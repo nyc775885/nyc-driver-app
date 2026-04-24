@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#0D1426" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="NYC Driver" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <title>NYC Driver Tracker</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body { background: #0D1426; color: #E8EAF0; font-family: -apple-system, PingFang SC, Noto Sans SC, sans-serif; overscroll-behavior: none; }
+    #root { min-height: 100vh; }
+    input, select, textarea, button { font-family: inherit; }
+    select option { background: #152135; }
+
+    /* Desktop layout */
+    @media (min-width: 900px) {
+      .app-desktop { display: flex; min-height: 100vh; }
+      .app-sidebar { width: 260px; min-height: 100vh; background: #0D1426; border-right: 1px solid #1A2A44; position: fixed; left: 0; top: 0; bottom: 0; overflow-y: auto; z-index: 100; }
+      .app-main { margin-left: 260px; flex: 1; max-width: calc(100vw - 260px); }
+      .app-content { max-width: 800px; margin: 0 auto; padding: 0 20px; }
+      .bottom-nav { left: 260px !important; }
+    }
+
+    /* Tablet layout */
+    @media (min-width: 600px) and (max-width: 899px) {
+      .app-content { max-width: 600px; margin: 0 auto; }
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('sw.js');
+      });
+    }
+  </script>
+</body>
+</html>
