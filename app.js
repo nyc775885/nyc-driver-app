@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-console.log("%cNYC Driver Tracker — version v33","color:#00D4FF;font-weight:bold;font-size:14px");
+console.log("%cNYC Driver Tracker — version v39","color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
 //   <script>window.SENTRY_DSN = "https://YOUR_KEY@oXXX.ingest.sentry.io/PROJECT";</script>
@@ -119,7 +119,7 @@ function Row(p){var fw=p.bold?800:600;var cl=p.color||"#E8EAF0";return React.cre
 function Stat(p){var pad=p.sm?"8px 6px":"12px 10px";var fs1=p.sm?11:12;var fs2=p.sm?13:16;var cl=p.color||"#E8EAF0";return React.createElement('div', { style: {background:C.bg2,borderRadius:10,padding:pad,border:"1px solid "+C.border,textAlign:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 41}}, React.createElement('div', { style: Object.assign({color:"#90B8D0",marginBottom:3},{fontSize:fs1}), __self: this, __source: {fileName: _jsxFileName, lineNumber: 41}}, p.label), React.createElement('div', { style: Object.assign({fontWeight:700},{fontSize:fs2,color:cl}), __self: this, __source: {fileName: _jsxFileName, lineNumber: 41}}, p.value));}
 function ABox(p){return React.createElement('div', { style: {margin:"8px 14px 0",background:p.bg,border:"1px solid "+p.color,borderRadius:10,padding:"10px 14px",fontSize:14,color:p.color,display:"flex",gap:8,alignItems:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 42}}, React.createElement('span', { style: {fontSize:18}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 42}}, p.icon), React.createElement('span', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 42}}, p.text));}
 function Field(p){var el;if(p.options){el=React.createElement('select', { value: p.value, onChange: function(e){p.onChange(e.target.value);}, style: IS, __self: this, __source: {fileName: _jsxFileName, lineNumber: 43}}, p.options.map(function(o){return React.createElement('option', { key: o[0], value: o[0], __self: this, __source: {fileName: _jsxFileName, lineNumber: 43}}, o[1]);}));}else{var isDateTime=p.type==="date"||p.type==="month"||p.type==="time";var baseStyle=isDateTime?Object.assign({},IS,{colorScheme:"dark",color:"#E8EAF0",fontSize:17,padding:"14px 16px",cursor:"pointer"}):IS;var inputProps={type:p.type||"text",value:p.value,onChange:function(e){p.onChange(e.target.value);},placeholder:p.placeholder||"",style:baseStyle,__self:this,__source:{fileName:_jsxFileName,lineNumber:43}};if(isDateTime){inputProps.onClick=function(e){try{if(e.currentTarget.showPicker)e.currentTarget.showPicker();}catch(err){}};}if(p.money){inputProps.step="0.01";inputProps.inputMode="decimal";inputProps.onBlur=function(e){var v=e.target.value;if(v===""||isNaN(+v))return;var formatted=(+v).toFixed(2);if(formatted!==v)p.onChange(formatted);};}el=React.createElement('input',inputProps);}return React.createElement('label', { style: {display:"flex",flexDirection:"column",gap:6,fontSize:14,color:"#C8E8F8",fontWeight:500}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 43}}, p.label, el);}
-function Modal(p){return React.createElement('div', { style: {position:"fixed",inset:0,background:"rgba(4,8,20,0.95)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:200,paddingBottom:"80px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 44}}, React.createElement('div', { style: {background:C.bg2,borderRadius:16,padding:"0 0 52px",width:"100%",maxWidth:600,border:"1px solid "+C.border,maxHeight:"calc(90vh - 80px)",overflowY:"auto",boxShadow:"0 -8px 40px rgba(0,0,0,0.5)"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 44}}, React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 18px",borderBottom:"1px solid #1A2A44",position:"sticky",top:0,background:C.bg2,zIndex:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 44}}, React.createElement('button', { onClick: p.onClose, style: {background:"#1E3050",border:"none",color:"#8ABCD0",fontSize:16,cursor:"pointer",width:34,height:34,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 44}}, "✕"), React.createElement('div', { style: {fontSize:16,fontWeight:800}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 44}}, p.title), React.createElement('button', { onClick: p.onSave, style: {background:"linear-gradient(135deg,#00CFFF,#0044EE)",border:"none",color:"#fff",fontSize:20,cursor:"pointer",width:34,height:34,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 10px rgba(0,207,255,0.3)"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 44}}, "✓")), React.createElement('div', { style: {padding:"18px 18px 0",display:"flex",flexDirection:"column",gap:14}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 44}}, p.children)));}
+function Modal(p){return React.createElement('div', { style: {position:"fixed",inset:0,background:"rgba(4,8,20,0.95)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:200,paddingBottom:"80px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 44}}, React.createElement('div', { style: {background:C.bg2,borderRadius:16,width:"100%",maxWidth:600,border:"1px solid "+C.border,maxHeight:"calc(90vh - 80px)",display:"flex",flexDirection:"column",overflow:"hidden",boxShadow:"0 -8px 40px rgba(0,0,0,0.5)"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 44}}, React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 18px",borderBottom:"1px solid #1A2A44",background:C.bg2,flexShrink:0}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 44}}, React.createElement('button', { onClick: p.onClose, style: {background:"#1E3050",border:"none",color:"#8ABCD0",fontSize:16,cursor:"pointer",width:34,height:34,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 44}}, "✕"), React.createElement('div', { style: {fontSize:16,fontWeight:800}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 44}}, p.title), React.createElement('button', { onClick: p.onSave, style: {background:"linear-gradient(135deg,#00CFFF,#0044EE)",border:"none",color:"#fff",fontSize:20,cursor:"pointer",width:34,height:34,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 10px rgba(0,207,255,0.3)"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 44}}, "✓")), React.createElement('div', { style: {padding:"18px 18px 52px",display:"flex",flexDirection:"column",gap:14,overflowY:"auto",flex:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 44}}, p.children)));}
 var MONTHS=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];function MoNav(p){var isEn=p.lang==="en";var moDisp=isEn?MONTHS[+p.val.slice(5)-1]+" "+p.val.slice(0,4):p.val.slice(0,4)+"年 "+p.val.slice(5)+"月";return React.createElement('div', { style: {display:"flex",alignItems:"center",gap:8,marginBottom:p.mb||12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 45}}, React.createElement('button', { onClick: function(){p.set(prevMo(p.val));}, style: {background:C.bg2,border:"1px solid "+C.border,borderRadius:8,padding:"9px 14px",color:"#D8EEFF",fontSize:17,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 45}}, "<"), React.createElement('div', { style: {flex:1,textAlign:"center",fontSize:17,fontWeight:800}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 45}}, moDisp), React.createElement('button', { onClick: function(){p.set(nextMo(p.val));}, style: {background:C.bg2,border:"1px solid "+C.border,borderRadius:8,padding:"9px 14px",color:"#D8EEFF",fontSize:17,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 45}}, ">"), p.children);}
 function YrNav(p){var yrDisp=p.lang==="en"?p.val:p.val+" 年";return React.createElement('div', { style: {display:"flex",alignItems:"center",gap:10,marginBottom:14}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 46}}, React.createElement('button', { onClick: function(){p.set(String(+p.val-1));}, style: {background:C.bg2,border:"1px solid "+C.border,borderRadius:8,padding:"9px 14px",color:"#D8EEFF",fontSize:17,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 46}}, "<"), React.createElement('div', { style: {flex:1,textAlign:"center",fontSize:19,fontWeight:800}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 46}}, yrDisp), React.createElement('button', { onClick: function(){p.set(String(+p.val+1));}, style: {background:C.bg2,border:"1px solid "+C.border,borderRadius:8,padding:"9px 14px",color:"#D8EEFF",fontSize:17,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 46}}, ">"));}
 function SegBtn(p){return React.createElement('div', { style: {display:"flex",background:C.bg,borderRadius:12,padding:3,gap:2,marginBottom:p.mb||14,border:"1px solid #151F35"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 47}}, p.opts.map(function(o,i){var active=p.val===o[0];var bg=active?"#1A3060":"transparent";var cl=active?"#00D4FF":"#C8E8F8";var fw=active?700:400;return React.createElement('button', { key: i, onClick: function(){p.set(o[0]);}, style: {flex:1,padding:10,borderRadius:9,border:"none",background:bg,color:cl,fontSize:13,fontWeight:fw,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 47}}, o[1]);}));}
@@ -289,6 +289,108 @@ function MonthPicker(p){
 }
 
 function Badge(p){return React.createElement('div', { style: {display:"inline-flex",alignItems:"center",gap:6,background:p.bg||"#1A2A10",border:"1px solid "+(p.color||"#00E676"),borderRadius:20,padding:"6px 12px",fontSize:13,fontWeight:700,color:p.color||"#00E676"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 53}}, React.createElement('span', { style: {fontSize:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 53}}, p.icon), p.text);}
+
+// PIN-based lock screen. Shown when:
+//   - User is idle for the configured timeout (default 5 min)
+//   - User has set a PIN previously (stored in localStorage as a simple hash)
+// First-time setup mode: user enters PIN twice to set it.
+// PINs are hashed (FNV-1a, simple non-cryptographic) so plaintext doesn't sit in localStorage.
+function hashPIN(s){var h=2166136261;for(var i=0;i<s.length;i++){h^=s.charCodeAt(i);h=(h*16777619)>>>0;}return h.toString(16);}
+
+function LockScreen(p){
+  var isEn = p.lang === "en";
+  var isSetup = p.mode === "setup";  // true = setting up new PIN, false = unlocking
+  var r1 = useState(""); var pin = r1[0], setPin = r1[1];
+  var r2 = useState(""); var confirmPin = r2[0], setConfirmPin = r2[1];
+  var r3 = useState(""); var error = r3[0], setError = r3[1];
+  var r4 = useState(0); var attempts = r4[0], setAttempts = r4[1];
+  var r5 = useState(isSetup ? "first" : "verify"); var stage = r5[0], setStage = r5[1];
+  // first → confirm → done (setup) | verify (unlock)
+  var current = stage === "confirm" ? confirmPin : pin;
+  var setCurrent = stage === "confirm" ? setConfirmPin : setPin;
+  var addDigit = function(d){
+    if(current.length>=4)return;
+    var next = current + d;
+    setCurrent(next);
+    setError("");
+    if(next.length===4){
+      // Auto-submit when 4 digits entered
+      setTimeout(function(){submit(next);}, 150);
+    }
+  };
+  var delDigit = function(){setCurrent(current.slice(0,-1));setError("");};
+  var submit = function(value){
+    var pinValue = stage === "confirm" ? value : value;
+    if(isSetup){
+      if(stage === "first"){
+        // Move to confirm stage
+        setPin(value);
+        setStage("confirm");
+        setConfirmPin("");
+      } else {
+        // Verify both match
+        if(pin === value){
+          // Save PIN
+          try{localStorage.setItem("nyc_pin", hashPIN(value));}catch(e){}
+          p.onSuccess();
+        } else {
+          setError(isEn ? "PINs don't match, try again" : "两次输入不一致，请重试");
+          setPin("");
+          setConfirmPin("");
+          setStage("first");
+        }
+      }
+    } else {
+      // Unlock mode
+      var stored = "";
+      try{stored = localStorage.getItem("nyc_pin")||"";}catch(e){}
+      if(hashPIN(value) === stored){
+        p.onSuccess();
+      } else {
+        setAttempts(attempts+1);
+        setError(isEn ? "Wrong PIN" : "PIN 错误");
+        setPin("");
+      }
+    }
+  };
+  var title = isSetup
+    ? (stage === "first" ? (isEn?"Set a 4-digit PIN":"设置 4 位 PIN") : (isEn?"Confirm PIN":"再次输入"))
+    : (isEn ? "Enter PIN" : "输入 PIN");
+  var subtitle = isSetup
+    ? (isEn?"This PIN protects your data when idle":"PIN 在空闲时保护你的数据")
+    : (isEn?"App locked due to inactivity":"App 因长时间未操作已锁定");
+  return React.createElement('div',{style:{position:"fixed",inset:0,background:"#080C18",zIndex:9999,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:24}},
+    // Lock icon
+    React.createElement('div',{style:{fontSize:48,marginBottom:12}},isSetup?"🔐":"🔒"),
+    React.createElement('div',{style:{fontSize:20,fontWeight:800,color:"#E8EAF0",marginBottom:6,textAlign:"center"}},title),
+    React.createElement('div',{style:{fontSize:13,color:"#90B8D0",marginBottom:30,textAlign:"center"}},subtitle),
+    // 4-dot indicator
+    React.createElement('div',{style:{display:"flex",gap:14,marginBottom:24}},
+      [0,1,2,3].map(function(i){
+        var filled = i < current.length;
+        return React.createElement('div',{key:i,style:{width:18,height:18,borderRadius:9,background:filled?"#00D4FF":"transparent",border:"2px solid "+(filled?"#00D4FF":"#2A4A6A"),transition:"all 0.15s"}});
+      })
+    ),
+    // Error message
+    error ? React.createElement('div',{style:{fontSize:13,color:"#FF5252",marginBottom:16,minHeight:18}},error) : React.createElement('div',{style:{minHeight:18,marginBottom:16}}),
+    // Number pad
+    React.createElement('div',{style:{display:"grid",gridTemplateColumns:"repeat(3,72px)",gap:14,marginBottom:20}},
+      [1,2,3,4,5,6,7,8,9].map(function(n){
+        return React.createElement('button',{key:n,onClick:function(){addDigit(""+n);},style:{width:72,height:72,borderRadius:36,background:"#0F1C30",border:"1px solid #1E3050",color:"#E8EAF0",fontSize:28,fontWeight:600,cursor:"pointer"}},n);
+      }),
+      // Empty slot
+      React.createElement('div',{key:"empty"}),
+      // 0
+      React.createElement('button',{key:"0",onClick:function(){addDigit("0");},style:{width:72,height:72,borderRadius:36,background:"#0F1C30",border:"1px solid #1E3050",color:"#E8EAF0",fontSize:28,fontWeight:600,cursor:"pointer"}},"0"),
+      // Backspace
+      React.createElement('button',{key:"del",onClick:delDigit,style:{width:72,height:72,borderRadius:36,background:"transparent",border:"1px solid #1E3050",color:"#90B8D0",fontSize:20,cursor:"pointer"}},"⌫")
+    ),
+    // Forgot PIN (unlock mode only)
+    !isSetup ? React.createElement('button',{onClick:function(){if(confirm(isEn?"Forgot PIN? This will sign you out and require Google login again. Continue?":"忘记 PIN？这会让你退出登录，需要重新用 Google 登录。继续吗？"))p.onForgot();},style:{background:"none",border:"none",color:"#7A9AB8",fontSize:13,cursor:"pointer",marginTop:10}},isEn?"Forgot PIN?":"忘记 PIN？") : null,
+    // Cancel setup
+    isSetup ? React.createElement('button',{onClick:p.onCancel,style:{background:"none",border:"none",color:"#7A9AB8",fontSize:13,cursor:"pointer",marginTop:10}},isEn?"Skip / Setup later":"跳过 / 以后再设") : null
+  );
+}
 function App() {
   var r0=useState(function(){try{var t=localStorage.getItem("nyc_tab");return t?+t:0;}catch(e){return 0;}}()),tab=r0[0],_setTab=r0[1];function setTab(v){_setTab(v);try{localStorage.setItem("nyc_tab",""+v);}catch(e){}} var r1=useState("month"),dashV=r1[0],setDashV=r1[1];
   var r2=useState("month"),repP=r2[0],setRepP=r2[1]; var r3=useState(curMo()),mo=r3[0],setMo=r3[1];
@@ -357,7 +459,46 @@ function App() {
   var insExpDiff=veh.insExpiry?Math.round((new Date(veh.insExpiry)-new Date())*0.000011574):null; var expiring=ll.filter(function(l){if(!l.expiryDate)return false;var d=(new Date(l.expiryDate)-new Date())*0.000011574;var rd=+(l.reminderDays||60);return d>=0&&d<=rd;});
   var expired=ll.filter(function(l){if(!l.expiryDate)return false;return(new Date(l.expiryDate)-new Date())*0.000011574<0;}); var totalFix=fl.filter(function(f){return f.active&&f.amount;}).reduce(function(s,f){return s+(f.cycle==="annual"?Math.round(+f.amount/12*100)/100:+f.amount);},0); var bldRep=function(p){var isM=p==="month",ri=isM?tInc:yInc,rg=isM?tGross:yStmts.reduce(function(s,x){return s+(+x.grossFare||0);},0),rt=isM?tTips:yStmts.reduce(function(s,x){return s+(+x.tips||0);},0),rb=isM?tBonus:yStmts.reduce(function(s,x){return s+(+x.bonus||0);},0),rtr=isM?tToll:yStmts.reduce(function(s,x){return s+(+x.tollReimbursed||0);},0),rTot=isM?tExp:yExp,rn=ri-rTot,rT=isM?tTrips:yTrips,rH=isM?tHours:yHours,rM=isM?tMiles:yMiles;return {ri:ri,rg:rg,rt:rt,rb:rb,rtr:rtr,rTot:rTot,rn:rn,rTrips:rT,rHours:rH,rMiles:rM};};
   var yAllExps=function(){return yExps.concat(yMons.reduce(function(acc,m){return acc.concat(genFixed(fl,m));},[]));}; var hourlyRate=tHours>0?Math.round(tInc/tHours*100)/100:0,lastMo=prevMo(mo),lmStmts=sl.filter(function(x){return x.month===lastMo;}),lmWeeks=wl.filter(function(w){return w.weekStart.slice(0,7)===lastMo;}),lmFixMo=genFixed(fl,lastMo),lmFeAll=el.filter(function(e){var c=allC[e.category];if(c&&c.mo)return (e.statementMonth||e.date.slice(0,7))===lastMo;return e.date.slice(0,7)===lastMo;}).concat(lmFixMo),lmInc=lmStmts.reduce(function(s,x){return s+(+x.grossFare||0)+(+x.tips||0)+(+x.bonus||0)+(+x.tollReimbursed||0)+(+x.otherIncome||0);},0),lmExp=lmFeAll.reduce(function(s,e){return s+(+e.amount||0);},0),lmNet=lmInc-lmExp,lmHours=lmWeeks.reduce(function(s,w){return s+(+w.hours||0);},0),lmHourly=lmHours>0?Math.round(lmInc/lmHours*100)/100:0,nextExpiry=ll.filter(function(l){return l.expiryDate;}).sort(function(a,b){return a.expiryDate.localeCompare(b.expiryDate);})[0]; var achievements=[];if(tInc>=5000)achievements.push({icon:"🏆",text:lang==="en"?"Income > $5000":"本月收入破$5000",color:"#FFD700",bg:"#1A1400"});else if(tInc>=3000)achievements.push({icon:"⭐",text:lang==="en"?"Income > $3000":"本月收入破$3000",color:"#FFD700",bg:"#1A1400"});if(net>0&&tInc>0&&net>=tInc*0.5)achievements.push({icon:"💰",text:lang==="en"?"Profit > 50%":"净利润超50%",color:"#00E676",bg:"#0A1A0A"});if(tTrips>=200)achievements.push({icon:"🚗",text:lang==="en"?"200 trips this month":"本月200趟达成",color:"#00D4FF",bg:"#0A1428"});else if(tTrips>=100)achievements.push({icon:"🎯",text:lang==="en"?"100 trips this month":"本月100趟达成",color:"#00D4FF",bg:"#0A1428"});if(expiring.length===0&&expired.length===0&&ll.length>0)achievements.push({icon:"✅",text:lang==="en"?"All licenses valid":"证件全部有效",color:"#00E676",bg:"#0A1A0A"});if(yInc>=50000)achievements.push({icon:"👑",text:lang==="en"?"Annual income > $50000":"年收入破$50000",color:"#FFD700",bg:"#1A1400"}); var r40=useState(function(){return lsLoad("nyc_custGroups",[]);}),custGroups=r40[0],setCustGroups=r40[1]; var r41=useState(""),newGrpName=r41[0],setNewGrpName=r41[1]; var r42=useState("📁"),newGrpIcon=r42[0],setNewGrpIcon=r42[1]; var r43=useState("#A8D0E8"),newGrpColor=r43[0],setNewGrpColor=r43[1]; var r44=useState(new Date().getFullYear()+""),taxYr=r44[0],setTaxYr=r44[1]; var r45=useState(function(){return lsLoad("nyc_seRate",15.3);}),seRate=r45[0],_setSeRate=r45[1];function setSeRate(v){_setSeRate(v);try{localStorage.setItem("nyc_seRate",JSON.stringify(v));}catch(e){}} var r45b=useState(function(){return lsLoad("nyc_fedRate",12);}),fedRate=r45b[0],_setFedRate=r45b[1];function setFedRate(v){_setFedRate(v);try{localStorage.setItem("nyc_fedRate",JSON.stringify(v));}catch(e){}} var r45c=useState(function(){return lsLoad("nyc_stateRate",8.5);}),stateRate=r45c[0],_setStateRate=r45c[1];function setStateRate(v){_setStateRate(v);try{localStorage.setItem("nyc_stateRate",JSON.stringify(v));}catch(e){}} var r45d=useState(function(){return lsLoad("nyc_stdDed",14600);}),stdDed=r45d[0],_setStdDed=r45d[1];function setStdDed(v){_setStdDed(v);try{localStorage.setItem("nyc_stdDed",JSON.stringify(v));}catch(e){}} var r46=useState(false),taxLoading=r46[0],setTaxLoading=r46[1]; var r47=useState(""),taxRateNote=r47[0],setTaxRateNote=r47[1]; var r48=useState(function(){return lsLoad("nyc_notes",[]);}),notes=r48[0],setNotes=r48[1]; var r49=useState({title:"",body:"",id:null}),noteF=r49[0],setNoteF=r49[1]; var r50=useState(false),noteEdit=r50[0],setNoteEdit=r50[1]; var r51=useState(function(){return lsLoad("nyc_incGoal","");}),incGoal=r51[0],_setIncGoal=r51[1];
-  function setIncGoal(v){_setIncGoal(v);try{localStorage.setItem("nyc_incGoal",JSON.stringify(v));}catch(e){}} var r52=useState(false),showGoal=r52[0],setShowGoal=r52[1]; var r52b=useState(false),showDP=r52b[0],setShowDP=r52b[1]; var r52c=useState(false),showTP=r52c[0],setShowTP=r52c[1]; var r52d=useState(null),mpState=r52d[0],setMpState=r52d[1]; useEffect(function(){var s=document.createElement("script");s.src="https://accounts.google.com/gsi/client";s.async=true;s.defer=true;document.body.appendChild(s);},[]); var r55=useState(""),syncStatus=r55[0],setSyncStatus=r55[1]; var r56=useState(false),syncing=r56[0],setSyncing=r56[1]; var r57=useState(null),driveFileId=r57[0],setDriveFileId=r57[1]; var r58=useState(null),accessToken=r58[0],setAccessToken=r58[1];
+  function setIncGoal(v){_setIncGoal(v);try{localStorage.setItem("nyc_incGoal",JSON.stringify(v));}catch(e){}} var r52=useState(false),showGoal=r52[0],setShowGoal=r52[1]; var r52b=useState(false),showDP=r52b[0],setShowDP=r52b[1]; var r52c=useState(false),showTP=r52c[0],setShowTP=r52c[1]; var r52d=useState(null),mpState=r52d[0],setMpState=r52d[1];
+
+  // PIN lock state
+  var r53a=useState(function(){return lsLoad("nyc_pinTimeout",5);}),pinTimeout=r53a[0],_setPinTimeout=r53a[1]; function setPinTimeout(v){_setPinTimeout(v);try{localStorage.setItem("nyc_pinTimeout",JSON.stringify(v));}catch(e){}}
+  var r53b=useState(function(){var p="";try{p=localStorage.getItem("nyc_pin")||"";}catch(e){}return !!p;}),hasPIN=r53b[0],setHasPIN=r53b[1];
+  // locked: true when PIN screen should be displayed (unlock mode)
+  var r53c=useState(false),locked=r53c[0],setLocked=r53c[1];
+  // showPinSetup: true when user is in "set up new PIN" flow
+  var r53d=useState(false),showPinSetup=r53d[0],setShowPinSetup=r53d[1];
+
+  // Idle detection: if user has set a PIN and pinTimeout > 0, lock the app after N minutes of inactivity.
+  useEffect(function(){
+    if(!hasPIN || pinTimeout<=0 || locked) return;
+    var timer;
+    var resetTimer = function(){
+      clearTimeout(timer);
+      timer = setTimeout(function(){setLocked(true);}, pinTimeout*60*1000);
+    };
+    var events = ["mousedown","keydown","touchstart","scroll"];
+    events.forEach(function(ev){window.addEventListener(ev, resetTimer, {passive:true});});
+    // Also lock when tab becomes hidden (user switches away)
+    var onVisChange = function(){
+      if(document.visibilityState === "hidden"){
+        // Start a shorter timer when tab is hidden
+        clearTimeout(timer);
+        timer = setTimeout(function(){setLocked(true);}, pinTimeout*60*1000);
+      } else {
+        resetTimer();
+      }
+    };
+    document.addEventListener("visibilitychange", onVisChange);
+    resetTimer();
+    return function(){
+      clearTimeout(timer);
+      events.forEach(function(ev){window.removeEventListener(ev, resetTimer);});
+      document.removeEventListener("visibilitychange", onVisChange);
+    };
+  }, [hasPIN, pinTimeout, locked]);
+
+  useEffect(function(){var s=document.createElement("script");s.src="https://accounts.google.com/gsi/client";s.async=true;s.defer=true;document.body.appendChild(s);},[]); var r55=useState(""),syncStatus=r55[0],setSyncStatus=r55[1]; var r56=useState(false),syncing=r56[0],setSyncing=r56[1]; var r57=useState(null),driveFileId=r57[0],setDriveFileId=r57[1]; var r58=useState(null),accessToken=r58[0],setAccessToken=r58[1];
 
   // Google Drive sync functions
   // Files are stored inside a dedicated folder "NYC Driver Income Backup"
@@ -962,10 +1103,10 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
           , React.createElement('div', { style: {width:"60%",maxWidth:220,background:C.bg2,height:"100%",overflowY:"auto",borderRight:"1px solid "+C.border,display:"flex",flexDirection:"column",paddingBottom:"70px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 597}}
             , React.createElement('div', { style: {padding:"20px 18px 16px",borderBottom:"1px solid "+C.border}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 598}}
               , React.createElement('div', { style: {fontSize:15,fontWeight:800,color:C.text}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 599}}, T.menu)
-              , React.createElement('div', { style: {fontSize:11,color:C.text3,marginTop:2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 600}}, "NYC RIDESHARE TRACKER · v1.0.7"    )
+              , React.createElement('div', { style: {fontSize:11,color:C.text3,marginTop:2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 600}}, "NYC RIDESHARE TRACKER · v1.1.0"    )
             )
             , React.createElement('div', { style: {padding:"10px 0",flex:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 602}}
-              , [{icon:"📝",label:lang==="en"?"Notes":"记事本",action:function(){setShowDrawer(false);setSf("notes");}},{icon:"🗂",label:lang==="en"?"Categories":"支出类别",action:function(){setShowDrawer(false);setSf("manage_cats");}},{icon:"&#128197;",label:T.fixedFees,action:function(){setShowDrawer(false);setSf("drawer_fixed");}},{icon:"🧾",label:lang==="en"?"Tax Center":"税务中心",action:function(){setShowDrawer(false);setSf("tax_center");}},{icon:"&#128190;",label:T.backup,action:function(){setShowDrawer(false);setShowBackup(true);}},{icon:"&#128276;",label:T.reminder,action:function(){setShowDrawer(false);setShowRemMgr(true);}},{icon:"&#128203;",label:T.license,action:function(){setShowDrawer(false);setSf("drawer_lic");}},{icon:"&#128241;",label:T.platform,action:function(){setShowDrawer(false);setShowPlatMgr(true);}},{icon:"&#128663;",label:T.vehicle,action:function(){setShowDrawer(false);setSf("drawer_veh");}},{icon:"🚪",label:lang==="en"?"Sign Out":"退出登录",action:function(){setGUser(null);try{localStorage.removeItem("nyc_user");}catch(e){}setShowDrawer(false);},color:"#FF5252"},].map(function(item,i){return React.createElement('button', { key: i, onClick: item.action, style: {display:"flex",alignItems:"center",gap:14,width:"100%",background:"none",border:"none",padding:"14px 18px",cursor:"pointer",textAlign:"left",borderBottom:"1px solid "+C.border,color:item.color||C.text}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 603}}, React.createElement('span', { style: {fontSize:20}, dangerouslySetInnerHTML: {__html:item.icon}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 603}} ), React.createElement('span', { style: {fontSize:14,color:C.text,fontWeight:600}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 603}}, item.label), React.createElement('span', { style: {marginLeft:"auto",color:C.text3,fontSize:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 603}}, ">"));})
+              , [{icon:"📝",label:lang==="en"?"Notes":"记事本",action:function(){setShowDrawer(false);setSf("notes");}},{icon:"🗂",label:lang==="en"?"Categories":"支出类别",action:function(){setShowDrawer(false);setSf("manage_cats");}},{icon:"&#128197;",label:T.fixedFees,action:function(){setShowDrawer(false);setSf("drawer_fixed");}},{icon:"🧾",label:lang==="en"?"Tax Center":"税务中心",action:function(){setShowDrawer(false);setSf("tax_center");}},{icon:"&#128190;",label:T.backup,action:function(){setShowDrawer(false);setShowBackup(true);}},{icon:"&#128276;",label:T.reminder,action:function(){setShowDrawer(false);setShowRemMgr(true);}},{icon:"&#128203;",label:T.license,action:function(){setShowDrawer(false);setSf("drawer_lic");}},{icon:"&#128241;",label:T.platform,action:function(){setShowDrawer(false);setShowPlatMgr(true);}},{icon:"&#128663;",label:T.vehicle,action:function(){setShowDrawer(false);setSf("drawer_veh");}},{icon:"🔒",label:lang==="en"?"PIN Lock":"PIN 锁屏",action:function(){setShowDrawer(false);setSf("pin_settings");}},{icon:"🚪",label:lang==="en"?"Sign Out":"退出登录",action:function(){if(!confirm(lang==="en"?"Sign out of Google?":"确认退出 Google 登录？"))return;setGUser(null);try{localStorage.removeItem("nyc_user");}catch(e){}setShowDrawer(false);},color:"#FF5252"},].map(function(item,i){return React.createElement('button', { key: i, onClick: item.action, style: {display:"flex",alignItems:"center",gap:14,width:"100%",background:"none",border:"none",padding:"14px 18px",cursor:"pointer",textAlign:"left",borderBottom:"1px solid "+C.border,color:item.color||C.text}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 603}}, React.createElement('span', { style: {fontSize:20}, dangerouslySetInnerHTML: {__html:item.icon}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 603}} ), React.createElement('span', { style: {fontSize:14,color:C.text,fontWeight:600}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 603}}, item.label), React.createElement('span', { style: {marginLeft:"auto",color:C.text3,fontSize:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 603}}, ">"));})
             )
           )
           , React.createElement('div', { style: {flex:1,background:"rgba(0,0,0,0.6)"}, onClick: function(){setShowDrawer(false);}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 606}} )
@@ -979,6 +1120,46 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
             , React.createElement('input', { type: "number", value: incGoal, onChange: function(e){setIncGoal(e.target.value);}, placeholder: lang==="en"?"e.g. 5000":"例：5000", style: Object.assign({},IS,{fontSize:20,fontWeight:700,marginBottom:16}), __self: this, __source: {fileName: _jsxFileName, lineNumber: 614}} )
             , React.createElement('div', { style: {display:"flex",gap:8,flexWrap:"wrap",marginBottom:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 615}}, ["3000","4000","5000","6000","7000","8000"].map(function(v){return React.createElement('button', { key: v, onClick: function(){setIncGoal(v);}, style: {background:incGoal===v?"#1A3060":"#0A1828",border:"1px solid "+(incGoal===v?"#00D4FF":"#2A3A54"),borderRadius:8,padding:"6px 12px",color:incGoal===v?"#00D4FF":C.text2,fontSize:13,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 615}}, "$", v);}))
             , React.createElement('div', { style: {display:"flex",gap:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 616}}, React.createElement('button', { onClick: function(){setIncGoal("");setShowGoal(false);}, style: {flex:1,background:"#1E3050",border:"none",borderRadius:10,padding:12,color:C.text2,fontSize:14,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 616}}, lang==="en"?"Clear":"清除"), React.createElement('button', { onClick: function(){setShowGoal(false);}, style: {flex:2,background:"linear-gradient(135deg,#00D4FF,#0055FF)",border:"none",borderRadius:10,padding:12,color:"#fff",fontSize:14,fontWeight:700,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 616}}, "✓ " , lang==="en"?"Save":"保存"))
+          )
+        )
+      ) : null
+
+      , sf==="pin_settings" ? (
+        React.createElement('div', { style: {position:"fixed",inset:0,background:C.bg,zIndex:300,overflowY:"auto"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 850}}
+          , React.createElement('div', { style: {maxWidth:600,margin:"0 auto",padding:"0 0 80px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 850}}
+            , React.createElement('div', { style: {background:C.bg2,padding:"16px 18px",borderBottom:"1px solid "+C.border,display:"flex",justifyContent:"space-between",alignItems:"center",position:"sticky",top:0,zIndex:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 850}}
+              , React.createElement('div', { style: {fontSize:16,fontWeight:800}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 850}}, "🔒 " , lang==="en"?"PIN Lock":"PIN 锁屏")
+              , React.createElement('button', { onClick: function(){setSf(null);}, style: {background:"#1E3050",border:"none",color:"#8ABCD0",fontSize:16,cursor:"pointer",width:32,height:32,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 850}}, "✕")
+            )
+            , React.createElement('div', { style: {padding:"20px 18px",display:"flex",flexDirection:"column",gap:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 850}}
+              // Status card
+              , React.createElement(Card, { style: {padding:"16px 18px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 850}}
+                , React.createElement('div', { style: {fontSize:14,fontWeight:700,color:hasPIN?"#00E676":"#FF9A65",marginBottom:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 850}}, hasPIN?(lang==="en"?"✓ PIN is set":"✓ 已设置 PIN"):(lang==="en"?"⚠ No PIN set":"⚠ 未设置 PIN"))
+                , React.createElement('div', { style: {fontSize:13,color:C.text3,marginBottom:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 850}}, hasPIN?(lang==="en"?"App will lock after "+pinTimeout+" min of inactivity":"App 将在空闲 "+pinTimeout+" 分钟后锁定"):(lang==="en"?"Set a 4-digit PIN to protect your data":"设置 4 位 PIN 来保护你的数据"))
+                , !hasPIN ? React.createElement('button', { onClick: function(){setShowPinSetup(true);}, style: {width:"100%",background:"linear-gradient(135deg,#00D4FF,#0055FF)",border:"none",color:"#fff",fontSize:14,fontWeight:700,padding:"12px",borderRadius:10,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 850}}, lang==="en"?"🔐 Set PIN":"🔐 设置 PIN") : React.createElement('div', { style: {display:"flex",gap:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 850}}
+                  , React.createElement('button', { onClick: function(){if(!confirm(lang==="en"?"Reset PIN?":"重置 PIN？"))return;try{localStorage.removeItem("nyc_pin");}catch(e){}setHasPIN(false);setShowPinSetup(true);}, style: {flex:1,background:"#1A2A44",border:"1px solid #2A4A6A",color:C.text2,fontSize:13,fontWeight:600,padding:"10px",borderRadius:10,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 850}}, lang==="en"?"🔄 Change PIN":"🔄 修改 PIN")
+                  , React.createElement('button', { onClick: function(){if(!confirm(lang==="en"?"Disable PIN lock? Your data will no longer be PIN-protected.":"关闭 PIN 锁屏？数据将不再受 PIN 保护。"))return;try{localStorage.removeItem("nyc_pin");}catch(e){}setHasPIN(false);}, style: {flex:1,background:"#2A1010",border:"1px solid #5A2020",color:"#FF7060",fontSize:13,fontWeight:600,padding:"10px",borderRadius:10,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 850}}, lang==="en"?"❌ Disable":"❌ 关闭")
+                )
+              )
+              // Timeout setting
+              , hasPIN ? React.createElement(Card, { style: {padding:"16px 18px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 850}}
+                , React.createElement('div', { style: {fontSize:14,fontWeight:700,color:C.text2,marginBottom:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 850}}, lang==="en"?"⏱ Auto-lock after":"⏱ 空闲多久后锁定")
+                , React.createElement('div', { style: {fontSize:12,color:C.text3,marginBottom:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 850}}, lang==="en"?"How long of inactivity before App locks":"App 多长时间不操作后自动锁定")
+                , React.createElement('div', { style: {display:"flex",gap:6,flexWrap:"wrap"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 850}}
+                  , [1,3,5,10,30].map(function(m){
+                    var sel = pinTimeout===m;
+                    return React.createElement('button', { key: m, onClick: function(){setPinTimeout(m);}, style: {flex:"1 0 auto",minWidth:60,padding:"8px 12px",borderRadius:8,border:"1px solid "+(sel?"#00D4FF":"#2A3A54"),background:sel?"#1A3060":"#0A1828",color:sel?"#00D4FF":C.text2,fontSize:13,fontWeight:sel?700:600,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 850}}, m+(lang==="en"?" min":" 分钟"));
+                  })
+                )
+              ) : null
+              // Info
+              , React.createElement('div', { style: {fontSize:12,color:C.text3,padding:"8px 4px",lineHeight:1.6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 850}}
+                , React.createElement('div', { style: {marginBottom:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 850}}, "ℹ️ " , lang==="en"?"How it works:":"工作原理：")
+                , React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 850}}, lang==="en"?"• PIN is stored locally (hashed) on this device":"• PIN 仅存储在本机（已加密）")
+                , React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 850}}, lang==="en"?"• You'll need to set PIN separately on each device":"• 每台设备需要单独设置 PIN")
+                , React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 850}}, lang==="en"?"• Forgot PIN? Sign out and start fresh":"• 忘记 PIN？退出登录后可重置")
+              )
+            )
           )
         )
       ) : null
@@ -1159,14 +1340,14 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
       ) : null
 
       , showRemMgr ? (
-        React.createElement('div', { style: {position:"fixed",inset:0,background:"rgba(0,0,0,0.92)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:300}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 743}}
-          , React.createElement('div', { style: {background:C.bg2,borderRadius:16,padding:"24px 20px 52px",width:"100%",maxWidth:600,border:"1px solid "+C.border,maxHeight:"85vh",overflowY:"auto"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 744}}
-            , React.createElement('div', { style: {width:40,height:4,background:"#1E3050",borderRadius:2,margin:"0 auto 20px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 745}} )
-            , React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 746}}
+        React.createElement('div', { style: {position:"fixed",inset:0,background:"rgba(0,0,0,0.92)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:300,paddingBottom:"80px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 743}}
+          , React.createElement('div', { style: {background:C.bg2,borderRadius:16,width:"100%",maxWidth:600,border:"1px solid "+C.border,maxHeight:"calc(85vh - 80px)",display:"flex",flexDirection:"column",overflow:"hidden"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 744}}
+            , React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 18px",borderBottom:"1px solid #1A2A44",background:C.bg2,flexShrink:0}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 746}}
               , React.createElement('button', { onClick: function(){setShowRemMgr(false);}, style: {background:"#1E3050",border:"none",color:"#8ABCD0",fontSize:16,cursor:"pointer",width:34,height:34,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 747}}, "✕")
               , React.createElement('div', { style: {fontSize:17,fontWeight:800}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 748}}, "🔔 " , T.reminder)
               , React.createElement('button', { onClick: function(){var title=rf.title==="custom"?(rf.customTitle||"").trim():rf.title;if(!title||!rf.date)return;setReminders(reminders.concat([{id:Date.now(),title:title,date:rf.date,note:rf.note||"",reminderDays:rf.reminderDays||"7"}]));setRf({title:"",date:"",note:"",reminderDays:"7"});setShowRemMgr(false);}, style: {background:"linear-gradient(135deg,#00D4FF,#0055FF)",border:"none",color:"#fff",fontSize:20,cursor:"pointer",width:34,height:34,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 10px rgba(0,212,255,0.3)"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 749}}, "✓")
             )
+            , React.createElement('div', { style: {padding:"18px 20px 52px",overflowY:"auto",flex:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 750}}
             , React.createElement('div', { style: {display:"flex",flexDirection:"column",gap:12,marginBottom:20}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 751}}
               , React.createElement(Field, { label: T.remTitle, value: rf.title, onChange: function(v){setRf(Object.assign({},rf,{title:v}));}, options: lang==="en"?[["","-- Please Select --"],["Renew TLC License","Renew TLC License"],["Renew FHV License","Renew FHV License"],["TLC Insurance Expiry","TLC Insurance Expiry"],["DDC Defensive Driving","DDC Defensive Driving"],["Vehicle Inspection","Vehicle Inspection"],["DMV License Renewal","DMV License Renewal"],["Health Insurance","Health Insurance"],["Quarterly Tax Payment","Quarterly Tax Payment"],["Drug Test","Drug Test"],["Fingerprint/Background","Fingerprint/Background"],["custom","✏️ Custom..."]]:[["","-- 请选择 --"],["TLC驾照更新","TLC驾照更新"],["FHV车辆执照更新","FHV车辆执照更新"],["TLC商业保险到期","TLC商业保险到期"],["DDC防御驾驶课程","DDC防御驾驶课程"],["车辆检验","车辆检验"],["DMV驾照更新","DMV驾照更新"],["健康保险到期","健康保险到期"],["季度预缴税","季度预缴税"],["验毒检查","验毒检查"],["指纹背景调查","指纹背景调查"],["custom","✏️ 自定义..."]], __self: this, __source: {fileName: _jsxFileName, lineNumber: 752}} )
               , rf.title==="custom" ? React.createElement(Field, { label: lang==="en"?"Custom Title":"自定义标题", value: rf.customTitle||"", onChange: function(v){setRf(Object.assign({},rf,{customTitle:v}));}, placeholder: lang==="en"?"Enter title":"输入标题", __self: this, __source: {fileName: _jsxFileName, lineNumber: 753}} ) : null
@@ -1178,42 +1359,45 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
               , React.createElement('div', { style: {fontSize:13,color:C.text3,marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 759}}, lang==="en"?"Active Reminders":"已设置的提醒")
               , reminders.map(function(r){var d=r.date?(new Date(r.date)-new Date())*0.000011574:null;var dc=d===null?"#7A9AB8":d<0?"#FF5252":d<=3?"#FF6030":d<=7?"#FFB300":"#00E676";var dt=d===null?"":d<0?(lang==="en"?"Expired":"已过期"):d===0?(lang==="en"?"Today":"今天"):d===1?(lang==="en"?"Tomorrow":"明天"):Math.round(d)+(lang==="en"?" days left":" 天");return React.createElement(Card, { key: r.id, style: {padding:"10px 14px",marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 760}}, React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"flex-start"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 760}}, React.createElement('div', { style: {flex:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 760}}, React.createElement('div', { style: {fontSize:14,fontWeight:700,color:C.text}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 760}}, r.title), React.createElement('div', { style: {fontSize:12,color:C.text3,marginTop:2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 760}}, fmtDate(r.date), " · "  , r.reminderDays, " " , lang==="en"?"days notice":"天提前提醒"), r.note?React.createElement('div', { style: {fontSize:12,color:C.text3,marginTop:2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 760}}, r.note):null), React.createElement('div', { style: {textAlign:"right"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 760}}, React.createElement('div', { style: Object.assign({fontSize:13,fontWeight:700},{color:dc}), __self: this, __source: {fileName: _jsxFileName, lineNumber: 760}}, dt), React.createElement('button', { onClick: function(){if(!confirm(lang==="en"?"Delete this reminder?":"确认删除这条提醒？"))return;setReminders(reminders.filter(function(x){return x.id!==r.id;}));}, style: {background:"none",border:"1px solid #3A1A1A",borderRadius:6,padding:"2px 8px",color:"#FF5252",cursor:"pointer",fontSize:11,marginTop:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 760}}, T.del))));})
             ) : React.createElement('div', { style: {fontSize:13,color:C.text3,textAlign:"center",padding:20}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 761}}, T.noData)
+            )
           )
         )
       ) : null
 
       , showPlatMgr ? (
-        React.createElement('div', { style: {position:"fixed",inset:0,background:"rgba(0,0,0,0.92)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:300}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 767}}
-          , React.createElement('div', { style: {background:C.bg2,borderRadius:16,padding:"24px 20px 52px",width:"100%",maxWidth:600,border:"1px solid "+C.border,maxHeight:"85vh",overflowY:"auto"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 768}}
-            , React.createElement('div', { style: {width:40,height:4,background:"#1E3050",borderRadius:2,margin:"0 auto 20px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 769}} )
-            , React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 770}}
+        React.createElement('div', { style: {position:"fixed",inset:0,background:"rgba(0,0,0,0.92)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:300,paddingBottom:"80px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 767}}
+          , React.createElement('div', { style: {background:C.bg2,borderRadius:16,width:"100%",maxWidth:600,border:"1px solid "+C.border,maxHeight:"calc(85vh - 80px)",display:"flex",flexDirection:"column",overflow:"hidden"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 768}}
+            , React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 18px",borderBottom:"1px solid #1A2A44",background:C.bg2,flexShrink:0}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 770}}
               , React.createElement('button', { onClick: function(){setShowPlatMgr(false);setNewPlat("");}, style: {background:"#1E3050",border:"none",color:"#8ABCD0",fontSize:16,cursor:"pointer",width:34,height:34,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 771}}, "✕")
               , React.createElement('div', { style: {fontSize:17,fontWeight:800}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 772}}, T.platform)
               , React.createElement('button', { onClick: function(){var v=newPlat.trim();if(!v){alert(lang==="en"?"Platform name is empty":"平台名不能为空");return;}if(allPlat.indexOf(v)>=0){alert(lang==="en"?"Platform already exists":"平台已存在");return;}setCustPlat(custPlat.concat([v]));setNewPlat("");}, style: {background:"linear-gradient(135deg,#00D4FF,#0055FF)",border:"none",color:"#fff",fontSize:20,cursor:"pointer",width:34,height:34,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 10px rgba(0,212,255,0.3)"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 773}}, "✓")
             )
+            , React.createElement('div', { style: {padding:"18px 20px 52px",overflowY:"auto",flex:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 774}}
             , React.createElement('input', { value: newPlat, onChange: function(e){setNewPlat(e.target.value);}, placeholder: T.newPlatform, style: Object.assign({},IS,{marginBottom:16}), __self: this, __source: {fileName: _jsxFileName, lineNumber: 775}} )
             , React.createElement('div', { style: {fontSize:13,color:C.text3,marginBottom:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 776}}, lang==="en"?"Default":"默认平台")
             , defPlat.map(function(p){return React.createElement('div', { key: p, style: {display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 0",borderBottom:"1px solid #0F1C30"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 777}}, React.createElement('span', { style: {fontSize:14,color:C.text}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 777}}, p==="其他"&&lang==="en"?"Other":p), React.createElement('button', { onClick: function(){if(!confirm(lang==="en"?"Delete this platform?":"确认删除这个平台？"))return;setDefPlat(defPlat.filter(function(x){return x!==p;}));}, style: {background:"none",border:"1px solid #3A1A1A",borderRadius:6,padding:"3px 10px",color:"#FF5252",cursor:"pointer",fontSize:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 777}}, T.del));})
             , custPlat.length>0 ? React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 778}}, React.createElement('div', { style: {fontSize:13,color:C.text3,marginTop:16,marginBottom:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 778}}, lang==="en"?"Custom":"自定义平台"), custPlat.map(function(p){return React.createElement('div', { key: p, style: {display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 0",borderBottom:"1px solid #0F1C30"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 778}}, React.createElement('span', { style: {fontSize:14,color:C.text}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 778}}, p==="其他"&&lang==="en"?"Other":p), React.createElement('button', { onClick: function(){if(!confirm(lang==="en"?"Delete this platform?":"确认删除这个平台？"))return;setCustPlat(custPlat.filter(function(x){return x!==p;}));}, style: {background:"none",border:"1px solid #3A1A1A",borderRadius:6,padding:"3px 10px",color:"#FF5252",cursor:"pointer",fontSize:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 778}}, T.del));})) : null
+            )
           )
         )
       ) : null
 
       , showBackup ? (
-        React.createElement('div', { style: {position:"fixed",inset:0,background:"rgba(0,0,0,0.92)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:300}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 784}}
-          , React.createElement('div', { style: {background:C.bg2,borderRadius:16,padding:"24px 20px 48px",width:"100%",maxWidth:600,border:"1px solid "+C.border,maxHeight:"90vh",overflowY:"auto"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 785}}
-            , React.createElement('div', { style: {width:40,height:4,background:"#1E3050",borderRadius:2,margin:"0 auto 16px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 786}} )
-            , React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 787}}
-              , React.createElement('div', { style: {fontSize:17,fontWeight:800}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 788}}, T.backup)
+        React.createElement('div', { style: {position:"fixed",inset:0,background:"rgba(0,0,0,0.92)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:300,paddingBottom:"80px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 784}}
+          , React.createElement('div', { style: {background:C.bg2,borderRadius:16,width:"100%",maxWidth:600,border:"1px solid "+C.border,maxHeight:"calc(90vh - 80px)",display:"flex",flexDirection:"column",overflow:"hidden"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 785}}
+            , React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 18px",borderBottom:"1px solid #1A2A44",background:C.bg2,flexShrink:0}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 787}}
               , React.createElement('button', { onClick: function(){setShowBackup(false);}, style: {background:"#1E3050",border:"none",color:"#8ABCD0",fontSize:16,cursor:"pointer",width:32,height:32,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 789}}, "✕")
+              , React.createElement('div', { style: {fontSize:17,fontWeight:800}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 788}}, T.backup)
+              , React.createElement('div', { style: {width:32}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 788}})
             )
+            , React.createElement('div', { style: {padding:"18px 20px 48px",overflowY:"auto",flex:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 790}}
             , React.createElement('div', { style: {background:C.bg3,border:"1px solid "+C.border,borderRadius:12,padding:16,marginBottom:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 791}}
               , React.createElement('div', { style: {fontSize:15,fontWeight:700,color:C.text2,marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 792}}, "☁️ Google Drive "   , lang==="en"?"Auto Sync":"自动同步")
               , gUser&&accessToken ? React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 793}}
                 , React.createElement('div', { style: {fontSize:13,color:"#00E676",marginBottom:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 794}}, "✓ " , gUser.email)
                 , React.createElement('div', { style: {fontSize:12,color:C.text3,marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 795}}, lang==="en"?"Auto-saves after every change":"每次修改自动保存")
-                , React.createElement('button', { onClick: function(){var data={wl:wl,sl:sl,el:el,fl:fl,ll:ll,veh:veh,cc:cc,custGroups:custGroups,reminders:reminders,custPlat:custPlat,notes:notes,incGoal:incGoal,seRate:seRate,fedRate:fedRate,stateRate:stateRate,stdDed:stdDed};saveToDrive(accessToken,driveFileId,data);}, style: {width:"100%",background:"#0A4020",border:"1px solid #2A8050",borderRadius:10,padding:12,color:"#00E676",fontSize:14,fontWeight:700,cursor:"pointer",marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 796}}, syncing?(lang==="en"?"Saving...":"保存中..."):(lang==="en"?"💾 Save Now":"💾 立即保存"))
-                , React.createElement('button', { onClick: function(){loadFromDrive(accessToken);}, style: {width:"100%",background:"#0A2040",border:"1px solid #1A5080",borderRadius:10,padding:12,color:"#00D4FF",fontSize:14,fontWeight:700,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 797}}, lang==="en"?"📥 Restore from Drive":"📥 从Drive恢复")
+                , React.createElement('button', { onClick: function(){if(!confirm(lang==="en"?"Upload current data to Google Drive? This will overwrite the cloud backup.":"上传当前数据到 Google Drive？这会覆盖云端备份。"))return;var data={wl:wl,sl:sl,el:el,fl:fl,ll:ll,veh:veh,cc:cc,custGroups:custGroups,reminders:reminders,custPlat:custPlat,notes:notes,incGoal:incGoal,seRate:seRate,fedRate:fedRate,stateRate:stateRate,stdDed:stdDed};saveToDrive(accessToken,driveFileId,data);}, style: {width:"100%",background:"#0A4020",border:"1px solid #2A8050",borderRadius:10,padding:12,color:"#00E676",fontSize:14,fontWeight:700,cursor:"pointer",marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 796}}, syncing?(lang==="en"?"Saving...":"保存中..."):(lang==="en"?"💾 Save Now":"💾 立即保存"))
+                , React.createElement('button', { onClick: function(){if(!confirm(lang==="en"?"⚠️ Restore from Drive will OVERWRITE all your current local data with the cloud backup. Continue?":"⚠️ 从 Drive 恢复会用云端备份覆盖当前所有本地数据，确认继续吗？"))return;loadFromDrive(accessToken);}, style: {width:"100%",background:"#0A2040",border:"1px solid #1A5080",borderRadius:10,padding:12,color:"#00D4FF",fontSize:14,fontWeight:700,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 797}}, lang==="en"?"📥 Restore from Drive":"📥 从Drive恢复")
                 , syncStatus?React.createElement('div', { style: {fontSize:12,color:"#00E676",marginTop:8,textAlign:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 798}}, syncStatus):null
               ) : gUser ? React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 799}}
                 , React.createElement('div', { style: {fontSize:13,color:"#FFB300",marginBottom:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 799}}, "⚠ " , gUser.email)
@@ -1221,13 +1405,13 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                 , React.createElement('button', { onClick: function(){signInWithGoogle();}, style: {width:"100%",background:"linear-gradient(135deg,#00D4FF,#0055FF)",border:"none",borderRadius:10,padding:12,color:"#fff",fontSize:14,fontWeight:700,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 799}}, lang==="en"?"🔄 Reconnect Drive":"🔄 重新连接 Drive")
               ) : React.createElement('div', { style: {fontSize:13,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 799}}, lang==="en"?"Sign in with Google to enable auto-sync":"登录Google后自动启用同步")
             )
-            , React.createElement('button', { onClick: function(){var data={wl:wl,sl:sl,el:el,fl:fl,ll:ll,veh:veh,cc:cc,custGroups:custGroups,reminders:reminders,custPlat:custPlat,notes:notes,incGoal:incGoal,seRate:seRate,fedRate:fedRate,stateRate:stateRate,stdDed:stdDed,exported:new Date().toISOString()};var blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});var url=URL.createObjectURL(blob);var a=document.createElement("a");a.href=url;a.download="nyc-driver-backup-"+today()+".json";a.click();URL.revokeObjectURL(url);}, style: {width:"100%",background:C.bg3,border:"1px solid "+C.border,borderRadius:12,padding:14,marginBottom:10,textAlign:"left",cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 801}}
+            , React.createElement('button', { onClick: function(){if(!confirm(lang==="en"?"Download a JSON backup file to your device?":"下载 JSON 备份文件到此设备？"))return;var data={wl:wl,sl:sl,el:el,fl:fl,ll:ll,veh:veh,cc:cc,custGroups:custGroups,reminders:reminders,custPlat:custPlat,notes:notes,incGoal:incGoal,seRate:seRate,fedRate:fedRate,stateRate:stateRate,stdDed:stdDed,exported:new Date().toISOString()};var blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});var url=URL.createObjectURL(blob);var a=document.createElement("a");a.href=url;a.download="nyc-driver-backup-"+today()+".json";a.click();URL.revokeObjectURL(url);}, style: {width:"100%",background:C.bg3,border:"1px solid "+C.border,borderRadius:12,padding:14,marginBottom:10,textAlign:"left",cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 801}}
               , React.createElement('div', { style: {fontSize:15,fontWeight:700,color:C.text2,marginBottom:3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 802}}, lang==="en"?"📤 Export JSON Backup":"📤 导出JSON备份")
               , React.createElement('div', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 803}}, lang==="en"?"Download all data as JSON":"下载所有数据为JSON文件")
             )
             , React.createElement('div', { style: {background:C.bg3,border:"1px solid "+C.border,borderRadius:12,padding:14,marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 805}}
               , React.createElement('div', { style: {fontSize:15,fontWeight:700,color:C.text2,marginBottom:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 806}}, lang==="en"?"📥 Restore from File":"📥 从文件恢复")
-              , React.createElement('input', { type: "file", accept: ".json", onChange: function(e){var file=e.target.files[0];if(!file)return;var reader=new FileReader();reader.onload=function(ev){try{var data=JSON.parse(ev.target.result);if(data.wl)setWl(data.wl);if(data.sl)setSl(data.sl);if(data.el)setEl(data.el);if(data.fl)setFl(data.fl);if(data.ll)setLl(data.ll);if(data.veh)setVeh(data.veh);if(data.cc)setCc(data.cc);if(data.custGroups)setCustGroups(data.custGroups);if(data.reminders)setReminders(data.reminders);if(data.custPlat)setCustPlat(data.custPlat);if(data.notes)setNotes(data.notes);if(data.incGoal)setIncGoal(data.incGoal);if(typeof data.seRate==="number")setSeRate(data.seRate);if(typeof data.fedRate==="number")setFedRate(data.fedRate);if(typeof data.stateRate==="number")setStateRate(data.stateRate);if(typeof data.stdDed==="number")setStdDed(data.stdDed);alert(lang==="en"?"Data restored!":"数据恢复成功！");}catch(err){alert(lang==="en"?"Invalid file":"文件格式错误");}};reader.readAsText(file);}, style: {width:"100%",background:C.bg3,border:"1px solid #2A3A54",borderRadius:8,padding:"8px",color:C.text,fontSize:13,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 807}} )
+              , React.createElement('input', { type: "file", accept: ".json", onChange: function(e){var file=e.target.files[0];if(!file)return;if(!confirm(lang==="en"?"⚠️ Importing will OVERWRITE all your current local data with this file. Continue?":"⚠️ 导入会用此文件覆盖当前所有本地数据，确认继续吗？")){e.target.value="";return;}var reader=new FileReader();reader.onload=function(ev){try{var data=JSON.parse(ev.target.result);if(data.wl)setWl(data.wl);if(data.sl)setSl(data.sl);if(data.el)setEl(data.el);if(data.fl)setFl(data.fl);if(data.ll)setLl(data.ll);if(data.veh)setVeh(data.veh);if(data.cc)setCc(data.cc);if(data.custGroups)setCustGroups(data.custGroups);if(data.reminders)setReminders(data.reminders);if(data.custPlat)setCustPlat(data.custPlat);if(data.notes)setNotes(data.notes);if(data.incGoal)setIncGoal(data.incGoal);if(typeof data.seRate==="number")setSeRate(data.seRate);if(typeof data.fedRate==="number")setFedRate(data.fedRate);if(typeof data.stateRate==="number")setStateRate(data.stateRate);if(typeof data.stdDed==="number")setStdDed(data.stdDed);alert(lang==="en"?"Data restored!":"数据恢复成功！");}catch(err){alert(lang==="en"?"Invalid file":"文件格式错误");}};reader.readAsText(file);}, style: {width:"100%",background:C.bg3,border:"1px solid #2A3A54",borderRadius:8,padding:"8px",color:C.text,fontSize:13,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 807}} )
             )
             , React.createElement('button', { onClick: function(){
               var yr=taxYr||(new Date().getFullYear()+"");
@@ -1265,6 +1449,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
             }, style: {width:"100%",background:"linear-gradient(135deg,#1A3060,#0A1828)",border:"1px solid #2A5080",borderRadius:12,padding:14,textAlign:"left",cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 809}}
               , React.createElement('div', { style: {fontSize:15,fontWeight:700,color:C.text2,marginBottom:3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 828}}, "📄 " , lang==="en"?"Export Tax Report PDF":"导出报税表PDF")
               , React.createElement('div', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 829}}, lang==="en"?"Generate "+(taxYr||new Date().getFullYear())+" tax report (year selectable in Tax Center)":"生成 "+(taxYr||new Date().getFullYear())+" 年报税表（年份在税务中心选择）")
+            )
             )
           )
         )
@@ -1354,6 +1539,8 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
       , showDP ? React.createElement(DatePicker, { value: ef.date, lang: lang, onChange: function(v){setEf(Object.assign({},ef,{date:v}));}, onClose: function(){setShowDP(false);} }) : null
       , showTP ? React.createElement(TimePicker, { value: ef.time, lang: lang, onChange: function(v){setEf(Object.assign({},ef,{time:v}));}, onClose: function(){setShowTP(false);} }) : null
       , mpState ? React.createElement(MonthPicker, { value: mpState.value, lang: lang, onChange: mpState.onChange, onClose: function(){setMpState(null);} }) : null
+      , locked ? React.createElement(LockScreen, { lang: lang, mode: "unlock", onSuccess: function(){setLocked(false);}, onForgot: function(){try{localStorage.removeItem("nyc_pin");localStorage.removeItem("nyc_user");}catch(e){}setHasPIN(false);setLocked(false);setGUser(null);setAccessToken(null);} }) : null
+      , showPinSetup ? React.createElement(LockScreen, { lang: lang, mode: "setup", onSuccess: function(){setHasPIN(true);setShowPinSetup(false);alert(lang==="en"?"PIN set! App will lock after "+pinTimeout+" min idle.":"PIN 设置成功！App 将在空闲 "+pinTimeout+" 分钟后锁定。");}, onCancel: function(){setShowPinSetup(false);} }) : null
     )
   );
 }
