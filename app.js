@@ -1,4 +1,5 @@
 // === Error monitoring (Sentry) ===
+console.log("%cNYC Driver Tracker — version v33","color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
 //   <script>window.SENTRY_DSN = "https://YOUR_KEY@oXXX.ingest.sentry.io/PROJECT";</script>
@@ -359,16 +360,52 @@ function App() {
   function setIncGoal(v){_setIncGoal(v);try{localStorage.setItem("nyc_incGoal",JSON.stringify(v));}catch(e){}} var r52=useState(false),showGoal=r52[0],setShowGoal=r52[1]; var r52b=useState(false),showDP=r52b[0],setShowDP=r52b[1]; var r52c=useState(false),showTP=r52c[0],setShowTP=r52c[1]; var r52d=useState(null),mpState=r52d[0],setMpState=r52d[1]; useEffect(function(){var s=document.createElement("script");s.src="https://accounts.google.com/gsi/client";s.async=true;s.defer=true;document.body.appendChild(s);},[]); var r55=useState(""),syncStatus=r55[0],setSyncStatus=r55[1]; var r56=useState(false),syncing=r56[0],setSyncing=r56[1]; var r57=useState(null),driveFileId=r57[0],setDriveFileId=r57[1]; var r58=useState(null),accessToken=r58[0],setAccessToken=r58[1];
 
   // Google Drive sync functions
-  function getDriveData(tok,cb){
-    fetch("https://www.googleapis.com/drive/v3/files?q=name%3D%27nyc-driver-data.json%27+and+trashed%3Dfalse&spaces=drive&fields=files(id,name,modifiedTime)",{headers:{Authorization:"Bearer "+tok}})
+  // Files are stored inside a dedicated folder "NYC Driver Income Backup"
+  // for tidiness. This requires the drive.file scope which only sees files
+  // the app itself created — that's fine because the folder is also
+  // created by us.
+  var DRIVE_FOLDER_NAME = "NYC Driver Income Backup";
+  var DRIVE_FILE_NAME = "nyc-driver-data.json";
+
+  // Find or create the backup folder; calls cb(folderId).
+  function getOrCreateFolder(tok, cb) {
+    var q = encodeURIComponent("name='"+DRIVE_FOLDER_NAME+"' and mimeType='application/vnd.google-apps.folder' and trashed=false");
+    fetch("https://www.googleapis.com/drive/v3/files?q="+q+"&spaces=drive&fields=files(id,name)",
+      {headers:{Authorization:"Bearer "+tok}})
     .then(function(r){return r.json();})
     .then(function(d){
-      if(d.files&&d.files.length>0){cb(d.files[0].id);}else{cb(null);}
-    }).catch(function(){cb(null);});
+      if(d.files && d.files.length>0){
+        cb(d.files[0].id);
+      } else {
+        // Create the folder
+        fetch("https://www.googleapis.com/drive/v3/files",{
+          method:"POST",
+          headers:{Authorization:"Bearer "+tok,"Content-Type":"application/json"},
+          body:JSON.stringify({name:DRIVE_FOLDER_NAME,mimeType:"application/vnd.google-apps.folder"})
+        })
+        .then(function(r){return r.json();})
+        .then(function(d2){cb(d2.id||null);})
+        .catch(function(err){reportError(err,{op:"createFolder"});cb(null);});
+      }
+    }).catch(function(err){reportError(err,{op:"findFolder"});cb(null);});
+  }
+
+  function getDriveData(tok,cb){
+    // Search for the data file inside our folder
+    getOrCreateFolder(tok,function(folderId){
+      if(!folderId){cb(null,null);return;}
+      var q = encodeURIComponent("name='"+DRIVE_FILE_NAME+"' and '"+folderId+"' in parents and trashed=false");
+      fetch("https://www.googleapis.com/drive/v3/files?q="+q+"&spaces=drive&fields=files(id,name,modifiedTime)",
+        {headers:{Authorization:"Bearer "+tok}})
+      .then(function(r){return r.json();})
+      .then(function(d){
+        if(d.files&&d.files.length>0){cb(d.files[0].id,folderId);}else{cb(null,folderId);}
+      }).catch(function(){cb(null,folderId);});
+    });
   }
   function loadFromDrive(tok){
     setSyncStatus(lang==="en"?"Loading data...":"正在加载数据...");
-    getDriveData(tok,function(fileId){
+    getDriveData(tok,function(fileId,folderId){
       if(!fileId){setSyncStatus(lang==="en"?"No saved data found":"未找到保存的数据");return;}
       setDriveFileId(fileId);
       fetch("https://www.googleapis.com/drive/v3/files/"+fileId+"?alt=media",{headers:{Authorization:"Bearer "+tok}})
@@ -398,30 +435,51 @@ function App() {
   function saveToDrive(tok,fid,dataObj){
     setSyncing(true);
     var body=JSON.stringify(dataObj);
-    var meta=JSON.stringify({name:"nyc-driver-data.json",mimeType:"application/json"});
     var bound="-------nycdriverfoo";
-    var reqBody="--"+bound+"\r\nContent-Type: application/json\r\n\r\n"+meta+"\r\n--"+bound+"\r\nContent-Type: application/json\r\n\r\n"+body+"\r\n--"+bound+"--";
-    var url=fid?"https://www.googleapis.com/upload/drive/v3/files/"+fid+"?uploadType=multipart":"https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart";
-    var method=fid?"PATCH":"POST";
-    fetch(url,{method:method,headers:{Authorization:"Bearer "+tok,"Content-Type":"multipart/related; boundary="+bound},body:reqBody})
-    .then(function(r){return r.json();})
-    .then(function(d){
-      if(d.id)setDriveFileId(d.id);
-      setSyncing(false);
-      setSyncStatus(lang==="en"?"✓ Saved":"✓ 已保存");
-      setTimeout(function(){setSyncStatus("");},2000);
-    }).catch(function(err){reportError(err,{op:"saveToDrive"});setSyncing(false);setSyncStatus(lang==="en"?"Save failed":"保存失败");});
+    var doUpload = function(folderId){
+      // For new file, include parents (folder); for update (PATCH), don't include parents
+      var meta = fid
+        ? {name:DRIVE_FILE_NAME,mimeType:"application/json"}
+        : {name:DRIVE_FILE_NAME,mimeType:"application/json",parents:folderId?[folderId]:undefined};
+      var metaStr = JSON.stringify(meta);
+      var reqBody = "--"+bound+"\r\nContent-Type: application/json\r\n\r\n"+metaStr+"\r\n--"+bound+"\r\nContent-Type: application/json\r\n\r\n"+body+"\r\n--"+bound+"--";
+      var url = fid
+        ? "https://www.googleapis.com/upload/drive/v3/files/"+fid+"?uploadType=multipart"
+        : "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart";
+      var method = fid ? "PATCH" : "POST";
+      fetch(url,{method:method,headers:{Authorization:"Bearer "+tok,"Content-Type":"multipart/related; boundary="+bound},body:reqBody})
+      .then(function(r){return r.json();})
+      .then(function(d){
+        if(d.id)setDriveFileId(d.id);
+        setSyncing(false);
+        setSyncStatus(lang==="en"?"✓ Saved":"✓ 已保存");
+        setTimeout(function(){setSyncStatus("");},2000);
+      }).catch(function(err){reportError(err,{op:"saveToDrive"});setSyncing(false);setSyncStatus(lang==="en"?"Save failed":"保存失败");});
+    };
+    if(fid){
+      doUpload(null); // existing file, no need to look up folder
+    }else{
+      getOrCreateFolder(tok,function(folderId){doUpload(folderId);});
+    }
   }
-  function signInWithGoogle(onDone){
+  function signInWithGoogle(onDone, opts){
+    opts = opts || {};
     if(!window.google||!window.google.accounts||!window.google.accounts.oauth2){
-      alert(lang==="en"?"Google not loaded, please refresh":"Google未加载，请刷新页面");
+      if(!opts.silent)alert(lang==="en"?"Google not loaded, please refresh":"Google未加载，请刷新页面");
       return;
     }
     var client=window.google.accounts.oauth2.initTokenClient({
       client_id:"191679830947-efrr8o2em07oo9q88co37rd57qnnb0ai.apps.googleusercontent.com",
       scope:"https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email",
+      // hint: pre-select the previously-signed-in account (if any) for smoother re-auth
+      hint: gUser&&gUser.email ? gUser.email : undefined,
+      // For silent re-auth: prompt:"" tries to skip the consent screen if user already granted
+      prompt: opts.silent ? "" : undefined,
       callback:function(tokenResp){
-        if(tokenResp.error)return;
+        if(tokenResp.error){
+          if(!opts.silent)console.warn("OAuth error:",tokenResp.error);
+          return;
+        }
         var tok=tokenResp.access_token;
         setAccessToken(tok);
         fetch("https://www.googleapis.com/oauth2/v2/userinfo",{headers:{Authorization:"Bearer "+tok}})
@@ -435,6 +493,27 @@ function App() {
     });
     client.requestAccessToken();
   }
+
+  // Auto-reconnect on startup: if user was previously signed in (gUser saved),
+  // try to silently re-authenticate so they don't have to click "Reconnect" every time.
+  useEffect(function(){
+    if(!gUser||accessToken)return;
+    var t=setTimeout(function(){
+      if(window.google&&window.google.accounts&&window.google.accounts.oauth2){
+        signInWithGoogle(null,{silent:true});
+      }
+    },1500); // wait for GIS script to load
+    return function(){clearTimeout(t);};
+  },[gUser,accessToken]);
+
+  // Periodic refresh from Drive: pull latest data every 30 seconds while signed in.
+  // This makes multi-device sync feel "real-time" — changes from another device
+  // appear within 30s without manual refresh.
+  useEffect(function(){
+    if(!accessToken)return;
+    var interval=setInterval(function(){loadFromDrive(accessToken);},30000);
+    return function(){clearInterval(interval);};
+  },[accessToken]);
 
   // Centralized Drive auto-save: any change to persisted state debounces and uploads.
   // The previous per-handler autoSave() calls only fired on a few add paths, missing

@@ -68,14 +68,30 @@
   -->
   <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin="anonymous"></script>
   <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin="anonymous"></script>
-  <script src="app.js?v=30"></script>
+  <script src="app.js?v=33"></script>
   <script>
-    // PWA service worker registration. When a new version of sw.js is detected,
-    // it auto-installs and the page reloads once to apply.
+    // PWA service worker: aggressive auto-update strategy.
+    // 1. Register on load
+    // 2. Check for updates every 60 seconds while app is open
+    // 3. Also check whenever app comes back to foreground
+    // 4. When new version installs, activate and reload page once
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function () {
         navigator.serviceWorker.register('./sw.js')
           .then(function (reg) {
+            // Periodically check for updates while app is running
+            setInterval(function () {
+              reg.update().catch(function () {});
+            }, 60000);
+
+            // Also check immediately when user returns to the tab/app
+            document.addEventListener('visibilitychange', function () {
+              if (document.visibilityState === 'visible') {
+                reg.update().catch(function () {});
+              }
+            });
+
+            // When a new SW finishes installing, tell it to skip waiting
             reg.addEventListener('updatefound', function () {
               var newSW = reg.installing;
               if (!newSW) return;
@@ -88,6 +104,7 @@
           })
           .catch(function (err) { console.warn('SW registration failed:', err); });
 
+        // When the active SW changes, reload once to pick up new assets
         var refreshing = false;
         navigator.serviceWorker.addEventListener('controllerchange', function () {
           if (refreshing) return;
