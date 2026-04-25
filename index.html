@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <!-- Allow user zoom for accessibility (use font-size:16px on inputs to prevent iOS zoom-on-focus) -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0D1426" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="NYC Driver" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <title>NYC Driver Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      background: #080C18;
+      color: #E8EAF0;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Noto Sans SC', 'Segoe UI', Roboto, sans-serif;
+      font-variant-numeric: tabular-nums;
+      font-feature-settings: "tnum", "ss01", "cv11";
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      overscroll-behavior: none;
+      letter-spacing: -0.01em;
+    }
+    #root { min-height: 100vh; }
+    /* font-size: 16px on inputs prevents iOS Safari from zooming on focus */
+    input, select, textarea, button {
+      font-family: inherit;
+      font-size: 16px;
+      font-variant-numeric: tabular-nums;
+    }
+    select { color: #E8EAF0 !important; background: #080E1C !important; }
+    select option { background: #152135 !important; color: #E8EAF0 !important; }
+    input[type="date"], input[type="month"] { color-scheme: dark; color: #E8EAF0 !important; }
+    /* Remove spinner arrows from number inputs */
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
+    .noscript-msg { padding: 40px 20px; text-align: center; line-height: 1.7; }
+  </style>
+</head>
+<body>
+  <noscript>
+    <div class="noscript-msg">
+      <h2>需要启用 JavaScript / JavaScript required</h2>
+      <p>请在浏览器设置中启用 JavaScript 后刷新页面。</p>
+      <p>Please enable JavaScript in your browser settings and reload.</p>
+    </div>
+  </noscript>
+  <div id="root"></div>
+  <!--
+    Optional: Sentry error monitoring. Sign up at https://sentry.io (free tier),
+    create a project, then uncomment below and paste your DSN.
+  -->
+  <!--
+  <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
+  <script>window.SENTRY_DSN = "https://YOUR_PUBLIC_KEY@oXXXXXX.ingest.us.sentry.io/PROJECT_ID";</script>
+  -->
+  <!--
+    React pinned to 18.3.1 (last stable 18.x). For production hardening, add SRI hashes:
+      integrity="sha384-..." crossorigin="anonymous"
+    Get hashes from https://www.srihash.org/ or cdnjs.com.
+  -->
+  <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin="anonymous"></script>
+  <script src="app.js?v=30"></script>
+  <script>
+    // PWA service worker registration. When a new version of sw.js is detected,
+    // it auto-installs and the page reloads once to apply.
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function () {
+        navigator.serviceWorker.register('./sw.js')
+          .then(function (reg) {
+            reg.addEventListener('updatefound', function () {
+              var newSW = reg.installing;
+              if (!newSW) return;
+              newSW.addEventListener('statechange', function () {
+                if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
+                  newSW.postMessage({ type: 'SKIP_WAITING' });
+                }
+              });
+            });
+          })
+          .catch(function (err) { console.warn('SW registration failed:', err); });
+
+        var refreshing = false;
+        navigator.serviceWorker.addEventListener('controllerchange', function () {
+          if (refreshing) return;
+          refreshing = true;
+          window.location.reload();
+        });
+      });
+    }
+  </script>
+</body>
+</html>
