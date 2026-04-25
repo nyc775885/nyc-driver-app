@@ -11,12 +11,29 @@
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="icon-192.png" />
   <title>NYC Driver Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" />
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-    body { background: #080C18; color: #E8EAF0; font-family: -apple-system, PingFang SC, Noto Sans SC, sans-serif; overscroll-behavior: none; }
+    body {
+      background: #080C18;
+      color: #E8EAF0;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Noto Sans SC', 'Segoe UI', Roboto, sans-serif;
+      font-variant-numeric: tabular-nums;
+      font-feature-settings: "tnum", "ss01", "cv11";
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      overscroll-behavior: none;
+      letter-spacing: -0.01em;
+    }
     #root { min-height: 100vh; }
     /* font-size: 16px on inputs prevents iOS Safari from zooming on focus */
-    input, select, textarea, button { font-family: inherit; font-size: 16px; }
+    input, select, textarea, button {
+      font-family: inherit;
+      font-size: 16px;
+      font-variant-numeric: tabular-nums;
+    }
     select { color: #E8EAF0 !important; background: #080E1C !important; }
     select option { background: #152135 !important; color: #E8EAF0 !important; }
     input[type="date"], input[type="month"] { color-scheme: dark; color: #E8EAF0 !important; }
@@ -51,7 +68,7 @@
   -->
   <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin="anonymous"></script>
   <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin="anonymous"></script>
-  <script src="app.js?v=21"></script>
+  <script src="app.js?v=26"></script>
   <script>
     // PWA service worker registration. When a new version of sw.js is detected,
     // it auto-installs and the page reloads once to apply.
