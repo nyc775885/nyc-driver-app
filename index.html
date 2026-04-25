@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0D1426" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="NYC Driver" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <title>NYC Driver Tracker</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body { background: #080C18; color: #E8EAF0; font-family: -apple-system, PingFang SC, Noto Sans SC, sans-serif; overscroll-behavior: none; }
+    #root { min-height: 100vh; }
+    input, select, textarea, button { font-family: inherit; font-size: 16px; }
+    select { color: #E8EAF0 !important; background: #080E1C !important; }
+    select option { background: #152135 !important; color: #E8EAF0 !important; }
+    input[type="date"], input[type="month"] { color-scheme: dark; color: #E8EAF0 !important; }
+    .noscript-msg { padding: 40px 20px; text-align: center; line-height: 1.7; }
+  </style>
+</head>
+<body>
+  <noscript>
+    <div class="noscript-msg">
+      <h2>需要启用 JavaScript / JavaScript required</h2>
+    </div>
+  </noscript>
+  <div id="root"></div>
+  <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin="anonymous"></script>
+  <script src="app.js?v=9"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function () {
+        navigator.serviceWorker.register('./sw.js')
+          .then(function (reg) {
+            reg.addEventListener('updatefound', function () {
+              var newSW = reg.installing;
+              if (!newSW) return;
+              newSW.addEventListener('statechange', function () {
+                if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
+                  newSW.postMessage({ type: 'SKIP_WAITING' });
+                }
+              });
+            });
+          })
+          .catch(function (err) { console.warn('SW registration failed:', err); });
+
+        var refreshing = false;
+        navigator.serviceWorker.addEventListener('controllerchange', function () {
+          if (refreshing) return;
+          refreshing = true;
+          window.location.reload();
+        });
+      });
+    }
+  </script>
+</body>
+</html>
