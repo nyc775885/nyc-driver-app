@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-console.log("%cNYC Driver Tracker — version v49","color:#00D4FF;font-weight:bold;font-size:14px");
+console.log("%cNYC Driver Tracker — version v50","color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
 //   <script>window.SENTRY_DSN = "https://YOUR_KEY@oXXX.ingest.sentry.io/PROJECT";</script>
@@ -718,7 +718,28 @@ function App() {
     return function(){clearTimeout(t);};
   },[gUser,accessToken]);
 
-  // === Smart Drive sync ===
+  // One-time migration: assign IDs to any legacy records imported without them.
+  // (Some old import JSON files didn't include id fields, which made delete-by-id
+  // accidentally remove ALL records. This patches existing data on App load.)
+  useEffect(function(){
+    var nextId = Date.now();
+    var fixed = false;
+    var fix = function(arr){
+      return arr.map(function(item){
+        if(!item.id){fixed = true; return Object.assign({},item,{id: ++nextId});}
+        return item;
+      });
+    };
+    var newSl = fix(sl), newWl = fix(wl), newEl = fix(el), newFl = fix(fl), newLl = fix(ll);
+    if(fixed){
+      console.log("[migration] Assigning IDs to legacy records");
+      setSl(newSl); setWl(newWl); setEl(newEl); setFl(newFl); setLl(newLl);
+    }
+  // Run once on mount (sl/wl/el etc. are deps but we only want to migrate once)
+  // eslint-disable-next-line
+  },[]);
+
+
   // Strategy: every 30 seconds (or when data changes) compare timestamps:
   //   - If cloud is NEWER than local → download (another device has newer data)
   //   - If local is NEWER than cloud → upload (we have unsaved changes)
@@ -1132,7 +1153,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
             , React.createElement(Field, { label: T.onlineHours+" (h)", type: "number", value: wf.onlineHours, onChange: function(v){setWf(Object.assign({},wf,{onlineHours:v}));}, placeholder: "0", __self: this, __source: {fileName: _jsxFileName, lineNumber: 490}} )
             , React.createElement(Field, { label: T.miles+" (mi)", type: "number", value: wf.miles, onChange: function(v){setWf(Object.assign({},wf,{miles:v}));}, placeholder: "0", __self: this, __source: {fileName: _jsxFileName, lineNumber: 491}} )
           )
-          , wf.id ? React.createElement('button', { onClick: function(){if(!confirm(lang==="en"?"Delete this week record?":"确认删除这条周记录？"))return;setWl(wl.filter(function(x){return x.id!==wf.id;}));setSf(null);}, style: {width:"100%",background:"#2A1010",border:"1px solid #5A2020",color:"#FF7060",fontSize:14,fontWeight:700,padding:"12px",borderRadius:10,cursor:"pointer",marginTop:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 492}}, "🗑 " , lang==="en"?"Delete":"删除") : null
+          , (wf.id||wf.weekStart) ? React.createElement('button', { onClick: function(){if(!confirm(lang==="en"?"Delete this week record?":"确认删除这条周记录？"))return;setWl(wl.filter(function(x){if(wf.id){return x.id!==wf.id;}return !(x.weekStart===wf.weekStart&&x.platform===wf.platform);}));setSf(null);}, style: {width:"100%",background:"#2A1010",border:"1px solid #5A2020",color:"#FF7060",fontSize:14,fontWeight:700,padding:"12px",borderRadius:10,cursor:"pointer",marginTop:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 492}}, "🗑 " , lang==="en"?"Delete":"删除") : null
         )
       ) : null
 
@@ -1156,7 +1177,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
             )
           )
           , React.createElement(Field, { label: T.notes, value: stf.notes||"", onChange: function(v){setStf(Object.assign({},stf,{notes:v}));}, placeholder: T.optional, __self: this, __source: {fileName: _jsxFileName, lineNumber: 515}} )
-          , stf.id ? React.createElement('button', { onClick: function(){if(!confirm(lang==="en"?"Delete this statement?":"确认删除这条月账单？"))return;setSl(sl.filter(function(x){return x.id!==stf.id;}));setSf(null);}, style: {width:"100%",background:"#2A1010",border:"1px solid #5A2020",color:"#FF7060",fontSize:14,fontWeight:700,padding:"12px",borderRadius:10,cursor:"pointer",marginTop:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 516}}, "🗑 " , lang==="en"?"Delete":"删除") : null
+          , (stf.id||stf.month) ? React.createElement('button', { onClick: function(){if(!confirm(lang==="en"?"Delete this statement?":"确认删除这条月账单？"))return;setSl(sl.filter(function(x){if(stf.id){return x.id!==stf.id;}return !(x.month===stf.month&&x.platform===stf.platform);}));setSf(null);}, style: {width:"100%",background:"#2A1010",border:"1px solid #5A2020",color:"#FF7060",fontSize:14,fontWeight:700,padding:"12px",borderRadius:10,cursor:"pointer",marginTop:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 516}}, "🗑 " , lang==="en"?"Delete":"删除") : null
         )
       ) : null
 
