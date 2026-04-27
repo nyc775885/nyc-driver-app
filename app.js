@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-console.log("%cNYC Driver Tracker — version v60","color:#00D4FF;font-weight:bold;font-size:14px");
+console.log("%cNYC Driver Tracker — version v61","color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
 //   <script>window.SENTRY_DSN = "https://YOUR_KEY@oXXX.ingest.sentry.io/PROJECT";</script>
@@ -1292,10 +1292,19 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
           , (ef.category==="fuel"||ef.category==="charging") ? React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, React.createElement(Field, { label: ef.category==="charging"?(lang==="en"?"kWh Charged":"充电度数 (kWh)"):(lang==="en"?"Gallons (Gal)":"加油加仑 (Gal)"), type: "number", value: ef.qty, onChange: function(v){setEf(Object.assign({},ef,{qty:v}));}, placeholder: "0.0", __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}} ), ef.amount&&ef.qty&&+ef.qty>0?React.createElement('div', { style: {background:C.bg3,border:"1px solid "+C.border,borderRadius:10,padding:"10px 14px",display:"flex",justifyContent:"space-between"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, React.createElement('span', { style: {fontSize:14,color:C.text2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, ef.category==="charging"?(lang==="en"?"Per kWh":"每度电"):(lang==="en"?"Per Gallon":"每加仑")), React.createElement('span', { style: {fontSize:17,fontWeight:800,color:"#FFD700"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, fmt(+ef.amount/+ef.qty), ef.category==="charging"?"/kWh":"/Gal")):null) : null
           , (function(){var c=allC[ef.category];if(c&&c.g==="车辆"){return React.createElement(Field, { label: (lang==="en"?"Odometer (mi)":"里程读数 (mi)")+" — "+(lang==="en"?"optional":"选填"), type: "number", value: ef.odometer||"", onChange: function(v){setEf(Object.assign({},ef,{odometer:v}));}, placeholder: "e.g. 45142", __self: this, __source: {fileName: _jsxFileName, lineNumber: 543}} );}return null;}())
           , (function(){
-              // Build history of unique notes for THIS category, sorted by frequency
-              var counts={};
-              el.forEach(function(e){if(e.category===ef.category&&e.notes&&e.notes.trim()){var n=e.notes.trim();counts[n]=(counts[n]||0)+1;}});
-              var history=Object.keys(counts).sort(function(a,b){return counts[b]-counts[a];});
+              // Build history of unique notes for THIS category, sorted by frequency.
+              // Normalize for dedup: lowercase, strip whitespace and trailing punctuation.
+              var normalize=function(s){return s.trim().toLowerCase().replace(/[\s\.,;:!?。，；：！？]+$/,"");};
+              var groups={}; // normalized → {display, count}
+              el.forEach(function(e){
+                if(e.category!==ef.category||!e.notes||!e.notes.trim())return;
+                var raw=e.notes.trim();
+                var key=normalize(raw);
+                if(!key)return;
+                if(!groups[key]){groups[key]={display:raw,count:1};}
+                else{groups[key].count++; if(raw.length<groups[key].display.length)groups[key].display=raw;} // prefer shorter clean version
+              });
+              var history=Object.keys(groups).map(function(k){return groups[k];}).sort(function(a,b){return b.count-a.count;});
               return React.createElement('label',{style:{display:"flex",flexDirection:"column",gap:6,fontSize:14,color:"#C8E8F8",fontWeight:500,position:"relative"}},
                 T.notes,
                 React.createElement('div',{style:{position:"relative"}},
@@ -1304,7 +1313,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                     React.createElement('summary',{style:{listStyle:"none",cursor:"pointer",background:"#1A2A44",border:"1px solid #2A4A6A",borderRadius:6,width:32,height:32,display:"flex",alignItems:"center",justifyContent:"center",color:"#00D4FF",fontSize:14}},"⏷"),
                     React.createElement('div',{style:{position:"absolute",right:0,top:36,background:C.bg2,border:"1px solid "+C.border,borderRadius:10,minWidth:240,maxHeight:280,overflowY:"auto",boxShadow:"0 4px 20px rgba(0,0,0,0.5)",zIndex:100}},
                       React.createElement('div',{style:{fontSize:11,color:C.text3,padding:"8px 12px",borderBottom:"1px solid "+C.border}},lang==="en"?"Recent locations":"历史地点"),
-                      history.slice(0,15).map(function(loc,i){return React.createElement('button',{key:i,type:"button",onClick:function(ev){ev.preventDefault();setEf(Object.assign({},ef,{notes:loc}));ev.target.closest('details').open=false;},style:{display:"block",width:"100%",textAlign:"left",background:"none",border:"none",padding:"10px 12px",color:C.text,fontSize:13,cursor:"pointer",borderBottom:i<14?"1px solid #0F1C30":"none"}},loc," ",React.createElement('span',{style:{color:C.text3,fontSize:11}},"(",counts[loc],")"));})
+                      history.slice(0,15).map(function(h,i){return React.createElement('button',{key:i,type:"button",onClick:function(ev){ev.preventDefault();setEf(Object.assign({},ef,{notes:h.display}));ev.target.closest('details').open=false;},style:{display:"block",width:"100%",textAlign:"left",background:"none",border:"none",padding:"10px 12px",color:C.text,fontSize:13,cursor:"pointer",borderBottom:i<14?"1px solid #0F1C30":"none"}},h.display," ",React.createElement('span',{style:{color:C.text3,fontSize:11}},"(",h.count,")"));})
                     )
                   ):null
                 )
