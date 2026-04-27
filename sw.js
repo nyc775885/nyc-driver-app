@@ -13,7 +13,7 @@ const CACHE_VERSION = 'nyc-driver-v7';
 const PRECACHE_ASSETS = [
   './',
   './index.html',
-  './app.js?v=61',
+  './app.js?v=65',
   './manifest.json',
   './icon-192.png',
   './icon-512.png',
