@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-console.log("%cNYC Driver Tracker — version v113","color:#00D4FF;font-weight:bold;font-size:14px");
+console.log("%cNYC Driver Tracker — version v123","color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
 //   <script>window.SENTRY_DSN = "https://YOUR_KEY@oXXX.ingest.sentry.io/PROJECT";</script>
@@ -77,6 +77,22 @@ var CATS_EN={fuel:{label:"Gas",icon:"⛽",g:"车辆",taxable:true},charging:{lab
 var PLATS=["Uber","Lyft","Via","Uber Black","Lyft Lux","其他"];
 var GROUPS=["车辆","牌照","平台","其他","自定义"];
 var TABS=["仪表盘","收入","支出","报告"];
+var MILE_PRESETS_EV=[
+  {key:"rotate",icon:"🔄",lbl_zh:"转胎",lbl_en:"Tire Rotation",interval:6250},
+  {key:"cabin",icon:"💨",lbl_zh:"空调滤芯",lbl_en:"Cabin Filter",interval:15000},
+  {key:"hepa",icon:"🌬",lbl_zh:"HEPA 滤芯",lbl_en:"HEPA Filter",interval:25000},
+  {key:"tires",icon:"🛞",lbl_zh:"轮胎更换",lbl_en:"Tire Replacement",interval:35000}
+];
+var MILE_PRESETS_GAS=[
+  {key:"oil",icon:"🛢",lbl_zh:"换机油",lbl_en:"Oil Change",interval:5000},
+  {key:"rotate",icon:"🔄",lbl_zh:"转胎",lbl_en:"Tire Rotation",interval:5000},
+  {key:"airfilter",icon:"🌬",lbl_zh:"空气滤清器",lbl_en:"Air Filter",interval:15000},
+  {key:"cabin",icon:"💨",lbl_zh:"空调滤芯",lbl_en:"Cabin Filter",interval:15000},
+  {key:"sparkplug",icon:"⚡",lbl_zh:"火花塞",lbl_en:"Spark Plugs",interval:30000},
+  {key:"brakefluid",icon:"🛑",lbl_zh:"刹车油",lbl_en:"Brake Fluid",interval:30000},
+  {key:"transmission",icon:"⚙",lbl_zh:"变速箱油",lbl_en:"Transmission Fluid",interval:30000},
+  {key:"tires",icon:"🛞",lbl_zh:"轮胎更换",lbl_en:"Tire Replacement",interval:35000}
+];
 var LICTYPES_ZH=["TLC 驾驶执照(2年·$252)","TLC 车辆执照FHV(1年)","DMV 驾驶执照","商业保险单","车辆注册","车辆年检(每4个月)","验毒证明","指纹背景调查","TLC 24小时培训课程","DDC防御驾驶课程(每3年)","WAV轮椅车辆培训","体检证明","FS-6T保险申报表","其他证件"];
 var LICTYPES_EN=["TLC Driver License (2yr·$252)","TLC FHV Vehicle License (1yr)","DMV Driver License","Commercial Insurance","Vehicle Registration","Vehicle Inspection (every 4 mo)","Drug Test","Fingerprint Background Check","TLC 24-hour Training","DDC Defensive Driving Course (every 3yr)","WAV Wheelchair Vehicle Training","Medical Exam","FS-6T Insurance Form","Other License"];
 var LICTYPES=LICTYPES_ZH;
@@ -107,6 +123,51 @@ function curYr(){return ""+new Date().getFullYear();}
 function fmt(n){return "$"+Number(n||0).toFixed(2);}
 // Format number with 2 decimals (no $ sign) for non-money values
 function fmt2(n){return Number(n||0).toFixed(2);}
+// Open the report HTML in a hidden iframe and trigger the native print dialog.
+// User picks "Save as PDF" / "Save to Files" — produces real text PDFs (selectable,
+// searchable, small). No library needed; works offline forever.
+function downloadPdf(html, filename){
+  try{
+    var iframe=document.createElement("iframe");
+    iframe.setAttribute("aria-hidden","true");
+    iframe.style.cssText="position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden;";
+    document.body.appendChild(iframe);
+    var idoc=iframe.contentDocument||iframe.contentWindow.document;
+    // Inject our HTML; the doc <title> becomes the default PDF filename in most browsers.
+    idoc.open();
+    idoc.write(html);
+    idoc.close();
+    // Override the title with the suggested filename (without .pdf extension)
+    if(filename){
+      try{ idoc.title=filename.replace(/\.pdf$/i,""); }catch(e){}
+    }
+    var fired=false;
+    function fire(){
+      if(fired) return;
+      fired=true;
+      try{
+        iframe.contentWindow.focus();
+        iframe.contentWindow.print();
+      }catch(err){
+        alert("Print failed: "+(err&&err.message?err.message:err));
+      }
+      // Clean up after print dialog closes (delay so dialog can read the doc)
+      setTimeout(function(){
+        try{ document.body.removeChild(iframe); }catch(e){}
+      },2000);
+    }
+    // Wait for the iframe document to be ready, then print
+    if(idoc.readyState==="complete"){
+      setTimeout(fire,150);
+    }else{
+      iframe.addEventListener("load",function(){ setTimeout(fire,150); });
+      // Safety fallback in case load never fires
+      setTimeout(fire,1500);
+    }
+  }catch(e){
+    alert("Error: "+e.message);
+  }
+}
 function prevMo(mo){var a=mo.split("-"),y=+a[0],m=+a[1]-1;if(m<1){m=12;y--;}return y+"-"+p2(m);}
 function nextMo(mo){var a=mo.split("-"),y=+a[0],m=+a[1]+1;if(m>12){m=1;y++;}return y+"-"+p2(m);}
 function getIcon(k,aC){var c=aC[k];return c?c.icon||"💼":"💼";}
@@ -572,7 +633,10 @@ function App() {
   var r27=useState(false),showBackup=r27[0],setShowBackup=r27[1]; var r28=useState(function(){return lsLoad("nyc_user",null);}),gUser=r28[0],setGUser=r28[1];
   var r29=useState(""),gStatus=r29[0],setGStatus=r29[1]; var r30=useState(null),openSec=r30[0],setOpenSec=r30[1];
   var r32=useState(false),showPlatMgr=r32[0],setShowPlatMgr=r32[1];
-  var r34=useState(function(){return lsLoad("nyc_reminders",[]);}),reminders=r34[0],setReminders=r34[1]; var r35=useState({title:"",date:"",note:"",reminderDays:"7"}),rf=r35[0],setRf=r35[1];
+  var r34=useState(function(){return lsLoad("nyc_reminders",[]);}),reminders=r34[0],setReminders=r34[1]; var r35=useState({type:"date",title:"",customTitle:"",date:"",note:"",reminderDays:"7",triggerMile:"",intervalMile:"",reminderMile:"200"}),rf=r35[0],setRf=r35[1];
+  // Completion modal state (for ✓ Done on mile-type reminders)
+  var rCmp=useState(null),cmpRem=rCmp[0],setCmpRem=rCmp[1];
+  var rCmpf=useState({currentMile:"",intervalMile:""}),cmpf=rCmpf[0],setCmpf=rCmpf[1];
   var r36=useState(false),showRemMgr=r36[0],setShowRemMgr=r36[1]; var r37=useState(false),showDrawer=r37[0],setShowDrawer=r37[1];
   var r39=useState("zh"),lang=r39[0],setLang=r39[1];
   var r33=useState(PLATS.slice()),defPlat=r33[0],setDefPlat=r33[1];
@@ -1040,6 +1104,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
       , insW && insW.diff >= 0 && insW.diff <= 30 ? React.createElement(ABox, { color: "#FFB300", bg: "#1A1400", icon: "!", text: (lang==="en"?"Inspection in ":"车辆检验还剩 ")+insW.diff+(lang==="en"?" days":" 天"), __self: this, __source: {fileName: _jsxFileName, lineNumber: 256}} ) : null
       , (function(){if(!nextExpiry)return null;var d=daysFromToday(nextExpiry.expiryDate);if(d===null||d<=0||d>(+(nextExpiry.reminderDays||60)))return null;return React.createElement(ABox, { color: "#FF9A00", bg: "#1A1000", icon: "📋", text: nextExpiry.type+" "+(lang==="en"?"expires in ":"还剩 ")+d+(lang==="en"?" days":" 天到期"), __self: this, __source: {fileName: _jsxFileName, lineNumber: 257}});})()
       , reminders.filter(function(r){if(!r.date)return false;var d=daysFromToday(r.date);return d!==null&&d>=0&&d<=(+(r.reminderDays||7));}).map(function(r,i){var d=daysFromToday(r.date);return React.createElement(ABox, { key: i, color: "#CC88FF", bg: "#150A20", icon: "🔔", text: r.title+(d===0?(lang==="en"?" · Today":" · 今天"):d===1?(lang==="en"?" · Tomorrow":" · 明天"):(lang==="en"?" · "+d+" days left":" · 还剩"+d+"天")), __self: this, __source: {fileName: _jsxFileName, lineNumber: 258}} );}) 
+      , (function(){var lo=el.filter(function(e){return e.odometer&&+e.odometer>0;}).sort(function(a,b){var c=b.date.localeCompare(a.date);return c!==0?c:(+b.odometer)-(+a.odometer);})[0];var co=lo?+lo.odometer:0;if(co<=0)return null;return reminders.filter(function(r){if(r.type!=="mile")return false;if(!r.triggerMile)return false;var rem=(+r.triggerMile)-co;return rem<=(+(r.reminderMile||200));}).map(function(r,i){var rem=(+r.triggerMile)-co;var txt=r.title+(rem<=0?(lang==="en"?" · Overdue by "+Math.abs(rem).toLocaleString()+" mi":" · 已超 "+Math.abs(rem).toLocaleString()+" mi"):(lang==="en"?" · "+rem.toLocaleString()+" mi left":" · 还剩 "+rem.toLocaleString()+" mi"));var col=rem<=0?"#FF5252":"#FFB300",bg=rem<=0?"#200808":"#1A1400";return React.createElement(ABox, { key: "m"+i, color: col, bg: bg, icon: "🛣", text: txt });});})()
       , React.createElement('div', { style: {padding:"16px 14px",paddingBottom:100,maxWidth:800,margin:"0 auto"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 259}}
 
         , tab===0 ? (
@@ -1557,7 +1622,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
           , React.createElement('div', { style: {width:"60%",maxWidth:220,background:C.bg2,height:"100%",overflowY:"auto",borderRight:"1px solid "+C.border,display:"flex",flexDirection:"column",paddingBottom:"70px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 597}}
             , React.createElement('div', { style: {padding:"20px 18px 16px",borderBottom:"1px solid "+C.border}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 598}}
               , React.createElement('div', { style: {fontSize:15,fontWeight:800,color:C.text}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 599}}, T.menu)
-              , React.createElement('div', { style: {fontSize:11,color:C.text3,marginTop:2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 600}}, "NYC RIDESHARE TRACKER · v1.6.7"    )
+              , React.createElement('div', { style: {fontSize:11,color:C.text3,marginTop:2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 600}}, "NYC RIDESHARE TRACKER · v1.7.8"    )
             )
             , React.createElement('div', { style: {padding:"10px 0",flex:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 602}}
               , [{icon:"📝",label:lang==="en"?"Notes":"记事本",action:function(){setShowDrawer(false);setSf("notes");}},{icon:"🗂",label:lang==="en"?"Categories":"支出类别",action:function(){setShowDrawer(false);setSf("manage_cats");}},{icon:"&#128197;",label:T.fixedFees,action:function(){setShowDrawer(false);setSf("drawer_fixed");}},{icon:"🧾",label:lang==="en"?"Tax Center":"税务中心",action:function(){setShowDrawer(false);setSf("tax_center");}},{icon:"&#128190;",label:T.backup,action:function(){setShowDrawer(false);setShowBackup(true);}},{icon:"&#128276;",label:T.reminder,action:function(){setShowDrawer(false);setShowRemMgr(true);}},{icon:"&#128203;",label:T.license,action:function(){setShowDrawer(false);setSf("drawer_lic");}},{icon:"&#128241;",label:T.platform,action:function(){setShowDrawer(false);setShowPlatMgr(true);}},{icon:"&#128663;",label:T.vehicle,action:function(){setShowDrawer(false);setSf("drawer_veh");}},{icon:"🔒",label:lang==="en"?"PIN Lock":"PIN 锁屏",action:function(){setShowDrawer(false);setSf("pin_settings");}},{icon:"🚪",label:lang==="en"?"Sign Out":"退出登录",action:function(){if(!confirm(lang==="en"?"Sign out of Google?":"确认退出 Google 登录？"))return;setGUser(null);try{localStorage.removeItem("nyc_user");localStorage.removeItem("nyc_tab");}catch(e){}setTab(0);setSf(null);setShowDrawer(false);setShowBackup(false);setShowPlatMgr(false);setShowRemMgr(false);},color:"#FF5252"},].map(function(item,i){return React.createElement('button', { key: i, onClick: item.action, style: {display:"flex",alignItems:"center",gap:14,width:"100%",background:"none",border:"none",padding:"14px 18px",cursor:"pointer",textAlign:"left",borderBottom:"1px solid "+C.border,color:item.color||C.text}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 603}}, React.createElement('span', { style: {fontSize:20}, dangerouslySetInnerHTML: {__html:item.icon}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 603}} ), React.createElement('span', { style: {fontSize:14,color:C.text,fontWeight:600}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 603}}, item.label), React.createElement('span', { style: {marginLeft:"auto",color:C.text3,fontSize:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 603}}, ">"));})
@@ -1783,6 +1848,176 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                   , React.createElement(Card, { style: {marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 729}}, React.createElement('div', { style: {fontSize:14,fontWeight:800,color:"#00E676",marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 729}}, "📊 " , lang==="en"?"Year-End Summary":"年终汇总")
                     , (function(){var grps={"车辆":{},"牌照":{},"平台":{},"其他":{}};yExAll.concat(yFxAll).forEach(function(e){var cat=allC[e.category]||{label:e.category,g:"其他"};var g=cat.g||"其他";var lbl=e.isFixed?e.fixedLabel:cat.label;if(!grps[g])grps[g]={};if(!grps[g][lbl])grps[g][lbl]=0;grps[g][lbl]+=(+e.amount||0);});var gT=yExAll.concat(yFxAll).reduce(function(s,e){return s+(+e.amount||0);},0);var gcl={"车辆":"#00D4FF","牌照":"#FFD700","平台":"#CC88FF","其他":"#A8D0E8"};var glbl=lang==="en"?{"车辆":"Vehicle","牌照":"License","平台":"Platform","其他":"Other"}:{"车辆":"车辆","牌照":"牌照","平台":"平台","其他":"其他"};if(!gT)return React.createElement('div', { style: {textAlign:"center",color:C.text3,padding:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 730}}, lang==="en"?"No expenses for "+yn:yn+"年暂无支出");return React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 730}}, ["车辆","牌照","平台","其他"].map(function(g){var items=grps[g];if(!items||!Object.keys(items).length)return null;var st=Object.values(items).reduce(function(s,v){return s+v;},0);return React.createElement('div', { key: g, style: {marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 730}}, React.createElement('div', { style: {display:"flex",justifyContent:"space-between",borderBottom:"2px solid "+gcl[g],paddingBottom:3,marginBottom:3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 730}}, React.createElement('span', { style: {fontSize:12,fontWeight:800,color:gcl[g]}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 730}}, glbl[g]), React.createElement('span', { style: {fontSize:12,fontWeight:800,color:gcl[g]}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 730}}, fmt(st))), Object.entries(items).map(function(kv){return React.createElement('div', { key: kv[0], style: {display:"flex",justifyContent:"space-between",padding:"2px 8px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 730}}, React.createElement('span', { style: {fontSize:12,color:C.text2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 730}}, kv[0]), React.createElement('span', { style: {fontSize:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 730}}, fmt(kv[1])));}));}), " " , React.createElement('div', { style: {borderTop:"2px solid "+C.border,paddingTop:8,display:"flex",justifyContent:"space-between"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 730}}, React.createElement('span', { style: {fontSize:14,fontWeight:800}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 730}}, lang==="en"?"TOTAL":"可抵扣总额"), React.createElement('span', { style: {fontSize:16,fontWeight:900,color:"#00E676"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 730}}, fmt(gT))));}())
                   )
+                  , React.createElement('button', { onClick: function(){if(!confirm(lang==="en"?"Download "+(taxYr||new Date().getFullYear())+" tax report PDF?":"下载 "+(taxYr||new Date().getFullYear())+" 年报税表 PDF？"))return;
+                    var yr=taxYr||(new Date().getFullYear()+"");
+                    var yStmts=sl.filter(function(x){return x.month&&x.month.slice(0,4)===yr;});
+                    var grossInc=yStmts.reduce(function(s,x){return s+(+x.grossFare||0)+(+x.tips||0)+(+x.bonus||0)+(+x.tollReimbursed||0)+(+x.otherIncome||0);},0);
+                    var yMonths=[];for(var mi=1;mi<=12;mi++){yMonths.push(yr+"-"+p2(mi));}
+                    var yFx=yMonths.reduce(function(acc,m){return acc.concat(genFixed(fl,m));},[]);
+                    var yExps=el.filter(function(e){return e.date&&e.date.slice(0,4)===yr;});
+                    var allYExps=yExps.concat(yFx);
+                    var totalExp=allYExps.reduce(function(s,e){return s+(+e.amount||0);},0);
+                    var MILE_RATES={"2020":0.575,"2021":0.56,"2022":0.625,"2023":0.655,"2024":0.67,"2025":0.70,"2026":0.70};
+                    var mileRate=MILE_RATES[yr]||0.70;
+                    var yMi=wl.filter(function(w){return w.weekStart&&w.weekStart.slice(0,4)===yr;}).reduce(function(s,w){return s+(+w.miles||0);},0);
+                    var mileDed=Math.round(yMi*mileRate*100)/100;
+                    var netP=grossInc-totalExp-mileDed;
+                    var seBase=Math.max(0,netP)*0.9235;
+                    var rate=(seRate||15.3)*0.01;
+                    var seTax=Math.round(seBase*rate*100)/100;
+                    var seDed=Math.round(seTax*50)/100;
+                    var taxableIncome=Math.max(0,netP-seDed-stdDed);
+                    var fedIncTax=Math.round(taxableIncome*(fedRate*0.01)*100)/100;
+                    var stateIncTax=Math.round(Math.max(0,netP-seDed)*(stateRate*0.01)*100)/100;
+                    var totalTax=seTax+fedIncTax+stateIncTax;
+                    function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+                    var html="<!DOCTYPE html><html><head><meta charset=UTF-8><title>NYC Driver Tax Report "+esc(yr)+"</title><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;max-width:800px;margin:40px auto;padding:20px;color:#1a1a1a}h1{color:#1a3a6a;border-bottom:3px solid #1a3a6a;padding-bottom:10px;margin-bottom:20px}h2{color:#2a5a9a;margin:25px 0 10px}table{width:100%;border-collapse:collapse;margin:10px 0}td,th{padding:10px 14px;border:1px solid #ddd;text-align:left}th{background:#f0f4ff;font-weight:bold}tr:nth-child(even){background:#f8f9ff}.total{font-weight:bold;background:#e8f0ff!important}.green{color:#1a8a1a}.red{color:#cc1a1a}.note{color:#666;font-size:13px;margin-bottom:8px}.print-btn{margin-top:30px;padding:12px 24px;background:#1a3a6a;color:white;border:none;border-radius:6px;cursor:pointer;font-size:15px}@media print{.print-btn{display:none}}</style></head><body>";
+                    html+="<h1>🚖 NYC Rideshare Driver - Tax Report "+esc(yr)+"</h1>";
+                    html+="<p class=note>Generated: "+esc(new Date().toLocaleDateString())+(gUser?" | "+esc(gUser.email):"")+". Estimates only — confirm with a CPA before filing.</p>";
+                    html+="<h2>📋 Schedule C - Profit or Loss from Business</h2><table><tr><th>Line</th><th>Description</th><th>Amount</th></tr><tr><td>1</td><td>Gross receipts (1099-K / 1099-NEC)</td><td class=green>$"+grossInc.toFixed(2)+"</td></tr><tr><td>9</td><td>Standard mileage ("+yMi+" mi × $"+mileRate.toFixed(3)+")</td><td class=red>$"+mileDed.toFixed(2)+"</td></tr><tr><td>28</td><td>Other business expenses</td><td class=red>$"+totalExp.toFixed(2)+"</td></tr><tr class=total><td>31</td><td>Net profit or loss</td><td class="+(netP>=0?"green":"red")+">$"+netP.toFixed(2)+"</td></tr></table>";
+                    html+="<h2>📋 Schedule SE - Self-Employment Tax</h2><table><tr><th>Description</th><th>Amount</th></tr><tr><td>Net profit × 92.35%</td><td>$"+seBase.toFixed(2)+"</td></tr><tr><td>SE tax (×"+(seRate||15.3)+"%)</td><td class=red>$"+seTax.toFixed(2)+"</td></tr><tr class=total><td>Deductible portion (½ SE tax)</td><td class=green>$"+seDed.toFixed(2)+"</td></tr></table>";
+                    html+="<h2>💰 Income Tax Estimate</h2><p class=note>Using your editable rates: federal "+fedRate+"%, state+city "+stateRate+"%, standard deduction $"+stdDed+".</p><table><tr><th>Description</th><th>Amount</th></tr><tr><td>Federal income tax ("+fedRate+"%)</td><td>$"+fedIncTax.toFixed(2)+"</td></tr><tr><td>State+City income tax ("+stateRate+"%)</td><td>$"+stateIncTax.toFixed(2)+"</td></tr><tr class=total><td>Total estimated annual tax</td><td>$"+totalTax.toFixed(2)+"</td></tr></table>";
+                    html+="<h2>📅 Quarterly Estimated Tax Payments</h2><p class=note>Includes SE + federal + state/city estimate. Actual amounts may vary.</p><table><tr><th>Quarter</th><th>Due Date</th><th>Amount</th></tr><tr><td>Q1 (Jan-Mar)</td><td>April 15</td><td>$"+(totalTax/4).toFixed(2)+"</td></tr><tr><td>Q2 (Apr-May)</td><td>June 15</td><td>$"+(totalTax/4).toFixed(2)+"</td></tr><tr><td>Q3 (Jun-Aug)</td><td>September 15</td><td>$"+(totalTax/4).toFixed(2)+"</td></tr><tr><td>Q4 (Sep-Dec)</td><td>January 15</td><td>$"+(totalTax/4).toFixed(2)+"</td></tr></table>";
+                    if(allYExps.length>0){html+="<h2>💸 Business Expense Detail</h2><table><tr><th>Date</th><th>Category</th><th>Notes</th><th>Amount</th></tr>";allYExps.slice().sort(function(a,b){return (a.date||"").localeCompare(b.date||"");}).forEach(function(e){var cat=allC[e.category],lbl=e.isFixed?(e.fixedIcon||"")+" "+(e.fixedLabel||""):(cat?cat.icon+" "+cat.label:e.category);html+="<tr><td>"+esc(e.date||"")+"</td><td>"+esc(lbl)+"</td><td>"+esc(e.notes||"")+"</td><td>$"+(+e.amount||0).toFixed(2)+"</td></tr>";});html+="<tr class=total><td colspan=3>Total Expenses</td><td>$"+totalExp.toFixed(2)+"</td></tr></table>";}
+                    html+="</body></html>";
+                    downloadPdf(html,"tax-report-"+today()+".pdf");
+                  }, style: {width:"100%",background:"linear-gradient(135deg,#1A3060,#0A1828)",border:"1px solid #2A5080",borderRadius:12,padding:14,textAlign:"left",cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 809}}
+                    , React.createElement('div', { style: {fontSize:15,fontWeight:700,color:C.text2,marginBottom:3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 828}}, "📄 " , lang==="en"?"Export Tax Report PDF":"导出报税表PDF")
+                    , React.createElement('div', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 829}}, lang==="en"?"Generate "+(taxYr||new Date().getFullYear())+" tax report (year selectable in Tax Center)":"生成 "+(taxYr||new Date().getFullYear())+" 年报税表（年份在税务中心选择）")
+                  )
+                  , React.createElement('button', { onClick: function(){if(!confirm(lang==="en"?"Download "+(taxYr||new Date().getFullYear())+" accountant tax summary PDF?":"下载 "+(taxYr||new Date().getFullYear())+" 年会计师报表 PDF？"))return;
+                      var yr=taxYr||(new Date().getFullYear()+"");
+                      var yStmts=sl.filter(function(x){return x.month&&x.month.slice(0,4)===yr;});
+                      var allYExps=el.filter(function(e){return e.date&&e.date.slice(0,4)===yr;});
+                      if(allYExps.length===0&&yStmts.length===0){alert(lang==="en"?"No data for "+yr:"没有 "+yr+" 年的数据");return;}
+                      // Income
+                      var grossFare=yStmts.reduce(function(s,x){return s+(+x.grossFare||0);},0);
+                      var tips=yStmts.reduce(function(s,x){return s+(+x.tips||0);},0);
+                      var bonus=yStmts.reduce(function(s,x){return s+(+x.bonus||0);},0);
+                      var tollReimb=yStmts.reduce(function(s,x){return s+(+x.tollReimbursed||0);},0);
+                      var otherInc=yStmts.reduce(function(s,x){return s+(+x.otherIncome||0);},0);
+                      var totalInc=grossFare+tips+bonus+tollReimb+otherInc;
+                      // Group expenses by taxable status
+                      var deductible={"车辆":[],"牌照":[],"平台":[],"其他":[]}, nonDeductible=[];
+                      var grpLabels={"车辆":lang==="en"?"Vehicle":"车辆","牌照":lang==="en"?"License & Permits":"牌照","平台":lang==="en"?"Platform & Communications":"平台","其他":lang==="en"?"Other":"其他"};
+                      allYExps.forEach(function(e){
+                        var cat=allC[e.category];
+                        var isDeductible=cat?cat.taxable!==false:true;
+                        var grp=cat?(cat.g||"其他"):"其他";
+                        var entry={date:e.date,label:e.isFixed?e.fixedLabel:(cat?cat.label:"Other"),amount:+e.amount||0,notes:e.notes||""};
+                        if(isDeductible){if(!deductible[grp])deductible[grp]=[];deductible[grp].push(entry);}
+                        else{nonDeductible.push(Object.assign(entry,{grp:grp}));}
+                      });
+                      // Calculate group totals
+                      var dedGroupTotals={};
+                      Object.keys(deductible).forEach(function(g){dedGroupTotals[g]=deductible[g].reduce(function(s,x){return s+x.amount;},0);});
+                      var totalDed=Object.values(dedGroupTotals).reduce(function(s,x){return s+x;},0);
+                      var totalNonDed=nonDeductible.reduce(function(s,x){return s+x.amount;},0);
+                      var netProfit=totalInc-totalDed;
+                      // Build category breakdown within each group
+                      var dedByCategory={};
+                      Object.keys(deductible).forEach(function(g){
+                        var byCat={};
+                        deductible[g].forEach(function(e){if(!byCat[e.label]){byCat[e.label]={total:0,count:0};}byCat[e.label].total+=e.amount;byCat[e.label].count++;});
+                        dedByCategory[g]=byCat;
+                      });
+                      var nonDedByCategory={};
+                      nonDeductible.forEach(function(e){if(!nonDedByCategory[e.label]){nonDedByCategory[e.label]={total:0,count:0};}nonDedByCategory[e.label].total+=e.amount;nonDedByCategory[e.label].count++;});
+                      // Driver info
+                      var driver=veh.driver||{};
+                      var esc=function(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");};
+                      // Build HTML
+                      var html='<!DOCTYPE html><html><head><meta charset=utf-8><title>Tax Summary '+yr+'</title>';
+                      html+='<style>';
+                      html+='body{font-family:-apple-system,Helvetica,Arial,sans-serif;max-width:800px;margin:30px auto;padding:20px;color:#222;line-height:1.5;background:#fff;}';
+                      html+='h1{font-size:22px;border-bottom:3px solid #000;padding-bottom:8px;margin-bottom:4px;}';
+                      html+='h2{font-size:16px;border-bottom:1px solid #888;padding-bottom:4px;margin-top:24px;color:#000;}';
+                      html+='.subtitle{font-size:12px;color:#666;margin-bottom:20px;}';
+                      html+='.info{font-size:12px;margin:10px 0;line-height:1.7;}';
+                      html+='.info b{display:inline-block;width:140px;color:#444;}';
+                      html+='table{width:100%;border-collapse:collapse;margin:8px 0 16px;font-size:12px;}';
+                      html+='th,td{padding:6px 10px;border-bottom:1px solid #ddd;text-align:left;}';
+                      html+='th{background:#f0f0f0;font-weight:700;}';
+                      html+='td.amt{text-align:right;font-variant-numeric:tabular-nums;}';
+                      html+='tr.subtotal td{font-weight:700;background:#f8f8f8;border-top:1px solid #888;}';
+                      html+='tr.total td{font-weight:800;background:#222;color:#fff;font-size:13px;}';
+                      html+='tr.section td{background:#e8e8e8;font-weight:700;font-size:11px;letter-spacing:0.5px;text-transform:uppercase;}';
+                      html+='.note{font-size:11px;color:#666;font-style:italic;margin:6px 0 10px;}';
+                      html+='.print-btn{display:inline-block;margin:30px 0 0;padding:10px 20px;background:#0055FF;color:#fff;border:none;border-radius:6px;font-size:14px;cursor:pointer;}';
+                      html+='@media print{.print-btn{display:none;}}';
+                      html+='</style></head><body>';
+                      html+='<h1>NYC RIDESHARE DRIVER<br>TAX SUMMARY — '+esc(yr)+'</h1>';
+                      html+='<div class=subtitle>Generated '+new Date().toLocaleDateString()+' by NYC Driver Tracker</div>';
+                      // Driver info
+                      html+='<h2>Driver Information</h2><div class=info>';
+                      if(driver.name)html+='<div><b>Name:</b> '+esc(driver.name)+'</div>';
+                      if(driver.tlcHack)html+='<div><b>TLC Hack #:</b> '+esc(driver.tlcHack)+'</div>';
+                      if(driver.dmvLic)html+='<div><b>DMV License #:</b> '+esc(driver.dmvLic)+'</div>';
+                      if(driver.phone)html+='<div><b>Phone:</b> '+esc(driver.phone)+'</div>';
+                      if(driver.email)html+='<div><b>Email:</b> '+esc(driver.email)+'</div>';
+                      html+='</div>';
+                      // Vehicle info
+                      html+='<h2>Vehicle Information</h2><div class=info>';
+                      if(veh.year||veh.brand||veh.model)html+='<div><b>Vehicle:</b> '+esc((veh.year||"")+" "+(veh.brand||"")+" "+(veh.model||""))+'</div>';
+                      if(veh.plate)html+='<div><b>License Plate:</b> '+esc(veh.plate)+'</div>';
+                      if(veh.tlcPlate)html+='<div><b>TLC Plate:</b> '+esc(veh.tlcPlate)+'</div>';
+                      if(veh.vin)html+='<div><b>VIN:</b> '+esc(veh.vin)+'</div>';
+                      html+='</div>';
+                      // Income
+                      html+='<h2>Income</h2><table>';
+                      html+='<tr><th>Description</th><th class=amt>Amount</th></tr>';
+                      html+='<tr><td>Gross Fares</td><td class=amt>$'+grossFare.toFixed(2)+'</td></tr>';
+                      html+='<tr><td>Tips</td><td class=amt>$'+tips.toFixed(2)+'</td></tr>';
+                      html+='<tr><td>Bonuses</td><td class=amt>$'+bonus.toFixed(2)+'</td></tr>';
+                      html+='<tr><td>Toll Reimbursements</td><td class=amt>$'+tollReimb.toFixed(2)+'</td></tr>';
+                      html+='<tr><td>Other Income</td><td class=amt>$'+otherInc.toFixed(2)+'</td></tr>';
+                      html+='<tr class=total><td>TOTAL INCOME</td><td class=amt>$'+totalInc.toFixed(2)+'</td></tr>';
+                      html+='</table>';
+                      // Deductible expenses
+                      html+='<h2>Deductible Business Expenses (Schedule C)</h2><table>';
+                      html+='<tr><th>Category</th><th class=amt>Count</th><th class=amt>Amount</th></tr>';
+                      ["车辆","牌照","平台","其他"].forEach(function(g){
+                        var cats=Object.keys(dedByCategory[g]||{});
+                        if(cats.length===0)return;
+                        html+='<tr class=section><td colspan=3>'+esc(grpLabels[g])+'</td></tr>';
+                        cats.sort(function(a,b){return dedByCategory[g][b].total-dedByCategory[g][a].total;}).forEach(function(c){
+                          html+='<tr><td>&nbsp;&nbsp;'+esc(c)+'</td><td class=amt>'+dedByCategory[g][c].count+'</td><td class=amt>$'+dedByCategory[g][c].total.toFixed(2)+'</td></tr>';
+                        });
+                        html+='<tr class=subtotal><td>Subtotal '+esc(grpLabels[g])+'</td><td></td><td class=amt>$'+dedGroupTotals[g].toFixed(2)+'</td></tr>';
+                      });
+                      html+='<tr class=total><td>TOTAL DEDUCTIBLE</td><td></td><td class=amt>$'+totalDed.toFixed(2)+'</td></tr>';
+                      html+='</table>';
+                      // Non-deductible (reference)
+                      if(Object.keys(nonDedByCategory).length>0){
+                        html+='<h2>Non-Deductible Expenses (Reference Only)</h2>';
+                        html+='<p class=note>These items are NOT tax-deductible per IRS rules. Listed here for your records only.</p><table>';
+                        html+='<tr><th>Category</th><th class=amt>Count</th><th class=amt>Amount</th></tr>';
+                        Object.keys(nonDedByCategory).sort(function(a,b){return nonDedByCategory[b].total-nonDedByCategory[a].total;}).forEach(function(c){
+                          html+='<tr><td>'+esc(c)+'</td><td class=amt>'+nonDedByCategory[c].count+'</td><td class=amt>$'+nonDedByCategory[c].total.toFixed(2)+'</td></tr>';
+                        });
+                        html+='<tr class=subtotal><td>Total Non-Deductible</td><td></td><td class=amt>$'+totalNonDed.toFixed(2)+'</td></tr>';
+                        html+='</table>';
+                      }
+                      // Net Profit
+                      html+='<h2>Net Profit Summary</h2><table>';
+                      html+='<tr><td>Total Income</td><td class=amt>$'+totalInc.toFixed(2)+'</td></tr>';
+                      html+='<tr><td>Less: Total Deductible Expenses</td><td class=amt>($'+totalDed.toFixed(2)+')</td></tr>';
+                      html+='<tr class=total><td>NET PROFIT (Schedule C Line 31)</td><td class=amt>$'+netProfit.toFixed(2)+'</td></tr>';
+                      html+='</table>';
+                      // Notes for accountant
+                      html+='<h2>Notes for Accountant</h2><div class=info style="font-size:11px;">';
+                      html+='<p>• <b>Auto Loan:</b> Only the interest portion is deductible. Principal is not.</p>';
+                      html+='<p>• <b>Phone Bill:</b> Currently 100% claimed as business. Adjust if any personal use.</p>';
+                      html+='<p>• <b>Health Insurance:</b> Self-employed health insurance is an above-the-line deduction (Form 1040 Schedule 1), not Schedule C.</p>';
+                      html+='<p>• <b>Standard Mileage vs Actual Expenses:</b> The expenses above use the actual expense method. The standard mileage method may yield different results — please advise.</p>';
+                      html+='<p>• <b>Quarterly Estimates:</b> Listed under non-deductible (these are tax payments, not expenses).</p>';
+                      html+='</div>';
+                                            html+='</body></html>';
+                      downloadPdf(html,"tax-report-"+today()+".pdf");
+                    }, style: {width:"100%",background:"linear-gradient(135deg,#1A3010,#0A1808)",border:"1px solid #2A6020",borderRadius:12,padding:14,textAlign:"left",cursor:"pointer",marginTop:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 810}}
+                    , React.createElement('div', { style: {fontSize:15,fontWeight:700,color:"#5ADA7A",marginBottom:3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 828}}, "📊 " , lang==="en"?"Tax Summary for Accountant":"会计师年度报表")
+                    , React.createElement('div', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 829}}, lang==="en"?"Schedule C-style summary, separates deductible vs non-deductible":"Schedule C 格式，区分可抵税与不可抵税")
+                  )
                   , React.createElement(Card, {__self: this, __source: {fileName: _jsxFileName, lineNumber: 732}}, React.createElement('div', { style: {fontSize:14,fontWeight:800,color:C.text2,marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 732}}, "🔗 " , lang==="en"?"Tax Links":"税务网站")
                     , [{label:"IRS Schedule C",url:"https://www.irs.gov/forms-pubs/about-schedule-c-form-1040"},{label:"IRS Schedule SE",url:"https://www.irs.gov/forms-pubs/about-schedule-se-form-1040"},{label:"IRS Form 1040-ES",url:"https://www.irs.gov/forms-pubs/about-form-1040-es"},{label:"NYC Free Tax Prep",url:"https://www1.nyc.gov/site/dca/consumers/file-your-taxes.page"}].map(function(lk,i){return React.createElement('a', { key: i, href: lk.url, target: "_blank", rel: "noopener noreferrer" , style: {display:"flex",justifyContent:"space-between",padding:"10px 0",borderBottom:"1px solid #1E3050",textDecoration:"none"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 733}}, React.createElement('span', { style: {fontSize:13,fontWeight:700,color:"#5AACFF"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 733}}, lk.label), React.createElement('span', { style: {color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 733}}, ">"));})
                   )
@@ -1799,20 +2034,126 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
             , React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 18px",borderBottom:"1px solid #1A2A44",background:C.bg2,flexShrink:0}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 746}}
               , React.createElement('button', { onClick: function(){setShowRemMgr(false);}, style: {background:"#1E3050",border:"none",color:"#8ABCD0",fontSize:16,cursor:"pointer",width:34,height:34,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 747}}, "✕")
               , React.createElement('div', { style: {fontSize:17,fontWeight:800}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 748}}, "🔔 " , T.reminder)
-              , React.createElement('button', { onClick: function(){var title=rf.title==="custom"?(rf.customTitle||"").trim():rf.title;if(!title||!rf.date)return;setReminders(reminders.concat([{id:Date.now(),title:title,date:rf.date,note:rf.note||"",reminderDays:rf.reminderDays||"7"}]));setRf({title:"",date:"",note:"",reminderDays:"7"});setShowRemMgr(false);}, style: {background:"linear-gradient(135deg,#00D4FF,#0055FF)",border:"none",color:"#fff",fontSize:20,cursor:"pointer",width:34,height:34,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 10px rgba(0,212,255,0.3)"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 749}}, "✓")
+              , React.createElement('button', { onClick: function(){var title=rf.title==="custom"?(rf.customTitle||"").trim():rf.title;if(!title){alert(lang==="en"?"Please select or enter a title":"请选择或输入标题");return;}if(rf.type==="mile"){var trig=+rf.triggerMile;if(!trig||trig<=0){alert(lang==="en"?"Please enter trigger mileage":"请输入到期里程");return;}setReminders(reminders.concat([{id:Date.now(),type:"mile",title:title,note:rf.note||"",triggerMile:trig,intervalMile:rf.intervalMile?+rf.intervalMile:null,reminderMile:+(rf.reminderMile||"200")}]));}else{if(!rf.date){alert(lang==="en"?"Please pick a date":"请选择日期");return;}setReminders(reminders.concat([{id:Date.now(),type:"date",title:title,date:rf.date,note:rf.note||"",reminderDays:rf.reminderDays||"7"}]));}setRf({type:"date",title:"",customTitle:"",date:"",note:"",reminderDays:"7",triggerMile:"",intervalMile:"",reminderMile:"200"});setShowRemMgr(false);}, style: {background:"linear-gradient(135deg,#00D4FF,#0055FF)",border:"none",color:"#fff",fontSize:20,cursor:"pointer",width:34,height:34,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 10px rgba(0,212,255,0.3)"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 749}}, "✓")
             )
             , React.createElement('div', { style: {padding:"18px 20px 52px",overflowY:"auto",flex:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 750}}
             , React.createElement('div', { style: {display:"flex",flexDirection:"column",gap:12,marginBottom:20}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 751}}
-              , React.createElement(Field, { label: T.remTitle, value: rf.title, onChange: function(v){setRf(Object.assign({},rf,{title:v}));}, options: lang==="en"?[["","-- Please Select --"],["Renew TLC License","Renew TLC License"],["Renew FHV License","Renew FHV License"],["TLC Insurance Expiry","TLC Insurance Expiry"],["DDC Defensive Driving","DDC Defensive Driving"],["Vehicle Inspection","Vehicle Inspection"],["DMV License Renewal","DMV License Renewal"],["Health Insurance","Health Insurance"],["Quarterly Tax Payment","Quarterly Tax Payment"],["Drug Test","Drug Test"],["Fingerprint/Background","Fingerprint/Background"],["custom","✏️ Custom..."]]:[["","-- 请选择 --"],["TLC驾照更新","TLC驾照更新"],["FHV车辆执照更新","FHV车辆执照更新"],["TLC商业保险到期","TLC商业保险到期"],["DDC防御驾驶课程","DDC防御驾驶课程"],["车辆检验","车辆检验"],["DMV驾照更新","DMV驾照更新"],["健康保险到期","健康保险到期"],["季度预缴税","季度预缴税"],["验毒检查","验毒检查"],["指纹背景调查","指纹背景调查"],["custom","✏️ 自定义..."]], __self: this, __source: {fileName: _jsxFileName, lineNumber: 752}} )
-              , rf.title==="custom" ? React.createElement(Field, { label: lang==="en"?"Custom Title":"自定义标题", value: rf.customTitle||"", onChange: function(v){setRf(Object.assign({},rf,{customTitle:v}));}, placeholder: lang==="en"?"Enter title":"输入标题", __self: this, __source: {fileName: _jsxFileName, lineNumber: 753}} ) : null
-              , React.createElement(Field, { label: T.remDate, type: "date", value: rf.date, onChange: function(v){setRf(Object.assign({},rf,{date:v}));}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 754}} )
-              , React.createElement(Field, { label: T.remDays, value: rf.reminderDays, onChange: function(v){setRf(Object.assign({},rf,{reminderDays:v}));}, options: [["1",T.day1],["3",T.day3],["7",T.day7],["14",T.day14],["30",T.days30],["60",T.days60],["90",T.days90]], __self: this, __source: {fileName: _jsxFileName, lineNumber: 755}} )
-              , React.createElement(Field, { label: T.remNote, value: rf.note, onChange: function(v){setRf(Object.assign({},rf,{note:v}));}, placeholder: T.optional, __self: this, __source: {fileName: _jsxFileName, lineNumber: 756}} )
+              // Type toggle: date vs mile
+              , React.createElement('div', { style: {display:"flex",gap:6,marginBottom:2} }
+                , React.createElement('button', { onClick: function(){setRf(Object.assign({},rf,{type:"date"}));}, style: {flex:1,padding:"10px 8px",borderRadius:10,border:"1px solid "+(rf.type!=="mile"?"#00D4FF":"#2A3A54"),background:rf.type!=="mile"?"#0A1828":"#0D1426",color:rf.type!=="mile"?"#00D4FF":C.text3,fontSize:13,fontWeight:rf.type!=="mile"?800:600,cursor:"pointer"} }, "📅 " , lang==="en"?"By Date":"按日期")
+                , React.createElement('button', { onClick: function(){setRf(Object.assign({},rf,{type:"mile"}));}, style: {flex:1,padding:"10px 8px",borderRadius:10,border:"1px solid "+(rf.type==="mile"?"#FFB300":"#2A3A54"),background:rf.type==="mile"?"#1A1000":"#0D1426",color:rf.type==="mile"?"#FFB300":C.text3,fontSize:13,fontWeight:rf.type==="mile"?800:600,cursor:"pointer"} }, "🛣 " , lang==="en"?"By Mileage":"按里程")
+              )
+              // Mile mode: presets row + current odo banner
+              , rf.type==="mile" ? (function(){
+                  var lo=el.filter(function(e){return e.odometer&&+e.odometer>0;}).sort(function(a,b){var c=b.date.localeCompare(a.date);return c!==0?c:(+b.odometer)-(+a.odometer);})[0];
+                  var co=lo?+lo.odometer:0;
+                  var presets=veh.type==="electric"?MILE_PRESETS_EV:MILE_PRESETS_GAS;
+                  return React.createElement('div', {style:{display:"flex",flexDirection:"column",gap:10}}
+                    , React.createElement('div', {style:{fontSize:11,color:C.text3,letterSpacing:0.5}}, lang==="en"?"QUICK PRESETS":"快速添加")
+                    , React.createElement('div', {style:{display:"flex",flexWrap:"wrap",gap:6}}
+                      , presets.map(function(p){return React.createElement('button',{key:p.key,onClick:function(){
+                          var lbl=lang==="en"?p.lbl_en:p.lbl_zh;
+                          setRf(Object.assign({},rf,{title:"custom",customTitle:lbl,triggerMile:String(co?(co+p.interval):p.interval),intervalMile:String(p.interval)}));
+                        },style:{flex:"1 0 auto",minWidth:100,padding:"8px 10px",borderRadius:8,border:"1px solid #2A3A54",background:"#0A1828",color:C.text2,fontSize:12,fontWeight:600,cursor:"pointer",textAlign:"left"}}, p.icon, " " , lang==="en"?p.lbl_en:p.lbl_zh, React.createElement('div',{style:{fontSize:10,color:C.text3,marginTop:2}}, "每 "+p.interval.toLocaleString()+" mi"));})
+                      , React.createElement('button',{onClick:function(){setRf(Object.assign({},rf,{title:"custom",customTitle:""}));},style:{flex:"1 0 auto",minWidth:100,padding:"8px 10px",borderRadius:8,border:"1px dashed #2A3A54",background:"transparent",color:C.text3,fontSize:12,fontWeight:600,cursor:"pointer",textAlign:"left"}}, "✏️ " , lang==="en"?"Custom":"自定义")
+                    )
+                    , React.createElement('div', {style:{background:co>0?"#0A2030":"#2A1500",border:"1px solid "+(co>0?"#1A4060":"#5A3000"),borderRadius:8,padding:"8px 12px",fontSize:13}}
+                      , co>0 ? React.createElement('span', null, "🛣 " , lang==="en"?"Current odometer: ":"当前里程：" , React.createElement('b',{style:{color:"#FFD700"}}, co.toLocaleString()+" mi"), " " , React.createElement('span',{style:{color:C.text3,fontSize:11}}, lang==="en"?"(from latest fuel/charge)":"(取自最近充电/加油记录)"))
+                        : React.createElement('span',{style:{color:"#FFB300"}}, "⚠ " , lang==="en"?"No odometer data yet — log a fuel/charge entry with mileage first":"暂无里程数据 — 请先在加油/充电记账时输入里程读数")
+                    )
+                  );
+                })() : null
+              // Title — for date mode use existing select; for mile mode just a free-text input
+              , rf.type!=="mile" ? React.createElement(Field, { label: T.remTitle, value: rf.title, onChange: function(v){setRf(Object.assign({},rf,{title:v}));}, options: lang==="en"?[["","-- Please Select --"],["Renew TLC License","Renew TLC License"],["Renew FHV License","Renew FHV License"],["TLC Insurance Expiry","TLC Insurance Expiry"],["DDC Defensive Driving","DDC Defensive Driving"],["Vehicle Inspection","Vehicle Inspection"],["DMV License Renewal","DMV License Renewal"],["Health Insurance","Health Insurance"],["Quarterly Tax Payment","Quarterly Tax Payment"],["Drug Test","Drug Test"],["Fingerprint/Background","Fingerprint/Background"],["custom","✏️ Custom..."]]:[["","-- 请选择 --"],["TLC驾照更新","TLC驾照更新"],["FHV车辆执照更新","FHV车辆执照更新"],["TLC商业保险到期","TLC商业保险到期"],["DDC防御驾驶课程","DDC防御驾驶课程"],["车辆检验","车辆检验"],["DMV驾照更新","DMV驾照更新"],["健康保险到期","健康保险到期"],["季度预缴税","季度预缴税"],["验毒检查","验毒检查"],["指纹背景调查","指纹背景调查"],["custom","✏️ 自定义..."]] }) : null
+              , (rf.type!=="mile" && rf.title==="custom") || (rf.type==="mile") ? React.createElement(Field, { label: lang==="en"?"Title":"标题", value: rf.customTitle||"", onChange: function(v){setRf(Object.assign({},rf,{title:"custom",customTitle:v}));}, placeholder: lang==="en"?"Enter title":"输入标题" }) : null
+              // Date mode: date + days notice
+              , rf.type!=="mile" ? React.createElement(Field, { label: T.remDate, type: "date", value: rf.date, onChange: function(v){setRf(Object.assign({},rf,{date:v}));} }) : null
+              , rf.type!=="mile" ? React.createElement(Field, { label: T.remDays, value: rf.reminderDays, onChange: function(v){setRf(Object.assign({},rf,{reminderDays:v}));}, options: [["1",T.day1],["3",T.day3],["7",T.day7],["14",T.day14],["30",T.days30],["60",T.days60],["90",T.days90]] }) : null
+              // Mile mode: trigger + interval + reminder threshold
+              , rf.type==="mile" ? React.createElement(Field, { label: lang==="en"?"Trigger at (mi)":"到期里程 (mi)", type: "number", value: rf.triggerMile, onChange: function(v){setRf(Object.assign({},rf,{triggerMile:v}));}, placeholder: "e.g. 52500" }) : null
+              , rf.type==="mile" ? React.createElement(Field, { label: lang==="en"?"Repeat every (mi) — optional":"间隔 (mi) — 选填，留空=一次性", type: "number", value: rf.intervalMile, onChange: function(v){setRf(Object.assign({},rf,{intervalMile:v}));}, placeholder: "e.g. 5000" }) : null
+              , rf.type==="mile" ? React.createElement(Field, { label: lang==="en"?"Alert when remaining ≤ (mi)":"提前警告 (mi)", type: "number", value: rf.reminderMile, onChange: function(v){setRf(Object.assign({},rf,{reminderMile:v}));}, placeholder: "200" }) : null
+              // Note (both modes)
+              , React.createElement(Field, { label: T.remNote, value: rf.note, onChange: function(v){setRf(Object.assign({},rf,{note:v}));}, placeholder: T.optional })
             )
-            , reminders.length>0 ? React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 758}}
-              , React.createElement('div', { style: {fontSize:13,color:C.text3,marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 759}}, lang==="en"?"Active Reminders":"已设置的提醒")
-              , reminders.map(function(r){var d=r.date?daysFromToday(r.date):null;var dc=d===null?"#7A9AB8":d<0?"#FF5252":d<=3?"#FF6030":d<=7?"#FFB300":"#00E676";var dt=d===null?"":d<0?(lang==="en"?"Expired":"已过期"):d===0?(lang==="en"?"Today":"今天"):d===1?(lang==="en"?"Tomorrow":"明天"):d+(lang==="en"?" days left":" 天");return React.createElement(Card, { key: r.id, style: {padding:"10px 14px",marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 760}}, React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"flex-start"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 760}}, React.createElement('div', { style: {flex:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 760}}, React.createElement('div', { style: {fontSize:14,fontWeight:700,color:C.text}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 760}}, r.title), React.createElement('div', { style: {fontSize:12,color:C.text3,marginTop:2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 760}}, fmtDate(r.date), " · "  , r.reminderDays, " " , lang==="en"?"days notice":"天提前提醒"), r.note?React.createElement('div', { style: {fontSize:12,color:C.text3,marginTop:2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 760}}, r.note):null), React.createElement('div', { style: {textAlign:"right"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 760}}, React.createElement('div', { style: Object.assign({fontSize:13,fontWeight:700},{color:dc}), __self: this, __source: {fileName: _jsxFileName, lineNumber: 760}}, dt), React.createElement('button', { onClick: function(){if(!confirm(lang==="en"?"Delete this reminder?":"确认删除这条提醒？"))return;setReminders(reminders.filter(function(x){return x.id!==r.id;}));}, style: {background:"none",border:"1px solid #3A1A1A",borderRadius:6,padding:"2px 8px",color:"#FF5252",cursor:"pointer",fontSize:11,marginTop:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 760}}, T.del))));})
+            , reminders.length>0 ? React.createElement('div', {}
+              , React.createElement('div', { style: {fontSize:13,color:C.text3,marginBottom:10} }, lang==="en"?"Active Reminders":"已设置的提醒")
+              , (function(){
+                  var lo=el.filter(function(e){return e.odometer&&+e.odometer>0;}).sort(function(a,b){var c=b.date.localeCompare(a.date);return c!==0?c:(+b.odometer)-(+a.odometer);})[0];
+                  var co=lo?+lo.odometer:0;
+                  return reminders.map(function(r){
+                    var isMile=r.type==="mile";
+                    var col,statusText,subText;
+                    if(isMile){
+                      var rem=co>0?((+r.triggerMile)-co):null;
+                      var thr=+(r.reminderMile||200);
+                      col=rem===null?"#7A9AB8":rem<=0?"#FF5252":rem<=thr?"#FFB300":"#00E676";
+                      statusText=rem===null?(lang==="en"?"No odo":"无里程"):rem<=0?((lang==="en"?"Over by ":"已超 ")+Math.abs(rem).toLocaleString()+" mi"):(rem.toLocaleString()+(lang==="en"?" mi left":" mi"));
+                      subText=(lang==="en"?"Due at ":"到期: ")+(+r.triggerMile).toLocaleString()+" mi"+(r.intervalMile?(lang==="en"?" · every "+(+r.intervalMile).toLocaleString()+" mi":" · 每 "+(+r.intervalMile).toLocaleString()+" mi"):(lang==="en"?" · one-time":" · 一次性"));
+                    }else{
+                      var d=r.date?daysFromToday(r.date):null;
+                      col=d===null?"#7A9AB8":d<0?"#FF5252":d<=3?"#FF6030":d<=7?"#FFB300":"#00E676";
+                      statusText=d===null?"":d<0?(lang==="en"?"Expired":"已过期"):d===0?(lang==="en"?"Today":"今天"):d===1?(lang==="en"?"Tomorrow":"明天"):d+(lang==="en"?" days left":" 天");
+                      subText=fmtDate(r.date)+" · "+(r.reminderDays||"7")+" "+(lang==="en"?"days notice":"天提前提醒");
+                    }
+                    return React.createElement(Card, { key: r.id, style: {padding:"10px 14px",marginBottom:8} }
+                      , React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"flex-start"} }
+                        , React.createElement('div', { style: {flex:1} }
+                          , React.createElement('div', { style: {fontSize:14,fontWeight:700,color:C.text} }, isMile?"🛣 ":"📅 ", r.title)
+                          , React.createElement('div', { style: {fontSize:12,color:C.text3,marginTop:2} }, subText)
+                          , r.note?React.createElement('div', { style: {fontSize:12,color:C.text3,marginTop:2} }, r.note):null
+                        )
+                        , React.createElement('div', { style: {textAlign:"right",display:"flex",flexDirection:"column",gap:4,alignItems:"flex-end"} }
+                          , React.createElement('div', { style: {fontSize:13,fontWeight:700,color:col} }, statusText)
+                          , isMile?React.createElement('button', { onClick: function(){
+                              setCmpRem(r);
+                              setCmpf({currentMile:co>0?String(co):"",intervalMile:r.intervalMile?String(r.intervalMile):""});
+                            }, style: {background:"#0A4020",border:"1px solid #2A8050",borderRadius:6,padding:"3px 10px",color:"#5ADA7A",cursor:"pointer",fontSize:11,fontWeight:700} }, "✓ " , lang==="en"?"Done":"完成"):null
+                          , React.createElement('button', { onClick: function(){if(!confirm(lang==="en"?"Delete this reminder?":"确认删除这条提醒？"))return;setReminders(reminders.filter(function(x){return x.id!==r.id;}));}, style: {background:"none",border:"1px solid #3A1A1A",borderRadius:6,padding:"2px 8px",color:"#FF5252",cursor:"pointer",fontSize:11} }, T.del)
+                        )
+                      )
+                    );
+                  });
+                })()
             ) : React.createElement('div', { style: {fontSize:13,color:C.text3,textAlign:"center",padding:20}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 761}}, T.noData)
+            )
+          )
+        )
+      ) : null
+
+      , cmpRem ? (
+        React.createElement('div', { style: {position:"fixed",inset:0,background:"rgba(0,0,0,0.94)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:400,padding:"20px"} }
+          , React.createElement('div', { style: {background:C.bg2,borderRadius:16,width:"100%",maxWidth:440,border:"1px solid "+C.border,padding:"20px"} }
+            , React.createElement('div', { style: {fontSize:17,fontWeight:800,marginBottom:6} }, "✓ " , lang==="en"?"Mark Service Done":"标记保养完成")
+            , React.createElement('div', { style: {fontSize:14,color:"#FFD700",marginBottom:14} }, "🛣 " , cmpRem.title)
+            , React.createElement('div', { style: {fontSize:12,color:C.text3,marginBottom:14,lineHeight:1.5} }, lang==="en"?"Confirm and the next due mileage will be recalculated from your current odometer.":"确认后，下次到期里程会以当前里程为基准重新计算。")
+            , React.createElement('div', { style: {display:"flex",flexDirection:"column",gap:12,marginBottom:18} }
+              , React.createElement(Field, { label: lang==="en"?"Current odometer (mi)":"当前里程 (mi)", type: "number", value: cmpf.currentMile, onChange: function(v){setCmpf(Object.assign({},cmpf,{currentMile:v}));}, placeholder: "e.g. 51000" })
+              , cmpRem.intervalMile ? React.createElement(Field, { label: lang==="en"?"Interval (mi)":"间隔 (mi)", type: "number", value: cmpf.intervalMile, onChange: function(v){setCmpf(Object.assign({},cmpf,{intervalMile:v}));}, placeholder: "e.g. 5000" }) : null
+              , (function(){
+                  var cm=+cmpf.currentMile, iv=+cmpf.intervalMile;
+                  if(!cm||cm<=0)return null;
+                  if(cmpRem.intervalMile){
+                    if(!iv||iv<=0)return null;
+                    return React.createElement('div', {style:{background:"#0A2030",border:"1px solid #1A4060",borderRadius:8,padding:"10px 12px",fontSize:13}}, lang==="en"?"Next due: ":"下次到期：" , React.createElement('b',{style:{color:"#00E676"}}, (cm+iv).toLocaleString()+" mi"));
+                  }
+                  return React.createElement('div', {style:{background:"#1A1000",border:"1px solid #5A3000",borderRadius:8,padding:"10px 12px",fontSize:13,color:"#FFB300"}}, lang==="en"?"One-time reminder will be removed.":"一次性提醒会被删除。");
+                })()
+            )
+            , React.createElement('div', { style: {display:"flex",gap:10} }
+              , React.createElement('button', { onClick: function(){setCmpRem(null);}, style: {flex:1,padding:"12px",borderRadius:10,border:"1px solid "+C.border,background:C.bg3,color:C.text2,fontSize:14,fontWeight:700,cursor:"pointer"} }, lang==="en"?"Cancel":"取消")
+              , React.createElement('button', { onClick: function(){
+                  var cm=+cmpf.currentMile;
+                  if(!cm||cm<=0){alert(lang==="en"?"Please enter current odometer":"请输入当前里程");return;}
+                  if(cmpRem.intervalMile){
+                    var iv=+cmpf.intervalMile;
+                    if(!iv||iv<=0){alert(lang==="en"?"Please enter interval":"请输入间隔");return;}
+                    setReminders(reminders.map(function(x){return x.id===cmpRem.id?Object.assign({},x,{triggerMile:cm+iv,intervalMile:iv}):x;}));
+                  }else{
+                    setReminders(reminders.filter(function(x){return x.id!==cmpRem.id;}));
+                  }
+                  setCmpRem(null);
+                }, style: {flex:1,padding:"12px",borderRadius:10,border:"none",background:"linear-gradient(135deg,#00C46A,#008A4A)",color:"#fff",fontSize:14,fontWeight:800,cursor:"pointer"} }, "✓ " , lang==="en"?"Confirm":"确认")
             )
           )
         )
@@ -1914,177 +2255,6 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                 alert(msg);
               }catch(err){setSyncStatus(lang==="en"?"✗ Import failed":"✗ 导入失败");setTimeout(function(){setSyncStatus("");},2500);alert((lang==="en"?"Error: ":"错误：")+err.message);}inputEl.value="";},100);});};reader.readAsText(file);}, style: {width:"100%",background:C.bg3,border:"1px solid #2A3A54",borderRadius:8,padding:"8px",color:C.text,fontSize:13,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 808}} )
             )
-            , React.createElement('button', { onClick: function(){
-              var yr=taxYr||(new Date().getFullYear()+"");
-              var yStmts=sl.filter(function(x){return x.month&&x.month.slice(0,4)===yr;});
-              var grossInc=yStmts.reduce(function(s,x){return s+(+x.grossFare||0)+(+x.tips||0)+(+x.bonus||0)+(+x.tollReimbursed||0)+(+x.otherIncome||0);},0);
-              var yMonths=[];for(var mi=1;mi<=12;mi++){yMonths.push(yr+"-"+p2(mi));}
-              var yFx=yMonths.reduce(function(acc,m){return acc.concat(genFixed(fl,m));},[]);
-              var yExps=el.filter(function(e){return e.date&&e.date.slice(0,4)===yr;});
-              var allYExps=yExps.concat(yFx);
-              var totalExp=allYExps.reduce(function(s,e){return s+(+e.amount||0);},0);
-              var MILE_RATES={"2020":0.575,"2021":0.56,"2022":0.625,"2023":0.655,"2024":0.67,"2025":0.70,"2026":0.70};
-              var mileRate=MILE_RATES[yr]||0.70;
-              var yMi=wl.filter(function(w){return w.weekStart&&w.weekStart.slice(0,4)===yr;}).reduce(function(s,w){return s+(+w.miles||0);},0);
-              var mileDed=Math.round(yMi*mileRate*100)/100;
-              var netP=grossInc-totalExp-mileDed;
-              var seBase=Math.max(0,netP)*0.9235;
-              var rate=(seRate||15.3)*0.01;
-              var seTax=Math.round(seBase*rate*100)/100;
-              var seDed=Math.round(seTax*50)/100;
-              var taxableIncome=Math.max(0,netP-seDed-stdDed);
-              var fedIncTax=Math.round(taxableIncome*(fedRate*0.01)*100)/100;
-              var stateIncTax=Math.round(Math.max(0,netP-seDed)*(stateRate*0.01)*100)/100;
-              var totalTax=seTax+fedIncTax+stateIncTax;
-              function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
-              var html="<!DOCTYPE html><html><head><meta charset=UTF-8><title>NYC Driver Tax Report "+esc(yr)+"</title><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;max-width:800px;margin:40px auto;padding:20px;color:#1a1a1a}h1{color:#1a3a6a;border-bottom:3px solid #1a3a6a;padding-bottom:10px;margin-bottom:20px}h2{color:#2a5a9a;margin:25px 0 10px}table{width:100%;border-collapse:collapse;margin:10px 0}td,th{padding:10px 14px;border:1px solid #ddd;text-align:left}th{background:#f0f4ff;font-weight:bold}tr:nth-child(even){background:#f8f9ff}.total{font-weight:bold;background:#e8f0ff!important}.green{color:#1a8a1a}.red{color:#cc1a1a}.note{color:#666;font-size:13px;margin-bottom:8px}.print-btn{margin-top:30px;padding:12px 24px;background:#1a3a6a;color:white;border:none;border-radius:6px;cursor:pointer;font-size:15px}@media print{.print-btn{display:none}}</style></head><body>";
-              html+="<h1>🚖 NYC Rideshare Driver - Tax Report "+esc(yr)+"</h1>";
-              html+="<p class=note>Generated: "+esc(new Date().toLocaleDateString())+(gUser?" | "+esc(gUser.email):"")+". Estimates only — confirm with a CPA before filing.</p>";
-              html+="<h2>📋 Schedule C - Profit or Loss from Business</h2><table><tr><th>Line</th><th>Description</th><th>Amount</th></tr><tr><td>1</td><td>Gross receipts (1099-K / 1099-NEC)</td><td class=green>$"+grossInc.toFixed(2)+"</td></tr><tr><td>9</td><td>Standard mileage ("+yMi+" mi × $"+mileRate.toFixed(3)+")</td><td class=red>$"+mileDed.toFixed(2)+"</td></tr><tr><td>28</td><td>Other business expenses</td><td class=red>$"+totalExp.toFixed(2)+"</td></tr><tr class=total><td>31</td><td>Net profit or loss</td><td class="+(netP>=0?"green":"red")+">$"+netP.toFixed(2)+"</td></tr></table>";
-              html+="<h2>📋 Schedule SE - Self-Employment Tax</h2><table><tr><th>Description</th><th>Amount</th></tr><tr><td>Net profit × 92.35%</td><td>$"+seBase.toFixed(2)+"</td></tr><tr><td>SE tax (×"+(seRate||15.3)+"%)</td><td class=red>$"+seTax.toFixed(2)+"</td></tr><tr class=total><td>Deductible portion (½ SE tax)</td><td class=green>$"+seDed.toFixed(2)+"</td></tr></table>";
-              html+="<h2>💰 Income Tax Estimate</h2><p class=note>Using your editable rates: federal "+fedRate+"%, state+city "+stateRate+"%, standard deduction $"+stdDed+".</p><table><tr><th>Description</th><th>Amount</th></tr><tr><td>Federal income tax ("+fedRate+"%)</td><td>$"+fedIncTax.toFixed(2)+"</td></tr><tr><td>State+City income tax ("+stateRate+"%)</td><td>$"+stateIncTax.toFixed(2)+"</td></tr><tr class=total><td>Total estimated annual tax</td><td>$"+totalTax.toFixed(2)+"</td></tr></table>";
-              html+="<h2>📅 Quarterly Estimated Tax Payments</h2><p class=note>Includes SE + federal + state/city estimate. Actual amounts may vary.</p><table><tr><th>Quarter</th><th>Due Date</th><th>Amount</th></tr><tr><td>Q1 (Jan-Mar)</td><td>April 15</td><td>$"+(totalTax/4).toFixed(2)+"</td></tr><tr><td>Q2 (Apr-May)</td><td>June 15</td><td>$"+(totalTax/4).toFixed(2)+"</td></tr><tr><td>Q3 (Jun-Aug)</td><td>September 15</td><td>$"+(totalTax/4).toFixed(2)+"</td></tr><tr><td>Q4 (Sep-Dec)</td><td>January 15</td><td>$"+(totalTax/4).toFixed(2)+"</td></tr></table>";
-              if(allYExps.length>0){html+="<h2>💸 Business Expense Detail</h2><table><tr><th>Date</th><th>Category</th><th>Notes</th><th>Amount</th></tr>";allYExps.slice().sort(function(a,b){return (a.date||"").localeCompare(b.date||"");}).forEach(function(e){var cat=allC[e.category],lbl=e.isFixed?(e.fixedIcon||"")+" "+(e.fixedLabel||""):(cat?cat.icon+" "+cat.label:e.category);html+="<tr><td>"+esc(e.date||"")+"</td><td>"+esc(lbl)+"</td><td>"+esc(e.notes||"")+"</td><td>$"+(+e.amount||0).toFixed(2)+"</td></tr>";});html+="<tr class=total><td colspan=3>Total Expenses</td><td>$"+totalExp.toFixed(2)+"</td></tr></table>";}
-              html+="<button class=print-btn onclick=window.print()>🖨️ Print / Save as PDF (Ctrl+P)</button></body></html>";
-              try{var blob=new Blob([html],{type:"text/html;charset=utf-8"});var url=URL.createObjectURL(blob);var a=document.createElement("a");a.href=url;a.download="tax-report-"+today()+".html";a.click();setTimeout(function(){URL.revokeObjectURL(url);},1000);alert(lang==="en"?"✓ Report downloaded. Open it then tap Share → Print to save as PDF.":"✓ 报表已下载。打开后点分享 → 打印，可保存为 PDF。");}catch(e){alert("Error: "+e.message);}
-            }, style: {width:"100%",background:"linear-gradient(135deg,#1A3060,#0A1828)",border:"1px solid #2A5080",borderRadius:12,padding:14,textAlign:"left",cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 809}}
-              , React.createElement('div', { style: {fontSize:15,fontWeight:700,color:C.text2,marginBottom:3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 828}}, "📄 " , lang==="en"?"Export Tax Report PDF":"导出报税表PDF")
-              , React.createElement('div', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 829}}, lang==="en"?"Generate "+(taxYr||new Date().getFullYear())+" tax report (year selectable in Tax Center)":"生成 "+(taxYr||new Date().getFullYear())+" 年报税表（年份在税务中心选择）")
-            )
-            , React.createElement('button', { onClick: function(){
-                var yr=taxYr||(new Date().getFullYear()+"");
-                var yStmts=sl.filter(function(x){return x.month&&x.month.slice(0,4)===yr;});
-                var allYExps=el.filter(function(e){return e.date&&e.date.slice(0,4)===yr;});
-                if(allYExps.length===0&&yStmts.length===0){alert(lang==="en"?"No data for "+yr:"没有 "+yr+" 年的数据");return;}
-                // Income
-                var grossFare=yStmts.reduce(function(s,x){return s+(+x.grossFare||0);},0);
-                var tips=yStmts.reduce(function(s,x){return s+(+x.tips||0);},0);
-                var bonus=yStmts.reduce(function(s,x){return s+(+x.bonus||0);},0);
-                var tollReimb=yStmts.reduce(function(s,x){return s+(+x.tollReimbursed||0);},0);
-                var otherInc=yStmts.reduce(function(s,x){return s+(+x.otherIncome||0);},0);
-                var totalInc=grossFare+tips+bonus+tollReimb+otherInc;
-                // Group expenses by taxable status
-                var deductible={"车辆":[],"牌照":[],"平台":[],"其他":[]}, nonDeductible=[];
-                var grpLabels={"车辆":lang==="en"?"Vehicle":"车辆","牌照":lang==="en"?"License & Permits":"牌照","平台":lang==="en"?"Platform & Communications":"平台","其他":lang==="en"?"Other":"其他"};
-                allYExps.forEach(function(e){
-                  var cat=allC[e.category];
-                  var isDeductible=cat?cat.taxable!==false:true;
-                  var grp=cat?(cat.g||"其他"):"其他";
-                  var entry={date:e.date,label:e.isFixed?e.fixedLabel:(cat?cat.label:"Other"),amount:+e.amount||0,notes:e.notes||""};
-                  if(isDeductible){if(!deductible[grp])deductible[grp]=[];deductible[grp].push(entry);}
-                  else{nonDeductible.push(Object.assign(entry,{grp:grp}));}
-                });
-                // Calculate group totals
-                var dedGroupTotals={};
-                Object.keys(deductible).forEach(function(g){dedGroupTotals[g]=deductible[g].reduce(function(s,x){return s+x.amount;},0);});
-                var totalDed=Object.values(dedGroupTotals).reduce(function(s,x){return s+x;},0);
-                var totalNonDed=nonDeductible.reduce(function(s,x){return s+x.amount;},0);
-                var netProfit=totalInc-totalDed;
-                // Build category breakdown within each group
-                var dedByCategory={};
-                Object.keys(deductible).forEach(function(g){
-                  var byCat={};
-                  deductible[g].forEach(function(e){if(!byCat[e.label]){byCat[e.label]={total:0,count:0};}byCat[e.label].total+=e.amount;byCat[e.label].count++;});
-                  dedByCategory[g]=byCat;
-                });
-                var nonDedByCategory={};
-                nonDeductible.forEach(function(e){if(!nonDedByCategory[e.label]){nonDedByCategory[e.label]={total:0,count:0};}nonDedByCategory[e.label].total+=e.amount;nonDedByCategory[e.label].count++;});
-                // Driver info
-                var driver=veh.driver||{};
-                var esc=function(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");};
-                // Build HTML
-                var html='<!DOCTYPE html><html><head><meta charset=utf-8><title>Tax Summary '+yr+'</title>';
-                html+='<style>';
-                html+='body{font-family:-apple-system,Helvetica,Arial,sans-serif;max-width:800px;margin:30px auto;padding:20px;color:#222;line-height:1.5;background:#fff;}';
-                html+='h1{font-size:22px;border-bottom:3px solid #000;padding-bottom:8px;margin-bottom:4px;}';
-                html+='h2{font-size:16px;border-bottom:1px solid #888;padding-bottom:4px;margin-top:24px;color:#000;}';
-                html+='.subtitle{font-size:12px;color:#666;margin-bottom:20px;}';
-                html+='.info{font-size:12px;margin:10px 0;line-height:1.7;}';
-                html+='.info b{display:inline-block;width:140px;color:#444;}';
-                html+='table{width:100%;border-collapse:collapse;margin:8px 0 16px;font-size:12px;}';
-                html+='th,td{padding:6px 10px;border-bottom:1px solid #ddd;text-align:left;}';
-                html+='th{background:#f0f0f0;font-weight:700;}';
-                html+='td.amt{text-align:right;font-variant-numeric:tabular-nums;}';
-                html+='tr.subtotal td{font-weight:700;background:#f8f8f8;border-top:1px solid #888;}';
-                html+='tr.total td{font-weight:800;background:#222;color:#fff;font-size:13px;}';
-                html+='tr.section td{background:#e8e8e8;font-weight:700;font-size:11px;letter-spacing:0.5px;text-transform:uppercase;}';
-                html+='.note{font-size:11px;color:#666;font-style:italic;margin:6px 0 10px;}';
-                html+='.print-btn{display:inline-block;margin:30px 0 0;padding:10px 20px;background:#0055FF;color:#fff;border:none;border-radius:6px;font-size:14px;cursor:pointer;}';
-                html+='@media print{.print-btn{display:none;}}';
-                html+='</style></head><body>';
-                html+='<h1>NYC RIDESHARE DRIVER<br>TAX SUMMARY — '+esc(yr)+'</h1>';
-                html+='<div class=subtitle>Generated '+new Date().toLocaleDateString()+' by NYC Driver Tracker</div>';
-                // Driver info
-                html+='<h2>Driver Information</h2><div class=info>';
-                if(driver.name)html+='<div><b>Name:</b> '+esc(driver.name)+'</div>';
-                if(driver.tlcHack)html+='<div><b>TLC Hack #:</b> '+esc(driver.tlcHack)+'</div>';
-                if(driver.dmvLic)html+='<div><b>DMV License #:</b> '+esc(driver.dmvLic)+'</div>';
-                if(driver.phone)html+='<div><b>Phone:</b> '+esc(driver.phone)+'</div>';
-                if(driver.email)html+='<div><b>Email:</b> '+esc(driver.email)+'</div>';
-                html+='</div>';
-                // Vehicle info
-                html+='<h2>Vehicle Information</h2><div class=info>';
-                if(veh.year||veh.brand||veh.model)html+='<div><b>Vehicle:</b> '+esc((veh.year||"")+" "+(veh.brand||"")+" "+(veh.model||""))+'</div>';
-                if(veh.plate)html+='<div><b>License Plate:</b> '+esc(veh.plate)+'</div>';
-                if(veh.tlcPlate)html+='<div><b>TLC Plate:</b> '+esc(veh.tlcPlate)+'</div>';
-                if(veh.vin)html+='<div><b>VIN:</b> '+esc(veh.vin)+'</div>';
-                html+='</div>';
-                // Income
-                html+='<h2>Income</h2><table>';
-                html+='<tr><th>Description</th><th class=amt>Amount</th></tr>';
-                html+='<tr><td>Gross Fares</td><td class=amt>$'+grossFare.toFixed(2)+'</td></tr>';
-                html+='<tr><td>Tips</td><td class=amt>$'+tips.toFixed(2)+'</td></tr>';
-                html+='<tr><td>Bonuses</td><td class=amt>$'+bonus.toFixed(2)+'</td></tr>';
-                html+='<tr><td>Toll Reimbursements</td><td class=amt>$'+tollReimb.toFixed(2)+'</td></tr>';
-                html+='<tr><td>Other Income</td><td class=amt>$'+otherInc.toFixed(2)+'</td></tr>';
-                html+='<tr class=total><td>TOTAL INCOME</td><td class=amt>$'+totalInc.toFixed(2)+'</td></tr>';
-                html+='</table>';
-                // Deductible expenses
-                html+='<h2>Deductible Business Expenses (Schedule C)</h2><table>';
-                html+='<tr><th>Category</th><th class=amt>Count</th><th class=amt>Amount</th></tr>';
-                ["车辆","牌照","平台","其他"].forEach(function(g){
-                  var cats=Object.keys(dedByCategory[g]||{});
-                  if(cats.length===0)return;
-                  html+='<tr class=section><td colspan=3>'+esc(grpLabels[g])+'</td></tr>';
-                  cats.sort(function(a,b){return dedByCategory[g][b].total-dedByCategory[g][a].total;}).forEach(function(c){
-                    html+='<tr><td>&nbsp;&nbsp;'+esc(c)+'</td><td class=amt>'+dedByCategory[g][c].count+'</td><td class=amt>$'+dedByCategory[g][c].total.toFixed(2)+'</td></tr>';
-                  });
-                  html+='<tr class=subtotal><td>Subtotal '+esc(grpLabels[g])+'</td><td></td><td class=amt>$'+dedGroupTotals[g].toFixed(2)+'</td></tr>';
-                });
-                html+='<tr class=total><td>TOTAL DEDUCTIBLE</td><td></td><td class=amt>$'+totalDed.toFixed(2)+'</td></tr>';
-                html+='</table>';
-                // Non-deductible (reference)
-                if(Object.keys(nonDedByCategory).length>0){
-                  html+='<h2>Non-Deductible Expenses (Reference Only)</h2>';
-                  html+='<p class=note>These items are NOT tax-deductible per IRS rules. Listed here for your records only.</p><table>';
-                  html+='<tr><th>Category</th><th class=amt>Count</th><th class=amt>Amount</th></tr>';
-                  Object.keys(nonDedByCategory).sort(function(a,b){return nonDedByCategory[b].total-nonDedByCategory[a].total;}).forEach(function(c){
-                    html+='<tr><td>'+esc(c)+'</td><td class=amt>'+nonDedByCategory[c].count+'</td><td class=amt>$'+nonDedByCategory[c].total.toFixed(2)+'</td></tr>';
-                  });
-                  html+='<tr class=subtotal><td>Total Non-Deductible</td><td></td><td class=amt>$'+totalNonDed.toFixed(2)+'</td></tr>';
-                  html+='</table>';
-                }
-                // Net Profit
-                html+='<h2>Net Profit Summary</h2><table>';
-                html+='<tr><td>Total Income</td><td class=amt>$'+totalInc.toFixed(2)+'</td></tr>';
-                html+='<tr><td>Less: Total Deductible Expenses</td><td class=amt>($'+totalDed.toFixed(2)+')</td></tr>';
-                html+='<tr class=total><td>NET PROFIT (Schedule C Line 31)</td><td class=amt>$'+netProfit.toFixed(2)+'</td></tr>';
-                html+='</table>';
-                // Notes for accountant
-                html+='<h2>Notes for Accountant</h2><div class=info style="font-size:11px;">';
-                html+='<p>• <b>Auto Loan:</b> Only the interest portion is deductible. Principal is not.</p>';
-                html+='<p>• <b>Phone Bill:</b> Currently 100% claimed as business. Adjust if any personal use.</p>';
-                html+='<p>• <b>Health Insurance:</b> Self-employed health insurance is an above-the-line deduction (Form 1040 Schedule 1), not Schedule C.</p>';
-                html+='<p>• <b>Standard Mileage vs Actual Expenses:</b> The expenses above use the actual expense method. The standard mileage method may yield different results — please advise.</p>';
-                html+='<p>• <b>Quarterly Estimates:</b> Listed under non-deductible (these are tax payments, not expenses).</p>';
-                html+='</div>';
-                html+='<button class=print-btn onclick=window.print()>🖨️ Print / Save as PDF (Ctrl+P)</button>';
-                html+='</body></html>';
-                try{var blob=new Blob([html],{type:"text/html;charset=utf-8"});var url=URL.createObjectURL(blob);var a=document.createElement("a");a.href=url;a.download="tax-report-"+today()+".html";a.click();setTimeout(function(){URL.revokeObjectURL(url);},1000);alert(lang==="en"?"✓ Report downloaded. Open it then tap Share → Print to save as PDF.":"✓ 报表已下载。打开后点分享 → 打印，可保存为 PDF。");}catch(e){alert("Error: "+e.message);}
-              }, style: {width:"100%",background:"linear-gradient(135deg,#1A3010,#0A1808)",border:"1px solid #2A6020",borderRadius:12,padding:14,textAlign:"left",cursor:"pointer",marginTop:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 810}}
-              , React.createElement('div', { style: {fontSize:15,fontWeight:700,color:"#5ADA7A",marginBottom:3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 828}}, "📊 " , lang==="en"?"Tax Summary for Accountant":"会计师年度报表")
-              , React.createElement('div', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 829}}, lang==="en"?"Schedule C-style summary, separates deductible vs non-deductible":"Schedule C 格式，区分可抵税与不可抵税")
-            )
             )
           )
         )
@@ -2095,6 +2265,46 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
           , React.createElement('div', { style: {background:C.bg2,padding:"18px",borderBottom:"1px solid "+C.border,display:"flex",justifyContent:"space-between",alignItems:"center",position:"sticky",top:0,zIndex:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 838}}
               , React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 839}}, React.createElement('div', { style: {fontSize:16,fontWeight:800}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 839}}, reportData.type==="exp"?(lang==="en"?"💸 Expense Detail":"💸 支出明细"):(lang==="en"?"📊 Financial Report":"📊 财务报告")), React.createElement('div', { style: {fontSize:13,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 839}}, reportData.label))
               , React.createElement('div', { style: {display:"flex",gap:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 840}}
+                , React.createElement('button', { onClick: function(){
+                    var rd=reportData;var esc=function(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");};
+                    var html='<!DOCTYPE html><html><head><meta charset=utf-8><title>'+(rd.type==="exp"?"Expense Detail":"Financial Report")+' '+esc(rd.label)+'</title>';
+                    html+='<style>body{font-family:-apple-system,Helvetica,Arial,sans-serif;max-width:800px;margin:30px auto;padding:20px;color:#222;line-height:1.5;background:#fff;}h1{font-size:22px;border-bottom:3px solid #000;padding-bottom:8px;margin-bottom:4px;}h2{font-size:16px;border-bottom:1px solid #888;padding-bottom:4px;margin-top:24px;color:#000;}.subtitle{font-size:12px;color:#666;margin-bottom:20px;}table{width:100%;border-collapse:collapse;margin:8px 0 16px;font-size:12px;}th,td{padding:6px 10px;border-bottom:1px solid #ddd;text-align:left;}th{background:#f0f0f0;font-weight:700;}td.amt{text-align:right;font-variant-numeric:tabular-nums;}tr.subtotal td{font-weight:700;background:#f8f8f8;border-top:1px solid #888;}tr.total td{font-weight:800;background:#222;color:#fff;font-size:13px;}tr.section td{background:#e8e8e8;font-weight:700;font-size:11px;letter-spacing:0.5px;}</style></head><body>';
+                    html+='<h1>🚖 NYC DRIVER '+(rd.type==="exp"?(lang==="en"?"EXPENSE DETAIL":"支出明细"):(lang==="en"?"FINANCIAL REPORT":"财务报告"))+'</h1>';
+                    html+='<div class=subtitle>'+esc(rd.label)+' · Generated '+new Date().toLocaleDateString()+'</div>';
+                    var grpLabels={"车辆":"Vehicle","牌照":"License","平台":"Platform","其他":"Other"};
+                    if(rd.type==="exp"){
+                      html+='<h2>Expenses</h2><table><tr><th>Category</th><th class=amt>Count</th><th class=amt>Amount</th></tr>';
+                      ["车辆","牌照","平台","其他"].forEach(function(g){
+                        var cats=rd.byGroup[g];if(!cats||!cats.length)return;
+                        html+='<tr class=section><td colspan=3>'+grpLabels[g]+'</td></tr>';
+                        var gTotal=0;
+                        cats.forEach(function(cat){var ct=cat.items?cat.items.length:(cat.count||0);gTotal+=cat.total;html+='<tr><td>&nbsp;&nbsp;'+esc(cat.label)+'</td><td class=amt>'+ct+'</td><td class=amt>$'+cat.total.toFixed(2)+'</td></tr>';});
+                        html+='<tr class=subtotal><td>Subtotal '+grpLabels[g]+'</td><td></td><td class=amt>$'+gTotal.toFixed(2)+'</td></tr>';
+                      });
+                      html+='<tr class=total><td>TOTAL EXPENSES</td><td></td><td class=amt>$'+rd.total.toFixed(2)+'</td></tr></table>';
+                    }else{
+                      var r=rd.r;
+                      html+='<h2>Income</h2><table><tr><th>Description</th><th class=amt>Amount</th></tr>';
+                      if(rd.stmts&&rd.stmts.length>0){rd.stmts.forEach(function(s){var sub=(+s.grossFare||0)+(+s.tips||0)+(+s.bonus||0)+(+s.tollReimbursed||0)+(+s.otherIncome||0);html+='<tr><td>'+esc(s.platform||"")+(s.month?' · '+esc(s.month):'')+'</td><td class=amt>$'+sub.toFixed(2)+'</td></tr>';});}
+                      html+='<tr class=total><td>TOTAL INCOME</td><td class=amt>$'+r.rInc.toFixed(2)+'</td></tr></table>';
+                      html+='<h2>Expenses</h2><table><tr><th>Category</th><th class=amt>Count</th><th class=amt>Amount</th></tr>';
+                      ["车辆","牌照","平台","其他"].forEach(function(g){
+                        var items=rd.byGroup[g];if(!items||!items.length)return;
+                        html+='<tr class=section><td colspan=3>'+grpLabels[g]+'</td></tr>';
+                        var gTotal=0;
+                        items.forEach(function(c){gTotal+=c.total;html+='<tr><td>&nbsp;&nbsp;'+esc(c.label)+'</td><td class=amt>'+(c.count||"")+'</td><td class=amt>$'+c.total.toFixed(2)+'</td></tr>';});
+                        html+='<tr class=subtotal><td>Subtotal '+grpLabels[g]+'</td><td></td><td class=amt>$'+gTotal.toFixed(2)+'</td></tr>';
+                      });
+                      html+='<tr class=total><td>TOTAL EXPENSES</td><td></td><td class=amt>$'+r.rTot.toFixed(2)+'</td></tr></table>';
+                      html+='<h2>Net Profit</h2><table>';
+                      html+='<tr><td>Income</td><td class=amt>$'+r.rInc.toFixed(2)+'</td></tr>';
+                      html+='<tr><td>Less: Expenses</td><td class=amt>($'+r.rTot.toFixed(2)+')</td></tr>';
+                      html+='<tr class=total><td>NET PROFIT</td><td class=amt>$'+r.rn.toFixed(2)+'</td></tr></table>';
+                    }
+                    html+='</body></html>';
+                    if(!confirm(lang==="en"?"Generate PDF?":"生成 PDF？"))return;
+                    downloadPdf(html,"report-"+today()+".pdf");
+                  }, style: {background:"linear-gradient(135deg,#1A3060,#0A1828)",border:"1px solid #2A5080",color:"#5ABCFF",fontSize:13,fontWeight:600,cursor:"pointer",padding:"6px 12px",borderRadius:8,display:"flex",alignItems:"center",gap:4} }, "📄", " ", lang==="en"?"PDF":"PDF")
                 , React.createElement('button', { onClick: function(){
                     var rd=reportData;var esc=function(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");};
                     var html='<!DOCTYPE html><html><head><meta charset=utf-8><title>'+(rd.type==="exp"?"Expense Detail":"Financial Report")+' '+esc(rd.label)+'</title>';
@@ -2132,7 +2342,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                       html+='<tr><td>Less: Expenses</td><td class=amt>($'+r.rTot.toFixed(2)+')</td></tr>';
                       html+='<tr class=total><td>NET PROFIT</td><td class=amt>$'+r.rn.toFixed(2)+'</td></tr></table>';
                     }
-                    html+='<button class=print-btn onclick=window.print()>🖨️ Print / Save as PDF (Ctrl+P)</button></body></html>';
+                    html+='</body></html>';
                     try{var blob=new Blob([html],{type:"text/html;charset=utf-8"});var url=URL.createObjectURL(blob);var a=document.createElement("a");a.href=url;a.download="report-"+today()+".html";a.click();setTimeout(function(){URL.revokeObjectURL(url);},1000);alert(lang==="en"?"✓ Report downloaded. Open it then tap Share → Print to save as PDF.":"✓ 报表已下载。打开后点分享 → 打印，可保存为 PDF。");}catch(e){alert("Error: "+e.message);}
                   }, style: {background:"#0A4020",border:"1px solid #2A8050",color:"#5ADA7A",fontSize:13,fontWeight:600,cursor:"pointer",padding:"6px 12px",borderRadius:8,display:"flex",alignItems:"center",gap:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 840}}, "🖨", " ", lang==="en"?"Print":"打印")
                 , React.createElement('button', { onClick: function(){setReportData(null);}, style: {background:"#1E3050",border:"none",color:"#8ABCD0",fontSize:16,cursor:"pointer",width:32,height:32,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 840}}, "✕")
