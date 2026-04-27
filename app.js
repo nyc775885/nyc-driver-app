@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-console.log("%cNYC Driver Tracker — version v141","color:#00D4FF;font-weight:bold;font-size:14px");
+console.log("%cNYC Driver Tracker — version v143","color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
 //   <script>window.SENTRY_DSN = "https://YOUR_KEY@oXXX.ingest.sentry.io/PROJECT";</script>
@@ -786,10 +786,11 @@ function App() {
   // Driver type: "rideshare" / "taxi" / null (null triggers onboarding)
   var r55=useState(function(){return lsLoad("nyc_driverType",null);}),driverType=r55[0],_setDriverType=r55[1];
   function setDriverType(v){_setDriverType(v);try{if(v===null){localStorage.removeItem("nyc_driverType");}else{localStorage.setItem("nyc_driverType",JSON.stringify(v));}}catch(e){}}
-  // showOnboarding: true when driverType is null (asked on launch, asked again next time if skipped)
-  var r56=useState(false),showOnboarding=r56[0],setShowOnboarding=r56[1];
-  // useEffect: open onboarding once on mount if no driver type set
-  useEffect(function(){ if(driverType===null){ setShowOnboarding(true); } }, []);
+  // Onboarding: shown when driverType is null AND user hasn't dismissed this session.
+  // Picking a type sets driverType (persisted) → modal hides automatically (derived).
+  // Dismissing only sets local flag → next reload (with no type saved) it shows again.
+  var r56=useState(false),onboardingDismissed=r56[0],setOnboardingDismissed=r56[1];
+  var showOnboarding = driverType===null && !onboardingDismissed;
   var r36=useState(false),showRemMgr=r36[0],setShowRemMgr=r36[1]; var r37=useState(false),showDrawer=r37[0],setShowDrawer=r37[1];
   var r39=useState("zh"),lang=r39[0],setLang=r39[1];
   var r33=useState(PLATS.slice()),defPlat=r33[0],setDefPlat=r33[1];
@@ -1096,7 +1097,7 @@ function App() {
   useEffect(function(){
     if(firstRenderRef.first){firstRenderRef.first=false;return;}
     setLocalModTime(new Date().toISOString());
-  },[wl,sl,el,fl,ll,veh,cc,custGroups,reminders,custPlat,custBrands,custLicTypes,custLoanTypes,favNotes,notes,incGoal,seRate,fedRate,stateRate,stdDed]);
+  },[wl,sl,el,fl,ll,veh,cc,custGroups,reminders,custPlat,custBrands,custLicTypes,custLoanTypes,favNotes,notes,incGoal,seRate,fedRate,stateRate,stdDed,dl,driverType]);
 
   // Smart sync function — compares timestamps and decides direction
   function smartSync(){
@@ -1137,6 +1138,8 @@ function App() {
           if(typeof cloudData.fedRate==="number")setFedRate(cloudData.fedRate);
           if(typeof cloudData.stateRate==="number")setStateRate(cloudData.stateRate);
           if(typeof cloudData.stdDed==="number")setStdDed(cloudData.stdDed);
+          if(Array.isArray(cloudData.dl))setDl(cloudData.dl);
+          if(cloudData.driverType==="rideshare"||cloudData.driverType==="taxi")setDriverType(cloudData.driverType);
           // Adopt cloud's timestamp (without bumping it, to avoid triggering the dirty effect)
           firstRenderRef.first = true;
           setLocalModTime(cloudModTime);
@@ -1886,10 +1889,10 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
           , React.createElement('div', { style: {width:"60%",maxWidth:220,background:C.bg2,height:"100%",overflowY:"auto",borderRight:"1px solid "+C.border,display:"flex",flexDirection:"column",paddingBottom:"70px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 597}}
             , React.createElement('div', { style: {padding:"20px 18px 16px",borderBottom:"1px solid "+C.border}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 598}}
               , React.createElement('div', { style: {fontSize:15,fontWeight:800,color:C.text}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 599}}, T.menu)
-              , React.createElement('div', { style: {fontSize:11,color:C.text3,marginTop:2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 600}}, "NYC RIDESHARE TRACKER · v1.9.9"    )
+              , React.createElement('div', { style: {fontSize:11,color:C.text3,marginTop:2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 600}}, "NYC RIDESHARE TRACKER · v2.0.1"    )
             )
             , React.createElement('div', { style: {padding:"10px 0",flex:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 602}}
-              , [{icon:"📝",label:lang==="en"?"Notes":"记事本",action:function(){setShowDrawer(false);setSf("notes");}},{icon:"🗂",label:lang==="en"?"Categories":"支出类别",action:function(){setShowDrawer(false);setSf("manage_cats");}},{icon:"&#128197;",label:T.fixedFees,action:function(){setShowDrawer(false);setSf("drawer_fixed");}},{icon:"🧾",label:lang==="en"?"Tax Center":"税务中心",action:function(){setShowDrawer(false);setSf("tax_center");}},{icon:"&#128190;",label:T.backup,action:function(){setShowDrawer(false);setShowBackup(true);}},{icon:"&#128276;",label:T.reminder,action:function(){setShowDrawer(false);setShowRemMgr(true);}},{icon:"&#128203;",label:T.license,action:function(){setShowDrawer(false);setSf("drawer_lic");}},{icon:"&#128241;",label:T.platform,action:function(){setShowDrawer(false);setShowPlatMgr(true);}},{icon:"&#128663;",label:T.vehicle,action:function(){setShowDrawer(false);setSf("drawer_veh");}},{icon:"🚖",label:lang==="en"?"Driver Type":"切换司机类型",action:function(){setShowDrawer(false);setDriverType(null);setShowOnboarding(true);}},{icon:"🔒",label:lang==="en"?"PIN Lock":"PIN 锁屏",action:function(){setShowDrawer(false);setSf("pin_settings");}},{icon:"🚪",label:lang==="en"?"Sign Out":"退出登录",action:function(){if(!confirm(lang==="en"?"Sign out of Google?":"确认退出 Google 登录？"))return;setGUser(null);try{localStorage.removeItem("nyc_user");localStorage.removeItem("nyc_tab");}catch(e){}setTab(0);setSf(null);setShowDrawer(false);setShowBackup(false);setShowPlatMgr(false);setShowRemMgr(false);},color:"#FF5252"},].map(function(item,i){return React.createElement('button', { key: i, onClick: item.action, style: {display:"flex",alignItems:"center",gap:14,width:"100%",background:"none",border:"none",padding:"14px 18px",cursor:"pointer",textAlign:"left",borderBottom:"1px solid "+C.border,color:item.color||C.text}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 603}}, React.createElement('span', { style: {fontSize:20}, dangerouslySetInnerHTML: {__html:item.icon}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 603}} ), React.createElement('span', { style: {fontSize:14,color:C.text,fontWeight:600}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 603}}, item.label), React.createElement('span', { style: {marginLeft:"auto",color:C.text3,fontSize:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 603}}, ">"));})
+              , [{icon:"📝",label:lang==="en"?"Notes":"记事本",action:function(){setShowDrawer(false);setSf("notes");}},{icon:"🗂",label:lang==="en"?"Categories":"支出类别",action:function(){setShowDrawer(false);setSf("manage_cats");}},{icon:"&#128197;",label:T.fixedFees,action:function(){setShowDrawer(false);setSf("drawer_fixed");}},{icon:"🧾",label:lang==="en"?"Tax Center":"税务中心",action:function(){setShowDrawer(false);setSf("tax_center");}},{icon:"&#128190;",label:T.backup,action:function(){setShowDrawer(false);setShowBackup(true);}},{icon:"&#128276;",label:T.reminder,action:function(){setShowDrawer(false);setShowRemMgr(true);}},{icon:"&#128203;",label:T.license,action:function(){setShowDrawer(false);setSf("drawer_lic");}},{icon:"&#128241;",label:T.platform,action:function(){setShowDrawer(false);setShowPlatMgr(true);}},{icon:"&#128663;",label:T.vehicle,action:function(){setShowDrawer(false);setSf("drawer_veh");}},{icon:"🚖",label:lang==="en"?"Driver Type":"切换司机类型",action:function(){setShowDrawer(false);setDriverType(null);setOnboardingDismissed(false);}},{icon:"🔒",label:lang==="en"?"PIN Lock":"PIN 锁屏",action:function(){setShowDrawer(false);setSf("pin_settings");}},{icon:"🚪",label:lang==="en"?"Sign Out":"退出登录",action:function(){if(!confirm(lang==="en"?"Sign out of Google?":"确认退出 Google 登录？"))return;setGUser(null);try{localStorage.removeItem("nyc_user");localStorage.removeItem("nyc_tab");}catch(e){}setTab(0);setSf(null);setShowDrawer(false);setShowBackup(false);setShowPlatMgr(false);setShowRemMgr(false);},color:"#FF5252"},].map(function(item,i){return React.createElement('button', { key: i, onClick: item.action, style: {display:"flex",alignItems:"center",gap:14,width:"100%",background:"none",border:"none",padding:"14px 18px",cursor:"pointer",textAlign:"left",borderBottom:"1px solid "+C.border,color:item.color||C.text}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 603}}, React.createElement('span', { style: {fontSize:20}, dangerouslySetInnerHTML: {__html:item.icon}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 603}} ), React.createElement('span', { style: {fontSize:14,color:C.text,fontWeight:600}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 603}}, item.label), React.createElement('span', { style: {marginLeft:"auto",color:C.text3,fontSize:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 603}}, ">"));})
             )
           )
           , React.createElement('div', { style: {flex:1,background:"rgba(0,0,0,0.6)"}, onClick: function(){setShowDrawer(false);}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 606}} )
@@ -2494,7 +2497,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
             , React.createElement('div', { style: {fontSize:22,fontWeight:900,marginBottom:6,textAlign:"center"} }, "👋 " , lang==="en"?"Welcome":"欢迎使用")
             , React.createElement('div', { style: {fontSize:14,color:C.text3,marginBottom:24,textAlign:"center",lineHeight:1.6} }, lang==="en"?"What kind of driver are you? This sets up the right income recording flow for you.":"你是哪种司机？这会决定收入记录方式。")
             , React.createElement('div', { style: {display:"flex",flexDirection:"column",gap:12,marginBottom:18} }
-              , React.createElement('button', { onClick: function(){setDriverType("rideshare");setShowOnboarding(false);}, style: {background:"linear-gradient(135deg,#0A2040,#1A3060)",border:"1px solid #2A5080",borderRadius:14,padding:"18px 16px",cursor:"pointer",textAlign:"left",color:"#fff"} }
+              , React.createElement('button', { onClick: function(){setDriverType("rideshare");setOnboardingDismissed(false);}, style: {background:"linear-gradient(135deg,#0A2040,#1A3060)",border:"1px solid #2A5080",borderRadius:14,padding:"18px 16px",cursor:"pointer",textAlign:"left",color:"#fff"} }
                 , React.createElement('div', { style: {display:"flex",alignItems:"center",gap:14} }
                   , React.createElement('div', { style: {fontSize:32} }, "📱")
                   , React.createElement('div', { style: {flex:1} }
@@ -2504,7 +2507,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                   , React.createElement('div', { style: {color:"#5AACFF",fontSize:18} }, "→")
                 )
               )
-              , React.createElement('button', { onClick: function(){setDriverType("taxi");setShowOnboarding(false);}, style: {background:"linear-gradient(135deg,#3A2800,#1A1000)",border:"1px solid #5A3A00",borderRadius:14,padding:"18px 16px",cursor:"pointer",textAlign:"left",color:"#fff"} }
+              , React.createElement('button', { onClick: function(){setDriverType("taxi");setOnboardingDismissed(false);}, style: {background:"linear-gradient(135deg,#3A2800,#1A1000)",border:"1px solid #5A3A00",borderRadius:14,padding:"18px 16px",cursor:"pointer",textAlign:"left",color:"#fff"} }
                 , React.createElement('div', { style: {display:"flex",alignItems:"center",gap:14} }
                   , React.createElement('div', { style: {fontSize:32} }, "🚖")
                   , React.createElement('div', { style: {flex:1} }
@@ -2515,7 +2518,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                 )
               )
             )
-            , React.createElement('button', { onClick: function(){setShowOnboarding(false);}, style: {width:"100%",background:"transparent",border:"none",color:C.text3,fontSize:13,padding:"10px",cursor:"pointer"} }, lang==="en"?"Skip — ask me later":"跳过 — 下次再问")
+            , React.createElement('button', { onClick: function(){setOnboardingDismissed(true);}, style: {width:"100%",background:"transparent",border:"none",color:C.text3,fontSize:13,padding:"10px",cursor:"pointer"} }, lang==="en"?"Skip — ask me later":"跳过 — 下次再问")
           )
         )
       ) : null
