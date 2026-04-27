@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-console.log("%cNYC Driver Tracker — version v103","color:#00D4FF;font-weight:bold;font-size:14px");
+console.log("%cNYC Driver Tracker — version v112","color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
 //   <script>window.SENTRY_DSN = "https://YOUR_KEY@oXXX.ingest.sentry.io/PROJECT";</script>
@@ -72,8 +72,8 @@ class ErrorBoundary extends React.Component {
     return this.props.children;
   }
 }
-var CATS_ZH={fuel:{label:"燃油费",icon:"⛽",g:"车辆"},charging:{label:"充电费",icon:"⚡",g:"车辆"},toll:{label:"过桥费(月结)",icon:"🌉",g:"车辆",mo:true},congestion:{label:"拥堵费(月结)",icon:"🏙",g:"车辆",mo:true},parking:{label:"停车费",icon:"🅿",g:"车辆"},ticket:{label:"停车罚款",icon:"🎫",g:"车辆"},carwash:{label:"洗车费",icon:"🚿",g:"车辆"},oil:{label:"换机油",icon:"🛢",g:"车辆"},tires:{label:"轮胎",icon:"🔄",g:"车辆"},brakes:{label:"刹车",icon:"🔩",g:"车辆"},battery:{label:"电池",icon:"🔋",g:"车辆"},ac:{label:"冷暖气",icon:"❄",g:"车辆"},wipers:{label:"雨刮片",icon:"🌂",g:"车辆"},washer:{label:"玻璃水",icon:"💧",g:"车辆"},maint:{label:"定期保养",icon:"🔧",g:"车辆"},repair:{label:"意外维修",icon:"🛠",g:"车辆"},insurance:{label:"TLC商业保险",icon:"🛡",g:"车辆"},carloan:{label:"车贷月付",icon:"🏷",g:"车辆"},rentalcar:{label:"周租车费",icon:"🔑",g:"车辆"},tlc:{label:"TLC驾照费",icon:"📋",g:"牌照"},fhv:{label:"FHV车辆执照费",icon:"🚗",g:"牌照"},dmv:{label:"DMV驾照",icon:"📝",g:"牌照"},drug:{label:"验毒检查",icon:"🧪",g:"牌照"},finger:{label:"指纹背景调查",icon:"👆",g:"牌照"},ddcourse:{label:"TLC 24小时培训",icon:"📚",g:"牌照"},defensive:{label:"DDC防御驾驶课程",icon:"🎓",g:"牌照"},wav:{label:"WAV轮椅车辆培训",icon:"♿",g:"牌照"},medical:{label:"体检费用",icon:"🩺",g:"牌照"},background:{label:"其他背景调查费",icon:"🔎",g:"牌照"},platform:{label:"平台费(月结)",icon:"📱",g:"平台",mo:true},blackcar:{label:"Black Car Fund(月结)",icon:"🖤",g:"平台",mo:true},uberpro:{label:"Uber Pro",icon:"⭐",g:"平台"},phonebill:{label:"手机费",icon:"📶",g:"平台"},coffee:{label:"咖啡",icon:"☕",g:"其他"},tax:{label:"季度预缴税",icon:"🧾",g:"其他"},accountant:{label:"会计费用",icon:"🧮",g:"其他"},health:{label:"健康保险",icon:"🏥",g:"其他"},meals:{label:"工作餐饮",icon:"🍱",g:"其他"},other:{label:"其他支出",icon:"💼",g:"其他"}};
-var CATS_EN={fuel:{label:"Gas",icon:"⛽",g:"车辆"},charging:{label:"Charging",icon:"⚡",g:"车辆"},toll:{label:"Toll(mo)",icon:"🌉",g:"车辆",mo:true},congestion:{label:"Congestion(mo)",icon:"🏙",g:"车辆",mo:true},parking:{label:"Parking",icon:"🅿",g:"车辆"},ticket:{label:"Parking Fine",icon:"🎫",g:"车辆"},carwash:{label:"Car Wash",icon:"🚿",g:"车辆"},oil:{label:"Oil Change",icon:"🛢",g:"车辆"},tires:{label:"Tires",icon:"🔄",g:"车辆"},brakes:{label:"Brakes",icon:"🔩",g:"车辆"},battery:{label:"Battery",icon:"🔋",g:"车辆"},ac:{label:"A/C",icon:"❄",g:"车辆"},wipers:{label:"Wipers",icon:"🌂",g:"车辆"},washer:{label:"Washer Fluid",icon:"💧",g:"车辆"},maint:{label:"Maintenance",icon:"🔧",g:"车辆"},repair:{label:"Repair",icon:"🛠",g:"车辆"},insurance:{label:"TLC Insurance",icon:"🛡",g:"车辆"},carloan:{label:"Car Loan",icon:"🏷",g:"车辆"},rentalcar:{label:"Weekly Rental",icon:"🔑",g:"车辆"},tlc:{label:"TLC License",icon:"📋",g:"牌照"},fhv:{label:"FHV License",icon:"🚗",g:"牌照"},dmv:{label:"DMV License",icon:"📝",g:"牌照"},drug:{label:"Drug Test",icon:"🧪",g:"牌照"},finger:{label:"Fingerprint",icon:"👆",g:"牌照"},ddcourse:{label:"TLC Training",icon:"📚",g:"牌照"},defensive:{label:"DDC Course",icon:"🎓",g:"牌照"},wav:{label:"WAV Training",icon:"♿",g:"牌照"},medical:{label:"Medical Exam",icon:"🩺",g:"牌照"},background:{label:"Background Check",icon:"🔎",g:"牌照"},platform:{label:"Platform Fee(mo)",icon:"📱",g:"平台",mo:true},blackcar:{label:"Black Car Fund(mo)",icon:"🖤",g:"平台",mo:true},uberpro:{label:"Uber Pro",icon:"⭐",g:"平台"},phonebill:{label:"Phone Bill",icon:"📶",g:"平台"},coffee:{label:"Coffee",icon:"☕",g:"其他"},tax:{label:"Quarterly Tax",icon:"🧾",g:"其他"},accountant:{label:"Accountant",icon:"🧮",g:"其他"},health:{label:"Health Insurance",icon:"🏥",g:"其他"},meals:{label:"Meals",icon:"🍱",g:"其他"},other:{label:"Other",icon:"💼",g:"其他"}};
+var CATS_ZH={fuel:{label:"燃油费",icon:"⛽",g:"车辆",taxable:true},charging:{label:"充电费",icon:"⚡",g:"车辆",taxable:true},toll:{label:"过桥费(月结)",icon:"🌉",g:"车辆",mo:true,taxable:true},congestion:{label:"拥堵费(月结)",icon:"🏙",g:"车辆",mo:true,taxable:true},parking:{label:"停车费",icon:"🅿",g:"车辆",taxable:true},ticket:{label:"停车罚款",icon:"🎫",g:"车辆",taxable:false},carwash:{label:"洗车费",icon:"🚿",g:"车辆",taxable:true},oil:{label:"换机油",icon:"🛢",g:"车辆",taxable:true},tires:{label:"轮胎",icon:"🔄",g:"车辆",taxable:true},brakes:{label:"刹车",icon:"🔩",g:"车辆",taxable:true},battery:{label:"电池",icon:"🔋",g:"车辆",taxable:true},ac:{label:"冷暖气",icon:"❄",g:"车辆",taxable:true},wipers:{label:"雨刮片",icon:"🌂",g:"车辆",taxable:true},washer:{label:"玻璃水",icon:"💧",g:"车辆",taxable:true},maint:{label:"定期保养",icon:"🔧",g:"车辆",taxable:true},repair:{label:"意外维修",icon:"🛠",g:"车辆",taxable:true},insurance:{label:"TLC商业保险",icon:"🛡",g:"车辆",taxable:true},carloan:{label:"车贷月付",icon:"🏷",g:"车辆",taxable:true},rentalcar:{label:"周租车费",icon:"🔑",g:"车辆",taxable:true},tlc:{label:"TLC驾照费",icon:"📋",g:"牌照",taxable:true},fhv:{label:"FHV车辆执照费",icon:"🚗",g:"牌照",taxable:true},dmv:{label:"DMV驾照",icon:"📝",g:"牌照",taxable:true},drug:{label:"验毒检查",icon:"🧪",g:"牌照",taxable:true},finger:{label:"指纹背景调查",icon:"👆",g:"牌照",taxable:true},ddcourse:{label:"TLC 24小时培训",icon:"📚",g:"牌照",taxable:true},defensive:{label:"DDC防御驾驶课程",icon:"🎓",g:"牌照",taxable:true},wav:{label:"WAV轮椅车辆培训",icon:"♿",g:"牌照",taxable:true},medical:{label:"体检费用",icon:"🩺",g:"牌照",taxable:true},background:{label:"其他背景调查费",icon:"🔎",g:"牌照",taxable:true},platform:{label:"平台费(月结)",icon:"📱",g:"平台",mo:true,taxable:true},blackcar:{label:"Black Car Fund(月结)",icon:"🖤",g:"平台",mo:true,taxable:true},uberpro:{label:"Uber Pro",icon:"⭐",g:"平台",taxable:true},phonebill:{label:"手机费",icon:"📶",g:"平台",taxable:true},coffee:{label:"咖啡",icon:"☕",g:"其他",taxable:false},tax:{label:"季度预缴税",icon:"🧾",g:"其他",taxable:false},accountant:{label:"会计费用",icon:"🧮",g:"其他",taxable:true},health:{label:"健康保险",icon:"🏥",g:"其他",taxable:true},meals:{label:"工作餐饮",icon:"🍱",g:"其他",taxable:false},other:{label:"其他支出",icon:"💼",g:"其他",taxable:true}};
+var CATS_EN={fuel:{label:"Gas",icon:"⛽",g:"车辆",taxable:true},charging:{label:"Charging",icon:"⚡",g:"车辆",taxable:true},toll:{label:"Toll(mo)",icon:"🌉",g:"车辆",mo:true,taxable:true},congestion:{label:"Congestion(mo)",icon:"🏙",g:"车辆",mo:true,taxable:true},parking:{label:"Parking",icon:"🅿",g:"车辆",taxable:true},ticket:{label:"Parking Fine",icon:"🎫",g:"车辆",taxable:false},carwash:{label:"Car Wash",icon:"🚿",g:"车辆",taxable:true},oil:{label:"Oil Change",icon:"🛢",g:"车辆",taxable:true},tires:{label:"Tires",icon:"🔄",g:"车辆",taxable:true},brakes:{label:"Brakes",icon:"🔩",g:"车辆",taxable:true},battery:{label:"Battery",icon:"🔋",g:"车辆",taxable:true},ac:{label:"A/C",icon:"❄",g:"车辆",taxable:true},wipers:{label:"Wipers",icon:"🌂",g:"车辆",taxable:true},washer:{label:"Washer Fluid",icon:"💧",g:"车辆",taxable:true},maint:{label:"Maintenance",icon:"🔧",g:"车辆",taxable:true},repair:{label:"Repair",icon:"🛠",g:"车辆",taxable:true},insurance:{label:"TLC Insurance",icon:"🛡",g:"车辆",taxable:true},carloan:{label:"Car Loan",icon:"🏷",g:"车辆",taxable:true},rentalcar:{label:"Weekly Rental",icon:"🔑",g:"车辆",taxable:true},tlc:{label:"TLC License",icon:"📋",g:"牌照",taxable:true},fhv:{label:"FHV License",icon:"🚗",g:"牌照",taxable:true},dmv:{label:"DMV License",icon:"📝",g:"牌照",taxable:true},drug:{label:"Drug Test",icon:"🧪",g:"牌照",taxable:true},finger:{label:"Fingerprint",icon:"👆",g:"牌照",taxable:true},ddcourse:{label:"TLC Training",icon:"📚",g:"牌照",taxable:true},defensive:{label:"DDC Course",icon:"🎓",g:"牌照",taxable:true},wav:{label:"WAV Training",icon:"♿",g:"牌照",taxable:true},medical:{label:"Medical Exam",icon:"🩺",g:"牌照",taxable:true},background:{label:"Background Check",icon:"🔎",g:"牌照",taxable:true},platform:{label:"Platform Fee(mo)",icon:"📱",g:"平台",mo:true,taxable:true},blackcar:{label:"Black Car Fund(mo)",icon:"🖤",g:"平台",mo:true,taxable:true},uberpro:{label:"Uber Pro",icon:"⭐",g:"平台",taxable:true},phonebill:{label:"Phone Bill",icon:"📶",g:"平台",taxable:true},coffee:{label:"Coffee",icon:"☕",g:"其他",taxable:false},tax:{label:"Quarterly Tax",icon:"🧾",g:"其他",taxable:false},accountant:{label:"Accountant",icon:"🧮",g:"其他",taxable:true},health:{label:"Health Insurance",icon:"🏥",g:"其他",taxable:true},meals:{label:"Meals",icon:"🍱",g:"其他",taxable:false},other:{label:"Other",icon:"💼",g:"其他",taxable:true}};
 var PLATS=["Uber","Lyft","Via","Uber Black","Lyft Lux","其他"];
 var GROUPS=["车辆","牌照","平台","其他","自定义"];
 var TABS=["仪表盘","收入","支出","报告"];
@@ -139,9 +139,9 @@ if(p.type==="date"||p.type==="month"){
   );
 }else{el=inputEl;}}return React.createElement('label', { style: {display:"flex",flexDirection:"column",gap:6,fontSize:14,color:"#C8E8F8",fontWeight:500}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 43}}, p.label, el);}
 function Modal(p){return React.createElement('div', { style: {position:"fixed",inset:0,background:"rgba(4,8,20,0.95)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:200,paddingBottom:"80px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 44}}, React.createElement('div', { style: {background:C.bg2,borderRadius:16,width:"100%",maxWidth:600,border:"1px solid "+C.border,maxHeight:"calc(90vh - 80px)",display:"flex",flexDirection:"column",overflow:"hidden",boxShadow:"0 -8px 40px rgba(0,0,0,0.5)"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 44}}, React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 18px",borderBottom:"1px solid #1A2A44",background:C.bg2,flexShrink:0}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 44}}, React.createElement('button', { onClick: p.onClose, style: {background:"#1E3050",border:"none",color:"#8ABCD0",fontSize:16,cursor:"pointer",width:34,height:34,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 44}}, "✕"), React.createElement('div', { style: {fontSize:16,fontWeight:800}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 44}}, p.title), React.createElement('button', { onClick: p.onSave, style: {background:"linear-gradient(135deg,#00CFFF,#0044EE)",border:"none",color:"#fff",fontSize:20,cursor:"pointer",width:34,height:34,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 10px rgba(0,207,255,0.3)"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 44}}, "✓")), React.createElement('div', { style: {padding:"18px 18px 52px",display:"flex",flexDirection:"column",gap:14,overflowY:"auto",flex:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 44}}, p.children)));}
-var MONTHS=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];function MoNav(p){var isEn=p.lang==="en";var moDisp=isEn?MONTHS[+p.val.slice(5)-1]+" "+p.val.slice(0,4):p.val.slice(0,4)+"年 "+p.val.slice(5)+"月";return React.createElement('div', { style: {display:"flex",alignItems:"center",gap:8,marginBottom:p.mb||12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 45}}, React.createElement('button', { onClick: function(){p.set(prevMo(p.val));}, style: {background:C.bg2,border:"1px solid "+C.border,borderRadius:8,padding:"9px 14px",color:"#D8EEFF",fontSize:17,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 45}}, "<"), React.createElement('button', { onClick: function(){if(p.onPick)p.onPick();}, style: {flex:1,textAlign:"center",fontSize:17,fontWeight:800,background:"none",border:"none",color:C.text,cursor:p.onPick?"pointer":"default",padding:"9px 0"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 45}}, moDisp), React.createElement('button', { onClick: function(){p.set(nextMo(p.val));}, style: {background:C.bg2,border:"1px solid "+C.border,borderRadius:8,padding:"9px 14px",color:"#D8EEFF",fontSize:17,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 45}}, ">"), p.children);}
-function YrNav(p){var yrDisp=p.lang==="en"?p.val:p.val+" 年";return React.createElement('div', { style: {display:"flex",alignItems:"center",gap:10,marginBottom:14}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 46}}, React.createElement('button', { onClick: function(){p.set(String(+p.val-1));}, style: {background:C.bg2,border:"1px solid "+C.border,borderRadius:8,padding:"9px 14px",color:"#D8EEFF",fontSize:17,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 46}}, "<"), React.createElement('button', { onClick: function(){if(p.onPick)p.onPick();}, style: {flex:1,textAlign:"center",fontSize:19,fontWeight:800,background:"none",border:"none",color:C.text,cursor:p.onPick?"pointer":"default",padding:"9px 0"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 46}}, yrDisp), React.createElement('button', { onClick: function(){p.set(String(+p.val+1));}, style: {background:C.bg2,border:"1px solid "+C.border,borderRadius:8,padding:"9px 14px",color:"#D8EEFF",fontSize:17,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 46}}, ">"));}
-function SegBtn(p){return React.createElement('div', { style: {display:"flex",background:C.bg,borderRadius:12,padding:3,gap:2,marginBottom:p.mb||14,border:"1px solid #151F35"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 47}}, p.opts.map(function(o,i){var active=p.val===o[0];var bg=active?"#1A3060":"transparent";var cl=active?"#00D4FF":"#C8E8F8";var fw=active?700:400;return React.createElement('button', { key: i, onClick: function(){p.set(o[0]);}, style: {flex:1,padding:10,borderRadius:9,border:"none",background:bg,color:cl,fontSize:13,fontWeight:fw,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 47}}, o[1]);}));}
+var MONTHS=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];function MoNav(p){var isEn=p.lang==="en";var moDisp=isEn?MONTHS[+p.val.slice(5)-1]+" "+p.val.slice(0,4):p.val.slice(0,4)+"年 "+p.val.slice(5)+"月";return React.createElement('div', { style: {display:"flex",alignItems:"center",gap:8,marginBottom:p.mb||12,position:"sticky",top:108,zIndex:35,background:"#080C18",paddingTop:6,paddingBottom:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 45}}, React.createElement('button', { onClick: function(){p.set(prevMo(p.val));}, style: {background:C.bg2,border:"1px solid "+C.border,borderRadius:8,padding:"9px 14px",color:"#D8EEFF",fontSize:17,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 45}}, "<"), React.createElement('button', { onClick: function(){if(p.onPick)p.onPick();}, style: {flex:1,textAlign:"center",fontSize:17,fontWeight:800,background:"none",border:"none",color:C.text,cursor:p.onPick?"pointer":"default",padding:"9px 0"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 45}}, moDisp), React.createElement('button', { onClick: function(){p.set(nextMo(p.val));}, style: {background:C.bg2,border:"1px solid "+C.border,borderRadius:8,padding:"9px 14px",color:"#D8EEFF",fontSize:17,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 45}}, ">"), p.children);}
+function YrNav(p){var yrDisp=p.lang==="en"?p.val:p.val+" 年";return React.createElement('div', { style: {display:"flex",alignItems:"center",gap:10,marginBottom:14,position:"sticky",top:108,zIndex:35,background:"#080C18",paddingTop:6,paddingBottom:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 46}}, React.createElement('button', { onClick: function(){p.set(String(+p.val-1));}, style: {background:C.bg2,border:"1px solid "+C.border,borderRadius:8,padding:"9px 14px",color:"#D8EEFF",fontSize:17,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 46}}, "<"), React.createElement('button', { onClick: function(){if(p.onPick)p.onPick();}, style: {flex:1,textAlign:"center",fontSize:19,fontWeight:800,background:"none",border:"none",color:C.text,cursor:p.onPick?"pointer":"default",padding:"9px 0"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 46}}, yrDisp), React.createElement('button', { onClick: function(){p.set(String(+p.val+1));}, style: {background:C.bg2,border:"1px solid "+C.border,borderRadius:8,padding:"9px 14px",color:"#D8EEFF",fontSize:17,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 46}}, ">"));}
+function SegBtn(p){return React.createElement('div', { style: {display:"flex",background:C.bg,borderRadius:12,padding:3,gap:2,marginBottom:p.mb||14,border:"1px solid #151F35",position:"sticky",top:48,zIndex:40}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 47}}, p.opts.map(function(o,i){var active=p.val===o[0];var bg=active?"#1A3060":"transparent";var cl=active?"#00D4FF":"#C8E8F8";var fw=active?700:400;return React.createElement('button', { key: i, onClick: function(){p.set(o[0]);}, style: {flex:1,padding:10,borderRadius:9,border:"none",background:bg,color:cl,fontSize:13,fontWeight:fw,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 47}}, o[1]);}));}
 function ExpItem(p){var item=p.item,aC=p.allC,isEn=p.lang==="en",cat=aC[item.category]||{label:isEn?"Other":"其他"},icon=item.isFixed?item.fixedIcon:getIcon(item.category,aC),label=item.isFixed?item.fixedLabel:cat.label,isMo=cat.mo,moPrefix=isEn?"Monthly ":"月结 ";
 // Hide placeholder times from imported data ("12:00" charging, "08:00" coffee, "23:59" month-end)
 var hideTime=item.time==="12:00"||item.time==="08:00"||item.time==="23:59";
@@ -567,6 +567,7 @@ function App() {
   var r25=useState(function(){return lsLoad("nyc_custPlat",[]);}),custPlat=r25[0],setCustPlat=r25[1]; var r26=useState(""),newPlat=r26[0],setNewPlat=r26[1];
   var r25b=useState(function(){return lsLoad("nyc_custBrands",[]);}),custBrands=r25b[0],_setCustBrands=r25b[1];function setCustBrands(v){_setCustBrands(v);try{localStorage.setItem("nyc_custBrands",JSON.stringify(v));}catch(e){}}
   var r25c=useState(function(){return lsLoad("nyc_custLicTypes",[]);}),custLicTypes=r25c[0],_setCustLicTypes=r25c[1];function setCustLicTypes(v){_setCustLicTypes(v);try{localStorage.setItem("nyc_custLicTypes",JSON.stringify(v));}catch(e){}}
+  var r25e=useState(function(){return lsLoad("nyc_favNotes",{});}),favNotes=r25e[0],_setFavNotes=r25e[1];function setFavNotes(v){_setFavNotes(v);try{localStorage.setItem("nyc_favNotes",JSON.stringify(v));}catch(e){}}
   var r25d=useState(function(){return lsLoad("nyc_custLoanTypes",[]);}),custLoanTypes=r25d[0],_setCustLoanTypes=r25d[1];function setCustLoanTypes(v){_setCustLoanTypes(v);try{localStorage.setItem("nyc_custLoanTypes",JSON.stringify(v));}catch(e){}}
   var r27=useState(false),showBackup=r27[0],setShowBackup=r27[1]; var r28=useState(function(){return lsLoad("nyc_user",null);}),gUser=r28[0],setGUser=r28[1];
   var r29=useState(""),gStatus=r29[0],setGStatus=r29[1]; var r30=useState(null),openSec=r30[0],setOpenSec=r30[1];
@@ -749,7 +750,7 @@ function App() {
         if(data.cc)setCc(data.cc);
         if(data.custGroups)setCustGroups(data.custGroups);
         if(data.reminders)setReminders(data.reminders);
-        if(data.custPlat)setCustPlat(data.custPlat);if(data.custBrands)setCustBrands(data.custBrands);if(data.custLicTypes)setCustLicTypes(data.custLicTypes);if(data.custLoanTypes)setCustLoanTypes(data.custLoanTypes);
+        if(data.custPlat)setCustPlat(data.custPlat);if(data.custBrands)setCustBrands(data.custBrands);if(data.custLicTypes)setCustLicTypes(data.custLicTypes);if(data.custLoanTypes)setCustLoanTypes(data.custLoanTypes);if(data.favNotes)setFavNotes(data.favNotes);
         if(data.notes)setNotes(data.notes);
         if(typeof data.incGoal!=="undefined")setIncGoal(data.incGoal);
         if(typeof data.seRate==="number")setSeRate(data.seRate);
@@ -873,7 +874,7 @@ function App() {
   useEffect(function(){
     if(firstRenderRef.first){firstRenderRef.first=false;return;}
     setLocalModTime(new Date().toISOString());
-  },[wl,sl,el,fl,ll,veh,cc,custGroups,reminders,custPlat,custBrands,custLicTypes,custLoanTypes,notes,incGoal,seRate,fedRate,stateRate,stdDed]);
+  },[wl,sl,el,fl,ll,veh,cc,custGroups,reminders,custPlat,custBrands,custLicTypes,custLoanTypes,favNotes,notes,incGoal,seRate,fedRate,stateRate,stdDed]);
 
   // Smart sync function — compares timestamps and decides direction
   function smartSync(){
@@ -882,7 +883,7 @@ function App() {
       if(!fileId){
         // No cloud file → upload our local data (first-time sync)
         if(localModTime){
-          var data={wl:wl,sl:sl,el:el,fl:fl,ll:ll,veh:veh,cc:cc,custGroups:custGroups,reminders:reminders,custPlat:custPlat,custBrands:custBrands,custLicTypes:custLicTypes,custLoanTypes:custLoanTypes,notes:notes,incGoal:incGoal,seRate:seRate,fedRate:fedRate,stateRate:stateRate,stdDed:stdDed,localModTime:localModTime};
+          var data={wl:wl,sl:sl,el:el,fl:fl,ll:ll,veh:veh,cc:cc,custGroups:custGroups,reminders:reminders,custPlat:custPlat,custBrands:custBrands,custLicTypes:custLicTypes,custLoanTypes:custLoanTypes,favNotes:favNotes,notes:notes,incGoal:incGoal,seRate:seRate,fedRate:fedRate,stateRate:stateRate,stdDed:stdDed,localModTime:localModTime};
           saveToDrive(accessToken,null,data);
         }
         return;
@@ -907,7 +908,7 @@ function App() {
           if(cloudData.cc)setCc(cloudData.cc);
           if(cloudData.custGroups)setCustGroups(cloudData.custGroups);
           if(cloudData.reminders)setReminders(cloudData.reminders);
-          if(cloudData.custPlat)setCustPlat(cloudData.custPlat);if(cloudData.custBrands)setCustBrands(cloudData.custBrands);if(cloudData.custLicTypes)setCustLicTypes(cloudData.custLicTypes);if(cloudData.custLoanTypes)setCustLoanTypes(cloudData.custLoanTypes);
+          if(cloudData.custPlat)setCustPlat(cloudData.custPlat);if(cloudData.custBrands)setCustBrands(cloudData.custBrands);if(cloudData.custLicTypes)setCustLicTypes(cloudData.custLicTypes);if(cloudData.custLoanTypes)setCustLoanTypes(cloudData.custLoanTypes);if(cloudData.favNotes)setFavNotes(cloudData.favNotes);
           if(cloudData.notes)setNotes(cloudData.notes);
           if(typeof cloudData.incGoal!=="undefined")setIncGoal(cloudData.incGoal);
           if(typeof cloudData.seRate==="number")setSeRate(cloudData.seRate);
@@ -921,7 +922,7 @@ function App() {
           setTimeout(function(){setSyncStatus("");},2000);
         } else if(localModTime > cloudModTime){
           // Local is newer — upload
-          var data={wl:wl,sl:sl,el:el,fl:fl,ll:ll,veh:veh,cc:cc,custGroups:custGroups,reminders:reminders,custPlat:custPlat,custBrands:custBrands,custLicTypes:custLicTypes,custLoanTypes:custLoanTypes,notes:notes,incGoal:incGoal,seRate:seRate,fedRate:fedRate,stateRate:stateRate,stdDed:stdDed,localModTime:localModTime};
+          var data={wl:wl,sl:sl,el:el,fl:fl,ll:ll,veh:veh,cc:cc,custGroups:custGroups,reminders:reminders,custPlat:custPlat,custBrands:custBrands,custLicTypes:custLicTypes,custLoanTypes:custLoanTypes,favNotes:favNotes,notes:notes,incGoal:incGoal,seRate:seRate,fedRate:fedRate,stateRate:stateRate,stdDed:stdDed,localModTime:localModTime};
           saveToDrive(accessToken,fileId,data);
         }
         // else: timestamps equal — already synced, do nothing
@@ -1473,28 +1474,27 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
           , (ef.category==="fuel"||ef.category==="charging") ? React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, React.createElement(Field, { label: ef.category==="charging"?(lang==="en"?"kWh Charged":"充电度数 (kWh)"):(lang==="en"?"Gallons (Gal)":"加油加仑 (Gal)"), type: "number", value: ef.qty, onChange: function(v){setEf(Object.assign({},ef,{qty:v}));}, placeholder: "0.0", __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}} ), ef.amount&&ef.qty&&+ef.qty>0?React.createElement('div', { style: {background:C.bg3,border:"1px solid "+C.border,borderRadius:10,padding:"10px 14px",display:"flex",justifyContent:"space-between"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, React.createElement('span', { style: {fontSize:14,color:C.text2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, ef.category==="charging"?(lang==="en"?"Per kWh":"每度电"):(lang==="en"?"Per Gallon":"每加仑")), React.createElement('span', { style: {fontSize:17,fontWeight:800,color:"#FFD700"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, fmt(+ef.amount/+ef.qty), ef.category==="charging"?"/kWh":"/Gal")):null) : null
           , (function(){var c=allC[ef.category];if(c&&c.g==="车辆"){return React.createElement(Field, { label: (lang==="en"?"Odometer (mi)":"里程读数 (mi)")+" — "+(lang==="en"?"optional":"选填"), type: "number", value: ef.odometer||"", onChange: function(v){setEf(Object.assign({},ef,{odometer:v}));}, placeholder: "e.g. 45142", __self: this, __source: {fileName: _jsxFileName, lineNumber: 543}} );}return null;}())
           , (function(){
-              // Build history of unique notes for THIS category, sorted by frequency.
-              // Normalize for dedup: lowercase, strip whitespace and trailing punctuation.
-              var normalize=function(s){return s.trim().toLowerCase().replace(/[\s\.,;:!?。，；：！？]+$/,"");};
-              var groups={}; // normalized → {display, count}
-              el.forEach(function(e){
-                if(e.category!==ef.category||!e.notes||!e.notes.trim())return;
-                var raw=e.notes.trim();
-                var key=normalize(raw);
-                if(!key)return;
-                if(!groups[key]){groups[key]={display:raw,count:1};}
-                else{groups[key].count++; if(raw.length<groups[key].display.length)groups[key].display=raw;} // prefer shorter clean version
-              });
-              var history=Object.keys(groups).map(function(k){return groups[k];}).sort(function(a,b){return b.count-a.count;});
+              var catKey=ef.category||"_default";
+              var favs=(favNotes&&favNotes[catKey])||[];
+              var currentNotes=(ef.notes||"").trim();
+              var alreadyFav=favs.some(function(f){return f.toLowerCase()===currentNotes.toLowerCase();});
+              var addFav=function(){if(!currentNotes||alreadyFav)return;var newFavs=Object.assign({},favNotes);newFavs[catKey]=(newFavs[catKey]||[]).concat([currentNotes]);setFavNotes(newFavs);};
+              var removeFav=function(item){var newFavs=Object.assign({},favNotes);newFavs[catKey]=(newFavs[catKey]||[]).filter(function(x){return x!==item;});setFavNotes(newFavs);};
               return React.createElement('label',{style:{display:"flex",flexDirection:"column",gap:6,fontSize:14,color:"#C8E8F8",fontWeight:500,position:"relative"}},
                 T.notes,
                 React.createElement('div',{style:{position:"relative"}},
-                  React.createElement('input',{type:"text",value:ef.notes||"",onChange:function(e){setEf(Object.assign({},ef,{notes:e.target.value}));},placeholder:T.optional,style:Object.assign({},IS,{paddingRight:history.length>0?"40px":undefined})}),
-                  history.length>0?React.createElement('details',{style:{position:"absolute",right:6,top:4}},
+                  React.createElement('input',{type:"text",value:ef.notes||"",onChange:function(e){setEf(Object.assign({},ef,{notes:e.target.value}));},placeholder:T.optional,style:Object.assign({},IS,{paddingRight:favs.length>0?(currentNotes&&!alreadyFav?"82px":"40px"):(currentNotes&&!alreadyFav?"42px":undefined)})}),
+                  // ⭐ Star button: only shows when there's text not already saved
+                  currentNotes&&!alreadyFav?React.createElement('button',{type:"button",onClick:addFav,title:lang==="en"?"Save as favorite":"添加为常用",style:{position:"absolute",right:favs.length>0?42:6,top:4,background:"#0A2010",border:"1px solid #2A6030",color:"#FFD700",borderRadius:6,width:32,height:32,cursor:"pointer",fontSize:14,padding:0}},"⭐"):null,
+                  // ⏷ Dropdown: shows favorites only
+                  favs.length>0?React.createElement('details',{style:{position:"absolute",right:6,top:4}},
                     React.createElement('summary',{style:{listStyle:"none",cursor:"pointer",background:"#1A2A44",border:"1px solid #2A4A6A",borderRadius:6,width:32,height:32,display:"flex",alignItems:"center",justifyContent:"center",color:"#00D4FF",fontSize:14}},"⏷"),
-                    React.createElement('div',{style:{position:"absolute",right:0,top:36,background:C.bg2,border:"1px solid "+C.border,borderRadius:10,minWidth:240,maxHeight:280,overflowY:"auto",boxShadow:"0 4px 20px rgba(0,0,0,0.5)",zIndex:100}},
-                      React.createElement('div',{style:{fontSize:11,color:C.text3,padding:"8px 12px",borderBottom:"1px solid "+C.border}},lang==="en"?"Recent locations":"历史地点"),
-                      history.slice(0,15).map(function(h,i){return React.createElement('button',{key:i,type:"button",onClick:function(ev){ev.preventDefault();setEf(Object.assign({},ef,{notes:h.display}));ev.target.closest('details').open=false;},style:{display:"block",width:"100%",textAlign:"left",background:"none",border:"none",padding:"10px 12px",color:C.text,fontSize:13,cursor:"pointer",borderBottom:i<14?"1px solid #0F1C30":"none"}},h.display," ",React.createElement('span',{style:{color:C.text3,fontSize:11}},"(",h.count,")"));})
+                    React.createElement('div',{style:{position:"absolute",right:0,top:36,background:C.bg2,border:"1px solid "+C.border,borderRadius:10,minWidth:260,maxHeight:320,overflowY:"auto",boxShadow:"0 4px 20px rgba(0,0,0,0.5)",zIndex:100}},
+                      React.createElement('div',{style:{fontSize:11,color:"#FFD700",padding:"8px 12px",borderBottom:"1px solid "+C.border,background:"#1A1400"}},"⭐ ",lang==="en"?"Favorites":"常用地点"),
+                      favs.map(function(loc,i){return React.createElement('div',{key:i,style:{display:"flex",alignItems:"center",borderBottom:i<favs.length-1?"1px solid #0F1C30":"none"}},
+                        React.createElement('button',{type:"button",onClick:function(ev){ev.preventDefault();setEf(Object.assign({},ef,{notes:loc}));ev.target.closest('details').open=false;},style:{flex:1,textAlign:"left",background:"none",border:"none",padding:"10px 12px",color:C.text,fontSize:13,cursor:"pointer"}},loc),
+                        React.createElement('button',{type:"button",onClick:function(ev){ev.preventDefault();ev.stopPropagation();if(confirm(lang==="en"?"Remove from favorites?":"取消收藏？"))removeFav(loc);},style:{background:"none",border:"none",color:"#FF7060",padding:"8px 12px",cursor:"pointer",fontSize:13}},"✕")
+                      );})
                     )
                   ):null
                 )
@@ -1557,7 +1557,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
           , React.createElement('div', { style: {width:"60%",maxWidth:220,background:C.bg2,height:"100%",overflowY:"auto",borderRight:"1px solid "+C.border,display:"flex",flexDirection:"column",paddingBottom:"70px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 597}}
             , React.createElement('div', { style: {padding:"20px 18px 16px",borderBottom:"1px solid "+C.border}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 598}}
               , React.createElement('div', { style: {fontSize:15,fontWeight:800,color:C.text}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 599}}, T.menu)
-              , React.createElement('div', { style: {fontSize:11,color:C.text3,marginTop:2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 600}}, "NYC RIDESHARE TRACKER · v1.5.7"    )
+              , React.createElement('div', { style: {fontSize:11,color:C.text3,marginTop:2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 600}}, "NYC RIDESHARE TRACKER · v1.6.6"    )
             )
             , React.createElement('div', { style: {padding:"10px 0",flex:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 602}}
               , [{icon:"📝",label:lang==="en"?"Notes":"记事本",action:function(){setShowDrawer(false);setSf("notes");}},{icon:"🗂",label:lang==="en"?"Categories":"支出类别",action:function(){setShowDrawer(false);setSf("manage_cats");}},{icon:"&#128197;",label:T.fixedFees,action:function(){setShowDrawer(false);setSf("drawer_fixed");}},{icon:"🧾",label:lang==="en"?"Tax Center":"税务中心",action:function(){setShowDrawer(false);setSf("tax_center");}},{icon:"&#128190;",label:T.backup,action:function(){setShowDrawer(false);setShowBackup(true);}},{icon:"&#128276;",label:T.reminder,action:function(){setShowDrawer(false);setShowRemMgr(true);}},{icon:"&#128203;",label:T.license,action:function(){setShowDrawer(false);setSf("drawer_lic");}},{icon:"&#128241;",label:T.platform,action:function(){setShowDrawer(false);setShowPlatMgr(true);}},{icon:"&#128663;",label:T.vehicle,action:function(){setShowDrawer(false);setSf("drawer_veh");}},{icon:"🔒",label:lang==="en"?"PIN Lock":"PIN 锁屏",action:function(){setShowDrawer(false);setSf("pin_settings");}},{icon:"🚪",label:lang==="en"?"Sign Out":"退出登录",action:function(){if(!confirm(lang==="en"?"Sign out of Google?":"确认退出 Google 登录？"))return;setGUser(null);try{localStorage.removeItem("nyc_user");localStorage.removeItem("nyc_tab");}catch(e){}setTab(0);setSf(null);setShowDrawer(false);setShowBackup(false);setShowPlatMgr(false);setShowRemMgr(false);},color:"#FF5252"},].map(function(item,i){return React.createElement('button', { key: i, onClick: item.action, style: {display:"flex",alignItems:"center",gap:14,width:"100%",background:"none",border:"none",padding:"14px 18px",cursor:"pointer",textAlign:"left",borderBottom:"1px solid "+C.border,color:item.color||C.text}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 603}}, React.createElement('span', { style: {fontSize:20}, dangerouslySetInnerHTML: {__html:item.icon}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 603}} ), React.createElement('span', { style: {fontSize:14,color:C.text,fontWeight:600}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 603}}, item.label), React.createElement('span', { style: {marginLeft:"auto",color:C.text3,fontSize:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 603}}, ">"));})
@@ -1850,7 +1850,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
               , gUser&&accessToken ? React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 793}}
                 , React.createElement('div', { style: {fontSize:13,color:"#00E676",marginBottom:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 794}}, "✓ " , gUser.email)
                 , React.createElement('div', { style: {fontSize:12,color:C.text3,marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 795}}, lang==="en"?"Auto-saves after every change":"每次修改自动保存")
-                , React.createElement('button', { onClick: function(){if(!confirm(lang==="en"?"Upload current data to Google Drive? This will overwrite the cloud backup.":"上传当前数据到 Google Drive？这会覆盖云端备份。"))return;var data={wl:wl,sl:sl,el:el,fl:fl,ll:ll,veh:veh,cc:cc,custGroups:custGroups,reminders:reminders,custPlat:custPlat,custBrands:custBrands,custLicTypes:custLicTypes,custLoanTypes:custLoanTypes,notes:notes,incGoal:incGoal,seRate:seRate,fedRate:fedRate,stateRate:stateRate,stdDed:stdDed};saveToDrive(accessToken,driveFileId,data);}, style: {width:"100%",background:"#0A4020",border:"1px solid #2A8050",borderRadius:10,padding:12,color:"#00E676",fontSize:14,fontWeight:700,cursor:"pointer",marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 796}}, syncing?(lang==="en"?"Saving...":"保存中..."):(lang==="en"?"💾 Save Now":"💾 立即保存"))
+                , React.createElement('button', { onClick: function(){if(!confirm(lang==="en"?"Upload current data to Google Drive? This will overwrite the cloud backup.":"上传当前数据到 Google Drive？这会覆盖云端备份。"))return;var data={wl:wl,sl:sl,el:el,fl:fl,ll:ll,veh:veh,cc:cc,custGroups:custGroups,reminders:reminders,custPlat:custPlat,custBrands:custBrands,custLicTypes:custLicTypes,custLoanTypes:custLoanTypes,favNotes:favNotes,notes:notes,incGoal:incGoal,seRate:seRate,fedRate:fedRate,stateRate:stateRate,stdDed:stdDed};saveToDrive(accessToken,driveFileId,data);}, style: {width:"100%",background:"#0A4020",border:"1px solid #2A8050",borderRadius:10,padding:12,color:"#00E676",fontSize:14,fontWeight:700,cursor:"pointer",marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 796}}, syncing?(lang==="en"?"Saving...":"保存中..."):(lang==="en"?"💾 Save Now":"💾 立即保存"))
                 , React.createElement('button', { onClick: function(){requireDangerConfirm("restoreDrive", lang==="en"?"Restore from Drive":"从 Drive 恢复", lang==="en"?"This will OVERWRITE all your current local data with the cloud backup. This cannot be undone.":"此操作会用云端备份覆盖当前所有本地数据，无法撤销。", function(){loadFromDrive(accessToken);});}, style: {width:"100%",background:"#0A2040",border:"1px solid #1A5080",borderRadius:10,padding:12,color:"#00D4FF",fontSize:14,fontWeight:700,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 797}}, lang==="en"?"📥 Restore from Drive":"📥 从Drive恢复")
                 , syncStatus?React.createElement('div', { style: {fontSize:12,color:"#00E676",marginTop:8,textAlign:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 798}}, syncStatus):null
               ) : gUser ? React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 799}}
@@ -1870,13 +1870,13 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
               , React.createElement('div', { style: {fontSize:15,fontWeight:700,color:"#FFB300",marginBottom:3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 802}}, lang==="en"?"🧹 Clear Placeholder Times":"🧹 清除占位时间")
               , React.createElement('div', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 803}}, lang==="en"?"Remove imported placeholder times (12:00 / 08:00 / 23:59)":"清除导入的占位时间（12:00 / 08:00 / 23:59）")
             );}())
-            , React.createElement('button', { onClick: function(){if(!confirm(lang==="en"?"Download a JSON backup file to your device?":"下载 JSON 备份文件到此设备？"))return;setSyncStatus(lang==="en"?"⏳ Exporting...":"⏳ 导出中...");setTimeout(function(){try{var data={wl:wl,sl:sl,el:el,fl:fl,ll:ll,veh:veh,cc:cc,custGroups:custGroups,reminders:reminders,custPlat:custPlat,custBrands:custBrands,custLicTypes:custLicTypes,custLoanTypes:custLoanTypes,notes:notes,incGoal:incGoal,seRate:seRate,fedRate:fedRate,stateRate:stateRate,stdDed:stdDed,exported:new Date().toISOString()};var blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});var url=URL.createObjectURL(blob);var a=document.createElement("a");a.href=url;a.download="nyc-driver-backup-"+today()+".json";a.click();URL.revokeObjectURL(url);setSyncStatus(lang==="en"?"✓ Exported":"✓ 导出成功");setTimeout(function(){setSyncStatus("");},2500);}catch(err){setSyncStatus(lang==="en"?"✗ Export failed":"✗ 导出失败");setTimeout(function(){setSyncStatus("");},2500);}},100);}, style: {width:"100%",background:C.bg3,border:"1px solid "+C.border,borderRadius:12,padding:14,marginBottom:10,textAlign:"left",cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 801}}
+            , React.createElement('button', { onClick: function(){if(!confirm(lang==="en"?"Download a JSON backup file to your device?":"下载 JSON 备份文件到此设备？"))return;setSyncStatus(lang==="en"?"⏳ Exporting...":"⏳ 导出中...");setTimeout(function(){try{var data={wl:wl,sl:sl,el:el,fl:fl,ll:ll,veh:veh,cc:cc,custGroups:custGroups,reminders:reminders,custPlat:custPlat,custBrands:custBrands,custLicTypes:custLicTypes,custLoanTypes:custLoanTypes,favNotes:favNotes,notes:notes,incGoal:incGoal,seRate:seRate,fedRate:fedRate,stateRate:stateRate,stdDed:stdDed,exported:new Date().toISOString()};var blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});var url=URL.createObjectURL(blob);var a=document.createElement("a");a.href=url;a.download="nyc-driver-backup-"+today()+".json";a.click();URL.revokeObjectURL(url);setSyncStatus(lang==="en"?"✓ Exported":"✓ 导出成功");setTimeout(function(){setSyncStatus("");},2500);}catch(err){setSyncStatus(lang==="en"?"✗ Export failed":"✗ 导出失败");setTimeout(function(){setSyncStatus("");},2500);}},100);}, style: {width:"100%",background:C.bg3,border:"1px solid "+C.border,borderRadius:12,padding:14,marginBottom:10,textAlign:"left",cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 801}}
               , React.createElement('div', { style: {fontSize:15,fontWeight:700,color:C.text2,marginBottom:3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 802}}, lang==="en"?"📤 Export JSON Backup":"📤 导出JSON备份")
               , React.createElement('div', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 803}}, lang==="en"?"Download all data as JSON":"下载所有数据为JSON文件")
             )
             , React.createElement('div', { style: {background:C.bg3,border:"1px solid "+C.border,borderRadius:12,padding:14,marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 805}}
               , React.createElement('div', { style: {fontSize:15,fontWeight:700,color:C.text2,marginBottom:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 806}}, lang==="en"?"📥 Restore from File":"📥 从文件恢复")
-              , React.createElement('input', { type: "file", accept: ".json", onChange: function(e){var file=e.target.files[0];if(!file)return;var inputEl=e.target;var reader=new FileReader();reader.onload=function(ev){var fileText=ev.target.result;requireDangerConfirm("restoreFile", lang==="en"?"Restore from File":"从文件恢复", lang==="en"?"This will OVERWRITE all your current local data with this file. This cannot be undone.":"此操作会用此文件覆盖当前所有本地数据，无法撤销。", function(){setSyncStatus(lang==="en"?"⏳ Restoring...":"⏳ 恢复中...");setTimeout(function(){try{var data=JSON.parse(fileText);if(data.wl)setWl(data.wl);if(data.sl)setSl(data.sl);if(data.el)setEl(data.el);if(data.fl)setFl(data.fl);if(data.ll)setLl(data.ll);if(data.veh)setVeh(data.veh);if(data.cc)setCc(data.cc);if(data.custGroups)setCustGroups(data.custGroups);if(data.reminders)setReminders(data.reminders);if(data.custPlat)setCustPlat(data.custPlat);if(data.custBrands)setCustBrands(data.custBrands);if(data.custLicTypes)setCustLicTypes(data.custLicTypes);if(data.custLoanTypes)setCustLoanTypes(data.custLoanTypes);if(data.notes)setNotes(data.notes);if(typeof data.incGoal!=="undefined")setIncGoal(data.incGoal);if(typeof data.seRate==="number")setSeRate(data.seRate);if(typeof data.fedRate==="number")setFedRate(data.fedRate);if(typeof data.stateRate==="number")setStateRate(data.stateRate);if(typeof data.stdDed==="number")setStdDed(data.stdDed);setSyncStatus(lang==="en"?"✓ Restored":"✓ 恢复成功");setTimeout(function(){setSyncStatus("");},2500);alert(lang==="en"?"Data restored!":"数据恢复成功！");}catch(err){setSyncStatus(lang==="en"?"✗ Restore failed":"✗ 恢复失败");setTimeout(function(){setSyncStatus("");},2500);alert(lang==="en"?"Invalid file":"文件格式错误");}inputEl.value="";},100);});};reader.readAsText(file);}, style: {width:"100%",background:C.bg3,border:"1px solid #2A3A54",borderRadius:8,padding:"8px",color:C.text,fontSize:13,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 807}} )
+              , React.createElement('input', { type: "file", accept: ".json", onChange: function(e){var file=e.target.files[0];if(!file)return;var inputEl=e.target;var reader=new FileReader();reader.onload=function(ev){var fileText=ev.target.result;requireDangerConfirm("restoreFile", lang==="en"?"Restore from File":"从文件恢复", lang==="en"?"This will OVERWRITE all your current local data with this file. This cannot be undone.":"此操作会用此文件覆盖当前所有本地数据，无法撤销。", function(){setSyncStatus(lang==="en"?"⏳ Restoring...":"⏳ 恢复中...");setTimeout(function(){try{var data=JSON.parse(fileText);if(data.wl)setWl(data.wl);if(data.sl)setSl(data.sl);if(data.el)setEl(data.el);if(data.fl)setFl(data.fl);if(data.ll)setLl(data.ll);if(data.veh)setVeh(data.veh);if(data.cc)setCc(data.cc);if(data.custGroups)setCustGroups(data.custGroups);if(data.reminders)setReminders(data.reminders);if(data.custPlat)setCustPlat(data.custPlat);if(data.custBrands)setCustBrands(data.custBrands);if(data.custLicTypes)setCustLicTypes(data.custLicTypes);if(data.custLoanTypes)setCustLoanTypes(data.custLoanTypes);if(data.favNotes)setFavNotes(data.favNotes);if(data.notes)setNotes(data.notes);if(typeof data.incGoal!=="undefined")setIncGoal(data.incGoal);if(typeof data.seRate==="number")setSeRate(data.seRate);if(typeof data.fedRate==="number")setFedRate(data.fedRate);if(typeof data.stateRate==="number")setStateRate(data.stateRate);if(typeof data.stdDed==="number")setStdDed(data.stdDed);setSyncStatus(lang==="en"?"✓ Restored":"✓ 恢复成功");setTimeout(function(){setSyncStatus("");},2500);alert(lang==="en"?"Data restored!":"数据恢复成功！");}catch(err){setSyncStatus(lang==="en"?"✗ Restore failed":"✗ 恢复失败");setTimeout(function(){setSyncStatus("");},2500);alert(lang==="en"?"Invalid file":"文件格式错误");}inputEl.value="";},100);});};reader.readAsText(file);}, style: {width:"100%",background:C.bg3,border:"1px solid #2A3A54",borderRadius:8,padding:"8px",color:C.text,fontSize:13,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 807}} )
             )
             , React.createElement('div', { style: {background:C.bg3,border:"1px solid "+C.border,borderRadius:12,padding:14,marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 808}}
               , React.createElement('div', { style: {fontSize:15,fontWeight:700,color:C.text2,marginBottom:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 808}}, lang==="en"?"➕ Smart Import":"➕ 智能导入")
@@ -1951,6 +1951,140 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
               , React.createElement('div', { style: {fontSize:15,fontWeight:700,color:C.text2,marginBottom:3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 828}}, "📄 " , lang==="en"?"Export Tax Report PDF":"导出报税表PDF")
               , React.createElement('div', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 829}}, lang==="en"?"Generate "+(taxYr||new Date().getFullYear())+" tax report (year selectable in Tax Center)":"生成 "+(taxYr||new Date().getFullYear())+" 年报税表（年份在税务中心选择）")
             )
+            , React.createElement('button', { onClick: function(){
+                var yr=taxYr||(new Date().getFullYear()+"");
+                var yStmts=sl.filter(function(x){return x.month&&x.month.slice(0,4)===yr;});
+                var allYExps=el.filter(function(e){return e.date&&e.date.slice(0,4)===yr;});
+                if(allYExps.length===0&&yStmts.length===0){alert(lang==="en"?"No data for "+yr:"没有 "+yr+" 年的数据");return;}
+                // Income
+                var grossFare=yStmts.reduce(function(s,x){return s+(+x.grossFare||0);},0);
+                var tips=yStmts.reduce(function(s,x){return s+(+x.tips||0);},0);
+                var bonus=yStmts.reduce(function(s,x){return s+(+x.bonus||0);},0);
+                var tollReimb=yStmts.reduce(function(s,x){return s+(+x.tollReimbursed||0);},0);
+                var otherInc=yStmts.reduce(function(s,x){return s+(+x.otherIncome||0);},0);
+                var totalInc=grossFare+tips+bonus+tollReimb+otherInc;
+                // Group expenses by taxable status
+                var deductible={"车辆":[],"牌照":[],"平台":[],"其他":[]}, nonDeductible=[];
+                var grpLabels={"车辆":lang==="en"?"Vehicle":"车辆","牌照":lang==="en"?"License & Permits":"牌照","平台":lang==="en"?"Platform & Communications":"平台","其他":lang==="en"?"Other":"其他"};
+                allYExps.forEach(function(e){
+                  var cat=allC[e.category];
+                  var isDeductible=cat?cat.taxable!==false:true;
+                  var grp=cat?(cat.g||"其他"):"其他";
+                  var entry={date:e.date,label:e.isFixed?e.fixedLabel:(cat?cat.label:"Other"),amount:+e.amount||0,notes:e.notes||""};
+                  if(isDeductible){if(!deductible[grp])deductible[grp]=[];deductible[grp].push(entry);}
+                  else{nonDeductible.push(Object.assign(entry,{grp:grp}));}
+                });
+                // Calculate group totals
+                var dedGroupTotals={};
+                Object.keys(deductible).forEach(function(g){dedGroupTotals[g]=deductible[g].reduce(function(s,x){return s+x.amount;},0);});
+                var totalDed=Object.values(dedGroupTotals).reduce(function(s,x){return s+x;},0);
+                var totalNonDed=nonDeductible.reduce(function(s,x){return s+x.amount;},0);
+                var netProfit=totalInc-totalDed;
+                // Build category breakdown within each group
+                var dedByCategory={};
+                Object.keys(deductible).forEach(function(g){
+                  var byCat={};
+                  deductible[g].forEach(function(e){if(!byCat[e.label]){byCat[e.label]={total:0,count:0};}byCat[e.label].total+=e.amount;byCat[e.label].count++;});
+                  dedByCategory[g]=byCat;
+                });
+                var nonDedByCategory={};
+                nonDeductible.forEach(function(e){if(!nonDedByCategory[e.label]){nonDedByCategory[e.label]={total:0,count:0};}nonDedByCategory[e.label].total+=e.amount;nonDedByCategory[e.label].count++;});
+                // Driver info
+                var driver=veh.driver||{};
+                var esc=function(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");};
+                // Build HTML
+                var html='<!DOCTYPE html><html><head><meta charset=utf-8><title>Tax Summary '+yr+'</title>';
+                html+='<style>';
+                html+='body{font-family:-apple-system,Helvetica,Arial,sans-serif;max-width:800px;margin:30px auto;padding:20px;color:#222;line-height:1.5;background:#fff;}';
+                html+='h1{font-size:22px;border-bottom:3px solid #000;padding-bottom:8px;margin-bottom:4px;}';
+                html+='h2{font-size:16px;border-bottom:1px solid #888;padding-bottom:4px;margin-top:24px;color:#000;}';
+                html+='.subtitle{font-size:12px;color:#666;margin-bottom:20px;}';
+                html+='.info{font-size:12px;margin:10px 0;line-height:1.7;}';
+                html+='.info b{display:inline-block;width:140px;color:#444;}';
+                html+='table{width:100%;border-collapse:collapse;margin:8px 0 16px;font-size:12px;}';
+                html+='th,td{padding:6px 10px;border-bottom:1px solid #ddd;text-align:left;}';
+                html+='th{background:#f0f0f0;font-weight:700;}';
+                html+='td.amt{text-align:right;font-variant-numeric:tabular-nums;}';
+                html+='tr.subtotal td{font-weight:700;background:#f8f8f8;border-top:1px solid #888;}';
+                html+='tr.total td{font-weight:800;background:#222;color:#fff;font-size:13px;}';
+                html+='tr.section td{background:#e8e8e8;font-weight:700;font-size:11px;letter-spacing:0.5px;text-transform:uppercase;}';
+                html+='.note{font-size:11px;color:#666;font-style:italic;margin:6px 0 10px;}';
+                html+='.print-btn{display:inline-block;margin:30px 0 0;padding:10px 20px;background:#0055FF;color:#fff;border:none;border-radius:6px;font-size:14px;cursor:pointer;}';
+                html+='@media print{.print-btn{display:none;}}';
+                html+='</style></head><body>';
+                html+='<h1>NYC RIDESHARE DRIVER<br>TAX SUMMARY — '+esc(yr)+'</h1>';
+                html+='<div class=subtitle>Generated '+new Date().toLocaleDateString()+' by NYC Driver Tracker</div>';
+                // Driver info
+                html+='<h2>Driver Information</h2><div class=info>';
+                if(driver.name)html+='<div><b>Name:</b> '+esc(driver.name)+'</div>';
+                if(driver.tlcHack)html+='<div><b>TLC Hack #:</b> '+esc(driver.tlcHack)+'</div>';
+                if(driver.dmvLic)html+='<div><b>DMV License #:</b> '+esc(driver.dmvLic)+'</div>';
+                if(driver.phone)html+='<div><b>Phone:</b> '+esc(driver.phone)+'</div>';
+                if(driver.email)html+='<div><b>Email:</b> '+esc(driver.email)+'</div>';
+                html+='</div>';
+                // Vehicle info
+                html+='<h2>Vehicle Information</h2><div class=info>';
+                if(veh.year||veh.brand||veh.model)html+='<div><b>Vehicle:</b> '+esc((veh.year||"")+" "+(veh.brand||"")+" "+(veh.model||""))+'</div>';
+                if(veh.plate)html+='<div><b>License Plate:</b> '+esc(veh.plate)+'</div>';
+                if(veh.tlcPlate)html+='<div><b>TLC Plate:</b> '+esc(veh.tlcPlate)+'</div>';
+                if(veh.vin)html+='<div><b>VIN:</b> '+esc(veh.vin)+'</div>';
+                html+='</div>';
+                // Income
+                html+='<h2>Income</h2><table>';
+                html+='<tr><th>Description</th><th class=amt>Amount</th></tr>';
+                html+='<tr><td>Gross Fares</td><td class=amt>$'+grossFare.toFixed(2)+'</td></tr>';
+                html+='<tr><td>Tips</td><td class=amt>$'+tips.toFixed(2)+'</td></tr>';
+                html+='<tr><td>Bonuses</td><td class=amt>$'+bonus.toFixed(2)+'</td></tr>';
+                html+='<tr><td>Toll Reimbursements</td><td class=amt>$'+tollReimb.toFixed(2)+'</td></tr>';
+                html+='<tr><td>Other Income</td><td class=amt>$'+otherInc.toFixed(2)+'</td></tr>';
+                html+='<tr class=total><td>TOTAL INCOME</td><td class=amt>$'+totalInc.toFixed(2)+'</td></tr>';
+                html+='</table>';
+                // Deductible expenses
+                html+='<h2>Deductible Business Expenses (Schedule C)</h2><table>';
+                html+='<tr><th>Category</th><th class=amt>Count</th><th class=amt>Amount</th></tr>';
+                ["车辆","牌照","平台","其他"].forEach(function(g){
+                  var cats=Object.keys(dedByCategory[g]||{});
+                  if(cats.length===0)return;
+                  html+='<tr class=section><td colspan=3>'+esc(grpLabels[g])+'</td></tr>';
+                  cats.sort(function(a,b){return dedByCategory[g][b].total-dedByCategory[g][a].total;}).forEach(function(c){
+                    html+='<tr><td>&nbsp;&nbsp;'+esc(c)+'</td><td class=amt>'+dedByCategory[g][c].count+'</td><td class=amt>$'+dedByCategory[g][c].total.toFixed(2)+'</td></tr>';
+                  });
+                  html+='<tr class=subtotal><td>Subtotal '+esc(grpLabels[g])+'</td><td></td><td class=amt>$'+dedGroupTotals[g].toFixed(2)+'</td></tr>';
+                });
+                html+='<tr class=total><td>TOTAL DEDUCTIBLE</td><td></td><td class=amt>$'+totalDed.toFixed(2)+'</td></tr>';
+                html+='</table>';
+                // Non-deductible (reference)
+                if(Object.keys(nonDedByCategory).length>0){
+                  html+='<h2>Non-Deductible Expenses (Reference Only)</h2>';
+                  html+='<p class=note>These items are NOT tax-deductible per IRS rules. Listed here for your records only.</p><table>';
+                  html+='<tr><th>Category</th><th class=amt>Count</th><th class=amt>Amount</th></tr>';
+                  Object.keys(nonDedByCategory).sort(function(a,b){return nonDedByCategory[b].total-nonDedByCategory[a].total;}).forEach(function(c){
+                    html+='<tr><td>'+esc(c)+'</td><td class=amt>'+nonDedByCategory[c].count+'</td><td class=amt>$'+nonDedByCategory[c].total.toFixed(2)+'</td></tr>';
+                  });
+                  html+='<tr class=subtotal><td>Total Non-Deductible</td><td></td><td class=amt>$'+totalNonDed.toFixed(2)+'</td></tr>';
+                  html+='</table>';
+                }
+                // Net Profit
+                html+='<h2>Net Profit Summary</h2><table>';
+                html+='<tr><td>Total Income</td><td class=amt>$'+totalInc.toFixed(2)+'</td></tr>';
+                html+='<tr><td>Less: Total Deductible Expenses</td><td class=amt>($'+totalDed.toFixed(2)+')</td></tr>';
+                html+='<tr class=total><td>NET PROFIT (Schedule C Line 31)</td><td class=amt>$'+netProfit.toFixed(2)+'</td></tr>';
+                html+='</table>';
+                // Notes for accountant
+                html+='<h2>Notes for Accountant</h2><div class=info style="font-size:11px;">';
+                html+='<p>• <b>Auto Loan:</b> Only the interest portion is deductible. Principal is not.</p>';
+                html+='<p>• <b>Phone Bill:</b> Currently 100% claimed as business. Adjust if any personal use.</p>';
+                html+='<p>• <b>Health Insurance:</b> Self-employed health insurance is an above-the-line deduction (Form 1040 Schedule 1), not Schedule C.</p>';
+                html+='<p>• <b>Standard Mileage vs Actual Expenses:</b> The expenses above use the actual expense method. The standard mileage method may yield different results — please advise.</p>';
+                html+='<p>• <b>Quarterly Estimates:</b> Listed under non-deductible (these are tax payments, not expenses).</p>';
+                html+='</div>';
+                html+='<button class=print-btn onclick=window.print()>🖨️ Print / Save as PDF (Ctrl+P)</button>';
+                html+='</body></html>';
+                var w=window.open("","_blank");if(w){w.document.write(html);w.document.close();}else{alert(lang==="en"?"Popup blocked. Please allow popups and try again.":"弹出窗口被拦截，请允许弹出后重试。");}
+              }, style: {width:"100%",background:"linear-gradient(135deg,#1A3010,#0A1808)",border:"1px solid #2A6020",borderRadius:12,padding:14,textAlign:"left",cursor:"pointer",marginTop:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 810}}
+              , React.createElement('div', { style: {fontSize:15,fontWeight:700,color:"#5ADA7A",marginBottom:3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 828}}, "📊 " , lang==="en"?"Tax Summary for Accountant":"会计师年度报表")
+              , React.createElement('div', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 829}}, lang==="en"?"Schedule C-style summary, separates deductible vs non-deductible":"Schedule C 格式，区分可抵税与不可抵税")
+            )
             )
           )
         )
@@ -1958,12 +2092,53 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
 
       , reportData ? (
         React.createElement('div', { style: {position:"fixed",inset:0,background:C.bg,zIndex:300,overflowY:"auto"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 836}}
-          , React.createElement('div', { style: {maxWidth:600,margin:"0 auto",padding:"0 0 60px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 837}}
-            , React.createElement('div', { style: {background:C.bg2,padding:"18px",borderBottom:"1px solid "+C.border,display:"flex",justifyContent:"space-between",alignItems:"center",position:"sticky",top:0,zIndex:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 838}}
+          , React.createElement('div', { style: {background:C.bg2,padding:"18px",borderBottom:"1px solid "+C.border,display:"flex",justifyContent:"space-between",alignItems:"center",position:"sticky",top:0,zIndex:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 838}}
               , React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 839}}, React.createElement('div', { style: {fontSize:16,fontWeight:800}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 839}}, reportData.type==="exp"?(lang==="en"?"💸 Expense Detail":"💸 支出明细"):(lang==="en"?"📊 Financial Report":"📊 财务报告")), React.createElement('div', { style: {fontSize:13,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 839}}, reportData.label))
-              , React.createElement('button', { onClick: function(){setReportData(null);}, style: {background:"#1E3050",border:"none",color:"#8ABCD0",fontSize:16,cursor:"pointer",width:32,height:32,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 840}}, "✕")
+              , React.createElement('div', { style: {display:"flex",gap:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 840}}
+                , React.createElement('button', { onClick: function(){
+                    var rd=reportData;var esc=function(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");};
+                    var html='<!DOCTYPE html><html><head><meta charset=utf-8><title>'+(rd.type==="exp"?"Expense Detail":"Financial Report")+' '+esc(rd.label)+'</title>';
+                    html+='<style>body{font-family:-apple-system,Helvetica,Arial,sans-serif;max-width:800px;margin:30px auto;padding:20px;color:#222;line-height:1.5;background:#fff;}h1{font-size:22px;border-bottom:3px solid #000;padding-bottom:8px;margin-bottom:4px;}h2{font-size:16px;border-bottom:1px solid #888;padding-bottom:4px;margin-top:24px;color:#000;}.subtitle{font-size:12px;color:#666;margin-bottom:20px;}table{width:100%;border-collapse:collapse;margin:8px 0 16px;font-size:12px;}th,td{padding:6px 10px;border-bottom:1px solid #ddd;text-align:left;}th{background:#f0f0f0;font-weight:700;}td.amt{text-align:right;font-variant-numeric:tabular-nums;}tr.subtotal td{font-weight:700;background:#f8f8f8;border-top:1px solid #888;}tr.total td{font-weight:800;background:#222;color:#fff;font-size:13px;}tr.section td{background:#e8e8e8;font-weight:700;font-size:11px;letter-spacing:0.5px;}.print-btn{display:inline-block;margin:30px 0 0;padding:10px 20px;background:#0055FF;color:#fff;border:none;border-radius:6px;font-size:14px;cursor:pointer;}@media print{.print-btn{display:none;}}</style></head><body>';
+                    html+='<h1>🚖 NYC DRIVER '+(rd.type==="exp"?(lang==="en"?"EXPENSE DETAIL":"支出明细"):(lang==="en"?"FINANCIAL REPORT":"财务报告"))+'</h1>';
+                    html+='<div class=subtitle>'+esc(rd.label)+' · Generated '+new Date().toLocaleDateString()+'</div>';
+                    var grpLabels={"车辆":"Vehicle","牌照":"License","平台":"Platform","其他":"Other"};
+                    if(rd.type==="exp"){
+                      html+='<h2>Expenses</h2><table><tr><th>Category</th><th class=amt>Count</th><th class=amt>Amount</th></tr>';
+                      ["车辆","牌照","平台","其他"].forEach(function(g){
+                        var cats=rd.byGroup[g];if(!cats||!cats.length)return;
+                        html+='<tr class=section><td colspan=3>'+grpLabels[g]+'</td></tr>';
+                        var gTotal=0;
+                        cats.forEach(function(cat){var ct=cat.items?cat.items.length:(cat.count||0);gTotal+=cat.total;html+='<tr><td>&nbsp;&nbsp;'+esc(cat.label)+'</td><td class=amt>'+ct+'</td><td class=amt>$'+cat.total.toFixed(2)+'</td></tr>';});
+                        html+='<tr class=subtotal><td>Subtotal '+grpLabels[g]+'</td><td></td><td class=amt>$'+gTotal.toFixed(2)+'</td></tr>';
+                      });
+                      html+='<tr class=total><td>TOTAL EXPENSES</td><td></td><td class=amt>$'+rd.total.toFixed(2)+'</td></tr></table>';
+                    }else{
+                      // Financial report (summary)
+                      var r=rd.r;
+                      html+='<h2>Income</h2><table><tr><th>Description</th><th class=amt>Amount</th></tr>';
+                      if(rd.stmts&&rd.stmts.length>0){rd.stmts.forEach(function(s){var sub=(+s.grossFare||0)+(+s.tips||0)+(+s.bonus||0)+(+s.tollReimbursed||0)+(+s.otherIncome||0);html+='<tr><td>'+esc(s.platform||"")+(s.month?' · '+esc(s.month):'')+'</td><td class=amt>$'+sub.toFixed(2)+'</td></tr>';});}
+                      html+='<tr class=total><td>TOTAL INCOME</td><td class=amt>$'+r.rInc.toFixed(2)+'</td></tr></table>';
+                      html+='<h2>Expenses</h2><table><tr><th>Category</th><th class=amt>Count</th><th class=amt>Amount</th></tr>';
+                      ["车辆","牌照","平台","其他"].forEach(function(g){
+                        var items=rd.byGroup[g];if(!items||!items.length)return;
+                        html+='<tr class=section><td colspan=3>'+grpLabels[g]+'</td></tr>';
+                        var gTotal=0;
+                        items.forEach(function(c){gTotal+=c.total;html+='<tr><td>&nbsp;&nbsp;'+esc(c.label)+'</td><td class=amt>'+(c.count||"")+'</td><td class=amt>$'+c.total.toFixed(2)+'</td></tr>';});
+                        html+='<tr class=subtotal><td>Subtotal '+grpLabels[g]+'</td><td></td><td class=amt>$'+gTotal.toFixed(2)+'</td></tr>';
+                      });
+                      html+='<tr class=total><td>TOTAL EXPENSES</td><td></td><td class=amt>$'+r.rTot.toFixed(2)+'</td></tr></table>';
+                      html+='<h2>Net Profit</h2><table>';
+                      html+='<tr><td>Income</td><td class=amt>$'+r.rInc.toFixed(2)+'</td></tr>';
+                      html+='<tr><td>Less: Expenses</td><td class=amt>($'+r.rTot.toFixed(2)+')</td></tr>';
+                      html+='<tr class=total><td>NET PROFIT</td><td class=amt>$'+r.rn.toFixed(2)+'</td></tr></table>';
+                    }
+                    html+='<button class=print-btn onclick=window.print()>🖨️ Print / Save as PDF (Ctrl+P)</button></body></html>';
+                    var w=window.open("","_blank");if(w){w.document.write(html);w.document.close();}else{alert(lang==="en"?"Popup blocked":"弹出窗口被拦截");}
+                  }, style: {background:"#0A4020",border:"1px solid #2A8050",color:"#5ADA7A",fontSize:13,fontWeight:600,cursor:"pointer",padding:"6px 12px",borderRadius:8,display:"flex",alignItems:"center",gap:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 840}}, "🖨", " ", lang==="en"?"Print":"打印")
+                , React.createElement('button', { onClick: function(){setReportData(null);}, style: {background:"#1E3050",border:"none",color:"#8ABCD0",fontSize:16,cursor:"pointer",width:32,height:32,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 840}}, "✕")
+              )
             )
-            , React.createElement('div', { style: {padding:"20px 16px 0",fontFamily:"monospace"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 842}}
+            , React.createElement('div', { style: {maxWidth:600,margin:"0 auto",padding:"20px 16px 60px",fontFamily:"monospace"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 842}}
               , React.createElement('div', { style: {textAlign:"center",marginBottom:20}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 843}}
                 , React.createElement('div', { style: {fontSize:18,fontWeight:900,color:C.text,letterSpacing:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 844}}, "🚖 " , lang==="en"?"NYC DRIVER REPORT":"纽约司机财务报告")
                 , React.createElement('div', { style: {fontSize:14,color:C.text3,marginTop:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 845}}, reportData.label)
@@ -2028,7 +2203,6 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
               )
             )
           )
-        )
       ) : null
 
       , React.createElement('div', { style: {position:"fixed",bottom:0,left:0,right:0,display:"flex",background:C.bg2,borderTop:"1px solid "+C.border,zIndex:500,paddingBottom:"env(safe-area-inset-bottom)",alignItems:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 906}}
