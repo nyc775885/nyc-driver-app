@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-console.log("%cNYC Driver Tracker — version v88","color:#00D4FF;font-weight:bold;font-size:14px");
+console.log("%cNYC Driver Tracker — version v90","color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
 //   <script>window.SENTRY_DSN = "https://YOUR_KEY@oXXX.ingest.sentry.io/PROJECT";</script>
@@ -377,6 +377,16 @@ function LockScreen(p){
   // first → confirm → done (setup) | verify (unlock)
   var current = stage === "confirm" ? confirmPin : pin;
   var setCurrent = stage === "confirm" ? setConfirmPin : setPin;
+  // Keyboard support — listen for digit keys + backspace globally
+  useEffect(function(){
+    var onKey = function(ev){
+      if(ev.key>="0"&&ev.key<="9"){ev.preventDefault();addDigit(ev.key);}
+      else if(ev.key==="Backspace"){ev.preventDefault();delDigit();}
+      else if(ev.key==="Escape"&&isSetup&&p.onCancel){ev.preventDefault();p.onCancel();}
+    };
+    window.addEventListener("keydown",onKey);
+    return function(){window.removeEventListener("keydown",onKey);};
+  },[current,stage]);
   var addDigit = function(d){
     if(current.length>=4)return;
     var next = current + d;
@@ -974,7 +984,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                 , React.createElement(Card, { style: {marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 269}}
                   , React.createElement('div', { style: {fontSize:13,color:"#8ACCA8",marginBottom:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 270}}, T.netIncome)
                   , (function(){var nc=net>=0?"#5AB078":"#C04848";return React.createElement('div', { style: {fontSize:20,fontWeight:700,color:nc,letterSpacing:-0.5}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 271}}, fmt(net));}())
-                  , React.createElement('div', { style: {fontSize:12,color:"#8ACCA8",marginTop:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 272}}, lang==="en"?"Income":"收", " " , fmt(tInc), " · "  , lang==="en"?"Expense":"支", " " , fmt(tExp))
+                  , React.createElement('div', { style: {fontSize:12,color:"#8ACCA8",marginTop:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 272}}, lang==="en"?"Income":"收", " " , fmt(tInc), " · "  , lang==="en"?"Expense":"支", " " , React.createElement('span',{style:{color:"#FF6B35"}}, fmt(tExp)))
                   , tInc>0&&tExp>0 ? React.createElement('div', { style: {marginTop:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 273}}, React.createElement('div', { style: {height:6,borderRadius:3,background:C.bg2,overflow:"hidden"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 273}}, React.createElement('div', { style: {height:6,borderRadius:3,background:"linear-gradient(90deg,#00E676,#00D4FF)",width:Math.min(100,Math.round(net/tInc*100))+"%"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 273}})), React.createElement('div', { style: {fontSize:11,color:"#5A8A6A",marginTop:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 273}}, lang==="en"?"Profit Rate":"利润率", " " , Math.round(net/tInc*100), "%")) : null
                 )
                 , achievements.length>0 ? React.createElement('div', { style: {display:"flex",flexWrap:"wrap",gap:8,marginBottom:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 275}}, achievements.map(function(a,i){return React.createElement(Badge, { key: i, icon: a.icon, text: a.text, color: a.color, bg: a.bg, __self: this, __source: {fileName: _jsxFileName, lineNumber: 275}} );})) : null
@@ -1463,7 +1473,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
           , React.createElement('div', { style: {width:"60%",maxWidth:220,background:C.bg2,height:"100%",overflowY:"auto",borderRight:"1px solid "+C.border,display:"flex",flexDirection:"column",paddingBottom:"70px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 597}}
             , React.createElement('div', { style: {padding:"20px 18px 16px",borderBottom:"1px solid "+C.border}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 598}}
               , React.createElement('div', { style: {fontSize:15,fontWeight:800,color:C.text}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 599}}, T.menu)
-              , React.createElement('div', { style: {fontSize:11,color:C.text3,marginTop:2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 600}}, "NYC RIDESHARE TRACKER · v1.3.9"    )
+              , React.createElement('div', { style: {fontSize:11,color:C.text3,marginTop:2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 600}}, "NYC RIDESHARE TRACKER · v1.4.1"    )
             )
             , React.createElement('div', { style: {padding:"10px 0",flex:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 602}}
               , [{icon:"📝",label:lang==="en"?"Notes":"记事本",action:function(){setShowDrawer(false);setSf("notes");}},{icon:"🗂",label:lang==="en"?"Categories":"支出类别",action:function(){setShowDrawer(false);setSf("manage_cats");}},{icon:"&#128197;",label:T.fixedFees,action:function(){setShowDrawer(false);setSf("drawer_fixed");}},{icon:"🧾",label:lang==="en"?"Tax Center":"税务中心",action:function(){setShowDrawer(false);setSf("tax_center");}},{icon:"&#128190;",label:T.backup,action:function(){setShowDrawer(false);setShowBackup(true);}},{icon:"&#128276;",label:T.reminder,action:function(){setShowDrawer(false);setShowRemMgr(true);}},{icon:"&#128203;",label:T.license,action:function(){setShowDrawer(false);setSf("drawer_lic");}},{icon:"&#128241;",label:T.platform,action:function(){setShowDrawer(false);setShowPlatMgr(true);}},{icon:"&#128663;",label:T.vehicle,action:function(){setShowDrawer(false);setSf("drawer_veh");}},{icon:"🔒",label:lang==="en"?"PIN Lock":"PIN 锁屏",action:function(){setShowDrawer(false);setSf("pin_settings");}},{icon:"🚪",label:lang==="en"?"Sign Out":"退出登录",action:function(){if(!confirm(lang==="en"?"Sign out of Google?":"确认退出 Google 登录？"))return;setGUser(null);try{localStorage.removeItem("nyc_user");localStorage.removeItem("nyc_tab");}catch(e){}setTab(0);setSf(null);setShowDrawer(false);setShowBackup(false);setShowPlatMgr(false);setShowRemMgr(false);},color:"#FF5252"},].map(function(item,i){return React.createElement('button', { key: i, onClick: item.action, style: {display:"flex",alignItems:"center",gap:14,width:"100%",background:"none",border:"none",padding:"14px 18px",cursor:"pointer",textAlign:"left",borderBottom:"1px solid "+C.border,color:item.color||C.text}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 603}}, React.createElement('span', { style: {fontSize:20}, dangerouslySetInnerHTML: {__html:item.icon}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 603}} ), React.createElement('span', { style: {fontSize:14,color:C.text,fontWeight:600}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 603}}, item.label), React.createElement('span', { style: {marginLeft:"auto",color:C.text3,fontSize:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 603}}, ">"));})
