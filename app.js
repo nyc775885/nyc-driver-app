@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-console.log("%cNYC Driver Tracker — version v221","color:#00D4FF;font-weight:bold;font-size:14px");
+console.log("%cNYC Driver Tracker — version v227","color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
 //   <script>window.SENTRY_DSN = "https://YOUR_KEY@oXXX.ingest.sentry.io/PROJECT";</script>
@@ -249,19 +249,43 @@ function parseUberStatement(text){
   var ms=Math.abs(new Date(weekEnd)-new Date(weekStart));
   var dayDiff=Math.round(ms/86400000);
   if(dayDiff<1){ return {error:"This looks like a partial-day statement (range "+weekStart+" to "+weekEnd+"). Please use a full-week statement."}; }
-  // Fare: there can be multiple "Fare $X" matches (header total + sub-category). Take the largest.
+  // Fare: tolerate variants like "Fare", "Trip Fare", "Total Fare", "Gross Fare"
+  // Also tolerate optional + sign before $
   var fareMatches=[]; var m;
-  var fareRe=/Fare\s+\$([0-9,]+\.\d{2})/g;
+  var fareRe=/(?:Trip\s+|Total\s+|Gross\s+)?Fare\s*\+?\s*\$([0-9,]+\.\d{2})/gi;
   while((m=fareRe.exec(text))!==null){ fareMatches.push(parseFloat(m[1].replace(/,/g,""))); }
   var fare=fareMatches.length>0?Math.max.apply(null,fareMatches):0;
-  // Tip
+  // Tip parsing: handle "Breakdown of Your earnings" (current week) AND
+  // "Breakdown of Your earnings (from previous weeks)" — late tips from prior weeks.
+  // Strategy: split text at "(from previous weeks)" if present.
+  var prevWeekIdx = text.indexOf("(from previous weeks)");
+  var currentText = prevWeekIdx >= 0 ? text.slice(0, prevWeekIdx) : text;
+  var prevText = prevWeekIdx >= 0 ? text.slice(prevWeekIdx) : "";
+  
+  // Current week tip — tolerate "Tip" or "Tips" with optional + sign
   var tipMatches=[];
-  var tipRe=/Tip\s+\$([0-9,]+\.\d{2})/g;
-  while((m=tipRe.exec(text))!==null){ tipMatches.push(parseFloat(m[1].replace(/,/g,""))); }
-  // First-line tip is usually summary; per-transaction Tips also appear. Take max.
+  var tipRe=/Tips?\s*\+?\s*\$([0-9,]+\.\d{2})/gi;
+  while((m=tipRe.exec(currentText))!==null){ tipMatches.push(parseFloat(m[1].replace(/,/g,""))); }
   var tip=tipMatches.length>0?Math.max.apply(null,tipMatches):0;
-  // Toll refund (under "Refunds & Expenses" section)
-  var tollRe=/Toll\s+\$([0-9,]+\.\d{2})/;
+  
+  // Previous-week leftover tip
+  var prevWeekTip = 0;
+  if(prevText){
+    var ptipMatches=[];
+    var ptipRe=/Tips?\s*\+?\s*\$([0-9,]+\.\d{2})/gi;
+    while((m=ptipRe.exec(prevText))!==null){ ptipMatches.push(parseFloat(m[1].replace(/,/g,""))); }
+    if(ptipMatches.length > 0) prevWeekTip = Math.max.apply(null, ptipMatches);
+  }
+  // Also check the summary line "Events from previous weeks $X" — covers cases where
+  // the breakdown section is missing but summary line exists
+  var prevSummaryRe = /Events from previous weeks\s+\$([0-9,]+\.\d{2})/;
+  var prevSummaryM = text.match(prevSummaryRe);
+  if(prevSummaryM){
+    var prevSummary = parseFloat(prevSummaryM[1].replace(/,/g,""));
+    if(prevSummary > prevWeekTip) prevWeekTip = prevSummary;
+  }
+  // Toll refund — tolerate "Toll", "Tolls", "Toll Reimbursement"
+  var tollRe=/Tolls?(?:\s+Reimbursement)?\s*\+?\s*\$([0-9,]+\.\d{2})/i;
   var tollM=text.match(tollRe);
   var toll=tollM?parseFloat(tollM[1].replace(/,/g,"")):0;
   // Payout amount + transferred date
@@ -286,18 +310,110 @@ function parseUberStatement(text){
   var earnRe=/Your earnings\s+\$([0-9,]+\.\d{2})/;
   var earnM=text.match(earnRe);
   var statedEarnings=earnM?parseFloat(earnM[1].replace(/,/g,"")):0;
+  // ============ AUDIT: cross-check Uber-stated totals vs our extracted values ============
+  // Look for "Refunds & Expenses $X" total (in Weekly Summary)
+  var refundsSummaryRe = /Refunds & Expenses\s+\$([0-9,]+\.\d{2})/;
+  var refundsSummaryM = text.match(refundsSummaryRe);
+  var refundsSummary = refundsSummaryM ? parseFloat(refundsSummaryM[1].replace(/,/g,"")) : 0;
+  
+  // Look for "Payouts $X" total
+  var payoutsTotalRe = /Payouts\s+\$([0-9,]+\.\d{2})/;
+  var payoutsTotalM = text.match(payoutsTotalRe);
+  var payoutsTotal = payoutsTotalM ? parseFloat(payoutsTotalM[1].replace(/,/g,"")) : 0;
+  
+  // Audit checks
+  var audit = { warnings: [] };
+  
+  // Check 1: Fare + Tip should equal Your earnings (within $0.50)
+  if(statedEarnings > 0){
+    var calcEarnings = fare + tip;
+    var earnDiff = Math.abs(calcEarnings - statedEarnings);
+    if(earnDiff >= 0.5){
+      audit.warnings.push({
+        type: "earnings_mismatch",
+        msg: "Fare+Tip ("+calcEarnings.toFixed(2)+") ≠ Uber stated earnings ("+statedEarnings.toFixed(2)+"). Off by $"+earnDiff.toFixed(2),
+        msgCn: "总车费+小费 ("+calcEarnings.toFixed(2)+") ≠ Uber 显示收入 ("+statedEarnings.toFixed(2)+")。差 $"+earnDiff.toFixed(2),
+        severity: "high"
+      });
+    }
+  }
+  
+  // Check 2: Refunds breakdown (toll) should equal Refunds total
+  if(refundsSummary > 0 && Math.abs(refundsSummary - toll) >= 0.5){
+    audit.warnings.push({
+      type: "refunds_mismatch",
+      msg: "Toll ($"+toll.toFixed(2)+") ≠ Refunds total ($"+refundsSummary.toFixed(2)+"). Other refund types may exist.",
+      msgCn: "过桥退款 ($"+toll.toFixed(2)+") ≠ 退款合计 ($"+refundsSummary.toFixed(2)+")。可能有其他类型的退款。",
+      severity: "med"
+    });
+  }
+  
+  // Check 3: Find all $XX.XX in text that we DIDN'T categorize — they might be missed income
+  // Look in the "Breakdown of Your earnings" section specifically
+  var earningsBreakdownStart = currentText.indexOf("Breakdown of Your earnings");
+  if(earningsBreakdownStart >= 0){
+    // Find end of section: next "Breakdown of" or end of currentText
+    var nextSection = currentText.indexOf("Breakdown of", earningsBreakdownStart + 30);
+    var sectionEnd = nextSection > 0 ? nextSection : earningsBreakdownStart + 2000;
+    var earningsSection = currentText.slice(earningsBreakdownStart, Math.min(sectionEnd, earningsBreakdownStart + 2000));
+    // Extract labeled $ amounts
+    var labelRe = /([A-Z][A-Za-z\s&\-]+?)\s+\$([0-9,]+\.\d{2})/g;
+    var foundLabels = [];
+    var lm;
+    while((lm = labelRe.exec(earningsSection)) !== null){
+      var lbl = lm[1].trim();
+      var amt = parseFloat(lm[2].replace(/,/g,""));
+      // Skip known categories we already handle
+      var lblLower = lbl.toLowerCase();
+      if(lblLower.indexOf("fare") >= 0) continue;
+      if(lblLower.indexOf("tip") >= 0) continue;
+      if(lblLower.indexOf("your earnings") >= 0) continue;
+      if(lblLower.indexOf("distance") >= 0) continue;  // sub-component of fare
+      if(lblLower.indexOf("time") >= 0) continue;  // sub-component of fare
+      if(lblLower.indexOf("surge") >= 0) continue;  // sub-component of fare
+      if(lblLower.indexOf("minimum fare") >= 0) continue;  // sub-component
+      if(lblLower.indexOf("wait time") >= 0) continue;  // sub-component
+      if(lblLower.indexOf("reserve premium") >= 0) continue;  // sub-component
+      if(lblLower.indexOf("out of town") >= 0) continue;  // sub-component
+      if(lblLower.indexOf("supplement") >= 0) continue;  // sub-component
+      if(lblLower.indexOf("breakdown") >= 0) continue;  // header
+      if(lblLower.indexOf("toll") >= 0) continue;  // tolls handled separately
+      if(lblLower.indexOf("refund") >= 0) continue;  // refunds total
+      if(lblLower.indexOf("expense") >= 0) continue;  // expense total
+      if(lblLower.indexOf("payout") >= 0) continue;  // payout total
+      if(lblLower.indexOf("balance") >= 0) continue;  // start/end balance
+      if(lblLower.indexOf("transferred") >= 0) continue;  // bank transfer
+      if(lblLower.indexOf("events from previous") >= 0) continue;  // prev-week earnings (already in bonus)
+      if(amt < 0.01) continue;
+      foundLabels.push({label: lbl, amount: amt});
+    }
+    if(foundLabels.length > 0){
+      audit.warnings.push({
+        type: "unrecognized_items",
+        msg: "Possible uncategorized income items: " + foundLabels.map(function(f){return f.label+" $"+f.amount.toFixed(2);}).join(", "),
+        msgCn: "可能有未分类的收入项: " + foundLabels.map(function(f){return f.label+" $"+f.amount.toFixed(2);}).join("、"),
+        severity: "high",
+        items: foundLabels
+      });
+    }
+  }
+  
   return {
     weekStart:weekStart,
     weekEnd:weekEnd,
     platform:"Uber",
     grossFare:fare.toFixed(2),
     tips:tip.toFixed(2),
-    bonus:"0.00",
+    bonus:prevWeekTip.toFixed(2),
     tollReimbursed:toll.toFixed(2),
     statedEarnings:statedEarnings.toFixed(2),
+    prevWeekTip:prevWeekTip.toFixed(2),
+    refundsSummary:refundsSummary.toFixed(2),
+    payoutsTotal:payoutsTotal.toFixed(2),
+    audit:audit,
     payoutAmount:payoutAmount?payoutAmount.toFixed(2):"",
     payoutDate:payoutDate||"",
-    notes:"Imported from Uber weekly statement ("+weekStart+" – "+weekEnd+")"
+    notes:"Imported from Uber weekly statement ("+weekStart+" – "+weekEnd+")"+(prevWeekTip>0?" + $"+prevWeekTip.toFixed(2)+" prior-week tips":"")
   };
 }
 
@@ -2682,7 +2798,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
             , React.createElement('div', { style: {padding:"10px 0",flex:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 602}}
               , [{icon:"📝",label:lang==="en"?"Notes":"记事本",action:function(){setShowDrawer(false);setSf("notes");}},{icon:"🏥",label:lang==="en"?"Health Check":"数据健康检查",action:function(){setShowDrawer(false);setSf("health_check");}},{icon:"🗂",label:lang==="en"?"Categories":"支出类别",action:function(){setShowDrawer(false);setSf("manage_cats");}},{icon:"&#128197;",label:T.fixedFees,action:function(){setShowDrawer(false);setSf("drawer_fixed");}},{icon:"🧾",label:lang==="en"?"Tax Center":"税务中心",action:function(){setShowDrawer(false);setSf("tax_center");}},{icon:"&#128190;",label:T.backup,action:function(){setShowDrawer(false);setShowBackup(true);}},{icon:"&#128276;",label:T.reminder,action:function(){setShowDrawer(false);setShowRemMgr(true);}},{icon:"&#128203;",label:T.license,action:function(){setShowDrawer(false);setSf("drawer_lic");}},{icon:"&#128241;",label:T.platform,action:function(){setShowDrawer(false);setShowPlatMgr(true);}},{icon:"&#128663;",label:T.vehicle,action:function(){setShowDrawer(false);setSf("drawer_veh");}},{icon:"🚖",label:lang==="en"?"Driver Type":"切换司机类型",action:function(){setShowDrawer(false);setDriverType(null);setOnboardingDismissed(false);}},{icon:"🔒",label:lang==="en"?"PIN Lock":"PIN 锁屏",action:function(){setShowDrawer(false);setSf("pin_settings");}},{icon:"🚪",label:lang==="en"?"Sign Out":"退出登录",action:function(){if(!confirm(lang==="en"?"Sign out of Google?":"确认退出 Google 登录？"))return;setGUser(null);try{localStorage.removeItem("nyc_user");localStorage.removeItem("nyc_tab");}catch(e){}setTab(0);setSf(null);setShowDrawer(false);setShowBackup(false);setShowPlatMgr(false);setShowRemMgr(false);},color:"#FF5252"},].map(function(item,i){return React.createElement('button', { key: i, onClick: item.action, style: {display:"flex",alignItems:"center",gap:14,width:"100%",background:"none",border:"none",padding:"14px 18px",cursor:"pointer",textAlign:"left",borderBottom:"1px solid "+C.border,color:item.color||C.text}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 603}}, React.createElement('span', { style: {fontSize:20}, dangerouslySetInnerHTML: {__html:item.icon}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 603}} ), React.createElement('span', { style: {fontSize:14,color:C.text,fontWeight:600}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 603}}, item.label), React.createElement('span', { style: {marginLeft:"auto",color:C.text3,fontSize:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 603}}, ">"));})
             )
-            , React.createElement('div', { style: {fontSize:10,color:C.text3,textAlign:"center",padding:"12px 18px 16px",borderTop:"1px solid "+C.border,letterSpacing:0.5} }, "NYC RIDESHARE TRACKER · v2.8.9"    )
+            , React.createElement('div', { style: {fontSize:10,color:C.text3,textAlign:"center",padding:"12px 18px 16px",borderTop:"1px solid "+C.border,letterSpacing:0.5} }, "NYC RIDESHARE TRACKER · v2.9.5"    )
           )
           , React.createElement('div', { style: {flex:1,background:"rgba(0,0,0,0.6)"}, onClick: function(){setShowDrawer(false);}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 606}} )
         )
@@ -3290,16 +3406,55 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                     setPasteUberResult(r);
                   }, style: {width:"100%",background:"linear-gradient(135deg,#0A4020,#1A6030)",border:"none",borderRadius:10,padding:"12px",color:"#5ADA7A",fontSize:14,fontWeight:800,cursor:"pointer",marginTop:12} }, "🔍 " , lang==="en"?"Parse":"解析")
               , pasteUberResult ? React.createElement('div', { style: {marginTop:14,padding:"14px 16px",background:"#0A2010",border:"1px solid #2A6020",borderRadius:10} }
-                  , React.createElement('div', { style: {fontSize:13,fontWeight:800,color:"#5ADA7A",marginBottom:10} }, "✓ " , lang==="en"?"Parsed successfully":"解析成功")
-                  , React.createElement('div', { style: {fontSize:12,color:C.text3,marginBottom:6} }, lang==="en"?"Week: ":"周次：" , React.createElement('b',{style:{color:"#FFD700"}}, pasteUberResult.weekStart, " → " , pasteUberResult.weekEnd))
-                  , React.createElement('div', { style: {display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,fontSize:13,marginTop:8} }
-                    , React.createElement('div', {}, "💵 " , lang==="en"?"Fare":"总车费" , ": ", React.createElement('b',{style:{color:"#00D4FF"}}, "$"+pasteUberResult.grossFare))
-                    , React.createElement('div', {}, "💰 " , T.tips , ": ", React.createElement('b',{style:{color:"#00E676"}}, "$"+pasteUberResult.tips))
-                    , React.createElement('div', {}, "🌉 " , T.toll , ": ", React.createElement('b',{style:{color:"#FFB300"}}, "$"+pasteUberResult.tollReimbursed))
-                    , React.createElement('div', {}, "📊 " , lang==="en"?"Total":"合计" , ": ", React.createElement('b',{style:{color:"#FFD700"}}, "$"+(((+pasteUberResult.grossFare)+(+pasteUberResult.tips)+(+pasteUberResult.tollReimbursed)).toFixed(2))))
+                  , React.createElement('div', { style: {fontSize:13,fontWeight:800,color:"#5ADA7A",marginBottom:6} }, "✓ " , lang==="en"?"Parsed — please verify before saving":"解析完成 — 保存前请核对")
+                  , React.createElement('div', { style: {fontSize:11,color:C.text3,marginBottom:8} }, "📝 " , lang==="en"?"Tap any number to edit":"点任何数字可修改")
+                  , React.createElement('div', { style: {fontSize:12,color:C.text3,marginBottom:8} }, lang==="en"?"Week: ":"周次：" , React.createElement('b',{style:{color:"#FFD700"}}, pasteUberResult.weekStart, " → " , pasteUberResult.weekEnd))
+                  , React.createElement('div', { style: {display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginTop:6} }
+                    , React.createElement('div', {style:{display:"flex",flexDirection:"column",gap:2}}
+                      , React.createElement('span',{style:{color:C.text3,fontSize:11}}, "💵 " , lang==="en"?"Fare":"总车费")
+                      , React.createElement('input',{type:"number",step:"0.01",value:pasteUberResult.grossFare,onChange:function(e){setPasteUberResult(Object.assign({},pasteUberResult,{grossFare:e.target.value}));},style:{background:"#0A1828",border:"1px solid #2A3A54",borderRadius:6,padding:"6px 8px",color:"#00D4FF",fontSize:14,fontWeight:700,width:"100%",boxSizing:"border-box"}})
+                    )
+                    , React.createElement('div', {style:{display:"flex",flexDirection:"column",gap:2}}
+                      , React.createElement('span',{style:{color:C.text3,fontSize:11}}, "💰 " , T.tips)
+                      , React.createElement('input',{type:"number",step:"0.01",value:pasteUberResult.tips,onChange:function(e){setPasteUberResult(Object.assign({},pasteUberResult,{tips:e.target.value}));},style:{background:"#0A1828",border:"1px solid #2A3A54",borderRadius:6,padding:"6px 8px",color:"#00E676",fontSize:14,fontWeight:700,width:"100%",boxSizing:"border-box"}})
+                    )
+                    , React.createElement('div', {style:{display:"flex",flexDirection:"column",gap:2}}
+                      , React.createElement('span',{style:{color:C.text3,fontSize:11}}, "🎁 " , lang==="en"?"Bonus / Prior tips":"奖励 / 遗留小费")
+                      , React.createElement('input',{type:"number",step:"0.01",value:pasteUberResult.bonus||"0.00",onChange:function(e){setPasteUberResult(Object.assign({},pasteUberResult,{bonus:e.target.value}));},style:{background:"#0A1828",border:"1px solid #2A3A54",borderRadius:6,padding:"6px 8px",color:"#FFD700",fontSize:14,fontWeight:700,width:"100%",boxSizing:"border-box"}})
+                    )
+                    , React.createElement('div', {style:{display:"flex",flexDirection:"column",gap:2}}
+                      , React.createElement('span',{style:{color:C.text3,fontSize:11}}, "🌉 " , T.toll)
+                      , React.createElement('input',{type:"number",step:"0.01",value:pasteUberResult.tollReimbursed,onChange:function(e){setPasteUberResult(Object.assign({},pasteUberResult,{tollReimbursed:e.target.value}));},style:{background:"#0A1828",border:"1px solid #2A3A54",borderRadius:6,padding:"6px 8px",color:"#FFB300",fontSize:14,fontWeight:700,width:"100%",boxSizing:"border-box"}})
+                    )
+                    , React.createElement('div', {style:{display:"flex",flexDirection:"column",gap:2}}
+                      , React.createElement('span',{style:{color:C.text3,fontSize:11}}, "🏦 " , lang==="en"?"Bank Payout":"银行入账")
+                      , React.createElement('input',{type:"number",step:"0.01",value:pasteUberResult.payoutAmount||"",placeholder:"0.00",onChange:function(e){setPasteUberResult(Object.assign({},pasteUberResult,{payoutAmount:e.target.value}));},style:{background:"#0A1828",border:"1px solid #2A3A54",borderRadius:6,padding:"6px 8px",color:"#5AACFF",fontSize:14,fontWeight:700,width:"100%",boxSizing:"border-box"}})
+                    )
+                    , React.createElement('div', {style:{display:"flex",flexDirection:"column",gap:2}}
+                      , React.createElement('span',{style:{color:C.text3,fontSize:11}}, "📅 " , lang==="en"?"Payout Date":"入账日期")
+                      , React.createElement('input',{type:"date",value:pasteUberResult.payoutDate||"",onChange:function(e){setPasteUberResult(Object.assign({},pasteUberResult,{payoutDate:e.target.value}));},style:{background:"#0A1828",border:"1px solid #2A3A54",borderRadius:6,padding:"6px 8px",color:C.text2,fontSize:13,fontWeight:600,width:"100%",boxSizing:"border-box"}})
+                    )
                   )
-                  , (pasteUberResult.payoutAmount && +pasteUberResult.payoutAmount>0) ? React.createElement('div', {style:{marginTop:8,padding:"6px 10px",background:"#0A1828",borderRadius:6,fontSize:12,color:"#5AACFF"}}, "\ud83c\udfe6 " , lang==="en"?"Bank Payout: $":"\u94f6\u884c\u5165\u8d26\uff1a$" , pasteUberResult.payoutAmount, pasteUberResult.payoutDate ? " \u00b7 "+pasteUberResult.payoutDate : "") : null
-                  , (+pasteUberResult.statedEarnings>0) ? React.createElement('div', {style:{fontSize:11,color:C.text3,marginTop:8}}, lang==="en"?"Uber's stated earnings: ":"Uber 显示收入：" , "$"+pasteUberResult.statedEarnings , (Math.abs((+pasteUberResult.grossFare+ +pasteUberResult.tips)-(+pasteUberResult.statedEarnings))<0.5?"  ✓":"  ⚠ "+(lang==="en"?"mismatch":"不匹配"))) : null
+                  , React.createElement('div', {style:{marginTop:10,padding:"8px 12px",background:"#0A1828",borderRadius:6,fontSize:13,textAlign:"center"}}
+                    , "📊 ", lang==="en"?"Total: ":"合计：" , React.createElement('b',{style:{color:"#FFD700",fontSize:16}}, "$"+(((+pasteUberResult.grossFare||0)+(+pasteUberResult.tips||0)+(+pasteUberResult.bonus||0)+(+pasteUberResult.tollReimbursed||0)).toFixed(2)))
+                  )
+                  , (+pasteUberResult.statedEarnings>0) ? (function(){
+                      var calculated = (+pasteUberResult.grossFare||0)+(+pasteUberResult.tips||0)+(+pasteUberResult.bonus||0);
+                      var diff = Math.abs(calculated - (+pasteUberResult.statedEarnings));
+                      var match = diff < 0.5;
+                      return React.createElement('div', {style:{fontSize:11,color:match?"#5ADA7A":"#FFB300",marginTop:8,padding:"6px 10px",background:match?"#0A2018":"#1A1400",borderRadius:6}}
+                        , match ? "✓ " : "⚠ "
+                        , lang==="en"?"Uber stated earnings: ":"Uber 显示收入：" , "$"+pasteUberResult.statedEarnings
+                        , match ? (lang==="en"?" — matches":" — 一致") : (lang==="en"?(" — off by $"+diff.toFixed(2)):(" — 差 $"+diff.toFixed(2)))
+                      );
+                    }()) : null
+                  , (pasteUberResult.audit && pasteUberResult.audit.warnings && pasteUberResult.audit.warnings.length > 0) ? React.createElement('div', {style:{marginTop:10,padding:"10px 12px",background:"#1A1400",border:"1px solid #5A3A00",borderRadius:8}}
+                      , React.createElement('div', {style:{fontSize:12,fontWeight:700,color:"#FFB300",marginBottom:6}}, "🔍 " , lang==="en"?"Audit Warnings — please verify":"审核警告 — 请核对")
+                      , pasteUberResult.audit.warnings.map(function(w,i){
+                          return React.createElement('div', {key:i,style:{fontSize:11,color:"#FFD380",marginBottom:4,lineHeight:1.5,paddingLeft:8,borderLeft:"2px solid #5A3A00"}}, lang==="en"?w.msg:w.msgCn);
+                        })
+                      , React.createElement('div', {style:{fontSize:10,color:C.text3,marginTop:6,fontStyle:"italic"}}, lang==="en"?"💡 If something is missing, edit the fields above before saving.":"💡 如有遗漏，请在上方字段中手动修正后保存。")
+                    ) : null
                   , React.createElement('button', { onClick: function(){
                       var r=pasteUberResult;
                       // Find existing wl entry for same week + Uber
