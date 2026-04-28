@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-console.log("%cNYC Driver Tracker — version v259","color:#00D4FF;font-weight:bold;font-size:14px");
+console.log("%cNYC Driver Tracker — version v293","color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
 //   <script>window.SENTRY_DSN = "https://YOUR_KEY@oXXX.ingest.sentry.io/PROJECT";</script>
@@ -602,7 +602,7 @@ function BucketList(p){
         var isExp=__bucketExpanded[groupKey];
         if(cat.items.length===1){
           var item=cat.items[0];
-          return React.createElement(ExpItem, { key: item.id, item: item, allC: aC, lang: p.lang, distFromLast: distMap[item.id]||null, onDel: function(){if(!confirm(p.lang==="en"?"Delete this expense?":"确认删除这笔支出？"))return;p.setEl(p.el.filter(function(x){return x.id!==item.id;}));}, onEdit: function(){if(item.isFixed){p.onEditFixed&&p.onEditFixed(item);}else{p.onEditExp&&p.onEditExp(item);}}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 49}} );
+          return React.createElement(ExpItem, { key: item.id, item: item, allC: aC, lang: p.lang, distFromLast: distMap[item.id]||null, onDel: function(){if(!confirm(p.lang==="en"?"Delete this expense?":"确认删除这笔支出？"))return;var prev=p.el.slice();p.setEl(p.el.filter(function(x){return x.id!==item.id;}));if(p.showUndo){p.showUndo((p.lang==="en"?"✓ Expense deleted":"✓ 支出已删除"), {prevEl:prev});}else if(typeof showToast==="function"){showToast(p.lang==="en"?"✓ Expense deleted":"✓ 支出已删除");}}, onEdit: function(){if(item.isFixed){p.onEditFixed&&p.onEditFixed(item);}else{p.onEditExp&&p.onEditExp(item);}}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 49}} );
         }
         return React.createElement('div', { key: ck, style: {marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 49}}
           , React.createElement('button', { onClick: function(){toggle(groupKey);}, style: {width:"100%",background:C.bg2,border:"1px solid "+C.border,borderRadius:10,padding:"10px 14px",display:"flex",justifyContent:"space-between",alignItems:"center",cursor:"pointer",marginBottom:isExp?8:0}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 49}}
@@ -619,7 +619,7 @@ function BucketList(p){
             )
           )
           , isExp ? React.createElement('div', { style: {paddingLeft:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 49}}
-            , cat.items.map(function(item){return React.createElement(ExpItem, { key: item.id, item: item, allC: aC, lang: p.lang, distFromLast: distMap[item.id]||null, onDel: function(){if(!confirm(p.lang==="en"?"Delete this expense?":"确认删除这笔支出？"))return;p.setEl(p.el.filter(function(x){return x.id!==item.id;}));}, onEdit: function(){if(item.isFixed){p.onEditFixed&&p.onEditFixed(item);}else{p.onEditExp&&p.onEditExp(item);}}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 49}} );})
+            , cat.items.map(function(item){return React.createElement(ExpItem, { key: item.id, item: item, allC: aC, lang: p.lang, distFromLast: distMap[item.id]||null, onDel: function(){if(!confirm(p.lang==="en"?"Delete this expense?":"确认删除这笔支出？"))return;var prev=p.el.slice();p.setEl(p.el.filter(function(x){return x.id!==item.id;}));if(p.showUndo){p.showUndo((p.lang==="en"?"✓ Expense deleted":"✓ 支出已删除"), {prevEl:prev});}else if(typeof showToast==="function"){showToast(p.lang==="en"?"✓ Expense deleted":"✓ 支出已删除");}}, onEdit: function(){if(item.isFixed){p.onEditFixed&&p.onEditFixed(item);}else{p.onEditExp&&p.onEditExp(item);}}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 49}} );})
           ) : null
         );
       })
@@ -1057,6 +1057,8 @@ function App() {
   var r25b=useState(function(){return lsLoad("nyc_custBrands",[]);}),custBrands=r25b[0],_setCustBrands=r25b[1];function setCustBrands(v){_setCustBrands(v);try{localStorage.setItem("nyc_custBrands",JSON.stringify(v));}catch(e){}}
   var r25c=useState(function(){return lsLoad("nyc_custLicTypes",[]);}),custLicTypes=r25c[0],_setCustLicTypes=r25c[1];function setCustLicTypes(v){_setCustLicTypes(v);try{localStorage.setItem("nyc_custLicTypes",JSON.stringify(v));}catch(e){}}
   var r25e=useState(function(){return lsLoad("nyc_favNotes",{});}),favNotes=r25e[0],_setFavNotes=r25e[1];function setFavNotes(v){_setFavNotes(v);try{localStorage.setItem("nyc_favNotes",JSON.stringify(v));}catch(e){}}
+  // favExpenses: [{id, label, category, amount, notes, icon}] - quick expense templates
+  var r25f=useState(function(){return lsLoad("nyc_favExpenses",[]);}),favExpenses=r25f[0],_setFavExpenses=r25f[1];function setFavExpenses(v){_setFavExpenses(v);try{localStorage.setItem("nyc_favExpenses",JSON.stringify(v));}catch(e){}}
   var r25d=useState(function(){return lsLoad("nyc_custLoanTypes",[]);}),custLoanTypes=r25d[0],_setCustLoanTypes=r25d[1];function setCustLoanTypes(v){_setCustLoanTypes(v);try{localStorage.setItem("nyc_custLoanTypes",JSON.stringify(v));}catch(e){}}
   var r27=useState(false),showBackup=r27[0],setShowBackup=r27[1];
   useEffect(function(){
@@ -1092,22 +1094,35 @@ function App() {
   // Onboarding wizard step: 0=idle, 2=vehicle filled, 3=license filled, 4=income filled (done)
   // (Step 1 = type selection, handled by showOnboarding above)
   var rWiz=useState(0),wizStep=rWiz[0],setWizStep=rWiz[1];
-  // When user closes a wizard page (sf becomes null), advance to next step
+  // When user closes a wizard page (sf becomes null), advance to next step.
+  // Safeguards added v3.6.1: timeout to avoid race with React re-renders + reset on driverType change.
   useEffect(function(){
     if(wizStep===0) return;
-    if(sf!==null) return;
-    if(wizStep===2){ setSf("drawer_lic"); setWizStep(3); }
-    else if(wizStep===3){
-      if(driverType==="taxi"){
-        setDlf({date:today(),cash:"",card:"",tips:"",trips:"",hours:"",miles:"",lease:"",notes:""});
-        setSf("daily");
-      } else {
-        setStf({month:curMo(),platform:"Uber",grossFare:"",tips:"",bonus:"",tollReimbursed:"",otherIncome:"",trips:"",onlineHours:"",miles:"",acceptRate:"",completionRate:"",notes:""});
-        setSf("stmt");
+    if(sf!==null) return;  // wait until current page closed
+    // Defer the advance to next tick so any pending state updates settle first
+    var timer = setTimeout(function(){
+      if(wizStep===2){
+        setSf("drawer_lic"); 
+        setWizStep(3);
+        showToast(lang==="en"?"Step 3/4: Licenses":"第 3/4 步：证件");
       }
-      setWizStep(4);
-    }
-    else if(wizStep===4){ setWizStep(0); }  // done
+      else if(wizStep===3){
+        if(driverType==="taxi"){
+          setDlf({date:today(),cash:"",card:"",tips:"",trips:"",hours:"",miles:"",lease:"",notes:""});
+          setSf("daily");
+        } else {
+          setStf({month:curMo(),platform:"Uber",grossFare:"",tips:"",bonus:"",tollReimbursed:"",otherIncome:"",trips:"",onlineHours:"",miles:"",acceptRate:"",completionRate:"",notes:""});
+          setSf("stmt");
+        }
+        setWizStep(4);
+        showToast(lang==="en"?"Step 4/4: Add first income":"第 4/4 步：添加首条收入");
+      }
+      else if(wizStep===4){ 
+        setWizStep(0);
+        showToast(lang==="en"?"✓ Setup complete!":"✓ 引导完成！");
+      }
+    }, 100);
+    return function(){ clearTimeout(timer); };  // cleanup on re-render
   }, [sf, wizStep, driverType]);
   var r36=useState(false),showRemMgr=r36[0],setShowRemMgr=r36[1]; var r37=useState(false),showDrawer=r37[0],setShowDrawer=r37[1];
   var r39=useState("zh"),lang=r39[0],setLang=r39[1];
@@ -1160,8 +1175,20 @@ function App() {
   var yAllExps=function(){return yExps.concat(yMons.reduce(function(acc,m){return acc.concat(genFixed(fl,m));},[]));}; var hourlyRate=tHours>0?Math.round(tInc/tHours*100)/100:0,lastMo=prevMo(mo),lmStmts=sl.filter(function(x){return x.month===lastMo;}),lmWeeks=wl.filter(function(w){return w.weekStart.slice(0,7)===lastMo;}),lmFixMo=genFixed(fl,lastMo),lmDailies=dl.filter(function(d){return d.date&&d.date.slice(0,7)===lastMo;}),lmDlInc=lmDailies.reduce(function(s,d){return s+(+d.cash||0)+(+d.card||0)+(+d.tips||0);},0),lmDlLease=lmDailies.reduce(function(s,d){return s+(+d.lease||0);},0),lmDlHours=lmDailies.reduce(function(s,d){return s+(+d.hours||0);},0),lmFeAll=el.filter(function(e){var c=allC[e.category];if(c&&c.mo)return (e.statementMonth||e.date.slice(0,7))===lastMo;return e.date.slice(0,7)===lastMo;}).concat(lmFixMo),lmInc=lmStmts.reduce(function(s,x){return s+(+x.grossFare||0)+(+x.tips||0)+(+x.bonus||0)+(+x.tollReimbursed||0)+(+x.otherIncome||0);},0)+lmDlInc,lmExp=lmFeAll.reduce(function(s,e){return s+(+e.amount||0);},0)+lmDlLease,lmNet=lmInc-lmExp,lmHours=lmWeeks.reduce(function(s,w){return s+(+w.hours||0);},0)+lmDlHours,lmHourly=lmHours>0?Math.round(lmInc/lmHours*100)/100:0,nextExpiry=ll.filter(function(l){return l.expiryDate;}).sort(function(a,b){return a.expiryDate.localeCompare(b.expiryDate);})[0]; var achievements=[];if(tInc>=5000)achievements.push({icon:"🏆",text:lang==="en"?"Income > $5000":"本月收入破$5000",color:"#FFD700",bg:"#1A1400"});else if(tInc>=3000)achievements.push({icon:"⭐",text:lang==="en"?"Income > $3000":"本月收入破$3000",color:"#FFD700",bg:"#1A1400"});if(net>0&&tInc>0&&net>=tInc*0.5)achievements.push({icon:"💰",text:lang==="en"?"Profit > 50%":"净利润超50%",color:"#00E676",bg:"#0A1A0A"});if(tTrips>=200)achievements.push({icon:"🚗",text:lang==="en"?"200 trips this month":"本月200趟达成",color:"#00D4FF",bg:"#0A1428"});else if(tTrips>=100)achievements.push({icon:"🎯",text:lang==="en"?"100 trips this month":"本月100趟达成",color:"#00D4FF",bg:"#0A1428"});if(expiring.length===0&&expired.length===0&&ll.length>0)achievements.push({icon:"✅",text:lang==="en"?"All licenses valid":"证件全部有效",color:"#00E676",bg:"#0A1A0A"});if(yInc>=50000)achievements.push({icon:"👑",text:lang==="en"?"Annual income > $50000":"年收入破$50000",color:"#FFD700",bg:"#1A1400"}); var r40=useState(function(){return lsLoad("nyc_custGroups",[]);}),custGroups=r40[0],setCustGroups=r40[1]; var r41=useState(""),newGrpName=r41[0],setNewGrpName=r41[1]; var r42=useState("📁"),newGrpIcon=r42[0],setNewGrpIcon=r42[1]; var r43=useState("#A8D0E8"),newGrpColor=r43[0],setNewGrpColor=r43[1]; var r44=useState(new Date().getFullYear()+""),taxYr=r44[0],setTaxYr=r44[1]; var r45=useState(function(){return lsLoad("nyc_seRate",15.3);}),seRate=r45[0],_setSeRate=r45[1];function setSeRate(v){_setSeRate(v);try{localStorage.setItem("nyc_seRate",JSON.stringify(v));}catch(e){}} var r45b=useState(function(){return lsLoad("nyc_fedRate",12);}),fedRate=r45b[0],_setFedRate=r45b[1];function setFedRate(v){_setFedRate(v);try{localStorage.setItem("nyc_fedRate",JSON.stringify(v));}catch(e){}} var r45c=useState(function(){return lsLoad("nyc_stateRate",8.5);}),stateRate=r45c[0],_setStateRate=r45c[1];function setStateRate(v){_setStateRate(v);try{localStorage.setItem("nyc_stateRate",JSON.stringify(v));}catch(e){}} var r45d=useState(function(){return lsLoad("nyc_stdDed",14600);}),stdDed=r45d[0],_setStdDed=r45d[1];function setStdDed(v){_setStdDed(v);try{localStorage.setItem("nyc_stdDed",JSON.stringify(v));}catch(e){}} var r45e=useState(function(){return lsLoad("nyc_mtaRate",0.34);}),mtaRate=r45e[0],_setMtaRate=r45e[1];function setMtaRate(v){_setMtaRate(v);try{localStorage.setItem("nyc_mtaRate",JSON.stringify(v));}catch(e){}} var rSV=useState(function(){return lsLoad("nyc_savedVehicles",[]);}),savedVehicles=rSV[0],_setSavedVehicles=rSV[1];function setSavedVehicles(v){_setSavedVehicles(v);try{localStorage.setItem("nyc_savedVehicles",JSON.stringify(v));}catch(e){}} var r46=useState(false),taxLoading=r46[0],setTaxLoading=r46[1]; var r47=useState(""),taxRateNote=r47[0],setTaxRateNote=r47[1]; var r48=useState(function(){return lsLoad("nyc_notes",[]);}),notes=r48[0],setNotes=r48[1]; var rSnap=useState([]),snapshotList=rSnap[0],setSnapshotList=rSnap[1];
   // Undo banner: { msg, prevEl, until } (for bulk operations)
   var rUndo=useState(null),undoBanner=rUndo[0],setUndoBanner=rUndo[1];
+  // Drawer "Advanced" submenu toggle
+  var rAdv=useState(false),showAdvanced=rAdv[0],setShowAdvanced=rAdv[1];
+  // Simple mode: hide power-user features. Persisted.
+  var rSimple=useState(function(){return lsLoad("nyc_simpleMode",false);}),simpleMode=rSimple[0],_setSimpleMode=rSimple[1];
+  function setSimpleMode(v){_setSimpleMode(v);try{localStorage.setItem("nyc_simpleMode",JSON.stringify(v));}catch(e){}}
   // Toast notifications: array of { id, msg, type, until }
   var rToast=useState([]),toasts=rToast[0],setToasts=rToast[1];
+  // Helper: trigger undo banner with a 30s timeout for any data restore
+  function showUndo(msg, prevState){
+    setUndoBanner(Object.assign({msg:msg, until:Date.now()+30000}, prevState));
+    setTimeout(function(){
+      setUndoBanner(function(b){return (b&&b.until<=Date.now())?null:b;});
+    }, 30100);
+  }
   function showToast(msg, type){
     var id=Date.now()+Math.random();
     var t=type||"success";
@@ -1170,10 +1197,39 @@ function App() {
       setToasts(function(prev){return prev.filter(function(x){return x.id!==id;});});
     }, 4100);
   }
+  // DEBUG: show a test toast on first render to verify UI works
+  useEffect(function(){
+    setTimeout(function(){
+      showToast(lang==="en"?"✓ Toast works! Save anything to test":"✓ Toast 正常！保存任何东西测试一下", "success");
+    }, 800);
+  }, []);
   var rDailyId=useState(function(){return lsLoad("nyc_driveDailyFileId",null);}),driveDailyFileId=rDailyId[0],_setDriveDailyFileId=rDailyId[1];function setDriveDailyFileId(v){_setDriveDailyFileId(v);try{if(v)localStorage.setItem("nyc_driveDailyFileId",JSON.stringify(v));else localStorage.removeItem("nyc_driveDailyFileId");}catch(e){}}
   var rDailyMod=useState(null),driveDailyModTime=rDailyMod[0],setDriveDailyModTime=rDailyMod[1];
   var rMonthlyId=useState(function(){return lsLoad("nyc_driveMonthlyFileId",null);}),driveMonthlyFileId=rMonthlyId[0],_setDriveMonthlyFileId=rMonthlyId[1];function setDriveMonthlyFileId(v){_setDriveMonthlyFileId(v);try{if(v)localStorage.setItem("nyc_driveMonthlyFileId",JSON.stringify(v));else localStorage.removeItem("nyc_driveMonthlyFileId");}catch(e){}}
-  var rMonthlyMod=useState(null),driveMonthlyModTime=rMonthlyMod[0],setDriveMonthlyModTime=rMonthlyMod[1]; var rSnapKey=useState(0),snapRefreshKey=rSnapKey[0],setSnapRefreshKey=rSnapKey[1]; var r49=useState({title:"",body:"",id:null}),noteF=r49[0],setNoteF=r49[1]; var r50=useState(false),noteEdit=r50[0],setNoteEdit=r50[1]; var r51=useState(function(){return lsLoad("nyc_incGoal","");}),incGoal=r51[0],_setIncGoal=r51[1];
+  var rMonthlyMod=useState(null),driveMonthlyModTime=rMonthlyMod[0],setDriveMonthlyModTime=rMonthlyMod[1]; var rSnapKey=useState(0),snapRefreshKey=rSnapKey[0],setSnapRefreshKey=rSnapKey[1]; var r49=useState({title:"",body:"",id:null}),noteF=r49[0],setNoteF=r49[1]; var r50=useState(false),noteEdit=r50[0],setNoteEdit=r50[1]; var r51=useState(function(){
+    // Migration: if old single-value nyc_incGoal exists, convert to per-month object
+    var perMonth = lsLoad("nyc_incGoals", null);
+    if(perMonth && typeof perMonth === "object") return perMonth;
+    var oldVal = lsLoad("nyc_incGoal", "");
+    var migrated = {};
+    if(oldVal && +oldVal > 0){
+      // Apply old single value to current calendar month only
+      var d = new Date(), curMonth = d.getFullYear()+"-"+(d.getMonth()+1<10?"0":"")+(d.getMonth()+1);
+      migrated[curMonth] = String(oldVal);
+      try{ localStorage.setItem("nyc_incGoals", JSON.stringify(migrated)); localStorage.removeItem("nyc_incGoal"); }catch(e){}
+    }
+    return migrated;
+  }),incGoals=r51[0],_setIncGoals=r51[1];
+  // Persist whole object
+  function setIncGoals(v){_setIncGoals(v);try{localStorage.setItem("nyc_incGoals",JSON.stringify(v));}catch(e){}}
+  // Derive: incGoal and setIncGoal for CURRENT VIEW MONTH (mo)
+  // (these names match the original API so all downstream UI code still works)
+  var incGoal = (incGoals && incGoals[mo]) || "";
+  function setIncGoal(v){
+    var nx = Object.assign({}, incGoals||{});
+    if(!v || +v <= 0) delete nx[mo]; else nx[mo] = String(v);
+    setIncGoals(nx);
+  }
   function setIncGoal(v){_setIncGoal(v);try{localStorage.setItem("nyc_incGoal",JSON.stringify(v));}catch(e){}} var r52=useState(false),showGoal=r52[0],setShowGoal=r52[1]; var r52b=useState(false),showDP=r52b[0],setShowDP=r52b[1]; var r52c=useState(false),showTP=r52c[0],setShowTP=r52c[1]; var r52d=useState(null),mpState=r52d[0],setMpState=r52d[1]; var r52z=useState(false),trendOpen=r52z[0],setTrendOpen=r52z[1]; var r52y=useState(0),_forceCount=r52y[0],_setForceCount=r52y[1]; var forceRerender=function(){_setForceCount(function(x){return x+1;});};
 
   // Last time local data was modified (ISO string). Used by smart sync.
@@ -1352,7 +1408,11 @@ function App() {
         if(data.reminders)setReminders(data.reminders);
         if(data.custPlat)setCustPlat(data.custPlat);if(data.custBrands)setCustBrands(data.custBrands);if(data.custLicTypes)setCustLicTypes(data.custLicTypes);if(data.custLoanTypes)setCustLoanTypes(data.custLoanTypes);if(data.favNotes)setFavNotes(data.favNotes);
         if(data.notes)setNotes(data.notes);
-        if(typeof data.incGoal!=="undefined")setIncGoal(data.incGoal);
+        if(data.incGoals && typeof data.incGoals === "object") setIncGoals(data.incGoals);
+        else if(typeof data.incGoal!=="undefined" && data.incGoal!=="") {
+          var d=new Date(),cm=d.getFullYear()+"-"+(d.getMonth()+1<10?"0":"")+(d.getMonth()+1);
+          var g={}; g[cm]=String(data.incGoal); setIncGoals(g);
+        }
         if(typeof data.seRate==="number")setSeRate(data.seRate);
         if(typeof data.fedRate==="number")setFedRate(data.fedRate);
         if(typeof data.stateRate==="number")setStateRate(data.stateRate);
@@ -1382,9 +1442,9 @@ function App() {
       .then(function(d){
         if(d.id)setDriveFileId(d.id);
         setSyncing(false);
-        setSyncStatus(lang==="en"?"✓ Saved":"✓ 已保存");
-        setTimeout(function(){setSyncStatus("");},2000);
-      }).catch(function(err){reportError(err,{op:"saveToDrive"});setSyncing(false);setSyncStatus(lang==="en"?"Save failed":"保存失败");});
+        setSyncStatus("");
+        showToast(lang==="en"?"☁ Synced to Drive":"☁ 已同步到 Drive");
+      }).catch(function(err){reportError(err,{op:"saveToDrive"});setSyncing(false);setSyncStatus("");showToast(lang==="en"?"✗ Sync failed":"✗ 同步失败","error");});
     };
     if(fid){
       doUpload(null); // existing file, no need to look up folder
@@ -1497,8 +1557,8 @@ function App() {
         custGroups:custGroups,reminders:reminders,
         custPlat:custPlat,custBrands:custBrands,
         custLicTypes:custLicTypes,custLoanTypes:custLoanTypes,
-        favNotes:favNotes,notes:notes,
-        incGoal:incGoal,seRate:seRate,fedRate:fedRate,
+        favNotes:favNotes,favExpenses:favExpenses,notes:notes,
+        incGoals:incGoals,seRate:seRate,fedRate:fedRate,
         stateRate:stateRate,stdDed:stdDed,mtaRate:mtaRate,
         savedVehicles:savedVehicles,dl:dl,driverType:driverType,
         _snapshotTime: now.toISOString()
@@ -1542,7 +1602,7 @@ function App() {
     // Save current to local pre-restore backup first
     try {
       var snapshot = {timestamp:new Date().toISOString(),label:lang==="en"?"Pre-Drive-snapshot-restore":"Drive 快照恢复前",
-        data:{wl:wl,sl:sl,el:el,fl:fl,ll:ll,veh:veh,cc:cc,custGroups:custGroups,reminders:reminders,custPlat:custPlat,custBrands:custBrands,custLicTypes:custLicTypes,custLoanTypes:custLoanTypes,favNotes:favNotes,notes:notes,incGoal:incGoal,seRate:seRate,fedRate:fedRate,stateRate:stateRate,stdDed:stdDed,mtaRate:mtaRate,savedVehicles:savedVehicles,dl:dl,driverType:driverType}};
+        data:{wl:wl,sl:sl,el:el,fl:fl,ll:ll,veh:veh,cc:cc,custGroups:custGroups,reminders:reminders,custPlat:custPlat,custBrands:custBrands,custLicTypes:custLicTypes,custLoanTypes:custLoanTypes,favNotes:favNotes,favExpenses:favExpenses,notes:notes,incGoals:incGoals,seRate:seRate,fedRate:fedRate,stateRate:stateRate,stdDed:stdDed,mtaRate:mtaRate,savedVehicles:savedVehicles,dl:dl,driverType:driverType}};
       localStorage.setItem("nyc_pre_restore_backup", JSON.stringify(snapshot));
     } catch(e){}
     setSyncStatus(lang==="en"?"⏳ Restoring...":"⏳ 恢复中...");
@@ -1553,8 +1613,12 @@ function App() {
       if(data.custGroups)setCustGroups(data.custGroups); if(data.reminders)setReminders(data.reminders);
       if(data.custPlat)setCustPlat(data.custPlat); if(data.custBrands)setCustBrands(data.custBrands);
       if(data.custLicTypes)setCustLicTypes(data.custLicTypes); if(data.custLoanTypes)setCustLoanTypes(data.custLoanTypes);
-      if(data.favNotes)setFavNotes(data.favNotes); if(data.notes)setNotes(data.notes);
-      if(typeof data.incGoal!=="undefined")setIncGoal(data.incGoal);
+      if(data.favNotes)setFavNotes(data.favNotes); if(Array.isArray(data.favExpenses))setFavExpenses(data.favExpenses); if(data.notes)setNotes(data.notes);
+      if(data.incGoals && typeof data.incGoals === "object") setIncGoals(data.incGoals);
+        else if(typeof data.incGoal!=="undefined" && data.incGoal!=="") {
+          var d=new Date(),cm=d.getFullYear()+"-"+(d.getMonth()+1<10?"0":"")+(d.getMonth()+1);
+          var g={}; g[cm]=String(data.incGoal); setIncGoals(g);
+        }
       if(typeof data.seRate==="number")setSeRate(data.seRate);
       if(typeof data.fedRate==="number")setFedRate(data.fedRate);
       if(typeof data.stateRate==="number")setStateRate(data.stateRate);
@@ -1668,7 +1732,7 @@ function App() {
   useEffect(function(){
     if(firstRenderRef.first){firstRenderRef.first=false;return;}
     setLocalModTime(new Date().toISOString());
-  },[wl,sl,el,fl,ll,veh,cc,custGroups,reminders,custPlat,custBrands,custLicTypes,custLoanTypes,favNotes,notes,incGoal,seRate,fedRate,stateRate,stdDed,mtaRate,savedVehicles,dl,driverType]);
+  },[wl,sl,el,fl,ll,veh,cc,custGroups,reminders,custPlat,custBrands,custLicTypes,custLoanTypes,favNotes,favExpenses,notes,incGoals,seRate,fedRate,stateRate,stdDed,mtaRate,savedVehicles,dl,driverType]);
 
   // Smart sync function — compares timestamps and decides direction
   function smartSync(){
@@ -1677,7 +1741,7 @@ function App() {
       if(!fileId){
         // No cloud file → upload our local data (first-time sync)
         if(localModTime){
-          var data={wl:wl,sl:sl,el:el,fl:fl,ll:ll,veh:veh,cc:cc,custGroups:custGroups,reminders:reminders,custPlat:custPlat,custBrands:custBrands,custLicTypes:custLicTypes,custLoanTypes:custLoanTypes,favNotes:favNotes,notes:notes,incGoal:incGoal,seRate:seRate,fedRate:fedRate,stateRate:stateRate,stdDed:stdDed,mtaRate:mtaRate,savedVehicles:savedVehicles,dl:dl,driverType:driverType,localModTime:localModTime};
+          var data={wl:wl,sl:sl,el:el,fl:fl,ll:ll,veh:veh,cc:cc,custGroups:custGroups,reminders:reminders,custPlat:custPlat,custBrands:custBrands,custLicTypes:custLicTypes,custLoanTypes:custLoanTypes,favNotes:favNotes,favExpenses:favExpenses,notes:notes,incGoals:incGoals,seRate:seRate,fedRate:fedRate,stateRate:stateRate,stdDed:stdDed,mtaRate:mtaRate,savedVehicles:savedVehicles,dl:dl,driverType:driverType,localModTime:localModTime};
           saveToDrive(accessToken,null,data);
         }
         return;
@@ -1702,9 +1766,13 @@ function App() {
           if(cloudData.cc)setCc(cloudData.cc);
           if(cloudData.custGroups)setCustGroups(cloudData.custGroups);
           if(cloudData.reminders)setReminders(cloudData.reminders);
-          if(cloudData.custPlat)setCustPlat(cloudData.custPlat);if(cloudData.custBrands)setCustBrands(cloudData.custBrands);if(cloudData.custLicTypes)setCustLicTypes(cloudData.custLicTypes);if(cloudData.custLoanTypes)setCustLoanTypes(cloudData.custLoanTypes);if(cloudData.favNotes)setFavNotes(cloudData.favNotes);
+          if(cloudData.custPlat)setCustPlat(cloudData.custPlat);if(cloudData.custBrands)setCustBrands(cloudData.custBrands);if(cloudData.custLicTypes)setCustLicTypes(cloudData.custLicTypes);if(cloudData.custLoanTypes)setCustLoanTypes(cloudData.custLoanTypes);if(cloudData.favNotes)setFavNotes(cloudData.favNotes);if(Array.isArray(cloudData.favExpenses))setFavExpenses(cloudData.favExpenses);
           if(cloudData.notes)setNotes(cloudData.notes);
-          if(typeof cloudData.incGoal!=="undefined")setIncGoal(cloudData.incGoal);
+          if(cloudData.incGoals && typeof cloudData.incGoals === "object") setIncGoals(cloudData.incGoals);
+          else if(typeof cloudData.incGoal!=="undefined" && cloudData.incGoal!=="") {
+            var d=new Date(),cm=d.getFullYear()+"-"+(d.getMonth()+1<10?"0":"")+(d.getMonth()+1);
+            var g={}; g[cm]=String(cloudData.incGoal); setIncGoals(g);
+          }
           if(typeof cloudData.seRate==="number")setSeRate(cloudData.seRate);
           if(typeof cloudData.fedRate==="number")setFedRate(cloudData.fedRate);
           if(typeof cloudData.stateRate==="number")setStateRate(cloudData.stateRate);
@@ -1718,7 +1786,7 @@ function App() {
           setTimeout(function(){setSyncStatus("");},2000);
         } else if(localModTime > cloudModTime){
           // Local is newer — upload
-          var data={wl:wl,sl:sl,el:el,fl:fl,ll:ll,veh:veh,cc:cc,custGroups:custGroups,reminders:reminders,custPlat:custPlat,custBrands:custBrands,custLicTypes:custLicTypes,custLoanTypes:custLoanTypes,favNotes:favNotes,notes:notes,incGoal:incGoal,seRate:seRate,fedRate:fedRate,stateRate:stateRate,stdDed:stdDed,mtaRate:mtaRate,savedVehicles:savedVehicles,dl:dl,driverType:driverType,localModTime:localModTime};
+          var data={wl:wl,sl:sl,el:el,fl:fl,ll:ll,veh:veh,cc:cc,custGroups:custGroups,reminders:reminders,custPlat:custPlat,custBrands:custBrands,custLicTypes:custLicTypes,custLoanTypes:custLoanTypes,favNotes:favNotes,favExpenses:favExpenses,notes:notes,incGoals:incGoals,seRate:seRate,fedRate:fedRate,stateRate:stateRate,stdDed:stdDed,mtaRate:mtaRate,savedVehicles:savedVehicles,dl:dl,driverType:driverType,localModTime:localModTime};
           saveToDrive(accessToken,fileId,data);
         }
         // else: timestamps equal — already synced, do nothing
@@ -1785,12 +1853,12 @@ function App() {
       wl:wl, sl:sl, el:el, fl:fl, ll:ll, veh:veh, cc:cc,
       custGroups:custGroups, reminders:reminders, custPlat:custPlat,
       custBrands:custBrands, custLicTypes:custLicTypes, custLoanTypes:custLoanTypes,
-      favNotes:favNotes, notes:notes, incGoal:incGoal, seRate:seRate,
+      favNotes:favNotes, notes:notes, incGoals:incGoals, seRate:seRate,
       fedRate:fedRate, stateRate:stateRate, stdDed:stdDed, mtaRate:mtaRate,
       savedVehicles:savedVehicles, dl:dl, driverType:driverType
     };
     idbAddSnapshot(snapshot);
-  }, [wl,sl,el,fl,ll,veh,cc,custGroups,reminders,custPlat,custBrands,custLicTypes,custLoanTypes,favNotes,notes,dl,driverType]);
+  }, [wl,sl,el,fl,ll,veh,cc,custGroups,reminders,custPlat,custBrands,custLicTypes,custLoanTypes,favNotes,favExpenses,notes,dl,driverType]);
   // ============ End Auto-snapshot ============
 
   useEffect(function(){try{document.documentElement.lang=lang==="en"?"en":"zh";}catch(e){}}, [lang]);
@@ -1839,7 +1907,11 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
   );
   return (
       React.createElement('div', { style: {minHeight:"100vh",background:C.bg,fontFamily:"'Inter',-apple-system,BlinkMacSystemFont,'PingFang SC','Noto Sans SC','Segoe UI',Roboto,sans-serif",color:C.text}, className: "app-wrapper", __self: this, __source: {fileName: _jsxFileName, lineNumber: 241}}
-      // === Toast notifications (extra visible) ===
+      // === Simple Mode banner (subtle reminder) ===
+      , simpleMode ? React.createElement('div', {
+          style: {position:"fixed",bottom:140,left:14,zIndex:9999,background:"#0A2018",border:"1px solid #2A6040",borderRadius:8,padding:"4px 10px",fontSize:10,color:"#5ADA7A",pointerEvents:"none",opacity:0.7}
+        }, "🎯 ", lang==="en"?"Simple":"精简") : null
+            // === Toast notifications (extra visible) ===
       , toasts && toasts.length > 0 ? React.createElement('div', {
           style: {position:"fixed",bottom:100,left:0,right:0,zIndex:10000,display:"flex",flexDirection:"column",gap:8,alignItems:"center",pointerEvents:"none",padding:"0 14px"}
         },
@@ -1865,7 +1937,19 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
         , React.createElement('button', {
             onClick: function(){
               if(undoBanner.prevEl) setEl(undoBanner.prevEl);
+              if(undoBanner.prevWl) setWl(undoBanner.prevWl);
+              if(undoBanner.prevSl) setSl(undoBanner.prevSl);
+              if(undoBanner.prevDl) setDl(undoBanner.prevDl);
+              if(undoBanner.prevLl) setLl(undoBanner.prevLl);
+              if(undoBanner.prevFl) setFl(undoBanner.prevFl);
+              if(undoBanner.prevReminders) setReminders(undoBanner.prevReminders);
+              if(undoBanner.prevCc) setCc(undoBanner.prevCc);
+              if(undoBanner.prevNotes) setNotes(undoBanner.prevNotes);
+              if(undoBanner.prevCustGroups) setCustGroups(undoBanner.prevCustGroups);
+              if(undoBanner.prevSavedVehicles) setSavedVehicles(undoBanner.prevSavedVehicles);
+              if(undoBanner.prevFavExpenses) setFavExpenses(undoBanner.prevFavExpenses);
               setUndoBanner(null);
+              showToast(lang==="en"?"↩️ Restored":"↩️ 已恢复");
             },
             style: {background:"#fff",border:"none",borderRadius:8,padding:"6px 14px",color:"#1A6030",fontSize:13,fontWeight:800,cursor:"pointer"}
           }, "↩️ " , lang==="en"?"Undo":"撤销")
@@ -1930,7 +2014,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
             , dashV==="month" ? (
               React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 265}}
                 , React.createElement(MoNav, { val: mo, set: setMo, lang: lang, onPick: function(){setMpState({value:mo,onChange:function(v){setMo(v);}});}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 266}} )
-                , (mo===curMo()) && incGoal&&+incGoal>0 ? React.createElement(Card, { style: {marginBottom:10,padding:"12px 14px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 267}}, React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 267}}, React.createElement('div', { style: {fontSize:13,fontWeight:700,color:"#FFD700"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 267}}, "🎯 " , lang==="en"?"Monthly Goal":"本月目标"), React.createElement('div', { style: {display:"flex",alignItems:"center",gap:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 267}}, React.createElement('span', { style: {fontSize:13,color:C.text2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 267}}, fmt(tInc), " / "  , fmt(+incGoal)), React.createElement('button', { onClick: function(){setShowGoal(true);}, style: {background:"none",border:"none",color:C.text3,fontSize:12,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 267}}, "✏️"))), React.createElement('div', { style: {height:8,borderRadius:4,background:"#1A2A40",overflow:"hidden",marginBottom:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 267}}, React.createElement('div', { style: {height:8,borderRadius:4,width:Math.min(100,Math.round(tInc/+incGoal*100))+"%",background:tInc>=+incGoal?"linear-gradient(90deg,#00E676,#FFD700)":"linear-gradient(90deg,#00D4FF,#0055FF)"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 267}} )), React.createElement('div', { style: {fontSize:12,color:tInc>=+incGoal?"#00E676":"#7A9AB8"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 267}}, tInc>=+incGoal?(lang==="en"?"🎉 Goal reached!":"🎉 目标达成！"):(lang==="en"?"Still need: ":"还差: ")+fmt(+incGoal-tInc)+" ("+Math.round(tInc/+incGoal*100)+"%)")) : mo===curMo() ? React.createElement('button', { onClick: function(){setShowGoal(true);}, style: {width:"100%",background:C.bg3,border:"1px dashed #2A4A6A",borderRadius:10,padding:"8px 14px",color:C.text3,fontSize:12,cursor:"pointer",marginBottom:10,textAlign:"left"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 267}}, "🎯 " , lang==="en"?"Set monthly goal...":"设定本月收入目标...") : null
+                , incGoal&&+incGoal>0 ? React.createElement(Card, { style: {marginBottom:10,padding:"12px 14px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 267}}, React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 267}}, React.createElement('div', { style: {fontSize:13,fontWeight:700,color:"#FFD700"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 267}}, "🎯 " , lang==="en"?"Monthly Goal":"本月目标"), React.createElement('div', { style: {display:"flex",alignItems:"center",gap:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 267}}, React.createElement('span', { style: {fontSize:13,color:C.text2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 267}}, fmt(tInc), " / "  , fmt(+incGoal)), React.createElement('button', { onClick: function(){setShowGoal(true);}, style: {background:"none",border:"none",color:C.text3,fontSize:12,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 267}}, "✏️"))), React.createElement('div', { style: {height:8,borderRadius:4,background:"#1A2A40",overflow:"hidden",marginBottom:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 267}}, React.createElement('div', { style: {height:8,borderRadius:4,width:Math.min(100,Math.round(tInc/+incGoal*100))+"%",background:tInc>=+incGoal?"linear-gradient(90deg,#00E676,#FFD700)":"linear-gradient(90deg,#00D4FF,#0055FF)"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 267}} )), React.createElement('div', { style: {fontSize:12,color:tInc>=+incGoal?"#00E676":"#7A9AB8"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 267}}, tInc>=+incGoal?(lang==="en"?"🎉 Goal reached!":"🎉 目标达成！"):(lang==="en"?"Still need: ":"还差: ")+fmt(+incGoal-tInc)+" ("+Math.round(tInc/+incGoal*100)+"%)")) : React.createElement('button', { onClick: function(){setShowGoal(true);}, style: {width:"100%",background:C.bg3,border:"1px dashed #2A4A6A",borderRadius:10,padding:"8px 14px",color:C.text3,fontSize:12,cursor:"pointer",marginBottom:10,textAlign:"left"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 267}}, "🎯 " , lang==="en"?"Set monthly goal...":"设定本月收入目标...")
                 , (function(){var hm=mData.filter(function(m){return m.inc>0;});if(hm.length<2)return null;var mx=Math.max.apply(null,hm.map(function(m){return m.inc;}));return React.createElement(Card, { style: {marginBottom:8,padding:"12px 14px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 268}}, React.createElement('div', { style: {fontSize:13,fontWeight:700,color:C.text2,marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 268}}, "📊 " , lang==="en"?("Income Trend · "+yr):("收入趋势 · "+yr+"年")), React.createElement('div', { style: {display:"flex",alignItems:"center",gap:3,height:60}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 268}}, mData.map(function(m,i){if(!m.inc)return React.createElement('div', { key: i, style: {flex:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 268}} );var h=Math.round(8+m.inc/mx*48);var isCur=m.m===mo;return React.createElement('div', { key: i, onClick: function(){setMo(m.m);setDashV("month");}, style: {flex:1,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 268}}, React.createElement('div', { style: {width:"100%",height:h,borderRadius:"3px 3px 0 0",background:isCur?"#00D4FF":m.net>=0?"#00E676":"#FF5252",opacity:isCur?1:0.7}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 268}} ));}), " " ), React.createElement('div', { style: {display:"flex",fontSize:10,color:C.text3,marginTop:3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 268}}, mData.map(function(m,i){return React.createElement('div', { key: i, style: {flex:1,textAlign:"center",color:m.m===mo?"#00D4FF":"#7A9AB8"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 268}}, m.label.slice(0,3));})));}())
                 // === Recent Bank Payout Card ===
                 , (function(){
@@ -2202,6 +2286,60 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                   , React.createElement('div', { style: {fontSize:14,fontWeight:700,color:C.text,marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 309}}, lang==="en"?"Monthly Breakdown":"逐月明细")
                   , mData.map(function(m){if(m.inc===0&&m.exp===0)return null;var ncl=m.net>=0?"#00E676":"#FF5252",mcl=m.m===mo?"#00D4FF":C.text;return React.createElement('div', { key: m.m, onClick: function(){setMo(m.m);setDashV("month");}, style: {display:"grid",gridTemplateColumns:"2fr 2fr 2fr 2fr",padding:"7px 0",borderBottom:"1px solid #182030",cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 310}}, React.createElement('span', { style: Object.assign({fontSize:12,fontWeight:700},{color:mcl}), __self: this, __source: {fileName: _jsxFileName, lineNumber: 310}}, m.label), React.createElement('span', { style: {fontSize:12,color:"#00D4FF"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 310}}, m.inc>0?fmt(m.inc):"—"), React.createElement('span', { style: {fontSize:12,color:"#FF6B35"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 310}}, m.exp>0?fmt(m.exp):"—"), React.createElement('span', { style: Object.assign({fontSize:12,fontWeight:700},{color:ncl}), __self: this, __source: {fileName: _jsxFileName, lineNumber: 310}}, fmt(m.net)));})
                 )
+                // === Pie Chart for YEAR mode (NEW v3.6.1) ===
+                , (function(){
+                    if(yExp<=0) return null;
+                    var allYE = yAllExps();
+                    var groupTotals={"车辆":0,"牌照":0,"平台":0,"其他":0};
+                    allYE.forEach(function(e){
+                      var cat=allC[e.category];
+                      var g=cat?(cat.g||"其他"):"其他";
+                      if(groupTotals[g]===undefined) g="其他";
+                      groupTotals[g]+=(+e.amount||0);
+                    });
+                    var total=Object.values(groupTotals).reduce(function(a,b){return a+b;},0);
+                    if(total<=0) return null;
+                    var colors={"车辆":"#00D4FF","牌照":"#FFD700","平台":"#CC88FF","其他":"#A8D0E8"};
+                    var labels=lang==="en"?{"车辆":"Vehicle","牌照":"License","平台":"Platform","其他":"Other"}:{"车辆":"车辆","牌照":"牌照","平台":"平台","其他":"其他"};
+                    var cx=60, cy=60, r=50;
+                    var startAngle=-Math.PI/2;
+                    var slices=[];
+                    ["车辆","牌照","平台","其他"].forEach(function(g){
+                      if(!groupTotals[g]) return;
+                      var pct=groupTotals[g]/total;
+                      var endAngle=startAngle+pct*2*Math.PI;
+                      var x1=cx+r*Math.cos(startAngle), y1=cy+r*Math.sin(startAngle);
+                      var x2=cx+r*Math.cos(endAngle), y2=cy+r*Math.sin(endAngle);
+                      var largeArc=pct>0.5?1:0;
+                      var path;
+                      if(pct>=0.999){
+                        path="M"+(cx-r)+","+cy+" A"+r+","+r+" 0 1,1 "+(cx+r)+","+cy+" A"+r+","+r+" 0 1,1 "+(cx-r)+","+cy+" Z";
+                      }else{
+                        path="M"+cx.toFixed(2)+","+cy.toFixed(2)+" L"+x1.toFixed(2)+","+y1.toFixed(2)+" A"+r+","+r+" 0 "+largeArc+",1 "+x2.toFixed(2)+","+y2.toFixed(2)+" Z";
+                      }
+                      slices.push({path:path,color:colors[g],label:labels[g],amount:groupTotals[g],pct:pct});
+                      startAngle=endAngle;
+                    });
+                    return React.createElement(Card, {style:{marginBottom:8,padding:"12px 14px"}}
+                      , React.createElement('div', {style:{fontSize:13,fontWeight:700,color:C.text2,marginBottom:10}}, "🥧 " , lang==="en"?("Annual Expense Distribution · "+yr):(yr+"年支出分布"))
+                      , React.createElement('div', {style:{display:"flex",alignItems:"center",gap:14}}
+                        , React.createElement('svg', {viewBox:"0 0 120 120",width:110,height:110,style:{flexShrink:0}}
+                          , slices.map(function(s,i){return React.createElement('path', {key:i,d:s.path,fill:s.color,stroke:C.bg2,strokeWidth:1.5});})
+                          , React.createElement('circle', {cx:60,cy:60,r:24,fill:C.bg})
+                          , React.createElement('text', {x:60,y:58,textAnchor:"middle",fill:C.text2,fontSize:9}, lang==="en"?"Total":"总计")
+                          , React.createElement('text', {x:60,y:70,textAnchor:"middle",fill:"#FF6B35",fontSize:11,fontWeight:700}, fmt(total))
+                        )
+                        , React.createElement('div', {style:{flex:1,display:"flex",flexDirection:"column",gap:5}}
+                          , slices.map(function(s,i){return React.createElement('div', {key:i,style:{display:"flex",alignItems:"center",gap:6,fontSize:11}}
+                            , React.createElement('div', {style:{width:10,height:10,borderRadius:2,background:s.color,flexShrink:0}})
+                            , React.createElement('span', {style:{flex:1,color:C.text2}}, s.label)
+                            , React.createElement('span', {style:{color:C.text3}}, Math.round(s.pct*100), "%")
+                            , React.createElement('span', {style:{color:C.text,fontWeight:600,minWidth:48,textAlign:"right"}}, fmt(s.amount))
+                          );})
+                        )
+                      )
+                    );
+                  }())
                 , yExp > 0 ? React.createElement(Card, {__self: this, __source: {fileName: _jsxFileName, lineNumber: 312}}, React.createElement('div', { style: {fontSize:14,fontWeight:700,color:C.text,marginBottom:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 312}}, lang==="en"?"Annual Expenses":"全年支出明细"), React.createElement(CatDetail, { items: yAllExps(), total: yExp, allC: allC, lang: lang, __self: this, __source: {fileName: _jsxFileName, lineNumber: 312}} )) : null
               )
             ) : null
@@ -2336,6 +2474,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                 var txExp=src.reduce(function(s,e){return s+(e.mode==="taxi"?(+e.amount||0):0);},0);
                 var shExp=src.reduce(function(s,e){return s+(e.mode==="shared"?(+e.amount||0):0);},0);
                 var unExp=src.reduce(function(s,e){return s+((!e.mode||(e.mode!=="rideshare"&&e.mode!=="taxi"&&e.mode!=="shared"))?(+e.amount||0):0);},0);
+                if(simpleMode) return null;  // hidden in simple mode
                 if(rsExp===0&&txExp===0&&shExp===0) return null;  // nothing classified yet
                 var showRs = driverType!=="taxi";
                 var showTx = driverType!=="rideshare";
@@ -2352,6 +2491,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                 if(!src||!src.length) return null;
                 var hasModeData = src.some(function(e){return e.mode==="rideshare"||e.mode==="taxi"||e.mode==="shared";});
                 if(!hasModeData) return null;
+                if(simpleMode) return null;  // hidden in simple mode
                 var opts=[
                   {v:"all",l:lang==="en"?"All":"全部",cl:C.text2,bg:"#1A2A44"},
                   {v:"rideshare",l:lang==="en"?"📱 RS":"📱 网约车",cl:"#5AACFF",bg:"#0A2040"},
@@ -2378,15 +2518,15 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                 , React.createElement(MoNav, { val: mo, set: setMo, lang: lang, onPick: function(){setMpState({value:mo,onChange:function(v){setMo(v);}});}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 346}} )
                 , fixMo.length > 0 ? React.createElement(Card, { style: {background:"#0D1E10",border:"1px solid #1A3A20",display:"flex",justifyContent:"space-between",alignItems:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 347}}, React.createElement('span', { style: {fontSize:14,color:"#5ADA7A",fontWeight:700}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 347}}, T.fixedFees+" "+fixMo.length), React.createElement('span', { style: {fontSize:14,fontWeight:700,color:"#FF9A65"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 347}}, "-", fmt(tFix))) : null
                 , React.createElement(Card, { style: {display:"flex",justifyContent:"space-between"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 348}}, React.createElement('span', { style: {fontSize:14,color:C.text2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 348}}, T.totalExpense), React.createElement('span', { style: {fontSize:18,fontWeight:800,color:"#FF6B35"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 348}}, fmt(tExp)))
-                , React.createElement(BucketList, { items: (function(){if(expModeF==="all")return feAll; if(expModeF==="unclassified") return feAll.filter(function(e){return !e.mode||(e.mode!=="rideshare"&&e.mode!=="taxi"&&e.mode!=="shared");}); return feAll.filter(function(e){return e.mode===expModeF;});}()), allC: allC, lang: lang, el: el, setEl: setEl, allEl: el, forceRerender: forceRerender, emptyText: T.noData, onEditFixed: function(item){setEditFx({id:item.id,amount:item.amount,notes:item.notes||"",fixedLabel:item.fixedLabel});}, onEditExp: function(item){setEf(Object.assign({},item,{qty:item.qty||"",isRecurring:false}));setSf("exp_edit_"+item.id);}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 349}} )
+                , React.createElement(BucketList, { items: (function(){if(expModeF==="all")return feAll; if(expModeF==="unclassified") return feAll.filter(function(e){return !e.mode||(e.mode!=="rideshare"&&e.mode!=="taxi"&&e.mode!=="shared");}); return feAll.filter(function(e){return e.mode===expModeF;});}()), allC: allC, lang: lang, el: el, setEl: setEl, allEl: el, forceRerender: forceRerender, showUndo: showUndo, emptyText: T.noData, onEditFixed: function(item){setEditFx({id:item.id,amount:item.amount,notes:item.notes||"",fixedLabel:item.fixedLabel});}, onEditExp: function(item){setEf(Object.assign({},item,{qty:item.qty||"",isRecurring:false}));setSf("exp_edit_"+item.id);}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 349}} )
               )
             ) : null
             , expV==="year" ? (
               React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 353}}
                 , React.createElement(YrNav, { val: yr, set: setYr, lang: lang, onPick: function(){var y=prompt(lang==="en"?"Enter year:":"输入年份:",yr);if(y&&/^[0-9]{4}$/.test(y))setYr(y);}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 354}} )
                 , React.createElement(Card, { style: {display:"flex",justifyContent:"space-between",marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 355}}, React.createElement('span', { style: {fontSize:14,color:C.text2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 355}}, T.totalExpense), React.createElement('span', { style: {fontSize:18,fontWeight:800,color:"#FF6B35"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 355}}, fmt(yExp)))
-                , (function(){var allYE_raw=yAllExps(); var allYE=expModeF==="all"?allYE_raw:(expModeF==="unclassified"?allYE_raw.filter(function(e){return !e.mode||(e.mode!=="rideshare"&&e.mode!=="taxi"&&e.mode!=="shared");}):allYE_raw.filter(function(e){return e.mode===expModeF;})); if(!allYE.length)return React.createElement(Empty, { text: T.noData, __self: this, __source: {fileName: _jsxFileName, lineNumber: 356}} );return React.createElement(BucketList, { items: allYE, allC: allC, lang: lang, el: el, setEl: setEl, allEl: el, forceRerender: forceRerender, emptyText: "", onEditFixed: function(item){setEditFx({id:item.id,amount:item.amount,notes:item.notes||"",fixedLabel:item.fixedLabel});}, onEditExp: function(item){setEf(Object.assign({},item,{qty:item.qty||"",isRecurring:false}));setSf("exp_edit_"+item.id);}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 356}} );}())
-                , Object.keys(cc).length > 0 ? React.createElement('div', { style: {marginTop:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 357}}, React.createElement('div', { style: {fontSize:14,fontWeight:700,color:C.text,marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 357}}, lang==="en"?"Custom Categories":"我的自定义类别"), Object.entries(cc).map(function(entry){var key=entry[0],cat=entry[1];return React.createElement(Card, { key: key, style: {display:"flex",alignItems:"center",gap:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 357}}, React.createElement('span', { style: {fontSize:22}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 357}}, cat.icon), React.createElement('div', { style: {flex:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 357}}, React.createElement('div', { style: {fontSize:14,fontWeight:600}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 357}}, cat.label), React.createElement('div', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 357}}, cat.group)), React.createElement('button', { onClick: function(){setCf({label:cat.label,icon:cat.icon,group:cat.group,_editKey:key});setSf("cc");}, style: {background:"none",border:"1px solid #2A4A6A",borderRadius:8,padding:"4px 10px",color:"#6AACEE",cursor:"pointer",fontSize:13}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 357}}, T.edit), React.createElement('button', { onClick: function(){if(!confirm(lang==="en"?"Delete this category?":"确认删除这个类别？"))return;var u=Object.assign({},cc);delete u[key];setCc(u);}, style: {background:"none",border:"1px solid #3A1A1A",borderRadius:8,padding:"4px 10px",color:"#FF5252",cursor:"pointer",fontSize:13}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 357}}, T.del));})) : null
+                , (function(){var allYE_raw=yAllExps(); var allYE=expModeF==="all"?allYE_raw:(expModeF==="unclassified"?allYE_raw.filter(function(e){return !e.mode||(e.mode!=="rideshare"&&e.mode!=="taxi"&&e.mode!=="shared");}):allYE_raw.filter(function(e){return e.mode===expModeF;})); if(!allYE.length)return React.createElement(Empty, { text: T.noData, __self: this, __source: {fileName: _jsxFileName, lineNumber: 356}} );return React.createElement(BucketList, { items: allYE, allC: allC, lang: lang, el: el, setEl: setEl, allEl: el, forceRerender: forceRerender, showUndo: showUndo, emptyText: "", onEditFixed: function(item){setEditFx({id:item.id,amount:item.amount,notes:item.notes||"",fixedLabel:item.fixedLabel});}, onEditExp: function(item){setEf(Object.assign({},item,{qty:item.qty||"",isRecurring:false}));setSf("exp_edit_"+item.id);}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 356}} );}())
+                , Object.keys(cc).length > 0 ? React.createElement('div', { style: {marginTop:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 357}}, React.createElement('div', { style: {fontSize:14,fontWeight:700,color:C.text,marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 357}}, lang==="en"?"Custom Categories":"我的自定义类别"), Object.entries(cc).map(function(entry){var key=entry[0],cat=entry[1];return React.createElement(Card, { key: key, style: {display:"flex",alignItems:"center",gap:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 357}}, React.createElement('span', { style: {fontSize:22}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 357}}, cat.icon), React.createElement('div', { style: {flex:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 357}}, React.createElement('div', { style: {fontSize:14,fontWeight:600}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 357}}, cat.label), React.createElement('div', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 357}}, cat.group)), React.createElement('button', { onClick: function(){setCf({label:cat.label,icon:cat.icon,group:cat.group,_editKey:key});setSf("cc");}, style: {background:"none",border:"1px solid #2A4A6A",borderRadius:8,padding:"4px 10px",color:"#6AACEE",cursor:"pointer",fontSize:13}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 357}}, T.edit), React.createElement('button', { onClick: function(){if(!confirm(lang==="en"?"Delete this category?":"确认删除这个类别？"))return;var prev=Object.assign({},cc);var u=Object.assign({},cc);delete u[key];setCc(u);showUndo((lang==="en"?"✓ Category deleted":"✓ 类别已删除"), {prevCc:prev});}, style: {background:"none",border:"1px solid #3A1A1A",borderRadius:8,padding:"4px 10px",color:"#FF5252",cursor:"pointer",fontSize:13}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 357}}, T.del));})) : null
                 , React.createElement('div', { style: {marginTop:14,textAlign:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 358}}, React.createElement('button', { onClick: function(){setCf({label:"",icon:"&#128296;",group:"车辆"});setSf("cc");}, style: {background:"#1A2A44",border:"1px dashed #2A3A54",borderRadius:10,padding:"10px 18px",color:C.text2,fontSize:14,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 358}}, "+ " , lang==="en"?"Custom Category":"新增自定义类别"))
               )
             ) : null
@@ -2447,12 +2587,17 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                     showToast(lang==="en"?"✓ Saved":"✓ 已保存");
                   };
                   
-                  // EMPTY state — friendly intro + single big button
+                  // EMPTY state — friendly intro + warning if vehicle has data
                   if(!hasProfiles){
-                    return React.createElement('div', { style: {background:C.bg3,border:"1px dashed "+C.border,borderRadius:12,padding:"16px 14px",marginBottom:16,textAlign:"center"} }
-                      , React.createElement('div', { style: {fontSize:14,fontWeight:700,color:"#90EAF8",marginBottom:6} }, "🚗 " , lang==="en"?"Multi-Vehicle Profiles":"多车辆管理")
-                      , React.createElement('div', { style: {fontSize:12,color:C.text3,marginBottom:12,lineHeight:1.5} }, lang==="en"?"Save your current vehicle as a profile, so you can quickly switch later when you change cars or rent another.":"把当前车辆保存为 profile，以后换车 / 租车时可以快速切换回来。")
-                      , React.createElement('button', { onClick: doSave, style: {background:"linear-gradient(135deg,#0A4020,#1A6030)",border:"1px solid #2A8050",borderRadius:10,padding:"10px 20px",color:"#5ADA7A",fontSize:13,fontWeight:700,cursor:"pointer"} }, "💾 " , lang==="en"?"Save Current Vehicle":"保存当前车辆")
+                    var hasVehData = !!(veh.brand || veh.plate || veh.tlcPlate || veh.model);
+                    var vehLabel = (veh.brand||"")+(veh.model?" "+veh.model:"")+(veh.plate?" ["+veh.plate+"]":"");
+                    var headerTxt = hasVehData ? (lang==="en"?"Save Current Vehicle First!":"先保存当前车辆！") : (lang==="en"?"Multi-Vehicle Profiles":"多车辆管理");
+                    var bodyTxt = hasVehData ? (lang==="en"?("You have vehicle data ("+vehLabel+"). Save it as a profile FIRST before changing fields — otherwise editing will overwrite it permanently."):("已有车辆数据（"+vehLabel+"）。改字段前请先保存为 profile — 否则修改会永久覆盖。")) : (lang==="en"?"Save your current vehicle as a profile, so you can quickly switch later when you change cars or rent another.":"把当前车辆保存为 profile，以后换车 / 租车时可以快速切换回来。");
+                    var btnTxt = hasVehData ? (lang==="en"?"Save Now":"立即保存") : (lang==="en"?"Save Current Vehicle":"保存当前车辆");
+                    return React.createElement('div', { style: {background:hasVehData?"#1A1400":C.bg3,border:hasVehData?"2px solid #5A3A00":"1px dashed "+C.border,borderRadius:12,padding:"16px 14px",marginBottom:16,textAlign:"center"} }
+                      , React.createElement('div', { style: {fontSize:14,fontWeight:700,color:hasVehData?"#FFB300":"#90EAF8",marginBottom:6} }, hasVehData?"⚠️ ":"🚗 " , headerTxt)
+                      , React.createElement('div', { style: {fontSize:12,color:hasVehData?"#FFD380":C.text3,marginBottom:12,lineHeight:1.6} }, bodyTxt)
+                      , React.createElement('button', { onClick: doSave, style: {background:hasVehData?"linear-gradient(135deg,#5A3A00,#3A2800)":"linear-gradient(135deg,#0A4020,#1A6030)",border:"1px solid "+(hasVehData?"#7A5500":"#2A8050"),borderRadius:10,padding:"10px 20px",color:hasVehData?"#FFD700":"#5ADA7A",fontSize:13,fontWeight:700,cursor:"pointer"} }, "💾 " , btnTxt)
                     );
                   }
                   
@@ -2479,7 +2624,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                               }, style: {background:"#0A2040",border:"1px solid #2A5080",borderRadius:6,padding:"5px 12px",color:"#5AACFF",fontSize:11,fontWeight:700,cursor:"pointer"} }, lang==="en"?"Switch":"切换") : null
                             , React.createElement('button', { onClick: function(){
                                 if(!confirm(lang==="en"?"Delete this profile? (Won\'t affect current vehicle data.)":"删除这个 profile？（不影响当前正在用的车辆资料）"))return;
-                                setSavedVehicles(savedVehicles.filter(function(_,j){return j!==i;}));
+                                var prev=savedVehicles.slice();setSavedVehicles(savedVehicles.filter(function(_,j){return j!==i;}));showUndo((lang==="en"?"✓ Profile deleted":"✓ Profile 已删除"), {prevSavedVehicles:prev});
                               }, style: {background:"none",border:"none",color:"#FF5252",fontSize:14,cursor:"pointer",padding:"4px 6px"} }, "✕")
                           );
                         })
@@ -2732,7 +2877,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                 else if(diff<30){sc="#FF5252";st=Math.round(diff)+(lang==="en"?" days left":" 天");}
                 else if(diff<60){sc="#FFB300";st=Math.round(diff)+(lang==="en"?" days left":" 天");}
                 else{sc="#00E676";st=Math.round(diff)+(lang==="en"?" days left":" 天");}
-                return React.createElement(Card, { key: lic.id, __self: this, __source: {fileName: _jsxFileName, lineNumber: 446}}, React.createElement('div', { style: {display:"flex",justifyContent:"space-between"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 446}}, React.createElement('div', { style: {flex:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 446}}, React.createElement('div', { style: {fontSize:14,fontWeight:700,marginBottom:5}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 446}}, lic.type), lic.number?React.createElement('div', { style: {fontSize:13,color:C.text}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 446}}, lang==="en"?"No: ":"编号: ", lic.number):null, React.createElement('div', { style: {display:"flex",gap:14,marginTop:6,flexWrap:"wrap"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 446}}, lic.issueDate?React.createElement('span', { style: {fontSize:13,color:C.text}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 446}}, lang==="en"?"Issued: ":"发出: ", fmtDate(lic.issueDate)):null, lic.expiryDate?React.createElement('span', { style: Object.assign({fontSize:13,fontWeight:600},{color:sc}), __self: this, __source: {fileName: _jsxFileName, lineNumber: 446}}, lang==="en"?"Exp: ":"到期: ", fmtDate(lic.expiryDate), " " , st):null), lic.renewalFee?React.createElement('div', { style: {fontSize:13,color:"#FFB300",marginTop:5}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 446}}, lang==="en"?"Fee: ":"更新费: ", "$", lic.renewalFee):null), React.createElement('div', { style: {display:"flex",flexDirection:"column",gap:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 446}}, React.createElement('button', { onClick: function(){setLf(Object.assign({},lic));setSf("lic_edit_"+lic.id);}, style: {background:"none",border:"1px solid #2A4A6A",borderRadius:6,padding:"3px 8px",color:"#6AACEE",cursor:"pointer",fontSize:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 446}}, T.edit), React.createElement('button', { onClick: function(){if(!confirm(lang==="en"?"Delete this license?":"确认删除这条证件？"))return;setLl(ll.filter(function(x){return x.id!==lic.id;}));}, style: {background:"none",border:"1px solid #3A1A1A",borderRadius:6,padding:"3px 8px",color:"#FF5252",cursor:"pointer",fontSize:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 446}}, T.del))));
+                return React.createElement(Card, { key: lic.id, __self: this, __source: {fileName: _jsxFileName, lineNumber: 446}}, React.createElement('div', { style: {display:"flex",justifyContent:"space-between"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 446}}, React.createElement('div', { style: {flex:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 446}}, React.createElement('div', { style: {fontSize:14,fontWeight:700,marginBottom:5}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 446}}, lic.type), lic.number?React.createElement('div', { style: {fontSize:13,color:C.text}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 446}}, lang==="en"?"No: ":"编号: ", lic.number):null, React.createElement('div', { style: {display:"flex",gap:14,marginTop:6,flexWrap:"wrap"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 446}}, lic.issueDate?React.createElement('span', { style: {fontSize:13,color:C.text}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 446}}, lang==="en"?"Issued: ":"发出: ", fmtDate(lic.issueDate)):null, lic.expiryDate?React.createElement('span', { style: Object.assign({fontSize:13,fontWeight:600},{color:sc}), __self: this, __source: {fileName: _jsxFileName, lineNumber: 446}}, lang==="en"?"Exp: ":"到期: ", fmtDate(lic.expiryDate), " " , st):null), lic.renewalFee?React.createElement('div', { style: {fontSize:13,color:"#FFB300",marginTop:5}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 446}}, lang==="en"?"Fee: ":"更新费: ", "$", lic.renewalFee):null), React.createElement('div', { style: {display:"flex",flexDirection:"column",gap:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 446}}, React.createElement('button', { onClick: function(){setLf(Object.assign({},lic));setSf("lic_edit_"+lic.id);}, style: {background:"none",border:"1px solid #2A4A6A",borderRadius:6,padding:"3px 8px",color:"#6AACEE",cursor:"pointer",fontSize:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 446}}, T.edit), React.createElement('button', { onClick: function(){if(!confirm(lang==="en"?"Delete this license?":"确认删除这条证件？"))return;var prev=ll.slice();setLl(ll.filter(function(x){return x.id!==lic.id;}));showUndo((lang==="en"?"✓ License deleted":"✓ 证件已删除"), {prevLl:prev});}, style: {background:"none",border:"1px solid #3A1A1A",borderRadius:6,padding:"3px 8px",color:"#FF5252",cursor:"pointer",fontSize:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 446}}, T.del))));
               })
               , React.createElement('div', { style: {marginTop:20}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 448}}
                 , React.createElement('div', { style: {fontSize:13,fontWeight:700,color:"#90EAF8",marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 449}}, lang==="en"?"Useful Links":"常用网站")
@@ -2762,7 +2907,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
             , React.createElement('div', { style: {padding:"16px 14px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 473}}
               , fl.length > 0 ? React.createElement(Card, { style: {display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 474}}, React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 474}}, React.createElement('div', { style: {fontSize:13,color:C.text,marginBottom:2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 474}}, lang==="en"?"Monthly Fixed Total":"每月固定总支出"), React.createElement('div', { style: {fontSize:12,color:C.text2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 474}}, fl.filter(function(f){return f.active;}).length, " " , lang==="en"?"active":"项启用")), React.createElement('div', { style: {fontSize:22,fontWeight:900,color:"#FF9A65"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 474}}, fmt(totalFix))) : null
               , fl.length===0 ? React.createElement('div', { style: {marginBottom:14}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 475}}, React.createElement('div', { style: {fontSize:14,fontWeight:700,color:C.text2,marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 475}}, T.quickAdd), (lang==="en"?FIXSUGG_EN:FIXSUGG_ZH).map(function(sg,i){return React.createElement('button', { key: i, onClick: function(){setFf({label:sg.label,icon:sg.icon,cat:sg.cat,cycle:"monthly",amount:"",day:""+sg.day,notes:"",active:true,startDate:"",endDate:"",maxCount:""});setSf("fixed");}, style: {display:"flex",alignItems:"center",gap:12,width:"100%",background:C.bg2,border:"1px dashed #2A3A54",borderRadius:10,padding:"10px 14px",cursor:"pointer",textAlign:"left",marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 475}}, React.createElement('span', { style: {fontSize:20}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 475}}, sg.icon), React.createElement('span', { style: {fontSize:14,color:C.text}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 475}}, sg.label), React.createElement('span', { style: {marginLeft:"auto",color:"#2A5A8A",fontSize:18}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 475}}, "+"));}), " " ) : null
-              , fl.map(function(f){var monthly=f.cycle==="annual"?Math.round(+f.amount/12*100)/100:+f.amount,activeVal=f.active,cardBorder=activeVal?"#1A3A20":"#2A2A2A";return React.createElement(Card, { key: f.id, style: {border:"1px solid "+cardBorder,opacity:activeVal?1:0.5}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 476}}, React.createElement('div', { style: {display:"flex",alignItems:"center",gap:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 476}}, React.createElement('span', { style: {fontSize:22,flexShrink:0}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 476}}, f.icon), React.createElement('div', { style: {flex:1,minWidth:0}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 476}}, React.createElement('div', { style: {fontSize:14,fontWeight:700}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 476}}, f.label, activeVal?"":" ("+(lang==="en"?"paused":"暂停")+")"), React.createElement('div', { style: {fontSize:12,color:C.text2,marginTop:2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 476}}, lang==="en"?"Day ":"每月 ", f.day, lang==="en"?" ":"日", f.startDate?(lang==="en"?" · from ":" · 从")+f.startDate.slice(0,7):"", f.endDate?(lang==="en"?" · to ":" · 至")+f.endDate.slice(0,7):""), f.cycle==="annual"?React.createElement('div', { style: {fontSize:12,color:"#BAA850"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 476}}, lang==="en"?"Annual":"年费", " " , fmt(+f.amount), " ÷12" ):null), React.createElement('div', { style: {textAlign:"right"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 476}}, React.createElement('div', { style: {fontSize:16,fontWeight:800,color:"#FF9A65",marginBottom:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 476}}, fmt(monthly), lang==="en"?"/mo":"/月"), React.createElement('div', { style: {display:"flex",gap:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 476}}, React.createElement('button', { onClick: function(){setFf(Object.assign({},f));setSf("fixed_edit_"+f.id);}, style: {background:"none",border:"1px solid #2A4A6A",borderRadius:6,padding:"3px 8px",color:"#6AACEE",cursor:"pointer",fontSize:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 476}}, T.edit), React.createElement('button', { onClick: function(){setFl(fl.map(function(x){return x.id===f.id?Object.assign({},x,{active:!x.active}):x;}));}, style: {background:"none",border:"1px solid #2A4A6A",borderRadius:6,padding:"3px 8px",color:"#5ADA7A",cursor:"pointer",fontSize:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 476}}, activeVal?T.pause:T.resume), React.createElement('button', { onClick: function(){if(!confirm(lang==="en"?"Delete this fixed fee?":"确认删除这条固定费用？"))return;setFl(fl.filter(function(x){return x.id!==f.id;}));}, style: {background:"none",border:"1px solid #3A1A1A",borderRadius:6,padding:"3px 8px",color:"#FF3D00",cursor:"pointer",fontSize:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 476}}, T.del)))));})
+              , fl.map(function(f){var monthly=f.cycle==="annual"?Math.round(+f.amount/12*100)/100:+f.amount,activeVal=f.active,cardBorder=activeVal?"#1A3A20":"#2A2A2A";return React.createElement(Card, { key: f.id, style: {border:"1px solid "+cardBorder,opacity:activeVal?1:0.5}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 476}}, React.createElement('div', { style: {display:"flex",alignItems:"center",gap:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 476}}, React.createElement('span', { style: {fontSize:22,flexShrink:0}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 476}}, f.icon), React.createElement('div', { style: {flex:1,minWidth:0}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 476}}, React.createElement('div', { style: {fontSize:14,fontWeight:700}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 476}}, f.label, activeVal?"":" ("+(lang==="en"?"paused":"暂停")+")"), React.createElement('div', { style: {fontSize:12,color:C.text2,marginTop:2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 476}}, lang==="en"?"Day ":"每月 ", f.day, lang==="en"?" ":"日", f.startDate?(lang==="en"?" · from ":" · 从")+f.startDate.slice(0,7):"", f.endDate?(lang==="en"?" · to ":" · 至")+f.endDate.slice(0,7):""), f.cycle==="annual"?React.createElement('div', { style: {fontSize:12,color:"#BAA850"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 476}}, lang==="en"?"Annual":"年费", " " , fmt(+f.amount), " ÷12" ):null), React.createElement('div', { style: {textAlign:"right"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 476}}, React.createElement('div', { style: {fontSize:16,fontWeight:800,color:"#FF9A65",marginBottom:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 476}}, fmt(monthly), lang==="en"?"/mo":"/月"), React.createElement('div', { style: {display:"flex",gap:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 476}}, React.createElement('button', { onClick: function(){setFf(Object.assign({},f));setSf("fixed_edit_"+f.id);}, style: {background:"none",border:"1px solid #2A4A6A",borderRadius:6,padding:"3px 8px",color:"#6AACEE",cursor:"pointer",fontSize:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 476}}, T.edit), React.createElement('button', { onClick: function(){setFl(fl.map(function(x){return x.id===f.id?Object.assign({},x,{active:!x.active}):x;}));showToast(activeVal?(lang==="en"?"⏸ Paused":"⏸ 已暂停"):(lang==="en"?"▶ Resumed":"▶ 已恢复"));}, style: {background:"none",border:"1px solid #2A4A6A",borderRadius:6,padding:"3px 8px",color:"#5ADA7A",cursor:"pointer",fontSize:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 476}}, activeVal?T.pause:T.resume), React.createElement('button', { onClick: function(){if(!confirm(lang==="en"?"Delete this fixed fee?":"确认删除这条固定费用？"))return;var prev=fl.slice();setFl(fl.filter(function(x){return x.id!==f.id;}));showUndo((lang==="en"?"✓ Fixed fee deleted":"✓ 固定费已删除"), {prevFl:prev});}, style: {background:"none",border:"1px solid #3A1A1A",borderRadius:6,padding:"3px 8px",color:"#FF3D00",cursor:"pointer",fontSize:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 476}}, T.del)))));})
             )
           )
         )
@@ -2814,7 +2959,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
           , React.createElement('div', { style: {fontSize:13,color:C.text3,marginTop:6,marginBottom:-4} }, "🏷 " , lang==="en"?"Daily Cost":"当日成本")
           , React.createElement(Field, { label: (lang==="en"?"Lease / Rental":"班车租金")+" ($)", type: "number", value: dlf.lease, onChange: function(v){setDlf(Object.assign({},dlf,{lease:v}));}, money: true, placeholder: "0.00" })
           , React.createElement(Field, { label: T.notes, value: dlf.notes, onChange: function(v){setDlf(Object.assign({},dlf,{notes:v}));}, placeholder: T.optional })
-          , dlf.id ? React.createElement('button', { onClick: function(){if(!confirm(lang==="en"?"Delete this entry?":"确认删除？"))return;setDl(dl.filter(function(x){return x.id!==dlf.id;}));setSf(null);}, style: {width:"100%",background:"#2A1010",border:"1px solid #5A2020",color:"#FF7060",fontSize:14,fontWeight:700,padding:"12px",borderRadius:10,cursor:"pointer",marginTop:8} }, "🗑 " , T.del) : null
+          , dlf.id ? React.createElement('button', { onClick: function(){if(!confirm(lang==="en"?"Delete this entry?":"确认删除？"))return;var prev=dl.slice();setDl(dl.filter(function(x){return x.id!==dlf.id;}));setSf(null);showUndo((lang==="en"?"✓ Day deleted":"✓ 日记已删除"), {prevDl:prev});}, style: {width:"100%",background:"#2A1010",border:"1px solid #5A2020",color:"#FF7060",fontSize:14,fontWeight:700,padding:"12px",borderRadius:10,cursor:"pointer",marginTop:8} }, "🗑 " , T.del) : null
         )
       ) : null
 
@@ -2859,7 +3004,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                   )
               )
             )
-          , (wf.id||wf.weekStart) ? React.createElement('button', { onClick: function(){if(!confirm(lang==="en"?"Delete this week record?":"确认删除这条周记录？"))return;setWl(wl.filter(function(x){if(wf.id){return x.id!==wf.id;}return !(x.weekStart===wf.weekStart&&x.platform===wf.platform);}));setSf(null);}, style: {width:"100%",background:"#2A1010",border:"1px solid #5A2020",color:"#FF7060",fontSize:14,fontWeight:700,padding:"12px",borderRadius:10,cursor:"pointer",marginTop:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 492}}, "🗑 " , lang==="en"?"Delete":"删除") : null
+          , (wf.id||wf.weekStart) ? React.createElement('button', { onClick: function(){if(!confirm(lang==="en"?"Delete this week record?":"确认删除这条周记录？"))return;var prev=wl.slice();setWl(wl.filter(function(x){if(wf.id){return x.id!==wf.id;}return !(x.weekStart===wf.weekStart&&x.platform===wf.platform);}));setSf(null);showUndo((lang==="en"?"✓ Week deleted":"✓ 周记录已删除"), {prevWl:prev});}, style: {width:"100%",background:"#2A1010",border:"1px solid #5A2020",color:"#FF7060",fontSize:14,fontWeight:700,padding:"12px",borderRadius:10,cursor:"pointer",marginTop:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 492}}, "🗑 " , lang==="en"?"Delete":"删除") : null
         )
       ) : null
 
@@ -2897,13 +3042,60 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
             )
           )
           , React.createElement(Field, { label: T.notes, value: stf.notes||"", onChange: function(v){setStf(Object.assign({},stf,{notes:v}));}, placeholder: T.optional, __self: this, __source: {fileName: _jsxFileName, lineNumber: 515}} )
-          , (stf.id||stf.month) ? React.createElement('button', { onClick: function(){if(!confirm(lang==="en"?"Delete this statement?":"确认删除这条月账单？"))return;setSl(sl.filter(function(x){if(stf.id){return x.id!==stf.id;}return !(x.month===stf.month&&x.platform===stf.platform);}));setSf(null);}, style: {width:"100%",background:"#2A1010",border:"1px solid #5A2020",color:"#FF7060",fontSize:14,fontWeight:700,padding:"12px",borderRadius:10,cursor:"pointer",marginTop:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 516}}, "🗑 " , lang==="en"?"Delete":"删除") : null
+          , (stf.id||stf.month) ? React.createElement('button', { onClick: function(){if(!confirm(lang==="en"?"Delete this statement?":"确认删除这条月账单？"))return;var prev=sl.slice();setSl(sl.filter(function(x){if(stf.id){return x.id!==stf.id;}return !(x.month===stf.month&&x.platform===stf.platform);}));setSf(null);showUndo((lang==="en"?"✓ Statement deleted":"✓ 月度账单已删除"), {prevSl:prev});}, style: {width:"100%",background:"#2A1010",border:"1px solid #5A2020",color:"#FF7060",fontSize:14,fontWeight:700,padding:"12px",borderRadius:10,cursor:"pointer",marginTop:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 516}}, "🗑 " , lang==="en"?"Delete":"删除") : null
         )
       ) : null
 
       , sf && (sf==="exp" || sf.startsWith("exp_edit_")) ? (
         React.createElement(Modal, { title: sf.startsWith("exp_edit_")?(T.edit+" "+(lang==="en"?"Expense":"支出")):(lang==="en"?"Add Expense":"添加支出"), onClose: function(){setSf(null);}, onSave: function(){if(!ef.amount)return;if(sf.startsWith("exp_edit_")){var eid=+sf.replace("exp_edit_","");setEl(el.map(function(x){return x.id===eid?Object.assign({},ef,{id:eid}):x;}));}else if(ef.isRecurring){setFl(fl.concat([{id:Date.now(),label:allC[ef.category]?allC[ef.category].label:ef.notes||"Fixed",icon:allC[ef.category]?allC[ef.category].icon:"💼",cat:ef.category,cycle:"monthly",amount:ef.amount,day:new Date().getDate()+"",notes:ef.notes,active:true,startDate:"",endDate:"",maxCount:""}]));}else{var nel=[Object.assign({},ef,{id:Date.now()})].concat(el);setEl(nel);autoSave({el:nel});}setSf(null);showToast(lang==="en"?"✓ Expense saved":"✓ 支出已保存");}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 520}}
-          , React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 521}}
+          
+          // === Quick Expenses (favorites) ===
+          , (function(){
+              if(sf.startsWith("exp_edit_")) return null;
+              if(!favExpenses || favExpenses.length === 0) return null;
+              return React.createElement('div', {style:{background:"#1A1400",border:"1px solid #5A3A00",borderRadius:10,padding:"10px 12px",marginBottom:6}}
+                , React.createElement('div', {style:{fontSize:11,color:"#FFD700",fontWeight:700,marginBottom:8}}, "⚡ " , lang==="en"?"Quick Expenses (tap to fill)":"快捷支出（点一下填表）")
+                , React.createElement('div', {style:{display:"flex",gap:6,flexWrap:"wrap"}}
+                  , favExpenses.map(function(fav){
+                      return React.createElement('div', {key:fav.id,style:{display:"flex",alignItems:"stretch",background:"#0F0A00",border:"1px solid #5A3A00",borderRadius:8,overflow:"hidden"}}
+                        , React.createElement('button', {
+                            onClick: function(){
+                              var update={category:fav.category||"other", amount:String(fav.amount||""), notes:fav.notes||"", isRecurring:false, mode:ef.mode||(driverType==="rideshare"||driverType==="taxi"?driverType:"")};
+                              if(fav.qty) update.qty = String(fav.qty);
+                              setEf(Object.assign({},ef,update));
+                              showToast((lang==="en"?"⚡ Filled: ":"⚡ 已填入：")+(fav.label||fav.notes||"$"+fav.amount));
+                            },
+                            style: {background:"transparent",border:"none",padding:"6px 10px",color:"#FFD700",fontSize:12,fontWeight:700,cursor:"pointer",textAlign:"left",display:"flex",alignItems:"center",gap:6}
+                          }
+                          , React.createElement('span', null, (fav.icon||"⚡")+" "+(fav.label||fav.notes||""))
+                          , React.createElement('span',{style:{fontSize:10,color:"#BAA850"}}, "$"+(+fav.amount||0).toFixed(2))
+                        )
+                        , React.createElement('button', {
+                            onClick: function(){
+                              if(!confirm((lang==="en"?"Delete quick expense \""+fav.label+"\"?":"删除快捷支出 \""+fav.label+"\"？")))return;
+                              setFavExpenses(favExpenses.filter(function(x){return x.id!==fav.id;}));
+                              showToast(lang==="en"?"✓ Removed":"✓ 已删除");
+                            },
+                            style: {background:"transparent",border:"none",borderLeft:"1px solid #5A3A00",padding:"0 8px",color:"#BAA850",fontSize:12,cursor:"pointer"}
+                          }, "✕")
+                      );
+                    })
+                )
+              );
+            }())
+          // Save current as quick expense
+          , (!sf.startsWith("exp_edit_") && ef.amount && +ef.amount > 0) ? React.createElement('button', {
+              onClick: function(){
+                var defaultName = ef.notes || (allC[ef.category]||{}).label || "Expense";
+                var label = prompt(lang==="en"?"Quick name (e.g. \"Coffee\"):":"快捷名称（例如：咖啡）：", defaultName);
+                if(!label || !label.trim()) return;
+                var icon = (allC[ef.category]||{}).icon || "⚡";
+                var newFav = {id:Date.now(), label:label.trim(), category:ef.category, amount:+ef.amount, notes:ef.notes||"", icon:icon, qty:ef.qty||""};
+                setFavExpenses((favExpenses||[]).concat([newFav]));
+                showToast((lang==="en"?"⚡ Saved as quick: ":"⚡ 已保存为快捷：")+label);
+              },
+              style: {background:"transparent",border:"1px dashed #5A3A00",borderRadius:8,padding:"6px 12px",color:"#BAA850",fontSize:11,fontWeight:600,cursor:"pointer",alignSelf:"flex-start",opacity:simpleMode?0.4:1}
+            }, "⚡ " , lang==="en"?"Save as quick expense":"保存为快捷支出") : null, React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 521}}
             , React.createElement('div', { style: {fontSize:14,color:C.text2,marginBottom:8,fontWeight:500}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 522}}, lang==="en"?"Category Group":"支出大类")
             , React.createElement('div', { style: {display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:8,marginBottom:14}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 523}}
               , [["车辆","&#128663;","#00D4FF","Vehicle"],["牌照","&#128203;","#FFD700","License"],["平台","&#128241;","#AB47BC","Platform"],["其他","&#128188;","#B0D4E8","Other"]].map(function(gb){
@@ -2939,17 +3131,69 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                   React.createElement('input',{type:"text",value:ef.notes||"",onChange:function(e){setEf(Object.assign({},ef,{notes:e.target.value}));},placeholder:T.optional,style:Object.assign({},IS,{paddingRight:favs.length>0?(currentNotes&&!alreadyFav?"82px":"40px"):(currentNotes&&!alreadyFav?"42px":undefined)})}),
                   // ⭐ Star button: only shows when there's text not already saved
                   currentNotes&&!alreadyFav?React.createElement('button',{type:"button",onClick:addFav,title:lang==="en"?"Save as favorite":"添加为常用",style:{position:"absolute",right:favs.length>0?42:6,top:4,background:"#0A2010",border:"1px solid #2A6030",color:"#FFD700",borderRadius:6,width:32,height:32,cursor:"pointer",fontSize:14,padding:0}},"⭐"):null,
-                  // ⏷ Dropdown: shows favorites only
-                  favs.length>0?React.createElement('details',{style:{position:"absolute",right:6,top:4}},
-                    React.createElement('summary',{style:{listStyle:"none",cursor:"pointer",background:"#1A2A44",border:"1px solid #2A4A6A",borderRadius:6,width:32,height:32,display:"flex",alignItems:"center",justifyContent:"center",color:"#00D4FF",fontSize:14}},"⏷"),
-                    React.createElement('div',{style:{position:"absolute",right:0,top:36,background:C.bg2,border:"1px solid "+C.border,borderRadius:10,minWidth:260,maxHeight:320,overflowY:"auto",boxShadow:"0 4px 20px rgba(0,0,0,0.5)",zIndex:100}},
-                      React.createElement('div',{style:{fontSize:11,color:"#FFD700",padding:"8px 12px",borderBottom:"1px solid "+C.border,background:"#1A1400"}},"⭐ ",lang==="en"?"Favorites":"常用地点"),
-                      favs.map(function(loc,i){return React.createElement('div',{key:i,style:{display:"flex",alignItems:"center",borderBottom:i<favs.length-1?"1px solid #0F1C30":"none"}},
-                        React.createElement('button',{type:"button",onClick:function(ev){ev.preventDefault();setEf(Object.assign({},ef,{notes:loc}));ev.target.closest('details').open=false;},style:{flex:1,textAlign:"left",background:"none",border:"none",padding:"10px 12px",color:C.text,fontSize:13,cursor:"pointer"}},loc),
-                        React.createElement('button',{type:"button",onClick:function(ev){ev.preventDefault();ev.stopPropagation();if(confirm(lang==="en"?"Remove from favorites?":"取消收藏？"))removeFav(loc);},style:{background:"none",border:"none",color:"#FF7060",padding:"8px 12px",cursor:"pointer",fontSize:13}},"✕")
-                      );})
-                    )
-                  ):null
+                  // ⏷ Globally searchable dropdown across all categories
+                  (function(){
+                    // Collect ALL favorites with their category
+                    var allFavs=[];
+                    Object.keys(favNotes||{}).forEach(function(catKey){
+                      var catLabel=(allC[catKey]||{}).label||catKey;
+                      (favNotes[catKey]||[]).forEach(function(loc){
+                        allFavs.push({loc:loc, catKey:catKey, catLabel:catLabel, sameCategory: catKey===ef.category});
+                      });
+                    });
+                    if(allFavs.length===0) return null;
+                    return React.createElement('details',{style:{position:"absolute",right:6,top:4}, ref:function(d){if(d)d._allFavs=allFavs;}},
+                      React.createElement('summary',{style:{listStyle:"none",cursor:"pointer",background:"#1A2A44",border:"1px solid #2A4A6A",borderRadius:6,width:32,height:32,display:"flex",alignItems:"center",justifyContent:"center",color:"#00D4FF",fontSize:14}},"⏷"),
+                      React.createElement('div',{style:{position:"absolute",right:0,top:36,background:C.bg2,border:"1px solid "+C.border,borderRadius:10,width:300,maxHeight:380,overflowY:"auto",boxShadow:"0 4px 20px rgba(0,0,0,0.5)",zIndex:100}},
+                        // Header with search input
+                        React.createElement('div',{style:{padding:"8px 10px",borderBottom:"1px solid "+C.border,background:"#1A1400",position:"sticky",top:0,zIndex:1}},
+                          React.createElement('div',{style:{fontSize:11,color:"#FFD700",marginBottom:6}},"⭐ ",lang==="en"?"Address Book":"地址簿"," (",allFavs.length,")"),
+                          React.createElement('input',{
+                            type:"search",
+                            placeholder: lang==="en"?"Search across all categories...":"搜索所有类别...",
+                            onChange: function(ev){
+                              var q = (ev.target.value||"").toLowerCase().trim();
+                              var list = ev.target.closest('div').nextElementSibling;
+                              if(!list) return;
+                              Array.from(list.children).forEach(function(node){
+                                var txt = (node.textContent||"").toLowerCase();
+                                node.style.display = (q==="" || txt.indexOf(q)>=0) ? "" : "none";
+                              });
+                            },
+                            onClick: function(ev){ev.stopPropagation();},
+                            style: {width:"100%",padding:"6px 10px",borderRadius:6,border:"1px solid "+C.border,background:C.bg3,color:C.text,fontSize:12,boxSizing:"border-box"}
+                          })
+                        ),
+                        // Favorites list (current category first, then others)
+                        React.createElement('div', null,
+                          allFavs.sort(function(a,b){return (b.sameCategory?1:0)-(a.sameCategory?1:0);}).map(function(item,i){
+                            return React.createElement('div',{key:item.catKey+"_"+item.loc+"_"+i,style:{display:"flex",alignItems:"center",borderBottom:"1px solid #0F1C30"}},
+                              React.createElement('button',{type:"button",onClick:function(ev){
+                                  ev.preventDefault();
+                                  // Set notes AND switch category if different
+                                  var update={notes:item.loc};
+                                  if(item.catKey!==ef.category) update.category=item.catKey;
+                                  setEf(Object.assign({},ef,update));
+                                  ev.target.closest('details').open=false;
+                                }, style:{flex:1,textAlign:"left",background:"none",border:"none",padding:"8px 12px",color:C.text,fontSize:13,cursor:"pointer"}},
+                                React.createElement('div',{style:{fontSize:13,marginBottom:2}},item.loc),
+                                React.createElement('div',{style:{fontSize:10,color:item.sameCategory?"#5ADA7A":C.text3}},
+                                  item.sameCategory ? "📍 " + item.catLabel : item.catLabel
+                                )
+                              ),
+                              React.createElement('button',{type:"button",onClick:function(ev){
+                                  ev.preventDefault();ev.stopPropagation();
+                                  if(!confirm((lang==="en"?"Remove from ":"从 ")+item.catLabel+(lang==="en"?" favorites?":" 中移除？")))return;
+                                  var nf=Object.assign({},favNotes);
+                                  nf[item.catKey]=(nf[item.catKey]||[]).filter(function(x){return x!==item.loc;});
+                                  setFavNotes(nf);
+                                }, style:{background:"none",border:"none",color:"#FF7060",padding:"6px 10px",cursor:"pointer",fontSize:13}},"✕")
+                            );
+                          })
+                        )
+                      )
+                    );
+                  }())
                 )
               );
             }())
@@ -2957,8 +3201,8 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
             , React.createElement('div', { style: {width:24,height:24,borderRadius:6,background:"#1A2A44",border:"2px solid #2A4A6A",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,flexShrink:0}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 545}}, ef.isRecurring?"✓":"")
             , React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 546}}, React.createElement('div', { style: {fontSize:14,fontWeight:600,color:C.text}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 546}}, T.fixedMonthly), React.createElement('div', { style: {fontSize:12,color:C.text3,marginTop:2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 546}}, T.fixedMonthlyDesc))
           ) : null
-          // Mode toggle moved here — after 固定月费 toggle (less critical, less prominent)
-          , React.createElement('div', {style:{display:"flex",alignItems:"center",gap:8,marginTop:2}},
+          // Mode toggle (hidden in simple mode)
+          , !simpleMode ? React.createElement('div', {style:{display:"flex",alignItems:"center",gap:8,marginTop:2}},
               React.createElement('span', {style:{fontSize:11,color:C.text3,minWidth:40}}, "🏷 ", lang==="en"?"Tag":"记给"),
               React.createElement('div', {style:{display:"flex",gap:5,flex:1}},
                 [{v:"rideshare",l:lang==="en"?"📱":"📱",cl:"#5AACFF",bg:"#0A2040"},{v:"taxi",l:"🚖",cl:"#FFB300",bg:"#1A1000"},{v:"shared",l:"📦",cl:C.text3,bg:C.bg3}].map(function(opt){
@@ -2966,8 +3210,8 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                   return React.createElement('button',{key:opt.v||"shared",onClick:function(){setEf(Object.assign({},ef,{mode:opt.v}));},style:{flex:1,padding:"5px 4px",borderRadius:6,border:"1px solid "+(sel?opt.cl:"#2A3A54"),background:sel?opt.bg:"transparent",color:sel?opt.cl:C.text3,fontSize:13,fontWeight:sel?700:400,cursor:"pointer"}},opt.l + (sel ? (opt.v==="rideshare"?(lang==="en"?" Rideshare":" 网约车"):opt.v==="taxi"?(lang==="en"?" Taxi":" 出租车"):(lang==="en"?" Shared":" 共用")):""));
                 })
               )
-            )
-          , sf.startsWith("exp_edit_") ? React.createElement('button', { onClick: function(){if(!confirm(lang==="en"?"Delete this expense?":"确认删除这笔支出？"))return;var eid=+sf.replace("exp_edit_","");setEl(el.filter(function(x){return x.id!==eid;}));setSf(null);}, style: {width:"100%",background:"#2A1010",border:"1px solid #5A2020",color:"#FF7060",fontSize:14,fontWeight:700,padding:"12px",borderRadius:10,cursor:"pointer",marginTop:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 547}}, "🗑 " , lang==="en"?"Delete":"删除") : null
+            ) : null
+          , sf.startsWith("exp_edit_") ? React.createElement('button', { onClick: function(){if(!confirm(lang==="en"?"Delete this expense?":"确认删除这笔支出？"))return;var eid=+sf.replace("exp_edit_","");var prev=el.slice();setEl(el.filter(function(x){return x.id!==eid;}));setSf(null);showUndo((lang==="en"?"✓ Expense deleted":"✓ 支出已删除"), {prevEl:prev});}, style: {width:"100%",background:"#2A1010",border:"1px solid #5A2020",color:"#FF7060",fontSize:14,fontWeight:700,padding:"12px",borderRadius:10,cursor:"pointer",marginTop:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 547}}, "🗑 " , lang==="en"?"Delete":"删除") : null
         )
       ) : null
 
@@ -3022,9 +3266,54 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
               , React.createElement('div', { style: {fontSize:15,fontWeight:800,color:C.text}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 599}}, T.menu)
             )
             , React.createElement('div', { style: {padding:"10px 0",flex:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 602}}
-              , [{icon:"📝",label:lang==="en"?"Notes":"记事本",action:function(){setShowDrawer(false);setSf("notes");}},{icon:"🏥",label:lang==="en"?"Health Check":"数据健康检查",action:function(){setShowDrawer(false);setSf("health_check");}},{icon:"🗂",label:lang==="en"?"Categories":"支出类别",action:function(){setShowDrawer(false);setSf("manage_cats");}},{icon:"&#128197;",label:T.fixedFees,action:function(){setShowDrawer(false);setSf("drawer_fixed");}},{icon:"🧾",label:lang==="en"?"Tax Center":"税务中心",action:function(){setShowDrawer(false);setSf("tax_center");}},{icon:"&#128190;",label:T.backup,action:function(){setShowDrawer(false);setShowBackup(true);}},{icon:"&#128276;",label:T.reminder,action:function(){setShowDrawer(false);setShowRemMgr(true);}},{icon:"&#128203;",label:T.license,action:function(){setShowDrawer(false);setSf("drawer_lic");}},{icon:"&#128241;",label:T.platform,action:function(){setShowDrawer(false);setShowPlatMgr(true);}},{icon:"&#128663;",label:T.vehicle,action:function(){setShowDrawer(false);setSf("drawer_veh");}},{icon:"🚖",label:lang==="en"?"Driver Type":"切换司机类型",action:function(){setShowDrawer(false);setDriverType(null);setOnboardingDismissed(false);}},{icon:"🔒",label:lang==="en"?"PIN Lock":"PIN 锁屏",action:function(){setShowDrawer(false);setSf("pin_settings");}},{icon:"🚪",label:lang==="en"?"Sign Out":"退出登录",action:function(){if(!confirm(lang==="en"?"Sign out of Google?":"确认退出 Google 登录？"))return;setGUser(null);try{localStorage.removeItem("nyc_user");localStorage.removeItem("nyc_tab");}catch(e){}setTab(0);setSf(null);setShowDrawer(false);setShowBackup(false);setShowPlatMgr(false);setShowRemMgr(false);},color:"#FF5252"},].map(function(item,i){return React.createElement('button', { key: i, onClick: item.action, style: {display:"flex",alignItems:"center",gap:14,width:"100%",background:"none",border:"none",padding:"14px 18px",cursor:"pointer",textAlign:"left",borderBottom:"1px solid "+C.border,color:item.color||C.text}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 603}}, React.createElement('span', { style: {fontSize:20}, dangerouslySetInnerHTML: {__html:item.icon}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 603}} ), React.createElement('span', { style: {fontSize:14,color:C.text,fontWeight:600}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 603}}, item.label), React.createElement('span', { style: {marginLeft:"auto",color:C.text3,fontSize:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 603}}, ">"));})
+              , (function(){
+                var mainItems = [
+                  {icon:"🧾",label:lang==="en"?"Tax Center":"税务中心",action:function(){setShowDrawer(false);setSf("tax_center");}},
+                  {icon:"&#128190;",label:T.backup,action:function(){setShowDrawer(false);setShowBackup(true);}},
+                  {icon:"&#128276;",label:T.reminder,action:function(){setShowDrawer(false);setShowRemMgr(true);}},
+                  {icon:"&#128663;",label:T.vehicle,action:function(){setShowDrawer(false);setSf("drawer_veh");}},
+                  {icon:"&#128241;",label:T.platform,action:function(){setShowDrawer(false);setShowPlatMgr(true);}},
+                  {icon:"📝",label:lang==="en"?"Notes":"记事本",action:function(){setShowDrawer(false);setSf("notes");}},
+                  {icon:"🚖",label:lang==="en"?"Driver Type":"切换司机类型",action:function(){setShowDrawer(false);setDriverType(null);setOnboardingDismissed(false);}}
+                ];
+                var advancedItems = [
+                  {icon:simpleMode?"🎯":"⚡", label:(simpleMode?(lang==="en"?"Simple Mode (ON)":"精简模式（开启）"):(lang==="en"?"Simple Mode (OFF)":"精简模式（关闭）")), action:function(){setSimpleMode(!simpleMode);showToast(simpleMode?(lang==="en"?"Full mode":"完整模式"):(lang==="en"?"✓ Simple mode":"✓ 精简模式"));}, color:simpleMode?"#5ADA7A":C.text2},
+                  {icon:"&#128197;",label:T.fixedFees,action:function(){setShowDrawer(false);setSf("drawer_fixed");}},
+                  {icon:"🗂",label:lang==="en"?"Categories":"支出类别",action:function(){setShowDrawer(false);setSf("manage_cats");}},
+                  {icon:"&#128203;",label:T.license,action:function(){setShowDrawer(false);setSf("drawer_lic");}},
+                  {icon:"🏥",label:lang==="en"?"Health Check":"数据健康检查",action:function(){setShowDrawer(false);setSf("health_check");}},
+                  {icon:"🔒",label:lang==="en"?"PIN Lock":"PIN 锁屏",action:function(){setShowDrawer(false);setSf("pin_settings");}}
+                ];
+                var signOut = {icon:"🚪",label:lang==="en"?"Sign Out":"退出登录",action:function(){if(!confirm(lang==="en"?"Sign out of Google?":"确认退出 Google 登录？"))return;setGUser(null);try{localStorage.removeItem("nyc_user");localStorage.removeItem("nyc_tab");}catch(e){}setTab(0);setSf(null);setShowDrawer(false);setShowBackup(false);setShowPlatMgr(false);setShowRemMgr(false);showToast(lang==="en"?"✓ Signed out":"✓ 已退出");},color:"#FF5252"};
+                
+                var renderItem = function(item, i){
+                  return React.createElement('button', { key: i, onClick: item.action, style: {display:"flex",alignItems:"center",gap:14,width:"100%",background:"none",border:"none",padding:"14px 18px",cursor:"pointer",textAlign:"left",borderBottom:"1px solid "+C.border,color:item.color||C.text} }
+                    , React.createElement('span', { style: {fontSize:20}, dangerouslySetInnerHTML: {__html:item.icon} } )
+                    , React.createElement('span', { style: {fontSize:14,color:item.color||C.text,fontWeight:600} }, item.label)
+                    , React.createElement('span', { style: {marginLeft:"auto",color:C.text3,fontSize:16} }, ">")
+                  );
+                };
+                
+                return React.createElement('div', null
+                  // Main items
+                  , mainItems.map(renderItem)
+                  // Advanced toggle (collapsed by default)
+                  , React.createElement('button', {
+                      onClick: function(){setShowAdvanced(!showAdvanced);},
+                      style: {display:"flex",alignItems:"center",gap:14,width:"100%",background:"none",border:"none",padding:"14px 18px",cursor:"pointer",textAlign:"left",borderBottom:"1px solid "+C.border,color:C.text3}
+                    }
+                    , React.createElement('span', {style:{fontSize:20}}, "⚙️")
+                    , React.createElement('span', {style:{fontSize:14,fontWeight:600}}, lang==="en"?"Advanced":"高级设置")
+                    , React.createElement('span', {style:{marginLeft:"auto",fontSize:14}}, showAdvanced?"▾":"▸")
+                  )
+                  // Advanced items (only when expanded)
+                  , showAdvanced ? React.createElement('div', {style:{background:"#0A0A12"}}, advancedItems.map(renderItem)) : null
+                  // Sign out (always at bottom)
+                  , renderItem(signOut, 999)
+                );
+              }())
             )
-            , React.createElement('div', { style: {fontSize:10,color:C.text3,textAlign:"center",padding:"12px 18px 16px",borderTop:"1px solid "+C.border,letterSpacing:0.5} }, "NYC RIDESHARE TRACKER · v3.2.7"    )
+            , React.createElement('div', { style: {fontSize:10,color:C.text3,textAlign:"center",padding:"12px 18px 16px",borderTop:"1px solid "+C.border,letterSpacing:0.5} }, "NYC RIDESHARE TRACKER · v3.6.1"    )
           )
           , React.createElement('div', { style: {flex:1,background:"rgba(0,0,0,0.6)"}, onClick: function(){setShowDrawer(false);}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 606}} )
         )
@@ -3033,7 +3322,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
       , showGoal ? (
         React.createElement('div', { style: {position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:300,padding:20}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 611}}
           , React.createElement('div', { style: {background:C.bg2,borderRadius:16,padding:24,width:"100%",maxWidth:320,border:"1px solid "+C.border}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 612}}
-            , React.createElement('div', { style: {fontSize:16,fontWeight:800,marginBottom:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 613}}, "🎯 " , lang==="en"?"Monthly Income Goal":"本月收入目标")
+            , React.createElement('div', { style: {fontSize:16,fontWeight:800,marginBottom:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 613}}, "🎯 " , lang==="en"?("Goal for "+mo):(mo+" 收入目标"))
             , React.createElement('input', { type: "number", value: incGoal, onChange: function(e){setIncGoal(e.target.value);}, placeholder: lang==="en"?"e.g. 5000":"例：5000", style: Object.assign({},IS,{fontSize:20,fontWeight:700,marginBottom:16}), __self: this, __source: {fileName: _jsxFileName, lineNumber: 614}} )
             , React.createElement('div', { style: {display:"flex",gap:8,flexWrap:"wrap",marginBottom:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 615}}, ["3000","4000","5000","6000","7000","8000"].map(function(v){return React.createElement('button', { key: v, onClick: function(){setIncGoal(v);}, style: {background:incGoal===v?"#1A3060":"#0A1828",border:"1px solid "+(incGoal===v?"#00D4FF":"#2A3A54"),borderRadius:8,padding:"6px 12px",color:incGoal===v?"#00D4FF":C.text2,fontSize:13,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 615}}, "$", v);}))
             , React.createElement('div', { style: {display:"flex",gap:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 616}}, React.createElement('button', { onClick: function(){setIncGoal("");setShowGoal(false);}, style: {flex:1,background:"#1E3050",border:"none",borderRadius:10,padding:12,color:C.text2,fontSize:14,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 616}}, lang==="en"?"Clear":"清除"), React.createElement('button', { onClick: function(){setShowGoal(false);}, style: {flex:2,background:"linear-gradient(135deg,#00D4FF,#0055FF)",border:"none",borderRadius:10,padding:12,color:"#fff",fontSize:14,fontWeight:700,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 616}}, "✓ " , lang==="en"?"Save":"保存"))
@@ -3101,7 +3390,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                 , React.createElement('input', { value: noteF.title, onChange: function(e){setNoteF(Object.assign({},noteF,{title:e.target.value}));}, placeholder: lang==="en"?"Title (optional)":"标题（可选）", style: Object.assign({},IS,{marginBottom:10,fontSize:15,fontWeight:600}), __self: this, __source: {fileName: _jsxFileName, lineNumber: 638}} )
                 , React.createElement('textarea', { value: noteF.body, onChange: function(e){setNoteF(Object.assign({},noteF,{body:e.target.value}));}, placeholder: lang==="en"?"Write your note...":"写下你的记事...", rows: 10, style: Object.assign({},IS,{resize:"vertical",lineHeight:1.7,fontSize:14}), __self: this, __source: {fileName: _jsxFileName, lineNumber: 639}} )
               ) : React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 640}}
-                , notes.length===0 ? React.createElement('div', { style: {textAlign:"center",padding:40,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 641}}, React.createElement('div', { style: {fontSize:40,marginBottom:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 641}}, "📝"), React.createElement('div', { style: {fontSize:14}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 641}}, lang==="en"?"No notes yet":"还没有记事")) : notes.map(function(n){return React.createElement(Card, { key: n.id, style: {marginBottom:10,cursor:"pointer"}, onClick: function(){setNoteF({title:n.title,body:n.body,id:n.id});setNoteEdit(true);}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 641}}, React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"flex-start"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 641}}, React.createElement('div', { style: {flex:1,minWidth:0}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 641}}, n.title?React.createElement('div', { style: {fontSize:14,fontWeight:700,marginBottom:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 641}}, n.title):null, React.createElement('div', { style: {fontSize:13,color:C.text2,lineHeight:1.5}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 641}}, n.body.slice(0,120), n.body.length>120?"...":""), React.createElement('div', { style: {fontSize:11,color:C.text3,marginTop:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 641}}, n.updated||n.date)), React.createElement('button', { onClick: function(e){e.stopPropagation();if(!confirm(lang==="en"?"Delete this note?":"确认删除这条记事？"))return;setNotes(notes.filter(function(x){return x.id!==n.id;}));}, style: {background:"none",border:"none",color:"#FF5252",fontSize:16,cursor:"pointer",padding:"0 0 0 10px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 641}}, "✕")));})
+                , notes.length===0 ? React.createElement('div', { style: {textAlign:"center",padding:40,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 641}}, React.createElement('div', { style: {fontSize:40,marginBottom:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 641}}, "📝"), React.createElement('div', { style: {fontSize:14}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 641}}, lang==="en"?"No notes yet":"还没有记事")) : notes.map(function(n){return React.createElement(Card, { key: n.id, style: {marginBottom:10,cursor:"pointer"}, onClick: function(){setNoteF({title:n.title,body:n.body,id:n.id});setNoteEdit(true);}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 641}}, React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"flex-start"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 641}}, React.createElement('div', { style: {flex:1,minWidth:0}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 641}}, n.title?React.createElement('div', { style: {fontSize:14,fontWeight:700,marginBottom:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 641}}, n.title):null, React.createElement('div', { style: {fontSize:13,color:C.text2,lineHeight:1.5}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 641}}, n.body.slice(0,120), n.body.length>120?"...":""), React.createElement('div', { style: {fontSize:11,color:C.text3,marginTop:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 641}}, n.updated||n.date)), React.createElement('button', { onClick: function(e){e.stopPropagation();if(!confirm(lang==="en"?"Delete this note?":"确认删除这条记事？"))return;var prev=notes.slice();setNotes(notes.filter(function(x){return x.id!==n.id;}));showUndo((lang==="en"?"✓ Note deleted":"✓ 记事已删除"), {prevNotes:prev});}, style: {background:"none",border:"none",color:"#FF5252",fontSize:16,cursor:"pointer",padding:"0 0 0 10px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 641}}, "✕")));})
               )
             )
           )
@@ -3114,19 +3403,19 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
             , React.createElement('div', { style: {background:C.bg2,padding:"16px 18px",borderBottom:"1px solid "+C.border,display:"flex",justifyContent:"space-between",alignItems:"center",position:"sticky",top:0,zIndex:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 651}}
               , React.createElement('button', { onClick: function(){setSf(null);}, style: {background:"#1E3050",border:"none",color:"#8ABCD0",fontSize:16,cursor:"pointer",width:34,height:34,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 652}}, "✕")
               , React.createElement('div', { style: {fontSize:16,fontWeight:800}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 653}}, "🗂 " , lang==="en"?"Categories":"支出类别")
-              , React.createElement('button', { onClick: function(){if(!newGrpName)return;setCustGroups(custGroups.concat([{name:newGrpName,icon:newGrpIcon||"📁",color:newGrpColor||"#A8D0E8"}]));setNewGrpName("");setNewGrpIcon("📁");setNewGrpColor("#A8D0E8");}, style: {background:"linear-gradient(135deg,#00D4FF,#0055FF)",border:"none",color:"#fff",fontSize:20,cursor:"pointer",width:34,height:34,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 654}}, "✓")
+              , React.createElement('button', { onClick: function(){if(!newGrpName)return;setCustGroups(custGroups.concat([{name:newGrpName,icon:newGrpIcon||"📁",color:newGrpColor||"#A8D0E8"}]));setNewGrpName("");setNewGrpIcon("📁");setNewGrpColor("#A8D0E8");showToast(lang==="en"?"✓ Group added":"✓ 大类已添加");}, style: {background:"linear-gradient(135deg,#00D4FF,#0055FF)",border:"none",color:"#fff",fontSize:20,cursor:"pointer",width:34,height:34,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 654}}, "✓")
             )
             , React.createElement('div', { style: {padding:"16px 14px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 656}}
               , React.createElement('div', { style: {fontSize:13,fontWeight:700,color:"#90EAF8",marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 657}}, lang==="en"?"Default Groups":"默认大类")
               , React.createElement('div', { style: {display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 658}}, [["🚗",lang==="en"?"Vehicle":"车辆","#00D4FF"],["📋",lang==="en"?"License":"牌照","#FFD700"],["📱",lang==="en"?"Platform":"平台","#CC88FF"],["💼",lang==="en"?"Other":"其他","#B0D4E8"]].map(function(g,i){return React.createElement('div', { key: i, style: {background:C.bg2,border:"1px solid #2A3A54",borderRadius:10,padding:"10px 12px",display:"flex",alignItems:"center",gap:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 658}}, React.createElement('span', { style: {fontSize:20}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 658}}, g[0]), React.createElement('span', { style: Object.assign({fontSize:13,fontWeight:700},{color:g[2]}), __self: this, __source: {fileName: _jsxFileName, lineNumber: 658}}, g[1]), React.createElement('span', { style: {marginLeft:"auto",fontSize:10,color:"#6A8AAA"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 658}}, lang==="en"?"built-in":"内置"));}))
               , React.createElement('div', { style: {borderTop:"1px solid "+C.border,paddingTop:14,marginBottom:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 659}}
                 , React.createElement('div', { style: {fontSize:13,fontWeight:700,color:"#90EAF8",marginBottom:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 660}}, lang==="en"?"Custom Categories":"自定义小类")
-                , Object.keys(cc).length===0 ? React.createElement('div', { style: {fontSize:13,color:C.text3,textAlign:"center",padding:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 661}}, lang==="en"?"No custom categories":"还没有自定义小类") : Object.entries(cc).map(function(e){var key=e[0],cat=e[1];return React.createElement(Card, { key: key, style: {display:"flex",alignItems:"center",gap:12,marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 661}}, React.createElement('span', { style: {fontSize:22}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 661}}, cat.icon), React.createElement('div', { style: {flex:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 661}}, React.createElement('div', { style: {fontSize:14,fontWeight:600}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 661}}, cat.label), React.createElement('div', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 661}}, cat.group)), React.createElement('button', { onClick: function(){setCf({label:cat.label,icon:cat.icon,group:cat.group,_editKey:key,_returnTo:"manage_cats"});setSf("cc");}, style: {background:"none",border:"1px solid #2A4A6A",borderRadius:6,padding:"3px 8px",color:"#6AACEE",cursor:"pointer",fontSize:12,marginRight:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 661}}, T.edit), React.createElement('button', { onClick: function(){if(!confirm(lang==="en"?"Delete this category?":"确认删除这个类别？"))return;var u=Object.assign({},cc);delete u[key];setCc(u);}, style: {background:"none",border:"1px solid #3A1A1A",borderRadius:6,padding:"3px 8px",color:"#FF5252",cursor:"pointer",fontSize:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 661}}, T.del));})
+                , Object.keys(cc).length===0 ? React.createElement('div', { style: {fontSize:13,color:C.text3,textAlign:"center",padding:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 661}}, lang==="en"?"No custom categories":"还没有自定义小类") : Object.entries(cc).map(function(e){var key=e[0],cat=e[1];return React.createElement(Card, { key: key, style: {display:"flex",alignItems:"center",gap:12,marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 661}}, React.createElement('span', { style: {fontSize:22}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 661}}, cat.icon), React.createElement('div', { style: {flex:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 661}}, React.createElement('div', { style: {fontSize:14,fontWeight:600}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 661}}, cat.label), React.createElement('div', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 661}}, cat.group)), React.createElement('button', { onClick: function(){setCf({label:cat.label,icon:cat.icon,group:cat.group,_editKey:key,_returnTo:"manage_cats"});setSf("cc");}, style: {background:"none",border:"1px solid #2A4A6A",borderRadius:6,padding:"3px 8px",color:"#6AACEE",cursor:"pointer",fontSize:12,marginRight:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 661}}, T.edit), React.createElement('button', { onClick: function(){if(!confirm(lang==="en"?"Delete this category?":"确认删除这个类别？"))return;var prev=Object.assign({},cc);var u=Object.assign({},cc);delete u[key];setCc(u);showUndo((lang==="en"?"✓ Category deleted":"✓ 类别已删除"), {prevCc:prev});}, style: {background:"none",border:"1px solid #3A1A1A",borderRadius:6,padding:"3px 8px",color:"#FF5252",cursor:"pointer",fontSize:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 661}}, T.del));})
                 , React.createElement('button', { onClick: function(){setCf({label:"",icon:"🔧",group:"车辆",_returnTo:"manage_cats"});setSf("cc");}, style: {width:"100%",background:"#1A2A44",border:"1px dashed #2A3A54",borderRadius:10,padding:"12px",color:C.text2,fontSize:14,cursor:"pointer",marginTop:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 662}}, "+ " , lang==="en"?"Add Custom Category":"添加自定义小类")
               )
               , React.createElement('div', { style: {borderTop:"1px solid "+C.border,paddingTop:14}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 664}}
                 , React.createElement('div', { style: {fontSize:13,fontWeight:700,color:"#90EAF8",marginBottom:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 665}}, lang==="en"?"Custom Groups":"自定义大类")
-                , custGroups.map(function(g,i){return React.createElement(Card, { key: i, style: {display:"flex",alignItems:"center",gap:12,marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 666}}, React.createElement('span', { style: {fontSize:22}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 666}}, g.icon), React.createElement('div', { style: {flex:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 666}}, React.createElement('div', { style: {fontSize:14,fontWeight:700}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 666}}, g.name)), React.createElement('button', { onClick: function(){if(!confirm(lang==="en"?"Delete this group?":"确认删除这个大类？"))return;setCustGroups(custGroups.filter(function(_,j){return j!==i;}));}, style: {background:"none",border:"1px solid #3A1A1A",borderRadius:6,padding:"3px 10px",color:"#FF5252",cursor:"pointer",fontSize:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 666}}, T.del));})
+                , custGroups.map(function(g,i){return React.createElement(Card, { key: i, style: {display:"flex",alignItems:"center",gap:12,marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 666}}, React.createElement('span', { style: {fontSize:22}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 666}}, g.icon), React.createElement('div', { style: {flex:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 666}}, React.createElement('div', { style: {fontSize:14,fontWeight:700}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 666}}, g.name)), React.createElement('button', { onClick: function(){if(!confirm(lang==="en"?"Delete this group?":"确认删除这个大类？"))return;var prev=custGroups.slice();setCustGroups(custGroups.filter(function(_,j){return j!==i;}));showUndo((lang==="en"?"✓ Group deleted":"✓ 分类已删除"), {prevCustGroups:prev});}, style: {background:"none",border:"1px solid #3A1A1A",borderRadius:6,padding:"3px 10px",color:"#FF5252",cursor:"pointer",fontSize:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 666}}, T.del));})
                 , custGroups.length===0 ? React.createElement('div', { style: {fontSize:13,color:C.text3,textAlign:"center",padding:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 667}}, lang==="en"?"No custom groups":"还没有自定义大类") : null
                 , React.createElement(Field, { label: lang==="en"?"Group Name":"大类名称", value: newGrpName||"", onChange: function(v){setNewGrpName(v);}, placeholder: lang==="en"?"e.g. Family":"例：家庭", __self: this, __source: {fileName: _jsxFileName, lineNumber: 668}} )
                 , React.createElement('div', { style: {marginTop:10,marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 669}}, React.createElement('div', { style: {fontSize:13,color:C.text2,marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 669}}, lang==="en"?"Icon":"图标"), React.createElement('div', { style: {display:"flex",flexWrap:"wrap",gap:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 669}}, ["🏠","👨‍👩‍👧","🐕","🎓","💊","🏋️","🎮","✈️","🛒","💡","📦","🎵","🍕","👔","💻"].map(function(ic){var sel=newGrpIcon===ic;return React.createElement('button', { key: ic, onClick: function(){setNewGrpIcon(ic);}, style: {width:38,height:38,borderRadius:8,border:"2px solid "+(sel?"#00D4FF":"#1E3050"),background:sel?"#0A2040":"#162338",fontSize:18,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 669}}, ic);})))
@@ -3444,6 +3733,195 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                     }, style: {width:"100%",background:"linear-gradient(135deg,#1A3010,#0A1808)",border:"1px solid #2A6020",borderRadius:12,padding:14,textAlign:"left",cursor:"pointer",marginTop:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 810}}
                     , React.createElement('div', { style: {fontSize:15,fontWeight:700,color:"#5ADA7A",marginBottom:3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 828}}, "📊 " , lang==="en"?"Tax Summary for Accountant":"会计师年度报表")
                     , React.createElement('div', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 829}}, lang==="en"?(taxYr||new Date().getFullYear())+" · Schedule C-style summary, separates deductible vs non-deductible":(taxYr||new Date().getFullYear())+" 年 · Schedule C 格式，区分可抵税与不可抵税")
+                  )
+                  // === Complete Tax Package — combines everything into one big PDF ===
+                  , React.createElement('button', { onClick: function(){
+                      var yr=taxYr||(new Date().getFullYear()+"");
+                      var yStmts=sl.filter(function(x){return x.platform!=="QUARTERLY"&&x.month&&x.month.slice(0,4)===yr;});
+                      var yDls=dl.filter(function(d){return d.date&&d.date.slice(0,4)===yr;});
+                      var yExpsRaw=el.filter(function(e){return e.date&&e.date.slice(0,4)===yr;});
+                      var yMonths=[];for(var mi=1;mi<=12;mi++){yMonths.push(yr+"-"+p2(mi));}
+                      var yFx=yMonths.reduce(function(acc,m){return acc.concat(genFixed(fl,m));},[]);
+                      var allYExps=yExpsRaw.concat(yFx);
+                      if(allYExps.length===0&&yStmts.length===0&&yDls.length===0){
+                        showToast(lang==="en"?"No data for "+yr:"没有 "+yr+" 年的数据","warn");
+                        return;
+                      }
+                      
+                      // Collect totals
+                      var grossFare=yStmts.reduce(function(s,x){return s+(+x.grossFare||0);},0);
+                      var dlCash=yDls.reduce(function(s,d){return s+(+d.cash||0);},0);
+                      var dlCard=yDls.reduce(function(s,d){return s+(+d.card||0);},0);
+                      var tips=yStmts.reduce(function(s,x){return s+(+x.tips||0);},0);
+                      var dlTips=yDls.reduce(function(s,d){return s+(+d.tips||0);},0);
+                      var bonus=yStmts.reduce(function(s,x){return s+(+x.bonus||0);},0);
+                      var tollReimb=yStmts.reduce(function(s,x){return s+(+x.tollReimbursed||0);},0);
+                      var otherInc=yStmts.reduce(function(s,x){return s+(+x.otherIncome||0);},0);
+                      var totalGross=grossFare+dlCash+dlCard;
+                      var totalTips=tips+dlTips;
+                      var totalIncome=totalGross+totalTips+bonus+tollReimb+otherInc;
+                      var totalExp=allYExps.reduce(function(s,e){return s+(+e.amount||0);},0);
+                      var netProfit=totalIncome-totalExp;
+                      
+                      var esc=function(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");};
+                      var html='<!DOCTYPE html><html><head><meta charset=utf-8><title>'+esc((lang==="en"?"Complete Tax Package ":"完整报税包 ")+yr)+'</title>';
+                      html+='<style>'+
+                        '@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap");'+
+                        '*{box-sizing:border-box;}'+
+                        'body{font-family:"Inter","SF Pro Display",-apple-system,Helvetica,Arial,sans-serif;max-width:800px;margin:30px auto;padding:30px 35px;color:#1a1a1a;line-height:1.6;background:#fff;}'+
+                        'h1{font-size:28px;font-weight:900;color:#0f172a;border-bottom:4px solid #2563eb;padding-bottom:10px;margin-bottom:6px;letter-spacing:-0.5px;}'+
+                        'h2{font-size:20px;font-weight:800;color:#0f172a;border-bottom:2px solid #cbd5e1;padding-bottom:6px;margin-top:36px;letter-spacing:-0.3px;}'+
+                        'h3{font-size:15px;font-weight:700;margin-top:20px;color:#334155;}'+
+                        '.subtitle{font-size:13px;color:#64748b;margin-bottom:24px;font-weight:500;}'+
+                        'table{width:100%;border-collapse:collapse;margin:10px 0 20px;font-size:12px;border-radius:8px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.06);}'+
+                        'th,td{padding:9px 12px;border-bottom:1px solid #e2e8f0;text-align:left;}'+
+                        'th{background:#f1f5f9;font-weight:700;color:#475569;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;}'+
+                        'td.amt{text-align:right;font-variant-numeric:tabular-nums;font-weight:600;}'+
+                        'tr:hover td{background:#f8fafc;}'+
+                        'tr.subtotal td{font-weight:700;background:#f1f5f9;border-top:2px solid #cbd5e1;}'+
+                        'tr.total td{font-weight:800;background:linear-gradient(135deg,#1e293b,#0f172a);color:#fff;font-size:14px;}'+
+                        '.summary-box{background:linear-gradient(135deg,#f8fafc,#f1f5f9);border:1px solid #e2e8f0;padding:18px 22px;border-radius:12px;margin:16px 0 24px;box-shadow:0 1px 3px rgba(0,0,0,0.04);}'+
+                        '.summary-row{display:flex;justify-content:space-between;padding:6px 0;font-size:14px;}'+
+                        '.summary-row.big{font-size:18px;font-weight:800;border-top:2px solid #1e293b;margin-top:10px;padding-top:12px;color:#0f172a;}'+
+                        '.page-break{page-break-before:always;}'+
+                        '@media print{body{margin:0;padding:20px;}h1{break-inside:avoid;}h2,h3{break-after:avoid;}table{break-inside:auto;}tr{break-inside:avoid;}}'+
+                        '</style></head><body>';
+                      
+                      // ========== COVER PAGE ==========
+                      html+='<h1>📋 '+(lang==="en"?"Complete Tax Package":"完整报税包")+'</h1>';
+                      html+='<div class="subtitle">'+(lang==="en"?"Tax Year ":"税务年度 ")+yr+' &nbsp;·&nbsp; '+(lang==="en"?"Generated ":"生成于 ")+today()+'</div>';
+                      
+                      html+='<div class="summary-box">';
+                      html+='<h3 style="margin-top:0">'+(lang==="en"?"Quick Summary":"快速概览")+'</h3>';
+                      html+='<div class="summary-row"><span>'+(lang==="en"?"Total Gross Income":"总毛收入")+'</span><span>$'+totalIncome.toFixed(2)+'</span></div>';
+                      html+='<div class="summary-row"><span>'+(lang==="en"?"Total Expenses":"总支出")+'</span><span>$'+totalExp.toFixed(2)+'</span></div>';
+                      html+='<div class="summary-row big"><span>'+(lang==="en"?"Net Profit":"净利润")+'</span><span>$'+netProfit.toFixed(2)+'</span></div>';
+                      html+='</div>';
+                      
+                      html+='<h3>'+(lang==="en"?"Contents":"目录")+'</h3>';
+                      html+='<ol style="line-height:2">';
+                      html+='<li>'+(lang==="en"?"Income Summary":"收入汇总")+' (Schedule C Line 1)</li>';
+                      html+='<li>'+(lang==="en"?"Monthly Income Detail":"月度收入明细")+'</li>';
+                      html+='<li>'+(lang==="en"?"Expense Summary by Category":"按类别支出汇总")+' (Schedule C Lines 8-27)</li>';
+                      html+='<li>'+(lang==="en"?"Expense Detail (all entries)":"全部支出明细")+'</li>';
+                      html+='<li>'+(lang==="en"?"Tax Estimates":"税额估算")+' (Form 1040-ES)</li>';
+                      html+='<li>'+(lang==="en"?"Driver & Vehicle Info":"司机/车辆信息")+'</li>';
+                      html+='</ol>';
+                      
+                      // ========== 1. INCOME SUMMARY ==========
+                      html+='<h2>1. '+(lang==="en"?"Income Summary":"收入汇总")+' (Schedule C Line 1)</h2>';
+                      html+='<table>';
+                      html+='<tr><th>'+(lang==="en"?"Item":"项目")+'</th><th class="amt">'+(lang==="en"?"Amount":"金额")+'</th></tr>';
+                      html+='<tr><td>'+(lang==="en"?"Gross Trip Earnings (1099-K)":"总车费 (1099-K)")+'</td><td class="amt">$'+totalGross.toFixed(2)+'</td></tr>';
+                      html+='<tr><td>'+(lang==="en"?"Tips":"小费")+'</td><td class="amt">$'+totalTips.toFixed(2)+'</td></tr>';
+                      html+='<tr><td>'+(lang==="en"?"Bonus / Incentives (1099-NEC)":"奖励/激励 (1099-NEC)")+'</td><td class="amt">$'+bonus.toFixed(2)+'</td></tr>';
+                      html+='<tr><td>'+(lang==="en"?"Toll Reimbursement":"过桥退款")+'</td><td class="amt">$'+tollReimb.toFixed(2)+'</td></tr>';
+                      if(otherInc>0) html+='<tr><td>'+(lang==="en"?"Other Income":"其他收入")+'</td><td class="amt">$'+otherInc.toFixed(2)+'</td></tr>';
+                      html+='<tr class="total"><td>'+(lang==="en"?"TOTAL GROSS INCOME":"总毛收入")+'</td><td class="amt">$'+totalIncome.toFixed(2)+'</td></tr>';
+                      html+='</table>';
+                      
+                      // ========== 2. MONTHLY INCOME DETAIL ==========
+                      html+='<h2>2. '+(lang==="en"?"Monthly Income Detail":"月度收入明细")+'</h2>';
+                      html+='<table>';
+                      html+='<tr><th>'+(lang==="en"?"Month":"月份")+'</th><th>'+(lang==="en"?"Platform":"平台")+'</th><th class="amt">'+(lang==="en"?"Gross":"总车费")+'</th><th class="amt">'+(lang==="en"?"Tips":"小费")+'</th><th class="amt">'+(lang==="en"?"Bonus":"奖励")+'</th><th class="amt">'+(lang==="en"?"Total":"合计")+'</th></tr>';
+                      yStmts.sort(function(a,b){return a.month.localeCompare(b.month);}).forEach(function(s){
+                        var t=(+s.grossFare||0)+(+s.tips||0)+(+s.bonus||0)+(+s.tollReimbursed||0)+(+s.otherIncome||0);
+                        html+='<tr><td>'+esc(s.month)+'</td><td>'+esc(s.platform)+'</td><td class="amt">$'+(+s.grossFare||0).toFixed(2)+'</td><td class="amt">$'+(+s.tips||0).toFixed(2)+'</td><td class="amt">$'+(+s.bonus||0).toFixed(2)+'</td><td class="amt">$'+t.toFixed(2)+'</td></tr>';
+                      });
+                      if(yDls.length>0){
+                        // Group dl by month
+                        var dlByMonth={};
+                        yDls.forEach(function(d){
+                          var mo=d.date.slice(0,7);
+                          if(!dlByMonth[mo]) dlByMonth[mo]={cash:0,card:0,tips:0};
+                          dlByMonth[mo].cash+=(+d.cash||0);
+                          dlByMonth[mo].card+=(+d.card||0);
+                          dlByMonth[mo].tips+=(+d.tips||0);
+                        });
+                        Object.keys(dlByMonth).sort().forEach(function(mo){
+                          var dm=dlByMonth[mo];
+                          var t=dm.cash+dm.card+dm.tips;
+                          html+='<tr><td>'+esc(mo)+'</td><td>Daily (Taxi)</td><td class="amt">$'+(dm.cash+dm.card).toFixed(2)+'</td><td class="amt">$'+dm.tips.toFixed(2)+'</td><td class="amt">$0.00</td><td class="amt">$'+t.toFixed(2)+'</td></tr>';
+                        });
+                      }
+                      html+='<tr class="total"><td colspan="5">'+(lang==="en"?"TOTAL":"合计")+'</td><td class="amt">$'+totalIncome.toFixed(2)+'</td></tr>';
+                      html+='</table>';
+                      
+                      // ========== 3. EXPENSE SUMMARY BY CATEGORY ==========
+                      html+='<h2 class="page-break">3. '+(lang==="en"?"Expense Summary by Category":"按类别支出汇总")+' (Schedule C Lines 8-27)</h2>';
+                      var catTotals={};
+                      allYExps.forEach(function(e){
+                        var cat=allC[e.category]||{label:e.category||"Other",g:"其他"};
+                        var key=cat.label||e.category||"Other";
+                        if(!catTotals[key]) catTotals[key]={total:0,group:cat.g||"其他",count:0};
+                        catTotals[key].total+=(+e.amount||0);
+                        catTotals[key].count++;
+                      });
+                      var catEntries=Object.entries(catTotals).sort(function(a,b){return b[1].total-a[1].total;});
+                      html+='<table>';
+                      html+='<tr><th>'+(lang==="en"?"Category":"类别")+'</th><th>'+(lang==="en"?"Group":"分组")+'</th><th class="amt">'+(lang==="en"?"Count":"笔数")+'</th><th class="amt">'+(lang==="en"?"Total":"合计")+'</th></tr>';
+                      catEntries.forEach(function(en){
+                        html+='<tr><td>'+esc(en[0])+'</td><td>'+esc(en[1].group)+'</td><td class="amt">'+en[1].count+'</td><td class="amt">$'+en[1].total.toFixed(2)+'</td></tr>';
+                      });
+                      html+='<tr class="total"><td colspan="3">'+(lang==="en"?"TOTAL EXPENSES":"总支出")+'</td><td class="amt">$'+totalExp.toFixed(2)+'</td></tr>';
+                      html+='</table>';
+                      
+                      // ========== 4. EXPENSE DETAIL ==========
+                      html+='<h2 class="page-break">4. '+(lang==="en"?"Expense Detail":"全部支出明细")+'</h2>';
+                      html+='<p class="subtitle">'+allYExps.length+' '+(lang==="en"?"entries":"条")+'</p>';
+                      html+='<table>';
+                      html+='<tr><th>'+(lang==="en"?"Date":"日期")+'</th><th>'+(lang==="en"?"Category":"类别")+'</th><th>'+(lang==="en"?"Notes":"备注")+'</th><th class="amt">'+(lang==="en"?"Amount":"金额")+'</th></tr>';
+                      allYExps.sort(function(a,b){return (a.date||"").localeCompare(b.date||"");}).forEach(function(e){
+                        var cat=allC[e.category]||{label:e.category||"Other"};
+                        html+='<tr><td>'+esc(e.date)+'</td><td>'+esc(cat.label)+'</td><td>'+esc(e.notes||"")+'</td><td class="amt">$'+(+e.amount||0).toFixed(2)+'</td></tr>';
+                      });
+                      html+='<tr class="total"><td colspan="3">'+(lang==="en"?"TOTAL":"合计")+'</td><td class="amt">$'+totalExp.toFixed(2)+'</td></tr>';
+                      html+='</table>';
+                      
+                      // ========== 5. TAX ESTIMATES ==========
+                      html+='<h2 class="page-break">5. '+(lang==="en"?"Tax Estimates":"税额估算")+' (Form 1040-ES)</h2>';
+                      var seDed=Math.round(netProfit*0.0765*100)/100;
+                      var seTax=Math.round(netProfit*0.9235*0.153*100)/100;
+                      var fedTax=Math.round(Math.max(0,netProfit-seDed-stdDed)*(fedRate*0.01)*100)/100;
+                      var stateTax=Math.round(Math.max(0,netProfit-seDed)*(stateRate*0.01)*100)/100;
+                      var mtaTax=netProfit>50000?Math.round(netProfit*(mtaRate*0.01)*100)/100:0;
+                      var totalTax=seTax+fedTax+stateTax+mtaTax;
+                      html+='<table>';
+                      html+='<tr><th>'+(lang==="en"?"Tax Type":"税种")+'</th><th>'+(lang==="en"?"Rate":"税率")+'</th><th class="amt">'+(lang==="en"?"Amount":"金额")+'</th></tr>';
+                      html+='<tr><td>'+(lang==="en"?"Self-Employment Tax":"自雇税")+'</td><td>15.3% (×0.9235)</td><td class="amt">$'+seTax.toFixed(2)+'</td></tr>';
+                      html+='<tr><td>'+(lang==="en"?"Federal Income Tax":"联邦所得税")+'</td><td>'+fedRate+'%</td><td class="amt">$'+fedTax.toFixed(2)+'</td></tr>';
+                      html+='<tr><td>'+(lang==="en"?"State + City Tax":"州+市税")+'</td><td>'+stateRate+'%</td><td class="amt">$'+stateTax.toFixed(2)+'</td></tr>';
+                      if(mtaTax>0) html+='<tr><td>'+(lang==="en"?"MTA Surcharge (NYC self-employed)":"MTA 附加税 (NYC 自雇)")+'</td><td>'+mtaRate+'%</td><td class="amt">$'+mtaTax.toFixed(2)+'</td></tr>';
+                      html+='<tr class="total"><td colspan="2">'+(lang==="en"?"ESTIMATED TOTAL TAX":"估算总税额")+'</td><td class="amt">$'+totalTax.toFixed(2)+'</td></tr>';
+                      html+='<tr class="subtotal"><td colspan="2">'+(lang==="en"?"Quarterly Estimate":"季度预缴")+'</td><td class="amt">$'+(totalTax/4).toFixed(2)+'</td></tr>';
+                      html+='</table>';
+                      html+='<p class="subtitle">'+(lang==="en"?"Estimates use Standard Deduction $":"估算使用标准扣除 $")+stdDed.toLocaleString()+'.</p>';
+                      
+                      // ========== 6. DRIVER & VEHICLE INFO ==========
+                      html+='<h2 class="page-break">6. '+(lang==="en"?"Driver & Vehicle Info":"司机/车辆信息")+'</h2>';
+                      html+='<table>';
+                      html+='<tr><th>'+(lang==="en"?"Field":"字段")+'</th><th>'+(lang==="en"?"Value":"值")+'</th></tr>';
+                      if(veh.driverName) html+='<tr><td>'+(lang==="en"?"Name":"姓名")+'</td><td>'+esc(veh.driverName)+'</td></tr>';
+                      if(veh.tlcDriverLicense) html+='<tr><td>TLC '+(lang==="en"?"Driver License":"驾照")+'</td><td>'+esc(veh.tlcDriverLicense)+'</td></tr>';
+                      if(veh.dmvLicense) html+='<tr><td>DMV '+(lang==="en"?"License":"驾照")+'</td><td>'+esc(veh.dmvLicense)+'</td></tr>';
+                      if(veh.email) html+='<tr><td>Email</td><td>'+esc(veh.email)+'</td></tr>';
+                      if(veh.brand||veh.model) html+='<tr><td>'+(lang==="en"?"Vehicle":"车辆")+'</td><td>'+esc((veh.year||"")+" "+(veh.brand||"")+" "+(veh.model||""))+'</td></tr>';
+                      if(veh.plate) html+='<tr><td>'+(lang==="en"?"License Plate":"车牌")+'</td><td>'+esc(veh.plate)+'</td></tr>';
+                      if(veh.tlcPlate) html+='<tr><td>TLC '+(lang==="en"?"Plate":"牌照")+'</td><td>'+esc(veh.tlcPlate)+'</td></tr>';
+                      if(veh.vin) html+='<tr><td>VIN</td><td>'+esc(veh.vin)+'</td></tr>';
+                      html+='</table>';
+                      
+                      // Footer
+                      html+='<div style="margin-top:40px;padding-top:20px;border-top:1px solid #ccc;font-size:11px;color:#888;text-align:center">';
+                      html+=esc(lang==="en"?"Generated by NYC Driver Tracker · Not an official tax document · Consult a tax professional":"由 NYC Driver Tracker 生成 · 非官方税务文档 · 请咨询税务专业人员");
+                      html+='</div>';
+                      html+='</body></html>';
+                      
+                      downloadPdf(html,"complete-tax-package-"+yr+".pdf");
+                      showToast(lang==="en"?"📦 Tax package generated":"📦 报税包已生成");
+                    }, style: {width:"100%",background:"linear-gradient(135deg,#3010A0,#1A0560)",border:"1px solid #6030C0",borderRadius:12,padding:14,textAlign:"left",cursor:"pointer",marginTop:10} }
+                    , React.createElement('div', { style: {fontSize:15,fontWeight:700,color:"#CC88FF",marginBottom:3} }, "📦 " , lang==="en"?"Complete Tax Package":"完整报税包")
+                    , React.createElement('div', { style: {fontSize:12,color:C.text3,lineHeight:1.5} }, lang==="en"?(taxYr||new Date().getFullYear())+" · All-in-one PDF: income + expenses + monthly detail + tax estimates + driver info":(taxYr||new Date().getFullYear())+" 年 · 一份 PDF 包含：收入 + 支出 + 月度明细 + 税额估算 + 司机信息（给会计师用）")
                   )
                   , React.createElement(Card, {__self: this, __source: {fileName: _jsxFileName, lineNumber: 732}}, React.createElement('div', { style: {fontSize:14,fontWeight:800,color:C.text2,marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 732}}, "🔗 " , lang==="en"?"Tax Links":"税务网站")
                     , [{label:"IRS Schedule C",url:"https://www.irs.gov/forms-pubs/about-schedule-c-form-1040"},{label:"IRS Schedule SE",url:"https://www.irs.gov/forms-pubs/about-schedule-se-form-1040"},{label:"IRS Form 1040-ES",url:"https://www.irs.gov/forms-pubs/about-form-1040-es"},{label:"NYC Free Tax Prep",url:"https://www1.nyc.gov/site/dca/consumers/file-your-taxes.page"}].map(function(lk,i){return React.createElement('a', { key: i, href: lk.url, target: "_blank", rel: "noopener noreferrer" , style: {display:"flex",justifyContent:"space-between",padding:"10px 0",borderBottom:"1px solid #1E3050",textDecoration:"none"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 733}}, React.createElement('span', { style: {fontSize:13,fontWeight:700,color:"#5AACFF"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 733}}, lk.label), React.createElement('span', { style: {color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 733}}, ">"));})
@@ -3770,6 +4248,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
               , React.createElement('button', { onClick: function(){
                   setDriverType("rideshare");
                   setOnboardingDismissed(false);
+                  showToast(lang==="en"?"✓ Switched to Rideshare":"✓ 已切换为网约车模式");
                   // Check what's already filled
                   var hasVeh = !!(veh.plate || veh.tlcPlate || veh.brand || veh.model);
                   var hasLic = ll.length>0;
@@ -3803,6 +4282,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
               , React.createElement('button', { onClick: function(){
                   setDriverType("taxi");
                   setOnboardingDismissed(false);
+                  showToast(lang==="en"?"✓ Switched to Taxi":"✓ 已切换为出租车模式");
                   var hasVeh = !!(veh.plate || veh.tlcPlate || veh.brand || veh.model);
                   var hasLic = ll.length>0;
                   var hasInc = sl.length>0 || wl.length>0 || dl.length>0;
@@ -3956,7 +4436,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                   if(cmpRem.intervalMile){
                     var iv=+cmpf.intervalMile;
                     if(!iv||iv<=0){alert(lang==="en"?"Please enter interval":"请输入间隔");return;}
-                    setReminders(reminders.map(function(x){return x.id===cmpRem.id?Object.assign({},x,{triggerMile:cm+iv,intervalMile:iv}):x;}));
+                    setReminders(reminders.map(function(x){return x.id===cmpRem.id?Object.assign({},x,{triggerMile:cm+iv,intervalMile:iv}):x;}));showToast(lang==="en"?"✓ Reminder rescheduled":"✓ 提醒已重新设定");
                   }else{
                     setReminders(reminders.filter(function(x){return x.id!==cmpRem.id;}));
                   }
@@ -3973,7 +4453,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
             , React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 18px",borderBottom:"1px solid #1A2A44",background:C.bg2,flexShrink:0}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 770}}
               , React.createElement('button', { onClick: function(){setShowPlatMgr(false);setNewPlat("");}, style: {background:"#1E3050",border:"none",color:"#8ABCD0",fontSize:16,cursor:"pointer",width:34,height:34,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 771}}, "✕")
               , React.createElement('div', { style: {fontSize:17,fontWeight:800}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 772}}, T.platform)
-              , React.createElement('button', { onClick: function(){var v=newPlat.trim();if(!v){alert(lang==="en"?"Platform name is empty":"平台名不能为空");return;}if(allPlat.indexOf(v)>=0){alert(lang==="en"?"Platform already exists":"平台已存在");return;}setCustPlat(custPlat.concat([v]));setNewPlat("");}, style: {background:"linear-gradient(135deg,#00D4FF,#0055FF)",border:"none",color:"#fff",fontSize:20,cursor:"pointer",width:34,height:34,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 10px rgba(0,212,255,0.3)"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 773}}, "✓")
+              , React.createElement('button', { onClick: function(){var v=newPlat.trim();if(!v){showToast(lang==="en"?"⚠ Platform name is empty":"⚠ 平台名不能为空","warn");return;}if(allPlat.indexOf(v)>=0){showToast(lang==="en"?"⚠ Platform already exists":"⚠ 平台已存在","warn");return;}setCustPlat(custPlat.concat([v]));setNewPlat("");showToast((lang==="en"?"✓ Added: ":"✓ 已添加：")+v);}, style: {background:"linear-gradient(135deg,#00D4FF,#0055FF)",border:"none",color:"#fff",fontSize:20,cursor:"pointer",width:34,height:34,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 10px rgba(0,212,255,0.3)"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 773}}, "✓")
             )
             , React.createElement('div', { style: {padding:"18px 20px 52px",overflowY:"auto",flex:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 774}}
             , React.createElement('div', { style: {background:C.bg3,border:"1px solid "+C.border,borderRadius:12,padding:14,marginBottom:10} }
@@ -4015,7 +4495,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
               , gUser&&accessToken ? React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 793}}
                 , React.createElement('div', { style: {fontSize:13,color:"#00E676",marginBottom:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 794}}, "✓ " , gUser.email)
                 , React.createElement('div', { style: {fontSize:12,color:C.text3,marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 795}}, lang==="en"?"Auto-saves after every change":"每次修改自动保存")
-                , React.createElement('button', { onClick: function(){if(!confirm(lang==="en"?"Upload current data to Google Drive? This will overwrite the cloud backup.":"上传当前数据到 Google Drive？这会覆盖云端备份。"))return;var data={wl:wl,sl:sl,el:el,fl:fl,ll:ll,veh:veh,cc:cc,custGroups:custGroups,reminders:reminders,custPlat:custPlat,custBrands:custBrands,custLicTypes:custLicTypes,custLoanTypes:custLoanTypes,favNotes:favNotes,notes:notes,incGoal:incGoal,seRate:seRate,fedRate:fedRate,stateRate:stateRate,stdDed:stdDed,mtaRate:mtaRate,savedVehicles:savedVehicles,dl:dl,driverType:driverType};saveToDrive(accessToken,driveFileId,data);}, style: {width:"100%",background:"#0A4020",border:"1px solid #2A8050",borderRadius:10,padding:12,color:"#00E676",fontSize:14,fontWeight:700,cursor:"pointer",marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 796}}, syncing?(lang==="en"?"Saving...":"保存中..."):(lang==="en"?"💾 Save Now":"💾 立即保存"))
+                , React.createElement('button', { onClick: function(){if(!confirm(lang==="en"?"Upload current data to Google Drive? This will overwrite the cloud backup.":"上传当前数据到 Google Drive？这会覆盖云端备份。"))return;var data={wl:wl,sl:sl,el:el,fl:fl,ll:ll,veh:veh,cc:cc,custGroups:custGroups,reminders:reminders,custPlat:custPlat,custBrands:custBrands,custLicTypes:custLicTypes,custLoanTypes:custLoanTypes,favNotes:favNotes,favExpenses:favExpenses,notes:notes,incGoals:incGoals,seRate:seRate,fedRate:fedRate,stateRate:stateRate,stdDed:stdDed,mtaRate:mtaRate,savedVehicles:savedVehicles,dl:dl,driverType:driverType};saveToDrive(accessToken,driveFileId,data);}, style: {width:"100%",background:"#0A4020",border:"1px solid #2A8050",borderRadius:10,padding:12,color:"#00E676",fontSize:14,fontWeight:700,cursor:"pointer",marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 796}}, syncing?(lang==="en"?"Saving...":"保存中..."):(lang==="en"?"💾 Save Now":"💾 立即保存"))
                 , React.createElement('button', { onClick: function(){requireDangerConfirm("restoreDrive", lang==="en"?"Restore from Drive":"从 Drive 恢复", lang==="en"?"This will OVERWRITE all your current local data with the cloud backup. This cannot be undone.":"此操作会用云端备份覆盖当前所有本地数据，无法撤销。", function(){loadFromDrive(accessToken);});}, style: {width:"100%",background:"#0A2040",border:"1px solid #1A5080",borderRadius:10,padding:12,color:"#00D4FF",fontSize:14,fontWeight:700,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 797}}, lang==="en"?"📥 Restore from Drive":"📥 从Drive恢复")
                 
                 , React.createElement('div', { style: {marginTop:14,paddingTop:14,borderTop:"1px solid "+C.border} }
@@ -4052,7 +4532,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
               , React.createElement('div', { style: {fontSize:15,fontWeight:700,color:"#FFB300",marginBottom:3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 802}}, lang==="en"?"🧹 Clear Placeholder Times":"🧹 清除占位时间")
               , React.createElement('div', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 803}}, lang==="en"?"Remove imported placeholder times (12:00 / 08:00 / 23:59)":"清除导入的占位时间（12:00 / 08:00 / 23:59）")
             );}())
-            , React.createElement('button', { onClick: function(){if(!confirm(lang==="en"?"Download a JSON backup file to your device?":"下载 JSON 备份文件到此设备？"))return;setSyncStatus(lang==="en"?"⏳ Exporting...":"⏳ 导出中...");setTimeout(function(){try{var data={wl:wl,sl:sl,el:el,fl:fl,ll:ll,veh:veh,cc:cc,custGroups:custGroups,reminders:reminders,custPlat:custPlat,custBrands:custBrands,custLicTypes:custLicTypes,custLoanTypes:custLoanTypes,favNotes:favNotes,notes:notes,incGoal:incGoal,seRate:seRate,fedRate:fedRate,stateRate:stateRate,stdDed:stdDed,mtaRate:mtaRate,savedVehicles:savedVehicles,dl:dl,driverType:driverType,exported:new Date().toISOString()};var blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});var url=URL.createObjectURL(blob);var a=document.createElement("a");a.href=url;a.download="nyc-driver-backup-"+today()+".json";a.click();URL.revokeObjectURL(url);setSyncStatus(lang==="en"?"✓ Exported":"✓ 导出成功");setTimeout(function(){setSyncStatus("");},2500);}catch(err){setSyncStatus(lang==="en"?"✗ Export failed":"✗ 导出失败");setTimeout(function(){setSyncStatus("");},2500);}},100);}, style: {width:"100%",background:C.bg3,border:"1px solid "+C.border,borderRadius:12,padding:14,marginBottom:10,textAlign:"left",cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 801}}
+            , React.createElement('button', { onClick: function(){if(!confirm(lang==="en"?"Download a JSON backup file to your device?":"下载 JSON 备份文件到此设备？"))return;setSyncStatus(lang==="en"?"⏳ Exporting...":"⏳ 导出中...");setTimeout(function(){try{var data={wl:wl,sl:sl,el:el,fl:fl,ll:ll,veh:veh,cc:cc,custGroups:custGroups,reminders:reminders,custPlat:custPlat,custBrands:custBrands,custLicTypes:custLicTypes,custLoanTypes:custLoanTypes,favNotes:favNotes,favExpenses:favExpenses,notes:notes,incGoals:incGoals,seRate:seRate,fedRate:fedRate,stateRate:stateRate,stdDed:stdDed,mtaRate:mtaRate,savedVehicles:savedVehicles,dl:dl,driverType:driverType,exported:new Date().toISOString()};var blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});var url=URL.createObjectURL(blob);var a=document.createElement("a");a.href=url;a.download="nyc-driver-backup-"+today()+".json";a.click();URL.revokeObjectURL(url);setSyncStatus(lang==="en"?"✓ Exported":"✓ 导出成功");setTimeout(function(){setSyncStatus("");},2500);}catch(err){setSyncStatus(lang==="en"?"✗ Export failed":"✗ 导出失败");setTimeout(function(){setSyncStatus("");},2500);}},100);}, style: {width:"100%",background:C.bg3,border:"1px solid "+C.border,borderRadius:12,padding:14,marginBottom:10,textAlign:"left",cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 801}}
               , React.createElement('div', { style: {fontSize:15,fontWeight:700,color:C.text2,marginBottom:3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 802}}, lang==="en"?"📤 Export JSON Backup":"📤 导出JSON备份")
               , React.createElement('div', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 803}}, lang==="en"?"Download all data as JSON":"下载所有数据为JSON文件")
             )
@@ -4077,7 +4557,11 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                     };
                     localStorage.setItem("nyc_pre_restore_backup", JSON.stringify(snapshot));
                   } catch(e) {}
-                  var data=JSON.parse(fileText);if(data.wl)setWl(data.wl);if(data.sl)setSl(data.sl);if(data.el)setEl(data.el);if(data.fl)setFl(data.fl);if(data.ll)setLl(data.ll);if(data.veh)setVeh(data.veh);if(data.cc)setCc(data.cc);if(data.custGroups)setCustGroups(data.custGroups);if(data.reminders)setReminders(data.reminders);if(data.custPlat)setCustPlat(data.custPlat);if(data.custBrands)setCustBrands(data.custBrands);if(data.custLicTypes)setCustLicTypes(data.custLicTypes);if(data.custLoanTypes)setCustLoanTypes(data.custLoanTypes);if(data.favNotes)setFavNotes(data.favNotes);if(data.notes)setNotes(data.notes);if(typeof data.incGoal!=="undefined")setIncGoal(data.incGoal);if(typeof data.seRate==="number")setSeRate(data.seRate);if(typeof data.fedRate==="number")setFedRate(data.fedRate);if(typeof data.stateRate==="number")setStateRate(data.stateRate);if(typeof data.stdDed==="number")setStdDed(data.stdDed);if(typeof data.mtaRate==="number")setMtaRate(data.mtaRate);if(Array.isArray(data.savedVehicles))setSavedVehicles(data.savedVehicles);if(Array.isArray(data.dl))setDl(data.dl);if(data.driverType==="rideshare"||data.driverType==="taxi")setDriverType(data.driverType);setSyncStatus(lang==="en"?"✓ Restored":"✓ 恢复成功");setTimeout(function(){setSyncStatus("");},2500);alert(lang==="en"?"Data restored!":"数据恢复成功！");}catch(err){setSyncStatus(lang==="en"?"✗ Restore failed":"✗ 恢复失败");setTimeout(function(){setSyncStatus("");},2500);alert(lang==="en"?"Invalid file":"文件格式错误");}inputEl.value="";},100);});};reader.readAsText(file);}, style: {width:"100%",background:C.bg3,border:"1px solid #2A3A54",borderRadius:8,padding:"8px",color:C.text,fontSize:13,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 807}} )
+                  var data=JSON.parse(fileText);if(data.wl)setWl(data.wl);if(data.sl)setSl(data.sl);if(data.el)setEl(data.el);if(data.fl)setFl(data.fl);if(data.ll)setLl(data.ll);if(data.veh)setVeh(data.veh);if(data.cc)setCc(data.cc);if(data.custGroups)setCustGroups(data.custGroups);if(data.reminders)setReminders(data.reminders);if(data.custPlat)setCustPlat(data.custPlat);if(data.custBrands)setCustBrands(data.custBrands);if(data.custLicTypes)setCustLicTypes(data.custLicTypes);if(data.custLoanTypes)setCustLoanTypes(data.custLoanTypes);if(data.favNotes)setFavNotes(data.favNotes);if(data.notes)setNotes(data.notes);if(data.incGoals && typeof data.incGoals === "object") setIncGoals(data.incGoals);
+        else if(typeof data.incGoal!=="undefined" && data.incGoal!=="") {
+          var d=new Date(),cm=d.getFullYear()+"-"+(d.getMonth()+1<10?"0":"")+(d.getMonth()+1);
+          var g={}; g[cm]=String(data.incGoal); setIncGoals(g);
+        }if(typeof data.seRate==="number")setSeRate(data.seRate);if(typeof data.fedRate==="number")setFedRate(data.fedRate);if(typeof data.stateRate==="number")setStateRate(data.stateRate);if(typeof data.stdDed==="number")setStdDed(data.stdDed);if(typeof data.mtaRate==="number")setMtaRate(data.mtaRate);if(Array.isArray(data.savedVehicles))setSavedVehicles(data.savedVehicles);if(Array.isArray(data.dl))setDl(data.dl);if(data.driverType==="rideshare"||data.driverType==="taxi")setDriverType(data.driverType);setSyncStatus(lang==="en"?"✓ Restored":"✓ 恢复成功");setTimeout(function(){setSyncStatus("");},2500);alert(lang==="en"?"Data restored!":"数据恢复成功！");}catch(err){setSyncStatus(lang==="en"?"✗ Restore failed":"✗ 恢复失败");setTimeout(function(){setSyncStatus("");},2500);alert(lang==="en"?"Invalid file":"文件格式错误");}inputEl.value="";},100);});};reader.readAsText(file);}, style: {width:"100%",background:C.bg3,border:"1px solid #2A3A54",borderRadius:8,padding:"8px",color:C.text,fontSize:13,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 807}} )
             )
             , (function(){
                 var snapshot = null;
@@ -4101,7 +4585,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                         if(d.custGroups)setCustGroups(d.custGroups); if(d.reminders)setReminders(d.reminders);
                         if(d.custPlat)setCustPlat(d.custPlat); if(d.custBrands)setCustBrands(d.custBrands);
                         if(d.custLicTypes)setCustLicTypes(d.custLicTypes); if(d.custLoanTypes)setCustLoanTypes(d.custLoanTypes);
-                        if(d.favNotes)setFavNotes(d.favNotes); if(d.notes)setNotes(d.notes);
+                        if(d.favNotes)setFavNotes(d.favNotes); if(Array.isArray(d.favExpenses))setFavExpenses(d.favExpenses); if(d.notes)setNotes(d.notes);
                         if(typeof d.incGoal!=="undefined")setIncGoal(d.incGoal);
                         if(typeof d.seRate==="number")setSeRate(d.seRate);
                         if(typeof d.fedRate==="number")setFedRate(d.fedRate);
@@ -4120,72 +4604,6 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                         forceRerender();
                       }, style: {background:"none",border:"1px solid #3A1A1A",borderRadius:8,padding:"10px 14px",color:"#FF5252",fontSize:12,cursor:"pointer"} }, "✕ " , lang==="en"?"Discard":"丢弃")
                   )
-                );
-              }())
-            , (function(){
-                // Trigger refresh of snapshot list when card mounts or refresh key changes
-                if(snapRefreshKey >= 0) {
-                  // Use a flag to prevent infinite loops; only fetch once per refresh key bump
-                }
-                return React.createElement('div', { style: {background:C.bg3,border:"1px solid "+C.border,borderRadius:12,padding:14,marginBottom:10} }
-                  , React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6} }
-                    , React.createElement('div', { style: {fontSize:15,fontWeight:700,color:C.text2} }, "📜 " , lang==="en"?"Local History (Last 7)":"本地历史快照（最近 7 个）")
-                    , React.createElement('button', { onClick: function(){
-                        idbListSnapshots().then(function(snaps){
-                          setSnapshotList(snaps);
-                          setSnapRefreshKey(snapRefreshKey+1);
-                        });
-                      }, style: {background:"#0A1828",border:"1px solid #2A3A54",borderRadius:6,padding:"4px 10px",color:"#5AACFF",fontSize:11,cursor:"pointer"} }, "🔄 " , lang==="en"?"Refresh":"刷新")
-                  )
-                  , React.createElement('div', { style: {fontSize:11,color:C.text3,marginBottom:10,lineHeight:1.5} }, lang==="en"?"Snapshots auto-saved on data changes (max once per minute). Roll back if you accidentally lose data.":"数据变动时自动保存（每分钟最多 1 个）。误操作丢数据时可回滚。")
-                  , snapshotList.length === 0 ? React.createElement('div', { style: {fontSize:11,color:C.text3,textAlign:"center",padding:"10px"} }, lang==="en"?"No snapshots yet. Tap Refresh.":"尚无快照。点刷新查看。")
-                    : snapshotList.map(function(s, i){
-                      var d = s.data || {};
-                      var ts = new Date(s.timestamp);
-                      var dateStr = ts.toLocaleDateString();
-                      var timeStr = ts.toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"});
-                      var ageMin = Math.round((Date.now() - s.timestamp) / 60000);
-                      var ageStr;
-                      if(ageMin < 1) ageStr = lang==="en"?"just now":"刚刚";
-                      else if(ageMin < 60) ageStr = ageMin + (lang==="en"?" min ago":" 分钟前");
-                      else if(ageMin < 1440) ageStr = Math.round(ageMin/60) + (lang==="en"?" hr ago":" 小时前");
-                      else ageStr = Math.round(ageMin/1440) + (lang==="en"?" days ago":" 天前");
-                      var stats = (d.el?d.el.length:0)+"e · "+(d.notes?d.notes.length:0)+"n · "+(d.sl?d.sl.length:0)+"s · "+(d.wl?d.wl.length:0)+"w · "+(d.dl?d.dl.length:0)+"d";
-                      return React.createElement('div', { key: s.id, style: {background:"#0A1828",border:"1px solid #2A3A54",borderRadius:8,padding:"10px 12px",marginBottom:6} }
-                        , React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:4} }
-                          , React.createElement('div', { style: {flex:1,minWidth:0} }
-                            , React.createElement('div', { style: {fontSize:13,fontWeight:600,color:C.text} }, dateStr, " ", timeStr)
-                            , React.createElement('div', { style: {fontSize:10,color:C.text3,marginTop:2} }, ageStr, " · ", stats)
-                          )
-                          , React.createElement('div', { style: {display:"flex",gap:5} }
-                            , React.createElement('button', { onClick: function(){
-                                if(!confirm((lang==="en"?"Roll back to this snapshot?\n":"回滚到这个快照？\n")+dateStr+" "+timeStr+"\n"+stats+(lang==="en"?"\n\nYour current data will be replaced.":"\n\n当前数据会被替换。")))return;
-                                // Save current state to pre-restore slot first (chain of undo)
-                                try {
-                                  var cur = {timestamp:new Date().toISOString(),label:lang==="en"?"Pre-snapshot-rollback":"快照回滚前",data:{wl:wl,sl:sl,el:el,fl:fl,ll:ll,veh:veh,cc:cc,custGroups:custGroups,reminders:reminders,custPlat:custPlat,custBrands:custBrands,custLicTypes:custLicTypes,custLoanTypes:custLoanTypes,favNotes:favNotes,notes:notes,incGoal:incGoal,seRate:seRate,fedRate:fedRate,stateRate:stateRate,stdDed:stdDed,mtaRate:mtaRate,savedVehicles:savedVehicles,dl:dl,driverType:driverType}};
-                                  localStorage.setItem("nyc_pre_restore_backup", JSON.stringify(cur));
-                                } catch(e){}
-                                if(d.wl)setWl(d.wl); if(d.sl)setSl(d.sl); if(d.el)setEl(d.el); if(d.fl)setFl(d.fl);
-                                if(d.ll)setLl(d.ll); if(d.veh)setVeh(d.veh); if(d.cc)setCc(d.cc);
-                                if(d.custGroups)setCustGroups(d.custGroups); if(d.reminders)setReminders(d.reminders);
-                                if(d.custPlat)setCustPlat(d.custPlat); if(d.custBrands)setCustBrands(d.custBrands);
-                                if(d.custLicTypes)setCustLicTypes(d.custLicTypes); if(d.custLoanTypes)setCustLoanTypes(d.custLoanTypes);
-                                if(d.favNotes)setFavNotes(d.favNotes); if(d.notes)setNotes(d.notes);
-                                if(typeof d.incGoal!=="undefined")setIncGoal(d.incGoal);
-                                if(typeof d.seRate==="number")setSeRate(d.seRate);
-                                if(typeof d.fedRate==="number")setFedRate(d.fedRate);
-                                if(typeof d.stateRate==="number")setStateRate(d.stateRate);
-                                if(typeof d.stdDed==="number")setStdDed(d.stdDed);
-                                if(typeof d.mtaRate==="number")setMtaRate(d.mtaRate);
-                                if(Array.isArray(d.savedVehicles))setSavedVehicles(d.savedVehicles);
-                                if(Array.isArray(d.dl))setDl(d.dl);
-                                if(d.driverType==="rideshare"||d.driverType==="taxi")setDriverType(d.driverType);
-                                showToast(lang==="en"?"✓ Rolled back":"✓ 已回滚");
-                              }, style: {background:"#0A4020",border:"1px solid #2A8050",borderRadius:6,padding:"4px 10px",color:"#5ADA7A",fontSize:11,fontWeight:700,cursor:"pointer"} }, "↩️ " , lang==="en"?"Restore":"回滚")
-                          )
-                        )
-                      );
-                    })
                 );
               }())
             , React.createElement('div', { style: {background:C.bg3,border:"1px solid "+C.border,borderRadius:12,padding:14,marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 808}}
@@ -4261,7 +4679,22 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                 , React.createElement('button', { onClick: function(){
                     var rd=reportData;var esc=function(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");};
                     var html='<!DOCTYPE html><html><head><meta charset=utf-8><title>'+(rd.type==="exp"?"Expense Detail":"Financial Report")+' '+esc(rd.label)+'</title>';
-                    html+='<style>body{font-family:-apple-system,Helvetica,Arial,sans-serif;max-width:800px;margin:30px auto;padding:20px;color:#222;line-height:1.5;background:#fff;}h1{font-size:22px;border-bottom:3px solid #000;padding-bottom:8px;margin-bottom:4px;}h2{font-size:16px;border-bottom:1px solid #888;padding-bottom:4px;margin-top:24px;color:#000;}.subtitle{font-size:12px;color:#666;margin-bottom:20px;}table{width:100%;border-collapse:collapse;margin:8px 0 16px;font-size:12px;}th,td{padding:6px 10px;border-bottom:1px solid #ddd;text-align:left;}th{background:#f0f0f0;font-weight:700;}td.amt{text-align:right;font-variant-numeric:tabular-nums;}tr.subtotal td{font-weight:700;background:#f8f8f8;border-top:1px solid #888;}tr.total td{font-weight:800;background:#222;color:#fff;font-size:13px;}tr.section td{background:#e8e8e8;font-weight:700;font-size:11px;letter-spacing:0.5px;}</style></head><body>';
+                    html+='<style>'+
+                    '@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap");'+
+                    '*{box-sizing:border-box;}'+
+                    'body{font-family:"Inter",-apple-system,Helvetica,Arial,sans-serif;max-width:800px;margin:30px auto;padding:30px 35px;color:#1a1a1a;line-height:1.6;background:#fff;}'+
+                    'h1{font-size:26px;font-weight:900;color:#0f172a;border-bottom:4px solid #2563eb;padding-bottom:10px;margin-bottom:4px;letter-spacing:-0.4px;}'+
+                    'h2{font-size:18px;font-weight:800;color:#0f172a;border-bottom:2px solid #cbd5e1;padding-bottom:6px;margin-top:28px;}'+
+                    '.subtitle{font-size:13px;color:#64748b;margin-bottom:22px;font-weight:500;}'+
+                    'table{width:100%;border-collapse:collapse;margin:10px 0 18px;font-size:12px;border-radius:8px;overflow:hidden;}'+
+                    'th,td{padding:9px 12px;border-bottom:1px solid #e2e8f0;text-align:left;}'+
+                    'th{background:#f1f5f9;font-weight:700;color:#475569;text-transform:uppercase;font-size:11px;letter-spacing:0.5px;}'+
+                    'td.amt{text-align:right;font-variant-numeric:tabular-nums;font-weight:600;}'+
+                    'tr.subtotal td{font-weight:700;background:#f1f5f9;border-top:2px solid #cbd5e1;}'+
+                    'tr.total td{font-weight:800;background:linear-gradient(135deg,#1e293b,#0f172a);color:#fff;font-size:14px;}'+
+                    'tr.section td{background:linear-gradient(135deg,#dbeafe,#e0e7ff);font-weight:700;font-size:11px;letter-spacing:0.5px;color:#1e40af;text-transform:uppercase;}'+
+                    '@media print{body{margin:0;padding:20px;}}'+
+                    '</style></head><body>';
                     html+='<h1>🚖 NYC DRIVER '+(rd.type==="exp"?(lang==="en"?"EXPENSE DETAIL":"支出明细"):(lang==="en"?"FINANCIAL REPORT":"财务报告"))+'</h1>';
                     html+='<div class=subtitle>'+esc(rd.label)+' · Generated '+new Date().toLocaleDateString()+'</div>';
                     var grpLabels={"车辆":"Vehicle","牌照":"License","平台":"Platform","其他":"Other"};
