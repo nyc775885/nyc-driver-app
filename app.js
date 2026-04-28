@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-console.log("%cNYC Driver Tracker — version v227","color:#00D4FF;font-weight:bold;font-size:14px");
+console.log("%cNYC Driver Tracker — version v231","color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
 //   <script>window.SENTRY_DSN = "https://YOUR_KEY@oXXX.ingest.sentry.io/PROJECT";</script>
@@ -249,11 +249,18 @@ function parseUberStatement(text){
   var ms=Math.abs(new Date(weekEnd)-new Date(weekStart));
   var dayDiff=Math.round(ms/86400000);
   if(dayDiff<1){ return {error:"This looks like a partial-day statement (range "+weekStart+" to "+weekEnd+"). Please use a full-week statement."}; }
-  // Fare: tolerate variants like "Fare", "Trip Fare", "Total Fare", "Gross Fare"
-  // Also tolerate optional + sign before $
+  // Fare: match "Fare" or "Trip Fare" but NOT "customer fare" / "Total customer fare"
+  // Use negative lookbehind via word boundary check
   var fareMatches=[]; var m;
-  var fareRe=/(?:Trip\s+|Total\s+|Gross\s+)?Fare\s*\+?\s*\$([0-9,]+\.\d{2})/gi;
-  while((m=fareRe.exec(text))!==null){ fareMatches.push(parseFloat(m[1].replace(/,/g,""))); }
+  var fareRe=/(?:Trip\s+)?Fare\s*\+?\s*\$([0-9,]+\.\d{2})/gi;
+  while((m=fareRe.exec(text))!==null){
+    // Check what's BEFORE the match — exclude "customer" or "total"
+    var beforeIdx = m.index;
+    var preceding = text.slice(Math.max(0, beforeIdx-30), beforeIdx).toLowerCase();
+    if(preceding.indexOf("customer") >= 0) continue;
+    if(preceding.match(/total\s*$/)) continue;
+    fareMatches.push(parseFloat(m[1].replace(/,/g,"")));
+  }
   var fare=fareMatches.length>0?Math.max.apply(null,fareMatches):0;
   // Tip parsing: handle "Breakdown of Your earnings" (current week) AND
   // "Breakdown of Your earnings (from previous weeks)" — late tips from prior weeks.
@@ -288,6 +295,11 @@ function parseUberStatement(text){
   var tollRe=/Tolls?(?:\s+Reimbursement)?\s*\+?\s*\$([0-9,]+\.\d{2})/i;
   var tollM=text.match(tollRe);
   var toll=tollM?parseFloat(tollM[1].replace(/,/g,"")):0;
+  // Uber Service Fee (Uber\'s commission/cut) — tax-deductible expense for Schedule C
+  // Pattern: "Uber Service Fee $146.28" — appears on Page 5
+  var serviceFeeRe = /Uber Service Fee\s+\$([0-9,]+\.\d{2})/i;
+  var serviceFeeM = text.match(serviceFeeRe);
+  var uberServiceFee = serviceFeeM ? parseFloat(serviceFeeM[1].replace(/,/g,"")) : 0;
   // Payout amount + transferred date
   var payoutAmount=0, payoutDate="";
   var payRe=/Transferred to your bank account on (\w+),\s*(\w+)\s+(\d{1,2}),\s*\d{1,2}:\d{2}\s*[AP]M\s*\$?([0-9,]+\.\d{2})/;
@@ -324,15 +336,18 @@ function parseUberStatement(text){
   // Audit checks
   var audit = { warnings: [] };
   
-  // Check 1: Fare + Tip should equal Your earnings (within $0.50)
+  // Check 1: Fare + Tip should equal Your earnings (within $0.50).
+  // Note: statedEarnings is "Your earnings" from CURRENT-week section only.
+  // Previous-week tip ($3.81) is separately reported as "Events from previous weeks"
+  // and should NOT be added when comparing against current-week stated earnings.
   if(statedEarnings > 0){
     var calcEarnings = fare + tip;
     var earnDiff = Math.abs(calcEarnings - statedEarnings);
     if(earnDiff >= 0.5){
       audit.warnings.push({
         type: "earnings_mismatch",
-        msg: "Fare+Tip ("+calcEarnings.toFixed(2)+") ≠ Uber stated earnings ("+statedEarnings.toFixed(2)+"). Off by $"+earnDiff.toFixed(2),
-        msgCn: "总车费+小费 ("+calcEarnings.toFixed(2)+") ≠ Uber 显示收入 ("+statedEarnings.toFixed(2)+")。差 $"+earnDiff.toFixed(2),
+        msg: "Fare+Tip ($"+calcEarnings.toFixed(2)+") ≠ Uber stated earnings ($"+statedEarnings.toFixed(2)+"). Off by $"+earnDiff.toFixed(2)+". May be missing income items.",
+        msgCn: "总车费+小费 ($"+calcEarnings.toFixed(2)+") ≠ Uber 显示收入 ($"+statedEarnings.toFixed(2)+")。差 $"+earnDiff.toFixed(2)+"。可能有遗漏的收入项。",
         severity: "high"
       });
     }
@@ -410,6 +425,7 @@ function parseUberStatement(text){
     prevWeekTip:prevWeekTip.toFixed(2),
     refundsSummary:refundsSummary.toFixed(2),
     payoutsTotal:payoutsTotal.toFixed(2),
+    uberServiceFee:uberServiceFee.toFixed(2),
     audit:audit,
     payoutAmount:payoutAmount?payoutAmount.toFixed(2):"",
     payoutDate:payoutDate||"",
@@ -2798,7 +2814,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
             , React.createElement('div', { style: {padding:"10px 0",flex:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 602}}
               , [{icon:"📝",label:lang==="en"?"Notes":"记事本",action:function(){setShowDrawer(false);setSf("notes");}},{icon:"🏥",label:lang==="en"?"Health Check":"数据健康检查",action:function(){setShowDrawer(false);setSf("health_check");}},{icon:"🗂",label:lang==="en"?"Categories":"支出类别",action:function(){setShowDrawer(false);setSf("manage_cats");}},{icon:"&#128197;",label:T.fixedFees,action:function(){setShowDrawer(false);setSf("drawer_fixed");}},{icon:"🧾",label:lang==="en"?"Tax Center":"税务中心",action:function(){setShowDrawer(false);setSf("tax_center");}},{icon:"&#128190;",label:T.backup,action:function(){setShowDrawer(false);setShowBackup(true);}},{icon:"&#128276;",label:T.reminder,action:function(){setShowDrawer(false);setShowRemMgr(true);}},{icon:"&#128203;",label:T.license,action:function(){setShowDrawer(false);setSf("drawer_lic");}},{icon:"&#128241;",label:T.platform,action:function(){setShowDrawer(false);setShowPlatMgr(true);}},{icon:"&#128663;",label:T.vehicle,action:function(){setShowDrawer(false);setSf("drawer_veh");}},{icon:"🚖",label:lang==="en"?"Driver Type":"切换司机类型",action:function(){setShowDrawer(false);setDriverType(null);setOnboardingDismissed(false);}},{icon:"🔒",label:lang==="en"?"PIN Lock":"PIN 锁屏",action:function(){setShowDrawer(false);setSf("pin_settings");}},{icon:"🚪",label:lang==="en"?"Sign Out":"退出登录",action:function(){if(!confirm(lang==="en"?"Sign out of Google?":"确认退出 Google 登录？"))return;setGUser(null);try{localStorage.removeItem("nyc_user");localStorage.removeItem("nyc_tab");}catch(e){}setTab(0);setSf(null);setShowDrawer(false);setShowBackup(false);setShowPlatMgr(false);setShowRemMgr(false);},color:"#FF5252"},].map(function(item,i){return React.createElement('button', { key: i, onClick: item.action, style: {display:"flex",alignItems:"center",gap:14,width:"100%",background:"none",border:"none",padding:"14px 18px",cursor:"pointer",textAlign:"left",borderBottom:"1px solid "+C.border,color:item.color||C.text}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 603}}, React.createElement('span', { style: {fontSize:20}, dangerouslySetInnerHTML: {__html:item.icon}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 603}} ), React.createElement('span', { style: {fontSize:14,color:C.text,fontWeight:600}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 603}}, item.label), React.createElement('span', { style: {marginLeft:"auto",color:C.text3,fontSize:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 603}}, ">"));})
             )
-            , React.createElement('div', { style: {fontSize:10,color:C.text3,textAlign:"center",padding:"12px 18px 16px",borderTop:"1px solid "+C.border,letterSpacing:0.5} }, "NYC RIDESHARE TRACKER · v2.9.5"    )
+            , React.createElement('div', { style: {fontSize:10,color:C.text3,textAlign:"center",padding:"12px 18px 16px",borderTop:"1px solid "+C.border,letterSpacing:0.5} }, "NYC RIDESHARE TRACKER · v2.9.9"    )
           )
           , React.createElement('div', { style: {flex:1,background:"rgba(0,0,0,0.6)"}, onClick: function(){setShowDrawer(false);}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 606}} )
         )
@@ -3435,17 +3451,25 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                       , React.createElement('input',{type:"date",value:pasteUberResult.payoutDate||"",onChange:function(e){setPasteUberResult(Object.assign({},pasteUberResult,{payoutDate:e.target.value}));},style:{background:"#0A1828",border:"1px solid #2A3A54",borderRadius:6,padding:"6px 8px",color:C.text2,fontSize:13,fontWeight:600,width:"100%",boxSizing:"border-box"}})
                     )
                   )
+                  , (pasteUberResult.uberServiceFee && +pasteUberResult.uberServiceFee>0) ? React.createElement('div', {style:{marginTop:10,padding:"10px 12px",background:"#1A0A1A",border:"1px solid #5A2A4A",borderRadius:8}}
+                      , React.createElement('div', {style:{fontSize:11,color:"#CC88FF",fontWeight:700,marginBottom:6}}, "💸 " , lang==="en"?"Uber Service Fee (tax-deductible expense)":"Uber 抽成（可抵税支出）")
+                      , React.createElement('div', {style:{display:"flex",alignItems:"center",gap:8}}
+                        , React.createElement('span', {style:{fontSize:14,fontWeight:700,color:"#CC88FF"}}, "$", pasteUberResult.uberServiceFee)
+                        , React.createElement('div', {style:{flex:1,fontSize:10,color:C.text3,lineHeight:1.4}}, lang==="en"?"This is what Uber takes. Will be auto-recorded as platform expense if you save.":"这是 Uber 从乘客那扣走的。保存时会自动作为平台支出录入。")
+                      )
+                    ) : null
                   , React.createElement('div', {style:{marginTop:10,padding:"8px 12px",background:"#0A1828",borderRadius:6,fontSize:13,textAlign:"center"}}
                     , "📊 ", lang==="en"?"Total: ":"合计：" , React.createElement('b',{style:{color:"#FFD700",fontSize:16}}, "$"+(((+pasteUberResult.grossFare||0)+(+pasteUberResult.tips||0)+(+pasteUberResult.bonus||0)+(+pasteUberResult.tollReimbursed||0)).toFixed(2)))
                   )
                   , (+pasteUberResult.statedEarnings>0) ? (function(){
-                      var calculated = (+pasteUberResult.grossFare||0)+(+pasteUberResult.tips||0)+(+pasteUberResult.bonus||0);
+                      // Uber stated earnings is current-week only — compare against fare+tips (NOT bonus, since bonus is prior-week tips)
+                      var calculated = (+pasteUberResult.grossFare||0)+(+pasteUberResult.tips||0);
                       var diff = Math.abs(calculated - (+pasteUberResult.statedEarnings));
                       var match = diff < 0.5;
                       return React.createElement('div', {style:{fontSize:11,color:match?"#5ADA7A":"#FFB300",marginTop:8,padding:"6px 10px",background:match?"#0A2018":"#1A1400",borderRadius:6}}
                         , match ? "✓ " : "⚠ "
                         , lang==="en"?"Uber stated earnings: ":"Uber 显示收入：" , "$"+pasteUberResult.statedEarnings
-                        , match ? (lang==="en"?" — matches":" — 一致") : (lang==="en"?(" — off by $"+diff.toFixed(2)):(" — 差 $"+diff.toFixed(2)))
+                        , match ? (lang==="en"?" — matches Fare+Tip":" — 与总车费+小费一致") : (lang==="en"?(" — off by $"+diff.toFixed(2)):(" — 差 $"+diff.toFixed(2)))
                       );
                     }()) : null
                   , (pasteUberResult.audit && pasteUberResult.audit.warnings && pasteUberResult.audit.warnings.length > 0) ? React.createElement('div', {style:{marginTop:10,padding:"10px 12px",background:"#1A1400",border:"1px solid #5A3A00",borderRadius:8}}
@@ -3470,6 +3494,24 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                             notes:r.notes
                           });
                         }));
+                        // Also create platform fee expense if not duplicate
+                        if(r.uberServiceFee && +r.uberServiceFee > 0){
+                          var expDate2 = r.weekStart;
+                          var dup2 = el.some(function(e){
+                            return e.category==="platformfee" && e.date===expDate2 && Math.abs((+e.amount||0)-(+r.uberServiceFee))<0.01;
+                          });
+                          if(!dup2){
+                            setEl([{
+                              id:Date.now()+1,
+                              date:expDate2,
+                              category:"platformfee",
+                              amount:+r.uberServiceFee,
+                              notes:"Uber Service Fee · "+r.weekStart+" – "+r.weekEnd,
+                              isFixed:false,
+                              mode:"rideshare"
+                            }].concat(el));
+                          }
+                        }
                       }else{
                         setWl([{
                           id:Date.now(), weekStart:r.weekStart, platform:"Uber",
@@ -3479,6 +3521,26 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                           trips:"", hours:"", onlineHours:"", miles:"",
                           notes:r.notes
                         }].concat(wl));
+                        // Also create a platform fee expense entry for Uber Service Fee
+                        if(r.uberServiceFee && +r.uberServiceFee > 0){
+                          // Use weekStart date as the expense date
+                          var expDate = r.weekStart;
+                          // Avoid duplicates: check if expense already exists for same week + amount
+                          var dup = el.some(function(e){
+                            return e.category==="platformfee" && e.date===expDate && Math.abs((+e.amount||0)-(+r.uberServiceFee))<0.01;
+                          });
+                          if(!dup){
+                            setEl([{
+                              id:Date.now()+1,
+                              date:expDate,
+                              category:"platformfee",
+                              amount:+r.uberServiceFee,
+                              notes:"Uber Service Fee · "+r.weekStart+" – "+r.weekEnd,
+                              isFixed:false,
+                              mode:"rideshare"
+                            }].concat(el));
+                          }
+                        }
                       }
                       setShowPasteUber(false);setPasteUberText("");setPasteUberResult(null);
                       alert(lang==="en"?"✓ Saved to weekly log":"✓ 已保存到周记录");
