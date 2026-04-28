@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-console.log("%cNYC Driver Tracker — version v201","color:#00D4FF;font-weight:bold;font-size:14px");
+console.log("%cNYC Driver Tracker — version v207","color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
 //   <script>window.SENTRY_DSN = "https://YOUR_KEY@oXXX.ingest.sentry.io/PROJECT";</script>
@@ -1304,6 +1304,36 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
       , (function(){if(!nextExpiry)return null;var d=daysFromToday(nextExpiry.expiryDate);if(d===null||d<=0||d>(+(nextExpiry.reminderDays||60)))return null;return React.createElement(ABox, { color: "#FF9A00", bg: "#1A1000", icon: "📋", text: nextExpiry.type+" "+(lang==="en"?"expires in ":"还剩 ")+d+(lang==="en"?" days":" 天到期"), __self: this, __source: {fileName: _jsxFileName, lineNumber: 257}});})()
       , reminders.filter(function(r){if(!r.date)return false;var d=daysFromToday(r.date);return d!==null&&d>=0&&d<=(+(r.reminderDays||7));}).map(function(r,i){var d=daysFromToday(r.date);return React.createElement(ABox, { key: i, color: "#CC88FF", bg: "#150A20", icon: "🔔", text: r.title+(d===0?(lang==="en"?" · Today":" · 今天"):d===1?(lang==="en"?" · Tomorrow":" · 明天"):(lang==="en"?" · "+d+" days left":" · 还剩"+d+"天")), __self: this, __source: {fileName: _jsxFileName, lineNumber: 258}} );}) 
       , (function(){var lo=el.filter(function(e){return e.odometer&&+e.odometer>0;}).sort(function(a,b){var c=b.date.localeCompare(a.date);return c!==0?c:(+b.odometer)-(+a.odometer);})[0];var co=lo?+lo.odometer:0;if(co<=0)return null;return reminders.filter(function(r){if(r.type!=="mile")return false;if(!r.triggerMile)return false;var rem=(+r.triggerMile)-co;return rem<=(+(r.reminderMile||200));}).map(function(r,i){var rem=(+r.triggerMile)-co;var txt=r.title+(rem<=0?(lang==="en"?" · Overdue by "+Math.abs(rem).toLocaleString()+" mi":" · 已超 "+Math.abs(rem).toLocaleString()+" mi"):(lang==="en"?" · "+rem.toLocaleString()+" mi left":" · 还剩 "+rem.toLocaleString()+" mi"));var col=rem<=0?"#FF5252":"#FFB300",bg=rem<=0?"#200808":"#1A1400";return React.createElement(ABox, { key: "m"+i, color: col, bg: bg, icon: "🛣", text: txt });});})()
+      // Smart preset-based maintenance alerts (independent of manual reminders)
+      , (function(){
+          var lo=el.filter(function(e){return e.odometer&&+e.odometer>0;}).sort(function(a,b){var c=b.date.localeCompare(a.date);return c!==0?c:(+b.odometer)-(+a.odometer);})[0];
+          var co=lo?+lo.odometer:0;
+          if(co<=0||!veh.type) return null;
+          var presets=veh.type==="electric"?MILE_PRESETS_EV:MILE_PRESETS_GAS;
+          // Track which preset keys are already covered by manual reminders (by title contains lbl)
+          var manuallyCovered=function(presetLbl){
+            return reminders.some(function(r){
+              if(r.type!=="mile") return false;
+              if(!r.title) return false;
+              return r.title.toLowerCase().indexOf(presetLbl.toLowerCase())>=0;
+            });
+          };
+          var alerts=[];
+          presets.forEach(function(p,i){
+            var lbl = lang==="en" ? p.lbl_en : p.lbl_zh;
+            if(manuallyCovered(p.lbl_en)||manuallyCovered(p.lbl_zh)) return;
+            // Next milestone: smallest multiple of interval >= currentOdo
+            var nextDue = Math.ceil(co / p.interval) * p.interval;
+            // If currentOdo is exactly on a milestone (like 5000 with interval 5000), next should be 10000
+            if(nextDue === co) nextDue += p.interval;
+            var rem = nextDue - co;
+            var thresh = Math.min(200, Math.round(p.interval * 0.05));
+            if(rem > thresh) return;  // too far away
+            var txt = p.icon + " " + lbl + (lang==="en" ? " · "+rem.toLocaleString()+" mi to "+nextDue.toLocaleString() : " · 还剩 "+rem.toLocaleString()+" mi (" + nextDue.toLocaleString() + ")");
+            alerts.push(React.createElement(ABox, { key: "preset_"+p.key, color: "#5AACFF", bg: "#0A1828", icon: "🔧", text: txt }));
+          });
+          return alerts.length ? alerts : null;
+        }())
       , React.createElement('div', { style: {padding:"16px 14px",paddingBottom:100,maxWidth:800,margin:"0 auto"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 259}}
 
         , tab===0 ? (
@@ -1795,42 +1825,65 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
               , React.createElement('button', { onClick: function(){setSf(null);}, style: {background:"linear-gradient(135deg,#00CFFF,#0044EE)",border:"none",color:"#fff",fontSize:20,cursor:"pointer",width:34,height:34,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 10px rgba(0,207,255,0.3)"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 393}}, "✓")
             )
             , React.createElement('div', { style: {padding:"16px 14px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 395}}
-              // === Saved Vehicle Profiles section ===
-              , React.createElement('div', { style: {background:C.bg3,border:"1px solid "+C.border,borderRadius:12,padding:14,marginBottom:16} }
-                , React.createElement('div', { style: {fontSize:13,fontWeight:700,color:"#90EAF8",marginBottom:8,display:"flex",justifyContent:"space-between",alignItems:"center"} }
-                  , React.createElement('span', null, "🚗 " , lang==="en"?"Saved Vehicles":"已保存车辆")
-                  , React.createElement('button', { onClick: function(){
-                      var label=prompt(lang==="en"?"Profile name (e.g. \"Tesla Y\", \"Camry rental\"):":"输入车辆名称（例如 \"Tesla Y\"、\"租来的 Camry\"）：", (veh.brand||"")+" "+(veh.model||""));
-                      if(!label||!label.trim()) return;
-                      var profile=Object.assign({},veh,{_savedName:label.trim(),_savedAt:new Date().toISOString()});
-                      setSavedVehicles((savedVehicles||[]).concat([profile]));
-                      alert(lang==="en"?"✓ Saved":"✓ 已保存");
-                    }, style: {background:"#0A2040",border:"1px solid #2A5080",borderRadius:8,padding:"5px 10px",color:"#5AACFF",fontSize:12,fontWeight:700,cursor:"pointer"} }
-                    , "💾 " , lang==="en"?"Save Current":"保存当前"
-                  )
-                )
-                , (savedVehicles && savedVehicles.length>0) ? React.createElement('div', null
-                    , savedVehicles.map(function(p,i){
-                        return React.createElement('div', { key: i, style: {display:"flex",alignItems:"center",gap:8,padding:"8px 10px",background:C.bg2,borderRadius:8,marginBottom:6} }
-                          , React.createElement('div', { style: {flex:1,minWidth:0} }
-                            , React.createElement('div', { style: {fontSize:13,fontWeight:700,color:C.text} }, p._savedName||(p.brand+" "+p.model))
-                            , React.createElement('div', { style: {fontSize:11,color:C.text3} }, [p.year,p.brand,p.model].filter(Boolean).join(" "), p.plate?" · ["+p.plate+"]":"", p.tlcPlate?" · TLC ["+p.tlcPlate+"]":"")
-                          )
-                          , React.createElement('button', { onClick: function(){
-                              if(!confirm(lang==="en"?"Load this profile? Current vehicle data will be replaced.":"加载这个 profile？当前车辆资料会被替换。"))return;
-                              var loaded=Object.assign({},p);
-                              delete loaded._savedName; delete loaded._savedAt;
-                              setVeh(loaded);
-                              alert(lang==="en"?"✓ Loaded":"✓ 已加载");
-                            }, style: {background:"#0A4020",border:"1px solid #2A8050",borderRadius:6,padding:"4px 10px",color:"#00E676",fontSize:11,fontWeight:700,cursor:"pointer"} }, lang==="en"?"Load":"加载")
-                          , React.createElement('button', { onClick: function(){
-                              if(!confirm(lang==="en"?"Delete this saved profile?":"删除这个 profile？"))return;
-                              setSavedVehicles(savedVehicles.filter(function(_,j){return j!==i;}));
-                            }, style: {background:"none",border:"1px solid #3A1A1A",borderRadius:6,padding:"4px 8px",color:"#FF5252",fontSize:11,cursor:"pointer"} }, lang==="en"?"Del":"删除")
-                        );
-                      })
-                  ) : React.createElement('div', { style: {fontSize:11,color:C.text3,padding:"8px 0",textAlign:"center"} }, lang==="en"?"No saved profiles. Save current vehicle to switch quickly later.":"暂无 profile。保存当前车辆以便快速切换。")
-              )
+// === Vehicle Profiles section ===
+              , (function(){
+                  var hasProfiles = savedVehicles && savedVehicles.length > 0;
+                  // Match current veh against saved profiles by plate
+                  var currentIdx = hasProfiles ? savedVehicles.findIndex(function(p){
+                    return (p.plate && p.plate===veh.plate) || (p.tlcPlate && p.tlcPlate===veh.tlcPlate);
+                  }) : -1;
+                  
+                  // Save action
+                  var doSave = function(){
+                    var label=prompt(lang==="en"?"Profile name (e.g. \"Tesla Y\", \"Camry rental\"):":"输入车辆名称（例如 \"Tesla Y\"、\"租来的 Camry\"）：", (veh.brand||"")+" "+(veh.model||""));
+                    if(!label||!label.trim()) return;
+                    var profile=Object.assign({},veh,{_savedName:label.trim(),_savedAt:new Date().toISOString()});
+                    setSavedVehicles((savedVehicles||[]).concat([profile]));
+                    alert(lang==="en"?"✓ Saved":"✓ 已保存");
+                  };
+                  
+                  // EMPTY state — friendly intro + single big button
+                  if(!hasProfiles){
+                    return React.createElement('div', { style: {background:C.bg3,border:"1px dashed "+C.border,borderRadius:12,padding:"16px 14px",marginBottom:16,textAlign:"center"} }
+                      , React.createElement('div', { style: {fontSize:14,fontWeight:700,color:"#90EAF8",marginBottom:6} }, "🚗 " , lang==="en"?"Multi-Vehicle Profiles":"多车辆管理")
+                      , React.createElement('div', { style: {fontSize:12,color:C.text3,marginBottom:12,lineHeight:1.5} }, lang==="en"?"Save your current vehicle as a profile, so you can quickly switch later when you change cars or rent another.":"把当前车辆保存为 profile，以后换车 / 租车时可以快速切换回来。")
+                      , React.createElement('button', { onClick: doSave, style: {background:"linear-gradient(135deg,#0A4020,#1A6030)",border:"1px solid #2A8050",borderRadius:10,padding:"10px 20px",color:"#5ADA7A",fontSize:13,fontWeight:700,cursor:"pointer"} }, "💾 " , lang==="en"?"Save Current Vehicle":"保存当前车辆")
+                    );
+                  }
+                  
+                  // POPULATED state — list with current marked
+                  return React.createElement('div', { style: {background:C.bg3,border:"1px solid "+C.border,borderRadius:12,padding:14,marginBottom:16} }
+                    , React.createElement('div', { style: {fontSize:13,fontWeight:700,color:"#90EAF8",marginBottom:10} }, "🚗 " , lang==="en"?"Switch Vehicle":"切换车辆")
+                    , React.createElement('div', null
+                      , savedVehicles.map(function(p,i){
+                          var isCurrent = i===currentIdx;
+                          return React.createElement('div', { key: i, style: {display:"flex",alignItems:"center",gap:8,padding:"10px 12px",background:isCurrent?"#0A2018":C.bg2,border:isCurrent?"1px solid #2A6040":"1px solid transparent",borderRadius:8,marginBottom:6} }
+                            , React.createElement('div', { style: {flex:1,minWidth:0} }
+                              , React.createElement('div', { style: {fontSize:13,fontWeight:700,color:isCurrent?"#5ADA7A":C.text,display:"flex",alignItems:"center",gap:6} }
+                                , isCurrent ? React.createElement('span',null,"✓ ") : null
+                                , p._savedName||(p.brand+" "+p.model)
+                                , isCurrent ? React.createElement('span',{style:{fontSize:10,padding:"1px 6px",borderRadius:4,background:"#2A6040",color:"#5ADA7A",fontWeight:600}},lang==="en"?"CURRENT":"当前") : null
+                              )
+                              , React.createElement('div', { style: {fontSize:11,color:C.text3,marginTop:2} }, [p.year,p.brand,p.model].filter(Boolean).join(" "), p.plate?" · ["+p.plate+"]":"", p.tlcPlate?" · TLC ["+p.tlcPlate+"]":"")
+                            )
+                            , !isCurrent ? React.createElement('button', { onClick: function(){
+                                if(!confirm(lang==="en"?"Switch to this vehicle? Current vehicle data will be replaced.":"切换到这辆车？当前车辆资料会被替换。"))return;
+                                var loaded=Object.assign({},p);
+                                delete loaded._savedName; delete loaded._savedAt;
+                                setVeh(loaded);
+                              }, style: {background:"#0A2040",border:"1px solid #2A5080",borderRadius:6,padding:"5px 12px",color:"#5AACFF",fontSize:11,fontWeight:700,cursor:"pointer"} }, lang==="en"?"Switch":"切换") : null
+                            , React.createElement('button', { onClick: function(){
+                                if(!confirm(lang==="en"?"Delete this profile? (Won\'t affect current vehicle data.)":"删除这个 profile？（不影响当前正在用的车辆资料）"))return;
+                                setSavedVehicles(savedVehicles.filter(function(_,j){return j!==i;}));
+                              }, style: {background:"none",border:"none",color:"#FF5252",fontSize:14,cursor:"pointer",padding:"4px 6px"} }, "✕")
+                          );
+                        })
+                    )
+                    , React.createElement('div', { style: {marginTop:8,paddingTop:10,borderTop:"1px solid "+C.border,textAlign:"center"} }
+                      , React.createElement('button', { onClick: doSave, style: {background:"transparent",border:"1px dashed #2A4A6A",borderRadius:8,padding:"6px 14px",color:"#5AACFF",fontSize:12,fontWeight:600,cursor:"pointer"} }, "💾 " , lang==="en"?"Save current as new profile":"将当前车辆保存为新 profile")
+                    )
+                  );
+                }())
               , React.createElement('div', { style: {fontSize:13,fontWeight:700,color:"#FFD700",marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 395}}, "🧑 " , lang==="en"?"Driver Info":"司机信息")
               , React.createElement('div', { style: {display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 395}}
                 , React.createElement(Field, { label: lang==="en"?"Full Name":"姓名", value: (veh.driver&&veh.driver.name)||"", onChange: function(v){setVeh(Object.assign({},veh,{driver:Object.assign({},veh.driver||{},{name:v})}));}, placeholder: lang==="en"?"John Doe":"姓名", __self: this, __source: {fileName: _jsxFileName, lineNumber: 395}} )
@@ -1881,6 +1934,171 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                 , React.createElement(Field, { label: T.loanType, value: veh.loanType||"loan", onChange: function(v){if(v==="__new__"){var n=prompt(lang==="en"?"New ownership type:":"新持有方式:");if(n&&n.trim()){var nm=n.trim();setCustLoanTypes(custLoanTypes.concat([nm]));setVeh(Object.assign({},veh,{loanType:nm}));}return;}setVeh(Object.assign({},veh,{loanType:v}));}, options: [["loan",T.loan],["lease",T.lease],["own",T.own],["rental",T.rental]].concat(custLoanTypes.map(function(l){return [l,l];})).concat([["__new__",lang==="en"?"+ Add new...":"+ 添加新选项..."]]), __self: this, __source: {fileName: _jsxFileName, lineNumber: 415}} )
                 , React.createElement(Field, { label: T.loanAmt, type: "number", value: veh.loanAmt||"", onChange: function(v){setVeh(Object.assign({},veh,{loanAmt:v}));}, money: true, placeholder: "0.00", __self: this, __source: {fileName: _jsxFileName, lineNumber: 416}} )
               )
+            )
+          )
+        )
+      ) : null
+
+      , sf==="health_check" ? (
+        React.createElement('div', { style: {position:"fixed",inset:0,background:C.bg,zIndex:300,overflowY:"auto"} }
+          , React.createElement('div', { style: {maxWidth:600,margin:"0 auto",padding:"0 0 80px"} }
+            , React.createElement('div', { style: {background:C.bg2,padding:"16px 18px",borderBottom:"1px solid "+C.border,display:"flex",justifyContent:"space-between",alignItems:"center",position:"sticky",top:0,zIndex:10} }
+              , React.createElement('button', { onClick: function(){setSf(null);}, style: {background:"#1E3050",border:"none",color:"#8ABCD0",fontSize:16,cursor:"pointer",width:34,height:34,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center"} }, "✕")
+              , React.createElement('div', { style: {fontSize:16,fontWeight:800} }, "🏥 " , lang==="en"?"Data Health Check":"数据健康检查")
+              , React.createElement('div', { style: {width:34} })
+            )
+            , React.createElement('div', { style: {padding:"16px 14px"} }
+              , (function(){
+                  var findings=[];
+                  var todayStr=new Date().toISOString().slice(0,10);
+                  
+                  // CRITICAL: $0 or negative amount expenses
+                  el.forEach(function(e){
+                    if(!e.amount || +e.amount<=0){
+                      findings.push({sev:"crit",icon:"💸",cat:lang==="en"?"Zero/Negative Amount":"金额异常",txt:(lang==="en"?"Expense amount is $":"支出金额为 $")+(e.amount||"0"),detail:e.date+" · "+(e.category||"?"),item:e,kind:"el"});
+                    }
+                  });
+                  
+                  // CRITICAL: Invalid date format
+                  el.forEach(function(e){
+                    if(e.date && !/^\d{4}-\d{2}-\d{2}$/.test(e.date)){
+                      findings.push({sev:"crit",icon:"📅",cat:lang==="en"?"Invalid Date":"日期格式错误",txt:e.date,detail:lang==="en"?"Expense":"支出",item:e,kind:"el"});
+                    }
+                  });
+                  
+                  // CRITICAL: Statement missing month
+                  sl.forEach(function(s){
+                    if(!s.month){
+                      findings.push({sev:"crit",icon:"📊",cat:lang==="en"?"Missing Month":"缺月份",txt:lang==="en"?"Statement has no month":"月度账单缺月份字段",detail:s.platform||"?",item:s,kind:"sl"});
+                    }
+                  });
+                  
+                  // CRITICAL: Odometer going backwards
+                  var sortedOdo=el.filter(function(e){return e.odometer&&+e.odometer>0&&e.date;}).sort(function(a,b){return a.date.localeCompare(b.date);});
+                  for(var i=1;i<sortedOdo.length;i++){
+                    if(+sortedOdo[i].odometer<+sortedOdo[i-1].odometer-100){  // tolerate 100mi rounding
+                      findings.push({sev:"crit",icon:"🛣",cat:lang==="en"?"Odometer Regression":"里程倒退",txt:sortedOdo[i].date+": "+(+sortedOdo[i].odometer).toLocaleString()+" mi < "+sortedOdo[i-1].date+": "+(+sortedOdo[i-1].odometer).toLocaleString()+" mi",detail:"",item:sortedOdo[i],kind:"el"});
+                    }
+                  }
+                  
+                  // WARNING: Vehicle type mismatch
+                  if(veh.type==="electric"){
+                    var fuelCnt=el.filter(function(e){return e.category==="fuel";}).length;
+                    if(fuelCnt>0){
+                      findings.push({sev:"warn",icon:"⛽",cat:lang==="en"?"Type Mismatch":"类型不匹配",txt:(lang==="en"?"Electric vehicle has ":"电动车有 ")+fuelCnt+(lang==="en"?" gas entries":" 条加油记录"),detail:"",kind:"info"});
+                    }
+                  } else if(veh.type==="petrol"){
+                    var chgCnt=el.filter(function(e){return e.category==="charging";}).length;
+                    if(chgCnt>0){
+                      findings.push({sev:"warn",icon:"⚡",cat:lang==="en"?"Type Mismatch":"类型不匹配",txt:(lang==="en"?"Gas vehicle has ":"汽油车有 ")+chgCnt+(lang==="en"?" charging entries":" 条充电记录"),detail:"",kind:"info"});
+                    }
+                  }
+                  
+                  // WARNING: Possible duplicates (same date+category+amount in el)
+                  var seen={};
+                  el.forEach(function(e){
+                    var key=e.date+"|"+e.category+"|"+e.amount;
+                    if(seen[key]){
+                      findings.push({sev:"warn",icon:"📑",cat:lang==="en"?"Possible Duplicate":"疑似重复",txt:e.date+" · "+(e.category||"?")+" · $"+e.amount,detail:lang==="en"?"Same as another entry":"与另一条记录相同",item:e,kind:"el"});
+                    }
+                    seen[key]=true;
+                  });
+                  
+                  // WARNING: Very large amounts (>$3000 single expense)
+                  el.forEach(function(e){
+                    if(+e.amount>3000){
+                      findings.push({sev:"warn",icon:"💰",cat:lang==="en"?"Large Amount":"金额偏大",txt:"$"+(+e.amount).toLocaleString()+(lang==="en"?" expense (verify if correct)":" 支出（请确认）"),detail:e.date+" · "+(e.category||"?"),item:e,kind:"el"});
+                    }
+                  });
+                  
+                  // WARNING: Future-dated entries
+                  el.forEach(function(e){
+                    if(e.date&&e.date>todayStr){
+                      findings.push({sev:"warn",icon:"🔮",cat:lang==="en"?"Future Date":"未来日期",txt:e.date+" "+(lang==="en"?"is in the future":"在未来"),detail:lang==="en"?"Expense":"支出·"+(e.category||"?"),item:e,kind:"el"});
+                    }
+                  });
+                  
+                  // INFO: Expired date reminders
+                  reminders.forEach(function(r){
+                    if(r.type==="date"&&r.date&&r.date<todayStr){
+                      findings.push({sev:"info",icon:"🔔",cat:lang==="en"?"Expired Reminder":"过期提醒",txt:(r.title||"?")+" ("+r.date+")",detail:lang==="en"?"You may want to clear this":"可以清除此提醒",item:r,kind:"reminders"});
+                    }
+                  });
+                  
+                  // Group by severity
+                  var crit=findings.filter(function(f){return f.sev==="crit";});
+                  var warn=findings.filter(function(f){return f.sev==="warn";});
+                  var info=findings.filter(function(f){return f.sev==="info";});
+                  
+                  // Data summary (always shown at top)
+                  var summary={
+                    sl:sl.length,wl:wl.length,dl:dl.length,el:el.length,
+                    reminders:reminders.length,licenses:ll.length,
+                    totalIssues:findings.length
+                  };
+                  
+                  var renderGroup=function(label,items,color){
+                    if(!items.length) return null;
+                    return React.createElement('div', {style:{marginBottom:14}}
+                      , React.createElement('div', {style:{fontSize:13,fontWeight:700,color:color,marginBottom:8,letterSpacing:0.5}}, label+" ("+items.length+")")
+                      , items.map(function(f,i){
+                          return React.createElement('div', {key:i,style:{background:C.bg3,border:"1px solid "+C.border,borderRadius:10,padding:"10px 12px",marginBottom:6}}
+                            , React.createElement('div', {style:{display:"flex",alignItems:"center",gap:8,marginBottom:4}}
+                              , React.createElement('span', {style:{fontSize:16}}, f.icon)
+                              , React.createElement('span', {style:{fontSize:11,color:color,fontWeight:700,background:C.bg,padding:"2px 8px",borderRadius:4}}, f.cat)
+                            )
+                            , React.createElement('div', {style:{fontSize:13,color:C.text,marginBottom:f.detail?2:0}}, f.txt)
+                            , f.detail ? React.createElement('div', {style:{fontSize:11,color:C.text3}}, f.detail) : null
+                            // Action button — delete (only for el and reminders)
+                            , (f.item && f.kind==="el") ? React.createElement('div', {style:{marginTop:6,display:"flex",gap:6}}
+                                , React.createElement('button', {onClick:function(){
+                                    if(!confirm(lang==="en"?"Delete this expense entry?":"删除这条支出记录？"))return;
+                                    setEl(el.filter(function(x){return x.id!==f.item.id;}));
+                                  },style:{background:"none",border:"1px solid #5A1A1A",borderRadius:6,padding:"4px 10px",color:"#FF5252",fontSize:11,cursor:"pointer"}}, "🗑 " , lang==="en"?"Delete":"删除")
+                              ) : null
+                            , (f.item && f.kind==="reminders") ? React.createElement('div', {style:{marginTop:6,display:"flex",gap:6}}
+                                , React.createElement('button', {onClick:function(){
+                                    if(!confirm(lang==="en"?"Delete this reminder?":"删除这条提醒？"))return;
+                                    setReminders(reminders.filter(function(x){return x.id!==f.item.id;}));
+                                  },style:{background:"none",border:"1px solid #5A1A1A",borderRadius:6,padding:"4px 10px",color:"#FF5252",fontSize:11,cursor:"pointer"}}, "🗑 " , lang==="en"?"Delete":"删除")
+                              ) : null
+                          );
+                        })
+                    );
+                  };
+                  
+                  return React.createElement('div', null
+                    // Top summary
+                    , React.createElement('div', {style:{background:C.bg3,border:"1px solid "+C.border,borderRadius:12,padding:"14px",marginBottom:14}}
+                      , findings.length===0 
+                        ? React.createElement('div', {style:{textAlign:"center",padding:"8px"}}
+                            , React.createElement('div', {style:{fontSize:36,marginBottom:6}}, "✅")
+                            , React.createElement('div', {style:{fontSize:15,fontWeight:700,color:"#5ADA7A"}}, lang==="en"?"All looks good!":"数据健康，无需处理！")
+                          )
+                        : React.createElement('div', {style:{textAlign:"center",padding:"4px"}}
+                            , React.createElement('div', {style:{fontSize:24,marginBottom:4}}, crit.length>0?"⚠️":"📋")
+                            , React.createElement('div', {style:{fontSize:14,fontWeight:700,color:crit.length>0?"#FF6B35":"#FFB300"}}, lang==="en"?("Found "+findings.length+" issue"+(findings.length>1?"s":"")):"发现 "+findings.length+" 个问题")
+                          )
+                    )
+                    // Data inventory
+                    , React.createElement('div', {style:{background:C.bg3,border:"1px solid "+C.border,borderRadius:12,padding:"12px 14px",marginBottom:14}}
+                      , React.createElement('div', {style:{fontSize:12,fontWeight:700,color:C.text2,marginBottom:6}}, "📦 " , lang==="en"?"Data Inventory":"数据清单")
+                      , React.createElement('div', {style:{fontSize:11,color:C.text3,lineHeight:1.7}}
+                        , (lang==="en"?"Statements: ":"月度账单：")+summary.sl+" · "
+                        , (lang==="en"?"Weekly: ":"周记录：")+summary.wl+" · "
+                        , (lang==="en"?"Daily: ":"每日：")+summary.dl
+                        , React.createElement('br')
+                        , (lang==="en"?"Expenses: ":"支出：")+summary.el+" · "
+                        , (lang==="en"?"Reminders: ":"提醒：")+summary.reminders+" · "
+                        , (lang==="en"?"Licenses: ":"证件：")+summary.licenses
+                      )
+                    )
+                    // Findings
+                    , renderGroup(lang==="en"?"🔴 Critical":"🔴 严重问题",crit,"#FF5252")
+                    , renderGroup(lang==="en"?"🟡 Warnings":"🟡 需要注意",warn,"#FFB300")
+                    , renderGroup(lang==="en"?"🔵 Info":"🔵 提示信息",info,"#5AACFF")
+                  );
+                }())
             )
           )
         )
@@ -2160,9 +2378,9 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
               , React.createElement('div', { style: {fontSize:15,fontWeight:800,color:C.text}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 599}}, T.menu)
             )
             , React.createElement('div', { style: {padding:"10px 0",flex:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 602}}
-              , [{icon:"📝",label:lang==="en"?"Notes":"记事本",action:function(){setShowDrawer(false);setSf("notes");}},{icon:"🗂",label:lang==="en"?"Categories":"支出类别",action:function(){setShowDrawer(false);setSf("manage_cats");}},{icon:"&#128197;",label:T.fixedFees,action:function(){setShowDrawer(false);setSf("drawer_fixed");}},{icon:"🧾",label:lang==="en"?"Tax Center":"税务中心",action:function(){setShowDrawer(false);setSf("tax_center");}},{icon:"&#128190;",label:T.backup,action:function(){setShowDrawer(false);setShowBackup(true);}},{icon:"&#128276;",label:T.reminder,action:function(){setShowDrawer(false);setShowRemMgr(true);}},{icon:"&#128203;",label:T.license,action:function(){setShowDrawer(false);setSf("drawer_lic");}},{icon:"&#128241;",label:T.platform,action:function(){setShowDrawer(false);setShowPlatMgr(true);}},{icon:"&#128663;",label:T.vehicle,action:function(){setShowDrawer(false);setSf("drawer_veh");}},{icon:"🚖",label:lang==="en"?"Driver Type":"切换司机类型",action:function(){setShowDrawer(false);setDriverType(null);setOnboardingDismissed(false);}},{icon:"🔒",label:lang==="en"?"PIN Lock":"PIN 锁屏",action:function(){setShowDrawer(false);setSf("pin_settings");}},{icon:"🚪",label:lang==="en"?"Sign Out":"退出登录",action:function(){if(!confirm(lang==="en"?"Sign out of Google?":"确认退出 Google 登录？"))return;setGUser(null);try{localStorage.removeItem("nyc_user");localStorage.removeItem("nyc_tab");}catch(e){}setTab(0);setSf(null);setShowDrawer(false);setShowBackup(false);setShowPlatMgr(false);setShowRemMgr(false);},color:"#FF5252"},].map(function(item,i){return React.createElement('button', { key: i, onClick: item.action, style: {display:"flex",alignItems:"center",gap:14,width:"100%",background:"none",border:"none",padding:"14px 18px",cursor:"pointer",textAlign:"left",borderBottom:"1px solid "+C.border,color:item.color||C.text}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 603}}, React.createElement('span', { style: {fontSize:20}, dangerouslySetInnerHTML: {__html:item.icon}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 603}} ), React.createElement('span', { style: {fontSize:14,color:C.text,fontWeight:600}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 603}}, item.label), React.createElement('span', { style: {marginLeft:"auto",color:C.text3,fontSize:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 603}}, ">"));})
+              , [{icon:"📝",label:lang==="en"?"Notes":"记事本",action:function(){setShowDrawer(false);setSf("notes");}},{icon:"🏥",label:lang==="en"?"Health Check":"数据健康检查",action:function(){setShowDrawer(false);setSf("health_check");}},{icon:"🗂",label:lang==="en"?"Categories":"支出类别",action:function(){setShowDrawer(false);setSf("manage_cats");}},{icon:"&#128197;",label:T.fixedFees,action:function(){setShowDrawer(false);setSf("drawer_fixed");}},{icon:"🧾",label:lang==="en"?"Tax Center":"税务中心",action:function(){setShowDrawer(false);setSf("tax_center");}},{icon:"&#128190;",label:T.backup,action:function(){setShowDrawer(false);setShowBackup(true);}},{icon:"&#128276;",label:T.reminder,action:function(){setShowDrawer(false);setShowRemMgr(true);}},{icon:"&#128203;",label:T.license,action:function(){setShowDrawer(false);setSf("drawer_lic");}},{icon:"&#128241;",label:T.platform,action:function(){setShowDrawer(false);setShowPlatMgr(true);}},{icon:"&#128663;",label:T.vehicle,action:function(){setShowDrawer(false);setSf("drawer_veh");}},{icon:"🚖",label:lang==="en"?"Driver Type":"切换司机类型",action:function(){setShowDrawer(false);setDriverType(null);setOnboardingDismissed(false);}},{icon:"🔒",label:lang==="en"?"PIN Lock":"PIN 锁屏",action:function(){setShowDrawer(false);setSf("pin_settings");}},{icon:"🚪",label:lang==="en"?"Sign Out":"退出登录",action:function(){if(!confirm(lang==="en"?"Sign out of Google?":"确认退出 Google 登录？"))return;setGUser(null);try{localStorage.removeItem("nyc_user");localStorage.removeItem("nyc_tab");}catch(e){}setTab(0);setSf(null);setShowDrawer(false);setShowBackup(false);setShowPlatMgr(false);setShowRemMgr(false);},color:"#FF5252"},].map(function(item,i){return React.createElement('button', { key: i, onClick: item.action, style: {display:"flex",alignItems:"center",gap:14,width:"100%",background:"none",border:"none",padding:"14px 18px",cursor:"pointer",textAlign:"left",borderBottom:"1px solid "+C.border,color:item.color||C.text}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 603}}, React.createElement('span', { style: {fontSize:20}, dangerouslySetInnerHTML: {__html:item.icon}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 603}} ), React.createElement('span', { style: {fontSize:14,color:C.text,fontWeight:600}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 603}}, item.label), React.createElement('span', { style: {marginLeft:"auto",color:C.text3,fontSize:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 603}}, ">"));})
             )
-            , React.createElement('div', { style: {fontSize:10,color:C.text3,textAlign:"center",padding:"12px 18px 16px",borderTop:"1px solid "+C.border,letterSpacing:0.5} }, "NYC RIDESHARE TRACKER · v2.6.9"    )
+            , React.createElement('div', { style: {fontSize:10,color:C.text3,textAlign:"center",padding:"12px 18px 16px",borderTop:"1px solid "+C.border,letterSpacing:0.5} }, "NYC RIDESHARE TRACKER · v2.7.5"    )
           )
           , React.createElement('div', { style: {flex:1,background:"rgba(0,0,0,0.6)"}, onClick: function(){setShowDrawer(false);}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 606}} )
         )
