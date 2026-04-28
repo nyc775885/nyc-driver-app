@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-console.log("%cNYC Driver Tracker — version v293","color:#00D4FF;font-weight:bold;font-size:14px");
+console.log("%cNYC Driver Tracker — version v295","color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
 //   <script>window.SENTRY_DSN = "https://YOUR_KEY@oXXX.ingest.sentry.io/PROJECT";</script>
@@ -1095,7 +1095,7 @@ function App() {
   // (Step 1 = type selection, handled by showOnboarding above)
   var rWiz=useState(0),wizStep=rWiz[0],setWizStep=rWiz[1];
   // When user closes a wizard page (sf becomes null), advance to next step.
-  // Safeguards added v3.6.1: timeout to avoid race with React re-renders + reset on driverType change.
+  // Safeguards added v3.6.3: timeout to avoid race with React re-renders + reset on driverType change.
   useEffect(function(){
     if(wizStep===0) return;
     if(sf!==null) return;  // wait until current page closed
@@ -2286,7 +2286,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                   , React.createElement('div', { style: {fontSize:14,fontWeight:700,color:C.text,marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 309}}, lang==="en"?"Monthly Breakdown":"逐月明细")
                   , mData.map(function(m){if(m.inc===0&&m.exp===0)return null;var ncl=m.net>=0?"#00E676":"#FF5252",mcl=m.m===mo?"#00D4FF":C.text;return React.createElement('div', { key: m.m, onClick: function(){setMo(m.m);setDashV("month");}, style: {display:"grid",gridTemplateColumns:"2fr 2fr 2fr 2fr",padding:"7px 0",borderBottom:"1px solid #182030",cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 310}}, React.createElement('span', { style: Object.assign({fontSize:12,fontWeight:700},{color:mcl}), __self: this, __source: {fileName: _jsxFileName, lineNumber: 310}}, m.label), React.createElement('span', { style: {fontSize:12,color:"#00D4FF"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 310}}, m.inc>0?fmt(m.inc):"—"), React.createElement('span', { style: {fontSize:12,color:"#FF6B35"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 310}}, m.exp>0?fmt(m.exp):"—"), React.createElement('span', { style: Object.assign({fontSize:12,fontWeight:700},{color:ncl}), __self: this, __source: {fileName: _jsxFileName, lineNumber: 310}}, fmt(m.net)));})
                 )
-                // === Pie Chart for YEAR mode (NEW v3.6.1) ===
+                // === Pie Chart for YEAR mode (NEW v3.6.3) ===
                 , (function(){
                     if(yExp<=0) return null;
                     var allYE = yAllExps();
@@ -3290,8 +3290,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                   return React.createElement('button', { key: i, onClick: item.action, style: {display:"flex",alignItems:"center",gap:14,width:"100%",background:"none",border:"none",padding:"14px 18px",cursor:"pointer",textAlign:"left",borderBottom:"1px solid "+C.border,color:item.color||C.text} }
                     , React.createElement('span', { style: {fontSize:20}, dangerouslySetInnerHTML: {__html:item.icon} } )
                     , React.createElement('span', { style: {fontSize:14,color:item.color||C.text,fontWeight:600} }, item.label)
-                    , React.createElement('span', { style: {marginLeft:"auto",color:C.text3,fontSize:16} }, ">")
-                  );
+                    );
                 };
                 
                 return React.createElement('div', null
@@ -3313,7 +3312,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                 );
               }())
             )
-            , React.createElement('div', { style: {fontSize:10,color:C.text3,textAlign:"center",padding:"12px 18px 16px",borderTop:"1px solid "+C.border,letterSpacing:0.5} }, "NYC RIDESHARE TRACKER · v3.6.1"    )
+            , React.createElement('div', { style: {fontSize:10,color:C.text3,textAlign:"center",padding:"12px 18px 16px",borderTop:"1px solid "+C.border,letterSpacing:0.5} }, "NYC RIDESHARE TRACKER · v3.6.3"    )
           )
           , React.createElement('div', { style: {flex:1,background:"rgba(0,0,0,0.6)"}, onClick: function(){setShowDrawer(false);}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 606}} )
         )
