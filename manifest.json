@@ -2,11 +2,10 @@
   "name": "NYC Rideshare Driver Tracker",
   "short_name": "NYC Driver",
   "description": "纽约网约车司机财务管理",
-  "start_url": "./",
-  "scope": "./",
+  "start_url": "/",
   "display": "standalone",
-  "background_color": "#0D1426",
-  "theme_color": "#0D1426",
+  "background_color": "#1F1B26",
+  "theme_color": "#1F1B26",
   "orientation": "portrait",
   "icons": [
     {
