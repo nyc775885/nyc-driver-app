@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-console.log("%cNYC Driver Tracker — version v219","color:#00D4FF;font-weight:bold;font-size:14px");
+console.log("%cNYC Driver Tracker — version v221","color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
 //   <script>window.SENTRY_DSN = "https://YOUR_KEY@oXXX.ingest.sentry.io/PROJECT";</script>
@@ -983,7 +983,11 @@ function App() {
     insW={next:tY+"-"+p2(tM+1)+"-"+p2(tD),diff:Math.round((idEnd-todayMidnight)/86400000),isTlc:isTlc};}
   var insExpDiff=veh.insExpiry?daysFromToday(veh.insExpiry):null; var expiring=ll.filter(function(l){if(!l.expiryDate)return false;var d=daysFromToday(l.expiryDate);var rd=+(l.reminderDays||60);return d!==null&&d>=0&&d<=rd;});
   var expired=ll.filter(function(l){if(!l.expiryDate)return false;var d=daysFromToday(l.expiryDate);return d!==null&&d<0;}); var totalFix=fl.filter(function(f){return f.active&&f.amount;}).reduce(function(s,f){return s+(f.cycle==="annual"?Math.round(+f.amount/12*100)/100:+f.amount);},0); var bldRep=function(p){var isM=p==="month",ri=isM?tInc:yInc,rg=isM?tGross:yStmts.reduce(function(s,x){return s+(+x.grossFare||0);},0),rt=isM?tTips:yStmts.reduce(function(s,x){return s+(+x.tips||0);},0),rb=isM?tBonus:yStmts.reduce(function(s,x){return s+(+x.bonus||0);},0),rtr=isM?tToll:yStmts.reduce(function(s,x){return s+(+x.tollReimbursed||0);},0),rTot=isM?tExp:yExp,rn=ri-rTot,rT=isM?tTrips:yTrips,rH=isM?tHours:yHours,rM=isM?tMiles:yMiles;return {ri:ri,rg:rg,rt:rt,rb:rb,rtr:rtr,rTot:rTot,rn:rn,rTrips:rT,rHours:rH,rMiles:rM};};
-  var yAllExps=function(){return yExps.concat(yMons.reduce(function(acc,m){return acc.concat(genFixed(fl,m));},[]));}; var hourlyRate=tHours>0?Math.round(tInc/tHours*100)/100:0,lastMo=prevMo(mo),lmStmts=sl.filter(function(x){return x.month===lastMo;}),lmWeeks=wl.filter(function(w){return w.weekStart.slice(0,7)===lastMo;}),lmFixMo=genFixed(fl,lastMo),lmDailies=dl.filter(function(d){return d.date&&d.date.slice(0,7)===lastMo;}),lmDlInc=lmDailies.reduce(function(s,d){return s+(+d.cash||0)+(+d.card||0)+(+d.tips||0);},0),lmDlLease=lmDailies.reduce(function(s,d){return s+(+d.lease||0);},0),lmDlHours=lmDailies.reduce(function(s,d){return s+(+d.hours||0);},0),lmFeAll=el.filter(function(e){var c=allC[e.category];if(c&&c.mo)return (e.statementMonth||e.date.slice(0,7))===lastMo;return e.date.slice(0,7)===lastMo;}).concat(lmFixMo),lmInc=lmStmts.reduce(function(s,x){return s+(+x.grossFare||0)+(+x.tips||0)+(+x.bonus||0)+(+x.tollReimbursed||0)+(+x.otherIncome||0);},0)+lmDlInc,lmExp=lmFeAll.reduce(function(s,e){return s+(+e.amount||0);},0)+lmDlLease,lmNet=lmInc-lmExp,lmHours=lmWeeks.reduce(function(s,w){return s+(+w.hours||0);},0)+lmDlHours,lmHourly=lmHours>0?Math.round(lmInc/lmHours*100)/100:0,nextExpiry=ll.filter(function(l){return l.expiryDate;}).sort(function(a,b){return a.expiryDate.localeCompare(b.expiryDate);})[0]; var achievements=[];if(tInc>=5000)achievements.push({icon:"🏆",text:lang==="en"?"Income > $5000":"本月收入破$5000",color:"#FFD700",bg:"#1A1400"});else if(tInc>=3000)achievements.push({icon:"⭐",text:lang==="en"?"Income > $3000":"本月收入破$3000",color:"#FFD700",bg:"#1A1400"});if(net>0&&tInc>0&&net>=tInc*0.5)achievements.push({icon:"💰",text:lang==="en"?"Profit > 50%":"净利润超50%",color:"#00E676",bg:"#0A1A0A"});if(tTrips>=200)achievements.push({icon:"🚗",text:lang==="en"?"200 trips this month":"本月200趟达成",color:"#00D4FF",bg:"#0A1428"});else if(tTrips>=100)achievements.push({icon:"🎯",text:lang==="en"?"100 trips this month":"本月100趟达成",color:"#00D4FF",bg:"#0A1428"});if(expiring.length===0&&expired.length===0&&ll.length>0)achievements.push({icon:"✅",text:lang==="en"?"All licenses valid":"证件全部有效",color:"#00E676",bg:"#0A1A0A"});if(yInc>=50000)achievements.push({icon:"👑",text:lang==="en"?"Annual income > $50000":"年收入破$50000",color:"#FFD700",bg:"#1A1400"}); var r40=useState(function(){return lsLoad("nyc_custGroups",[]);}),custGroups=r40[0],setCustGroups=r40[1]; var r41=useState(""),newGrpName=r41[0],setNewGrpName=r41[1]; var r42=useState("📁"),newGrpIcon=r42[0],setNewGrpIcon=r42[1]; var r43=useState("#A8D0E8"),newGrpColor=r43[0],setNewGrpColor=r43[1]; var r44=useState(new Date().getFullYear()+""),taxYr=r44[0],setTaxYr=r44[1]; var r45=useState(function(){return lsLoad("nyc_seRate",15.3);}),seRate=r45[0],_setSeRate=r45[1];function setSeRate(v){_setSeRate(v);try{localStorage.setItem("nyc_seRate",JSON.stringify(v));}catch(e){}} var r45b=useState(function(){return lsLoad("nyc_fedRate",12);}),fedRate=r45b[0],_setFedRate=r45b[1];function setFedRate(v){_setFedRate(v);try{localStorage.setItem("nyc_fedRate",JSON.stringify(v));}catch(e){}} var r45c=useState(function(){return lsLoad("nyc_stateRate",8.5);}),stateRate=r45c[0],_setStateRate=r45c[1];function setStateRate(v){_setStateRate(v);try{localStorage.setItem("nyc_stateRate",JSON.stringify(v));}catch(e){}} var r45d=useState(function(){return lsLoad("nyc_stdDed",14600);}),stdDed=r45d[0],_setStdDed=r45d[1];function setStdDed(v){_setStdDed(v);try{localStorage.setItem("nyc_stdDed",JSON.stringify(v));}catch(e){}} var r45e=useState(function(){return lsLoad("nyc_mtaRate",0.34);}),mtaRate=r45e[0],_setMtaRate=r45e[1];function setMtaRate(v){_setMtaRate(v);try{localStorage.setItem("nyc_mtaRate",JSON.stringify(v));}catch(e){}} var rSV=useState(function(){return lsLoad("nyc_savedVehicles",[]);}),savedVehicles=rSV[0],_setSavedVehicles=rSV[1];function setSavedVehicles(v){_setSavedVehicles(v);try{localStorage.setItem("nyc_savedVehicles",JSON.stringify(v));}catch(e){}} var r46=useState(false),taxLoading=r46[0],setTaxLoading=r46[1]; var r47=useState(""),taxRateNote=r47[0],setTaxRateNote=r47[1]; var r48=useState(function(){return lsLoad("nyc_notes",[]);}),notes=r48[0],setNotes=r48[1]; var rSnap=useState([]),snapshotList=rSnap[0],setSnapshotList=rSnap[1]; var rSnapKey=useState(0),snapRefreshKey=rSnapKey[0],setSnapRefreshKey=rSnapKey[1]; var r49=useState({title:"",body:"",id:null}),noteF=r49[0],setNoteF=r49[1]; var r50=useState(false),noteEdit=r50[0],setNoteEdit=r50[1]; var r51=useState(function(){return lsLoad("nyc_incGoal","");}),incGoal=r51[0],_setIncGoal=r51[1];
+  var yAllExps=function(){return yExps.concat(yMons.reduce(function(acc,m){return acc.concat(genFixed(fl,m));},[]));}; var hourlyRate=tHours>0?Math.round(tInc/tHours*100)/100:0,lastMo=prevMo(mo),lmStmts=sl.filter(function(x){return x.month===lastMo;}),lmWeeks=wl.filter(function(w){return w.weekStart.slice(0,7)===lastMo;}),lmFixMo=genFixed(fl,lastMo),lmDailies=dl.filter(function(d){return d.date&&d.date.slice(0,7)===lastMo;}),lmDlInc=lmDailies.reduce(function(s,d){return s+(+d.cash||0)+(+d.card||0)+(+d.tips||0);},0),lmDlLease=lmDailies.reduce(function(s,d){return s+(+d.lease||0);},0),lmDlHours=lmDailies.reduce(function(s,d){return s+(+d.hours||0);},0),lmFeAll=el.filter(function(e){var c=allC[e.category];if(c&&c.mo)return (e.statementMonth||e.date.slice(0,7))===lastMo;return e.date.slice(0,7)===lastMo;}).concat(lmFixMo),lmInc=lmStmts.reduce(function(s,x){return s+(+x.grossFare||0)+(+x.tips||0)+(+x.bonus||0)+(+x.tollReimbursed||0)+(+x.otherIncome||0);},0)+lmDlInc,lmExp=lmFeAll.reduce(function(s,e){return s+(+e.amount||0);},0)+lmDlLease,lmNet=lmInc-lmExp,lmHours=lmWeeks.reduce(function(s,w){return s+(+w.hours||0);},0)+lmDlHours,lmHourly=lmHours>0?Math.round(lmInc/lmHours*100)/100:0,nextExpiry=ll.filter(function(l){return l.expiryDate;}).sort(function(a,b){return a.expiryDate.localeCompare(b.expiryDate);})[0]; var achievements=[];if(tInc>=5000)achievements.push({icon:"🏆",text:lang==="en"?"Income > $5000":"本月收入破$5000",color:"#FFD700",bg:"#1A1400"});else if(tInc>=3000)achievements.push({icon:"⭐",text:lang==="en"?"Income > $3000":"本月收入破$3000",color:"#FFD700",bg:"#1A1400"});if(net>0&&tInc>0&&net>=tInc*0.5)achievements.push({icon:"💰",text:lang==="en"?"Profit > 50%":"净利润超50%",color:"#00E676",bg:"#0A1A0A"});if(tTrips>=200)achievements.push({icon:"🚗",text:lang==="en"?"200 trips this month":"本月200趟达成",color:"#00D4FF",bg:"#0A1428"});else if(tTrips>=100)achievements.push({icon:"🎯",text:lang==="en"?"100 trips this month":"本月100趟达成",color:"#00D4FF",bg:"#0A1428"});if(expiring.length===0&&expired.length===0&&ll.length>0)achievements.push({icon:"✅",text:lang==="en"?"All licenses valid":"证件全部有效",color:"#00E676",bg:"#0A1A0A"});if(yInc>=50000)achievements.push({icon:"👑",text:lang==="en"?"Annual income > $50000":"年收入破$50000",color:"#FFD700",bg:"#1A1400"}); var r40=useState(function(){return lsLoad("nyc_custGroups",[]);}),custGroups=r40[0],setCustGroups=r40[1]; var r41=useState(""),newGrpName=r41[0],setNewGrpName=r41[1]; var r42=useState("📁"),newGrpIcon=r42[0],setNewGrpIcon=r42[1]; var r43=useState("#A8D0E8"),newGrpColor=r43[0],setNewGrpColor=r43[1]; var r44=useState(new Date().getFullYear()+""),taxYr=r44[0],setTaxYr=r44[1]; var r45=useState(function(){return lsLoad("nyc_seRate",15.3);}),seRate=r45[0],_setSeRate=r45[1];function setSeRate(v){_setSeRate(v);try{localStorage.setItem("nyc_seRate",JSON.stringify(v));}catch(e){}} var r45b=useState(function(){return lsLoad("nyc_fedRate",12);}),fedRate=r45b[0],_setFedRate=r45b[1];function setFedRate(v){_setFedRate(v);try{localStorage.setItem("nyc_fedRate",JSON.stringify(v));}catch(e){}} var r45c=useState(function(){return lsLoad("nyc_stateRate",8.5);}),stateRate=r45c[0],_setStateRate=r45c[1];function setStateRate(v){_setStateRate(v);try{localStorage.setItem("nyc_stateRate",JSON.stringify(v));}catch(e){}} var r45d=useState(function(){return lsLoad("nyc_stdDed",14600);}),stdDed=r45d[0],_setStdDed=r45d[1];function setStdDed(v){_setStdDed(v);try{localStorage.setItem("nyc_stdDed",JSON.stringify(v));}catch(e){}} var r45e=useState(function(){return lsLoad("nyc_mtaRate",0.34);}),mtaRate=r45e[0],_setMtaRate=r45e[1];function setMtaRate(v){_setMtaRate(v);try{localStorage.setItem("nyc_mtaRate",JSON.stringify(v));}catch(e){}} var rSV=useState(function(){return lsLoad("nyc_savedVehicles",[]);}),savedVehicles=rSV[0],_setSavedVehicles=rSV[1];function setSavedVehicles(v){_setSavedVehicles(v);try{localStorage.setItem("nyc_savedVehicles",JSON.stringify(v));}catch(e){}} var r46=useState(false),taxLoading=r46[0],setTaxLoading=r46[1]; var r47=useState(""),taxRateNote=r47[0],setTaxRateNote=r47[1]; var r48=useState(function(){return lsLoad("nyc_notes",[]);}),notes=r48[0],setNotes=r48[1]; var rSnap=useState([]),snapshotList=rSnap[0],setSnapshotList=rSnap[1];
+  var rDailyId=useState(null),driveDailyFileId=rDailyId[0],setDriveDailyFileId=rDailyId[1];
+  var rDailyMod=useState(null),driveDailyModTime=rDailyMod[0],setDriveDailyModTime=rDailyMod[1];
+  var rMonthlyId=useState(null),driveMonthlyFileId=rMonthlyId[0],setDriveMonthlyFileId=rMonthlyId[1];
+  var rMonthlyMod=useState(null),driveMonthlyModTime=rMonthlyMod[0],setDriveMonthlyModTime=rMonthlyMod[1]; var rSnapKey=useState(0),snapRefreshKey=rSnapKey[0],setSnapRefreshKey=rSnapKey[1]; var r49=useState({title:"",body:"",id:null}),noteF=r49[0],setNoteF=r49[1]; var r50=useState(false),noteEdit=r50[0],setNoteEdit=r50[1]; var r51=useState(function(){return lsLoad("nyc_incGoal","");}),incGoal=r51[0],_setIncGoal=r51[1];
   function setIncGoal(v){_setIncGoal(v);try{localStorage.setItem("nyc_incGoal",JSON.stringify(v));}catch(e){}} var r52=useState(false),showGoal=r52[0],setShowGoal=r52[1]; var r52b=useState(false),showDP=r52b[0],setShowDP=r52b[1]; var r52c=useState(false),showTP=r52c[0],setShowTP=r52c[1]; var r52d=useState(null),mpState=r52d[0],setMpState=r52d[1]; var r52z=useState(false),trendOpen=r52z[0],setTrendOpen=r52z[1]; var r52y=useState(0),_forceCount=r52y[0],_setForceCount=r52y[1]; var forceRerender=function(){_setForceCount(function(x){return x+1;});};
 
   // Last time local data was modified (ISO string). Used by smart sync.
@@ -1063,6 +1067,8 @@ function App() {
   // created by us.
   var DRIVE_FOLDER_NAME = "NYC Driver Income Backup";
   var DRIVE_FILE_NAME = "nyc-driver-data.json";
+  var DRIVE_DAILY_NAME = "nyc-driver-data-daily.json";
+  var DRIVE_MONTHLY_NAME = "nyc-driver-data-monthly.json";
 
   // Find or create the backup folder; calls cb(folderId).
   function getOrCreateFolder(tok, cb) {
@@ -1159,6 +1165,142 @@ function App() {
       getOrCreateFolder(tok,function(folderId){doUpload(folderId);});
     }
   }
+
+  // Save data to a specific named file in Drive (for daily/monthly snapshots)
+  function saveToNamedFile(tok, fileName, fileId, dataObj, onSuccess){
+    var body=JSON.stringify(dataObj);
+    var bound="-------nycdriversnap";
+    var doUpload = function(folderId){
+      var meta = fileId
+        ? {name:fileName,mimeType:"application/json"}
+        : {name:fileName,mimeType:"application/json",parents:folderId?[folderId]:undefined};
+      var metaStr = JSON.stringify(meta);
+      var reqBody = "--"+bound+"\r\nContent-Type: application/json\r\n\r\n"+metaStr+"\r\n--"+bound+"\r\nContent-Type: application/json\r\n\r\n"+body+"\r\n--"+bound+"--";
+      var url = fileId
+        ? "https://www.googleapis.com/upload/drive/v3/files/"+fileId+"?uploadType=multipart&fields=id,modifiedTime"
+        : "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,modifiedTime";
+      var method = fileId ? "PATCH" : "POST";
+      fetch(url,{method:method,headers:{Authorization:"Bearer "+tok,"Content-Type":"multipart/related; boundary="+bound},body:reqBody})
+      .then(function(r){return r.json();})
+      .then(function(d){
+        if(onSuccess) onSuccess(d.id, d.modifiedTime);
+      }).catch(function(err){console.warn("[drive snap save] "+fileName, err);});
+    };
+    if(fileId){
+      doUpload(null);
+    }else{
+      getOrCreateFolder(tok,function(folderId){doUpload(folderId);});
+    }
+  }
+
+  // Find a named file in our Drive folder
+  function findNamedFile(tok, fileName, cb){
+    getOrCreateFolder(tok, function(folderId){
+      if(!folderId){cb(null,null);return;}
+      var q = encodeURIComponent("name='"+fileName+"' and '"+folderId+"' in parents and trashed=false");
+      fetch("https://www.googleapis.com/drive/v3/files?q="+q+"&spaces=drive&fields=files(id,name,modifiedTime)",
+        {headers:{Authorization:"Bearer "+tok}})
+      .then(function(r){return r.json();})
+      .then(function(d){
+        if(d.files && d.files.length > 0) cb(d.files[0].id, d.files[0].modifiedTime);
+        else cb(null, null);
+      }).catch(function(){cb(null,null);});
+    });
+  }
+
+  // Read a named file's content
+  function readNamedFile(tok, fileId, cb){
+    fetch("https://www.googleapis.com/drive/v3/files/"+fileId+"?alt=media",{headers:{Authorization:"Bearer "+tok}})
+    .then(function(r){return r.json();})
+    .then(function(data){cb(data, null);})
+    .catch(function(err){cb(null, err);});
+  }
+
+  // Check & rotate daily/monthly snapshots if stale
+  function maybeRotateSnapshots(tok){
+    if(!tok) return;
+    var now = new Date();
+    var todayStr = now.toISOString().slice(0,10);
+    var thisMonth = todayStr.slice(0,7);
+    
+    var currentData = function(){
+      return {
+        wl:wl,sl:sl,el:el,fl:fl,ll:ll,veh:veh,cc:cc,
+        custGroups:custGroups,reminders:reminders,
+        custPlat:custPlat,custBrands:custBrands,
+        custLicTypes:custLicTypes,custLoanTypes:custLoanTypes,
+        favNotes:favNotes,notes:notes,
+        incGoal:incGoal,seRate:seRate,fedRate:fedRate,
+        stateRate:stateRate,stdDed:stdDed,mtaRate:mtaRate,
+        savedVehicles:savedVehicles,dl:dl,driverType:driverType,
+        _snapshotTime: now.toISOString()
+      };
+    };
+    
+    // Daily check
+    findNamedFile(tok, DRIVE_DAILY_NAME, function(fid, modTime){
+      var stale = !modTime || modTime.slice(0,10) < todayStr;
+      if(fid) setDriveDailyFileId(fid);
+      if(modTime) setDriveDailyModTime(modTime);
+      if(stale && (sl.length>0 || el.length>0 || wl.length>0)){
+        // Only rotate if we have data (avoid empty file on first launch)
+        saveToNamedFile(tok, DRIVE_DAILY_NAME, fid, currentData(), function(newId, newMod){
+          if(newId) setDriveDailyFileId(newId);
+          if(newMod) setDriveDailyModTime(newMod);
+          console.log("[drive] daily snapshot rotated");
+        });
+      }
+    });
+    
+    // Monthly check
+    findNamedFile(tok, DRIVE_MONTHLY_NAME, function(fid, modTime){
+      var stale = !modTime || modTime.slice(0,7) < thisMonth;
+      if(fid) setDriveMonthlyFileId(fid);
+      if(modTime) setDriveMonthlyModTime(modTime);
+      if(stale && (sl.length>0 || el.length>0 || wl.length>0)){
+        saveToNamedFile(tok, DRIVE_MONTHLY_NAME, fid, currentData(), function(newId, newMod){
+          if(newId) setDriveMonthlyFileId(newId);
+          if(newMod) setDriveMonthlyModTime(newMod);
+          console.log("[drive] monthly snapshot rotated");
+        });
+      }
+    });
+  }
+
+  // Restore from a Drive snapshot file (daily or monthly)
+  function restoreFromDriveSnapshot(tok, fileId, label){
+    if(!fileId){alert(lang==="en"?"Snapshot not found":"快照不存在");return;}
+    if(!confirm((lang==="en"?"Restore from ":"从 ")+label+(lang==="en"?" snapshot? Current data will be replaced.":" 快照恢复？当前数据会被替换。")))return;
+    // Save current to local pre-restore backup first
+    try {
+      var snapshot = {timestamp:new Date().toISOString(),label:lang==="en"?"Pre-Drive-snapshot-restore":"Drive 快照恢复前",
+        data:{wl:wl,sl:sl,el:el,fl:fl,ll:ll,veh:veh,cc:cc,custGroups:custGroups,reminders:reminders,custPlat:custPlat,custBrands:custBrands,custLicTypes:custLicTypes,custLoanTypes:custLoanTypes,favNotes:favNotes,notes:notes,incGoal:incGoal,seRate:seRate,fedRate:fedRate,stateRate:stateRate,stdDed:stdDed,mtaRate:mtaRate,savedVehicles:savedVehicles,dl:dl,driverType:driverType}};
+      localStorage.setItem("nyc_pre_restore_backup", JSON.stringify(snapshot));
+    } catch(e){}
+    setSyncStatus(lang==="en"?"⏳ Restoring...":"⏳ 恢复中...");
+    readNamedFile(tok, fileId, function(data, err){
+      if(err || !data){setSyncStatus(lang==="en"?"✗ Failed":"✗ 失败");setTimeout(function(){setSyncStatus("");},2000);return;}
+      if(data.wl)setWl(data.wl); if(data.sl)setSl(data.sl); if(data.el)setEl(data.el); if(data.fl)setFl(data.fl);
+      if(data.ll)setLl(data.ll); if(data.veh)setVeh(data.veh); if(data.cc)setCc(data.cc);
+      if(data.custGroups)setCustGroups(data.custGroups); if(data.reminders)setReminders(data.reminders);
+      if(data.custPlat)setCustPlat(data.custPlat); if(data.custBrands)setCustBrands(data.custBrands);
+      if(data.custLicTypes)setCustLicTypes(data.custLicTypes); if(data.custLoanTypes)setCustLoanTypes(data.custLoanTypes);
+      if(data.favNotes)setFavNotes(data.favNotes); if(data.notes)setNotes(data.notes);
+      if(typeof data.incGoal!=="undefined")setIncGoal(data.incGoal);
+      if(typeof data.seRate==="number")setSeRate(data.seRate);
+      if(typeof data.fedRate==="number")setFedRate(data.fedRate);
+      if(typeof data.stateRate==="number")setStateRate(data.stateRate);
+      if(typeof data.stdDed==="number")setStdDed(data.stdDed);
+      if(typeof data.mtaRate==="number")setMtaRate(data.mtaRate);
+      if(Array.isArray(data.savedVehicles))setSavedVehicles(data.savedVehicles);
+      if(Array.isArray(data.dl))setDl(data.dl);
+      if(data.driverType==="rideshare"||data.driverType==="taxi")setDriverType(data.driverType);
+      setSyncStatus(lang==="en"?"✓ Restored":"✓ 恢复成功");
+      setTimeout(function(){setSyncStatus("");},2500);
+      alert((lang==="en"?"✓ Restored from ":"✓ 已从 ")+label+(lang==="en"?" snapshot":" 快照恢复"));
+    });
+  }
+  
   function signInWithGoogle(onDone, opts){
     opts = opts || {};
     if(!window.google||!window.google.accounts||!window.google.accounts.oauth2){
@@ -1183,7 +1325,7 @@ function App() {
         .then(function(r){return r.json();})
         .then(function(u){
           setGUser({name:u.name,email:u.email,picture:u.picture});
-          loadFromDrive(tok);
+          loadFromDrive(tok); setTimeout(function(){maybeRotateSnapshots(tok);}, 5000);
           if(onDone)onDone(tok);
         });
       }
@@ -2540,7 +2682,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
             , React.createElement('div', { style: {padding:"10px 0",flex:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 602}}
               , [{icon:"📝",label:lang==="en"?"Notes":"记事本",action:function(){setShowDrawer(false);setSf("notes");}},{icon:"🏥",label:lang==="en"?"Health Check":"数据健康检查",action:function(){setShowDrawer(false);setSf("health_check");}},{icon:"🗂",label:lang==="en"?"Categories":"支出类别",action:function(){setShowDrawer(false);setSf("manage_cats");}},{icon:"&#128197;",label:T.fixedFees,action:function(){setShowDrawer(false);setSf("drawer_fixed");}},{icon:"🧾",label:lang==="en"?"Tax Center":"税务中心",action:function(){setShowDrawer(false);setSf("tax_center");}},{icon:"&#128190;",label:T.backup,action:function(){setShowDrawer(false);setShowBackup(true);}},{icon:"&#128276;",label:T.reminder,action:function(){setShowDrawer(false);setShowRemMgr(true);}},{icon:"&#128203;",label:T.license,action:function(){setShowDrawer(false);setSf("drawer_lic");}},{icon:"&#128241;",label:T.platform,action:function(){setShowDrawer(false);setShowPlatMgr(true);}},{icon:"&#128663;",label:T.vehicle,action:function(){setShowDrawer(false);setSf("drawer_veh");}},{icon:"🚖",label:lang==="en"?"Driver Type":"切换司机类型",action:function(){setShowDrawer(false);setDriverType(null);setOnboardingDismissed(false);}},{icon:"🔒",label:lang==="en"?"PIN Lock":"PIN 锁屏",action:function(){setShowDrawer(false);setSf("pin_settings");}},{icon:"🚪",label:lang==="en"?"Sign Out":"退出登录",action:function(){if(!confirm(lang==="en"?"Sign out of Google?":"确认退出 Google 登录？"))return;setGUser(null);try{localStorage.removeItem("nyc_user");localStorage.removeItem("nyc_tab");}catch(e){}setTab(0);setSf(null);setShowDrawer(false);setShowBackup(false);setShowPlatMgr(false);setShowRemMgr(false);},color:"#FF5252"},].map(function(item,i){return React.createElement('button', { key: i, onClick: item.action, style: {display:"flex",alignItems:"center",gap:14,width:"100%",background:"none",border:"none",padding:"14px 18px",cursor:"pointer",textAlign:"left",borderBottom:"1px solid "+C.border,color:item.color||C.text}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 603}}, React.createElement('span', { style: {fontSize:20}, dangerouslySetInnerHTML: {__html:item.icon}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 603}} ), React.createElement('span', { style: {fontSize:14,color:C.text,fontWeight:600}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 603}}, item.label), React.createElement('span', { style: {marginLeft:"auto",color:C.text3,fontSize:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 603}}, ">"));})
             )
-            , React.createElement('div', { style: {fontSize:10,color:C.text3,textAlign:"center",padding:"12px 18px 16px",borderTop:"1px solid "+C.border,letterSpacing:0.5} }, "NYC RIDESHARE TRACKER · v2.8.7"    )
+            , React.createElement('div', { style: {fontSize:10,color:C.text3,textAlign:"center",padding:"12px 18px 16px",borderTop:"1px solid "+C.border,letterSpacing:0.5} }, "NYC RIDESHARE TRACKER · v2.8.9"    )
           )
           , React.createElement('div', { style: {flex:1,background:"rgba(0,0,0,0.6)"}, onClick: function(){setShowDrawer(false);}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 606}} )
         )
@@ -3448,6 +3590,23 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                 , React.createElement('div', { style: {fontSize:12,color:C.text3,marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 795}}, lang==="en"?"Auto-saves after every change":"每次修改自动保存")
                 , React.createElement('button', { onClick: function(){if(!confirm(lang==="en"?"Upload current data to Google Drive? This will overwrite the cloud backup.":"上传当前数据到 Google Drive？这会覆盖云端备份。"))return;var data={wl:wl,sl:sl,el:el,fl:fl,ll:ll,veh:veh,cc:cc,custGroups:custGroups,reminders:reminders,custPlat:custPlat,custBrands:custBrands,custLicTypes:custLicTypes,custLoanTypes:custLoanTypes,favNotes:favNotes,notes:notes,incGoal:incGoal,seRate:seRate,fedRate:fedRate,stateRate:stateRate,stdDed:stdDed,mtaRate:mtaRate,savedVehicles:savedVehicles,dl:dl,driverType:driverType};saveToDrive(accessToken,driveFileId,data);}, style: {width:"100%",background:"#0A4020",border:"1px solid #2A8050",borderRadius:10,padding:12,color:"#00E676",fontSize:14,fontWeight:700,cursor:"pointer",marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 796}}, syncing?(lang==="en"?"Saving...":"保存中..."):(lang==="en"?"💾 Save Now":"💾 立即保存"))
                 , React.createElement('button', { onClick: function(){requireDangerConfirm("restoreDrive", lang==="en"?"Restore from Drive":"从 Drive 恢复", lang==="en"?"This will OVERWRITE all your current local data with the cloud backup. This cannot be undone.":"此操作会用云端备份覆盖当前所有本地数据，无法撤销。", function(){loadFromDrive(accessToken);});}, style: {width:"100%",background:"#0A2040",border:"1px solid #1A5080",borderRadius:10,padding:12,color:"#00D4FF",fontSize:14,fontWeight:700,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 797}}, lang==="en"?"📥 Restore from Drive":"📥 从Drive恢复")
+                
+                , React.createElement('div', { style: {marginTop:14,paddingTop:14,borderTop:"1px solid "+C.border} }
+                  , React.createElement('div', { style: {fontSize:12,fontWeight:700,color:C.text2,marginBottom:6} }, "📅 " , lang==="en"?"Time-shifted Snapshots":"时间快照")
+                  , React.createElement('div', { style: {fontSize:11,color:C.text3,marginBottom:10,lineHeight:1.5} }, lang==="en"?"Auto-rotating snapshots on Drive — daily refreshed today, monthly at month start.":"Drive 上自动轮换快照 — 每日今天首次启动刷新，每月月初首次启动刷新。")
+                  , React.createElement('div', { style: {display:"grid",gridTemplateColumns:"1fr 1fr",gap:8} }
+                    , React.createElement('div', { style: {background:"#0A1828",border:"1px solid #2A3A54",borderRadius:8,padding:"10px 12px"} }
+                      , React.createElement('div', { style: {fontSize:11,color:"#5AACFF",fontWeight:700,marginBottom:4} }, "🌅 " , lang==="en"?"Daily":"每日")
+                      , React.createElement('div', { style: {fontSize:10,color:C.text3,marginBottom:8,minHeight:14} }, driveDailyModTime ? new Date(driveDailyModTime).toLocaleString() : (lang==="en"?"Not yet":"暂无"))
+                      , driveDailyFileId ? React.createElement('button', { onClick: function(){restoreFromDriveSnapshot(accessToken, driveDailyFileId, lang==="en"?"daily":"每日");}, style: {width:"100%",background:"#0A2840",border:"1px solid #2A5080",borderRadius:6,padding:"6px",color:"#5AACFF",fontSize:11,fontWeight:700,cursor:"pointer"} }, "↩️ " , lang==="en"?"Restore":"恢复") : React.createElement('div', {style:{fontSize:10,color:C.text3,textAlign:"center",padding:"6px"}}, lang==="en"?"Pending":"待生成")
+                    )
+                    , React.createElement('div', { style: {background:"#0A1828",border:"1px solid #2A3A54",borderRadius:8,padding:"10px 12px"} }
+                      , React.createElement('div', { style: {fontSize:11,color:"#FFB300",fontWeight:700,marginBottom:4} }, "📆 " , lang==="en"?"Monthly":"每月")
+                      , React.createElement('div', { style: {fontSize:10,color:C.text3,marginBottom:8,minHeight:14} }, driveMonthlyModTime ? new Date(driveMonthlyModTime).toLocaleString() : (lang==="en"?"Not yet":"暂无"))
+                      , driveMonthlyFileId ? React.createElement('button', { onClick: function(){restoreFromDriveSnapshot(accessToken, driveMonthlyFileId, lang==="en"?"monthly":"每月");}, style: {width:"100%",background:"#1A1000",border:"1px solid #3A2800",borderRadius:6,padding:"6px",color:"#FFB300",fontSize:11,fontWeight:700,cursor:"pointer"} }, "↩️ " , lang==="en"?"Restore":"恢复") : React.createElement('div', {style:{fontSize:10,color:C.text3,textAlign:"center",padding:"6px"}}, lang==="en"?"Pending":"待生成")
+                    )
+                  )
+                )
                 , syncStatus?React.createElement('div', { style: {fontSize:12,color:"#00E676",marginTop:8,textAlign:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 798}}, syncStatus):null
               ) : gUser ? React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 799}}
                 , React.createElement('div', { style: {fontSize:13,color:"#FFB300",marginBottom:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 799}}, "⚠ " , gUser.email)
