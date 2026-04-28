@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-console.log("%cNYC Driver Tracker — version v251","color:#00D4FF;font-weight:bold;font-size:14px");
+console.log("%cNYC Driver Tracker — version v255","color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
 //   <script>window.SENTRY_DSN = "https://YOUR_KEY@oXXX.ingest.sentry.io/PROJECT";</script>
@@ -1158,6 +1158,18 @@ function App() {
   var insExpDiff=veh.insExpiry?daysFromToday(veh.insExpiry):null; var expiring=ll.filter(function(l){if(!l.expiryDate)return false;var d=daysFromToday(l.expiryDate);var rd=+(l.reminderDays||60);return d!==null&&d>=0&&d<=rd;});
   var expired=ll.filter(function(l){if(!l.expiryDate)return false;var d=daysFromToday(l.expiryDate);return d!==null&&d<0;}); var totalFix=fl.filter(function(f){return f.active&&f.amount;}).reduce(function(s,f){return s+(f.cycle==="annual"?Math.round(+f.amount/12*100)/100:+f.amount);},0); var bldRep=function(p){var isM=p==="month",ri=isM?tInc:yInc,rg=isM?tGross:yStmts.reduce(function(s,x){return s+(+x.grossFare||0);},0),rt=isM?tTips:yStmts.reduce(function(s,x){return s+(+x.tips||0);},0),rb=isM?tBonus:yStmts.reduce(function(s,x){return s+(+x.bonus||0);},0),rtr=isM?tToll:yStmts.reduce(function(s,x){return s+(+x.tollReimbursed||0);},0),rTot=isM?tExp:yExp,rn=ri-rTot,rT=isM?tTrips:yTrips,rH=isM?tHours:yHours,rM=isM?tMiles:yMiles;return {ri:ri,rg:rg,rt:rt,rb:rb,rtr:rtr,rTot:rTot,rn:rn,rTrips:rT,rHours:rH,rMiles:rM};};
   var yAllExps=function(){return yExps.concat(yMons.reduce(function(acc,m){return acc.concat(genFixed(fl,m));},[]));}; var hourlyRate=tHours>0?Math.round(tInc/tHours*100)/100:0,lastMo=prevMo(mo),lmStmts=sl.filter(function(x){return x.month===lastMo;}),lmWeeks=wl.filter(function(w){return w.weekStart.slice(0,7)===lastMo;}),lmFixMo=genFixed(fl,lastMo),lmDailies=dl.filter(function(d){return d.date&&d.date.slice(0,7)===lastMo;}),lmDlInc=lmDailies.reduce(function(s,d){return s+(+d.cash||0)+(+d.card||0)+(+d.tips||0);},0),lmDlLease=lmDailies.reduce(function(s,d){return s+(+d.lease||0);},0),lmDlHours=lmDailies.reduce(function(s,d){return s+(+d.hours||0);},0),lmFeAll=el.filter(function(e){var c=allC[e.category];if(c&&c.mo)return (e.statementMonth||e.date.slice(0,7))===lastMo;return e.date.slice(0,7)===lastMo;}).concat(lmFixMo),lmInc=lmStmts.reduce(function(s,x){return s+(+x.grossFare||0)+(+x.tips||0)+(+x.bonus||0)+(+x.tollReimbursed||0)+(+x.otherIncome||0);},0)+lmDlInc,lmExp=lmFeAll.reduce(function(s,e){return s+(+e.amount||0);},0)+lmDlLease,lmNet=lmInc-lmExp,lmHours=lmWeeks.reduce(function(s,w){return s+(+w.hours||0);},0)+lmDlHours,lmHourly=lmHours>0?Math.round(lmInc/lmHours*100)/100:0,nextExpiry=ll.filter(function(l){return l.expiryDate;}).sort(function(a,b){return a.expiryDate.localeCompare(b.expiryDate);})[0]; var achievements=[];if(tInc>=5000)achievements.push({icon:"🏆",text:lang==="en"?"Income > $5000":"本月收入破$5000",color:"#FFD700",bg:"#1A1400"});else if(tInc>=3000)achievements.push({icon:"⭐",text:lang==="en"?"Income > $3000":"本月收入破$3000",color:"#FFD700",bg:"#1A1400"});if(net>0&&tInc>0&&net>=tInc*0.5)achievements.push({icon:"💰",text:lang==="en"?"Profit > 50%":"净利润超50%",color:"#00E676",bg:"#0A1A0A"});if(tTrips>=200)achievements.push({icon:"🚗",text:lang==="en"?"200 trips this month":"本月200趟达成",color:"#00D4FF",bg:"#0A1428"});else if(tTrips>=100)achievements.push({icon:"🎯",text:lang==="en"?"100 trips this month":"本月100趟达成",color:"#00D4FF",bg:"#0A1428"});if(expiring.length===0&&expired.length===0&&ll.length>0)achievements.push({icon:"✅",text:lang==="en"?"All licenses valid":"证件全部有效",color:"#00E676",bg:"#0A1A0A"});if(yInc>=50000)achievements.push({icon:"👑",text:lang==="en"?"Annual income > $50000":"年收入破$50000",color:"#FFD700",bg:"#1A1400"}); var r40=useState(function(){return lsLoad("nyc_custGroups",[]);}),custGroups=r40[0],setCustGroups=r40[1]; var r41=useState(""),newGrpName=r41[0],setNewGrpName=r41[1]; var r42=useState("📁"),newGrpIcon=r42[0],setNewGrpIcon=r42[1]; var r43=useState("#A8D0E8"),newGrpColor=r43[0],setNewGrpColor=r43[1]; var r44=useState(new Date().getFullYear()+""),taxYr=r44[0],setTaxYr=r44[1]; var r45=useState(function(){return lsLoad("nyc_seRate",15.3);}),seRate=r45[0],_setSeRate=r45[1];function setSeRate(v){_setSeRate(v);try{localStorage.setItem("nyc_seRate",JSON.stringify(v));}catch(e){}} var r45b=useState(function(){return lsLoad("nyc_fedRate",12);}),fedRate=r45b[0],_setFedRate=r45b[1];function setFedRate(v){_setFedRate(v);try{localStorage.setItem("nyc_fedRate",JSON.stringify(v));}catch(e){}} var r45c=useState(function(){return lsLoad("nyc_stateRate",8.5);}),stateRate=r45c[0],_setStateRate=r45c[1];function setStateRate(v){_setStateRate(v);try{localStorage.setItem("nyc_stateRate",JSON.stringify(v));}catch(e){}} var r45d=useState(function(){return lsLoad("nyc_stdDed",14600);}),stdDed=r45d[0],_setStdDed=r45d[1];function setStdDed(v){_setStdDed(v);try{localStorage.setItem("nyc_stdDed",JSON.stringify(v));}catch(e){}} var r45e=useState(function(){return lsLoad("nyc_mtaRate",0.34);}),mtaRate=r45e[0],_setMtaRate=r45e[1];function setMtaRate(v){_setMtaRate(v);try{localStorage.setItem("nyc_mtaRate",JSON.stringify(v));}catch(e){}} var rSV=useState(function(){return lsLoad("nyc_savedVehicles",[]);}),savedVehicles=rSV[0],_setSavedVehicles=rSV[1];function setSavedVehicles(v){_setSavedVehicles(v);try{localStorage.setItem("nyc_savedVehicles",JSON.stringify(v));}catch(e){}} var r46=useState(false),taxLoading=r46[0],setTaxLoading=r46[1]; var r47=useState(""),taxRateNote=r47[0],setTaxRateNote=r47[1]; var r48=useState(function(){return lsLoad("nyc_notes",[]);}),notes=r48[0],setNotes=r48[1]; var rSnap=useState([]),snapshotList=rSnap[0],setSnapshotList=rSnap[1];
+  // Undo banner: { msg, prevEl, until } (for bulk operations)
+  var rUndo=useState(null),undoBanner=rUndo[0],setUndoBanner=rUndo[1];
+  // Toast notifications: array of { id, msg, type, until }
+  var rToast=useState([]),toasts=rToast[0],setToasts=rToast[1];
+  function showToast(msg, type){
+    var id=Date.now()+Math.random();
+    var t=type||"success";
+    setToasts(function(prev){return prev.concat([{id:id,msg:msg,type:t,until:Date.now()+2500}]);});
+    setTimeout(function(){
+      setToasts(function(prev){return prev.filter(function(x){return x.id!==id;});});
+    }, 2600);
+  }
   var rDailyId=useState(function(){return lsLoad("nyc_driveDailyFileId",null);}),driveDailyFileId=rDailyId[0],_setDriveDailyFileId=rDailyId[1];function setDriveDailyFileId(v){_setDriveDailyFileId(v);try{if(v)localStorage.setItem("nyc_driveDailyFileId",JSON.stringify(v));else localStorage.removeItem("nyc_driveDailyFileId");}catch(e){}}
   var rDailyMod=useState(null),driveDailyModTime=rDailyMod[0],setDriveDailyModTime=rDailyMod[1];
   var rMonthlyId=useState(function(){return lsLoad("nyc_driveMonthlyFileId",null);}),driveMonthlyFileId=rMonthlyId[0],_setDriveMonthlyFileId=rMonthlyId[1];function setDriveMonthlyFileId(v){_setDriveMonthlyFileId(v);try{if(v)localStorage.setItem("nyc_driveMonthlyFileId",JSON.stringify(v));else localStorage.removeItem("nyc_driveMonthlyFileId");}catch(e){}}
@@ -1553,7 +1565,7 @@ function App() {
       if(data.driverType==="rideshare"||data.driverType==="taxi")setDriverType(data.driverType);
       setSyncStatus(lang==="en"?"✓ Restored":"✓ 恢复成功");
       setTimeout(function(){setSyncStatus("");},2500);
-      alert((lang==="en"?"✓ Restored from ":"✓ 已从 ")+label+(lang==="en"?" snapshot":" 快照恢复"));
+      showToast((lang==="en"?"✓ Restored from ":"✓ 已从 ")+label+(lang==="en"?" snapshot":" 快照恢复"));
     });
   }
   
@@ -1827,6 +1839,41 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
   );
   return (
       React.createElement('div', { style: {minHeight:"100vh",background:C.bg,fontFamily:"'Inter',-apple-system,BlinkMacSystemFont,'PingFang SC','Noto Sans SC','Segoe UI',Roboto,sans-serif",color:C.text}, className: "app-wrapper", __self: this, __source: {fileName: _jsxFileName, lineNumber: 241}}
+      // === Toast notifications (bottom-right, auto-dismiss 2.5s) ===
+      , toasts && toasts.length > 0 ? React.createElement('div', {
+          style: {position:"fixed",bottom:90,right:14,zIndex:10000,display:"flex",flexDirection:"column",gap:8,alignItems:"flex-end",pointerEvents:"none"}
+        },
+        toasts.slice(-4).map(function(t){
+          var colors={
+            success: {bg:"#0A4020",border:"#2A8050",text:"#5ADA7A"},
+            error:   {bg:"#3A1010",border:"#7A2020",text:"#FF7060"},
+            warn:    {bg:"#3A2800",border:"#7A5500",text:"#FFB300"},
+            info:    {bg:"#0A2840",border:"#2A5080",text:"#5AACFF"}
+          };
+          var c=colors[t.type]||colors.success;
+          return React.createElement('div', {
+            key: t.id,
+            style: {background:c.bg,border:"1px solid "+c.border,color:c.text,padding:"10px 14px",borderRadius:10,fontSize:13,fontWeight:600,boxShadow:"0 4px 14px rgba(0,0,0,0.5)",maxWidth:280,minWidth:120,animation:"toastIn 0.25s ease-out"}
+          }, t.msg);
+        })
+      ) : null
+      // === Undo Banner (5-30s grace period for bulk operations) ===
+      , undoBanner ? React.createElement('div', {
+          style: {position:"fixed",top:0,left:0,right:0,zIndex:9999,background:"linear-gradient(135deg,#1A6030,#0A4020)",color:"#fff",padding:"12px 16px",display:"flex",alignItems:"center",gap:12,boxShadow:"0 2px 16px rgba(0,0,0,0.4)",borderBottom:"1px solid #2A8050"}
+        }
+        , React.createElement('div', {style:{flex:1,fontSize:13,fontWeight:700}}, undoBanner.msg)
+        , React.createElement('button', {
+            onClick: function(){
+              if(undoBanner.prevEl) setEl(undoBanner.prevEl);
+              setUndoBanner(null);
+            },
+            style: {background:"#fff",border:"none",borderRadius:8,padding:"6px 14px",color:"#1A6030",fontSize:13,fontWeight:800,cursor:"pointer"}
+          }, "↩️ " , lang==="en"?"Undo":"撤销")
+        , React.createElement('button', {
+            onClick: function(){setUndoBanner(null);},
+            style: {background:"transparent",border:"1px solid rgba(255,255,255,0.3)",borderRadius:8,padding:"6px 10px",color:"#fff",fontSize:11,cursor:"pointer"}
+          }, "✕")
+      ) : null
       , React.createElement('div', { style: {background:C.bg,padding:"10px 14px 8px",borderBottom:"1px solid "+C.border,position:"sticky",top:0,zIndex:50}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 242}}
         , React.createElement('div', { style: {display:"flex",alignItems:"center",gap:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 243}}
           , React.createElement('button', { onClick: function(){setShowDrawer(true);}, style: {background:"none",border:"none",color:C.text2,fontSize:22,cursor:"pointer",padding:"2px 6px",lineHeight:1,flexShrink:0}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 244}}, "☰")
@@ -2397,7 +2444,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                     if(!label||!label.trim()) return;
                     var profile=Object.assign({},veh,{_savedName:label.trim(),_savedAt:new Date().toISOString()});
                     setSavedVehicles((savedVehicles||[]).concat([profile]));
-                    alert(lang==="en"?"✓ Saved":"✓ 已保存");
+                    showToast(lang==="en"?"✓ Saved":"✓ 已保存");
                   };
                   
                   // EMPTY state — friendly intro + single big button
@@ -2977,7 +3024,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
             , React.createElement('div', { style: {padding:"10px 0",flex:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 602}}
               , [{icon:"📝",label:lang==="en"?"Notes":"记事本",action:function(){setShowDrawer(false);setSf("notes");}},{icon:"🏥",label:lang==="en"?"Health Check":"数据健康检查",action:function(){setShowDrawer(false);setSf("health_check");}},{icon:"🗂",label:lang==="en"?"Categories":"支出类别",action:function(){setShowDrawer(false);setSf("manage_cats");}},{icon:"&#128197;",label:T.fixedFees,action:function(){setShowDrawer(false);setSf("drawer_fixed");}},{icon:"🧾",label:lang==="en"?"Tax Center":"税务中心",action:function(){setShowDrawer(false);setSf("tax_center");}},{icon:"&#128190;",label:T.backup,action:function(){setShowDrawer(false);setShowBackup(true);}},{icon:"&#128276;",label:T.reminder,action:function(){setShowDrawer(false);setShowRemMgr(true);}},{icon:"&#128203;",label:T.license,action:function(){setShowDrawer(false);setSf("drawer_lic");}},{icon:"&#128241;",label:T.platform,action:function(){setShowDrawer(false);setShowPlatMgr(true);}},{icon:"&#128663;",label:T.vehicle,action:function(){setShowDrawer(false);setSf("drawer_veh");}},{icon:"🚖",label:lang==="en"?"Driver Type":"切换司机类型",action:function(){setShowDrawer(false);setDriverType(null);setOnboardingDismissed(false);}},{icon:"🔒",label:lang==="en"?"PIN Lock":"PIN 锁屏",action:function(){setShowDrawer(false);setSf("pin_settings");}},{icon:"🚪",label:lang==="en"?"Sign Out":"退出登录",action:function(){if(!confirm(lang==="en"?"Sign out of Google?":"确认退出 Google 登录？"))return;setGUser(null);try{localStorage.removeItem("nyc_user");localStorage.removeItem("nyc_tab");}catch(e){}setTab(0);setSf(null);setShowDrawer(false);setShowBackup(false);setShowPlatMgr(false);setShowRemMgr(false);},color:"#FF5252"},].map(function(item,i){return React.createElement('button', { key: i, onClick: item.action, style: {display:"flex",alignItems:"center",gap:14,width:"100%",background:"none",border:"none",padding:"14px 18px",cursor:"pointer",textAlign:"left",borderBottom:"1px solid "+C.border,color:item.color||C.text}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 603}}, React.createElement('span', { style: {fontSize:20}, dangerouslySetInnerHTML: {__html:item.icon}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 603}} ), React.createElement('span', { style: {fontSize:14,color:C.text,fontWeight:600}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 603}}, item.label), React.createElement('span', { style: {marginLeft:"auto",color:C.text3,fontSize:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 603}}, ">"));})
             )
-            , React.createElement('div', { style: {fontSize:10,color:C.text3,textAlign:"center",padding:"12px 18px 16px",borderTop:"1px solid "+C.border,letterSpacing:0.5} }, "NYC RIDESHARE TRACKER · v3.1.9"    )
+            , React.createElement('div', { style: {fontSize:10,color:C.text3,textAlign:"center",padding:"12px 18px 16px",borderTop:"1px solid "+C.border,letterSpacing:0.5} }, "NYC RIDESHARE TRACKER · v3.2.3"    )
           )
           , React.createElement('div', { style: {flex:1,background:"rgba(0,0,0,0.6)"}, onClick: function(){setShowDrawer(false);}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 606}} )
         )
@@ -3507,7 +3554,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                         }].concat(sl));
                       }
                       setShowPasteUberTax(false);setPasteUberTaxText("");setPasteUberTaxResult(null);
-                      alert(lang==="en"?"✓ Saved monthly statement":"✓ 月度账单已保存");
+                      showToast(lang==="en"?"✓ Saved monthly statement":"✓ 月度账单已保存");
                     }, style: {width:"100%",background:"linear-gradient(135deg,#5A3A00,#3A2800)",border:"1px solid #7A5500",borderRadius:10,padding:"12px",color:"#fff",fontSize:14,fontWeight:800,cursor:"pointer"} }, "✓ " , (lang==="en"?"Save Monthly Statement":"保存月度账单"))
                   // Annual import button (12 statements)
                   : (pasteUberTaxResult.hasMonthly && pasteUberTaxResult.hasTrips) ? React.createElement('button', { onClick: function(){
@@ -3548,7 +3595,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                         });
                         setSl(newSl);
                         setShowPasteUberTax(false);setPasteUberTaxText("");setPasteUberTaxResult(null);
-                        alert(lang==="en"?"✓ Imported 12 monthly statements for "+yr:"✓ "+yr+" 年 12 个月度账单已导入");
+                        showToast(lang==="en"?"✓ Imported 12 monthly statements for "+yr:"✓ "+yr+" 年 12 个月度账单已导入");
                       }, style: {width:"100%",background:"linear-gradient(135deg,#5A3A00,#3A2800)",border:"1px solid #7A5500",borderRadius:10,padding:"12px",color:"#fff",fontSize:14,fontWeight:800,cursor:"pointer"} }, "✓ " , lang==="en"?"Import 12 Monthly Statements":"导入 12 个月度账单") : null
                 ) : null
             )
@@ -3706,7 +3753,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                         }
                       }
                       setShowPasteUber(false);setPasteUberText("");setPasteUberResult(null);
-                      alert(lang==="en"?"✓ Saved to weekly log":"✓ 已保存到周记录");
+                      showToast(lang==="en"?"✓ Saved to weekly log":"✓ 已保存到周记录");
                     }, style: {width:"100%",background:"linear-gradient(135deg,#1A6030,#0A4020)",border:"1px solid #2A8050",borderRadius:10,padding:"12px",color:"#fff",fontSize:14,fontWeight:800,cursor:"pointer",marginTop:14} }, "✓ " , lang==="en"?"Save to Weekly Log":"保存到周记录")
                 ) : null
             )
@@ -4000,7 +4047,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                 if(changed===0){alert(lang==="en"?"No placeholder times found":"没有占位时间需要清理");return;}
                 if(!confirm((lang==="en"?"Remove placeholder times from "+changed+" entries?":"清除 "+changed+" 条记录的占位时间？")))return;
                 setEl(cleaned);
-                alert((lang==="en"?"✓ Cleaned ":"✓ 已清理 ")+changed+(lang==="en"?" entries":" 条记录"));
+                showToast((lang==="en"?"✓ Cleaned ":"✓ 已清理 ")+changed+(lang==="en"?" entries":" 条记录"));
               }, style: {width:"100%",background:C.bg3,border:"1px solid "+C.border,borderRadius:12,padding:14,marginBottom:10,textAlign:"left",cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 801}}
               , React.createElement('div', { style: {fontSize:15,fontWeight:700,color:"#FFB300",marginBottom:3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 802}}, lang==="en"?"🧹 Clear Placeholder Times":"🧹 清除占位时间")
               , React.createElement('div', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 803}}, lang==="en"?"Remove imported placeholder times (12:00 / 08:00 / 23:59)":"清除导入的占位时间（12:00 / 08:00 / 23:59）")
@@ -4065,7 +4112,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                         if(Array.isArray(d.dl))setDl(d.dl);
                         if(d.driverType==="rideshare"||d.driverType==="taxi")setDriverType(d.driverType);
                         try{localStorage.removeItem("nyc_pre_restore_backup");}catch(e){}
-                        alert(lang==="en"?"✓ Rolled back":"✓ 已回滚");
+                        showToast(lang==="en"?"✓ Rolled back":"✓ 已回滚");
                       }, style: {flex:1,background:"linear-gradient(135deg,#1A6030,#0A4020)",border:"1px solid #2A8050",borderRadius:8,padding:"10px",color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer"} }, "↩️ " , lang==="en"?"Roll Back":"回滚")
                     , React.createElement('button', { onClick: function(){
                         if(!confirm(lang==="en"?"Discard the snapshot? You won\'t be able to undo the last restore anymore.":"丢弃快照？以后将无法撤销上次恢复。"))return;
@@ -4133,7 +4180,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                                 if(Array.isArray(d.savedVehicles))setSavedVehicles(d.savedVehicles);
                                 if(Array.isArray(d.dl))setDl(d.dl);
                                 if(d.driverType==="rideshare"||d.driverType==="taxi")setDriverType(d.driverType);
-                                alert(lang==="en"?"✓ Rolled back":"✓ 已回滚");
+                                showToast(lang==="en"?"✓ Rolled back":"✓ 已回滚");
                               }, style: {background:"#0A4020",border:"1px solid #2A8050",borderRadius:6,padding:"4px 10px",color:"#5ADA7A",fontSize:11,fontWeight:700,cursor:"pointer"} }, "↩️ " , lang==="en"?"Restore":"回滚")
                           )
                         )
@@ -4190,14 +4237,14 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                     if(!sharedItems.length){alert(lang==="en"?"No shared expenses to convert.":"没有共用支出可转换");return;}
                     if(!confirm((lang==="en"?"Convert ":"将 ")+sharedItems.length+(lang==="en"?" shared expenses to 📱 Rideshare?":" 条共用支出改为 📱 网约车？")))return;
                     setEl(el.map(function(item){return item.mode==="shared"?Object.assign({},item,{mode:"rideshare"}):item;}));
-                    alert(lang==="en"?"✓ Done":"✓ 已转换");
+                    showToast(lang==="en"?"✓ Done":"✓ 已转换");
                   }, style: {background:"#0A2040",border:"1px solid #2A5080",borderRadius:10,padding:"10px",color:"#5AACFF",fontSize:12,fontWeight:700,cursor:"pointer"} }, "📱 → " , lang==="en"?"Rideshare":"网约车")
                 , React.createElement('button', { onClick: function(){
                     var sharedItems=el.filter(function(e){return e.mode==="shared";});
                     if(!sharedItems.length){alert(lang==="en"?"No shared expenses to convert.":"没有共用支出可转换");return;}
                     if(!confirm((lang==="en"?"Convert ":"将 ")+sharedItems.length+(lang==="en"?" shared expenses to 🚖 Taxi?":" 条共用支出改为 🚖 出租车？")))return;
                     setEl(el.map(function(item){return item.mode==="shared"?Object.assign({},item,{mode:"taxi"}):item;}));
-                    alert(lang==="en"?"✓ Done":"✓ 已转换");
+                    showToast(lang==="en"?"✓ Done":"✓ 已转换");
                   }, style: {background:"#1A1000",border:"1px solid #3A2800",borderRadius:10,padding:"10px",color:"#FFB300",fontSize:12,fontWeight:700,cursor:"pointer"} }, "🚖 → " , lang==="en"?"Taxi":"出租车")
               )
             )

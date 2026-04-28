@@ -43,7 +43,8 @@
     input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
     input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
     .noscript-msg { padding: 40px 20px; text-align: center; line-height: 1.7; }
-  </style>
+  @keyframes toastIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+</style>
 </head>
 <body>
   <noscript>
@@ -69,7 +70,7 @@
   -->
   <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin="anonymous"></script>
   <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin="anonymous"></script>
-  <script src="app.js?v=251"></script>
+  <script src="app.js?v=255"></script>
   <script>
     // PWA service worker: aggressive auto-update strategy.
     // 1. Register on load
