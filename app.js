@@ -1938,7 +1938,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
           var c=colors[t.type]||colors.success;
           return React.createElement('div', {
             key: t.id,
-            style: {background:c.bg,border:"2px solid "+c.border,color:c.text,padding:"14px 22px",borderRadius:14,fontSize:15,fontWeight:800,boxShadow:"0 8px 24px rgba(0,0,0,0.6), 0 0 20px rgba(90,218,122,0.4)",minWidth:200,maxWidth:380,textAlign:"center",animation:"toastIn 0.3s ease-out"}
+            style: {background:c.bg,border:"1px solid "+c.border,color:c.text,padding:"8px 14px",borderRadius:10,fontSize:12,fontWeight:700,boxShadow:"0 4px 14px rgba(0,0,0,0.5)",minWidth:120,maxWidth:300,textAlign:"center",animation:"toastIn 0.25s ease-out"}
           }, t.msg);
         })
       ) : null
@@ -2839,7 +2839,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
               
               // ========== Version footer ==========
               , React.createElement('div', {style:{textAlign:"center",fontSize:11,color:C.text3,padding:"10px 0"}}
-                , "NYC Driver Tracker · v4.0.1"
+                , "NYC Driver Tracker · v4.0.5"
                 , React.createElement('br')
                 , lang==="en"?"Built for NYC drivers who care about their numbers.":"为认真对待数字的 NYC 司机而做。"
               )
@@ -3275,18 +3275,29 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                 }
               }
               if(distinctRecent.length === 0) return null;
-              // AUTO-PREFILL: if amount is empty AND user just selected a category, fill with most recent price
-              if(!ef.amount && distinctRecent[0]){
-                var prefillAmt = String(+distinctRecent[0].amount);
-                var prefillCatKey = catKey + "|" + noteKey;
-                if(ef._lastPrefillKey !== prefillCatKey){
-                  Promise.resolve().then(function(){
-                    setEf(function(prev){
-                      if(prev.amount) return prev;  // user already typed something
-                      return Object.assign({}, prev, {amount: prefillAmt, _lastPrefillKey: prefillCatKey});
-                    });
+              // AUTO-PREFILL: refresh when category/notes changes
+              // We track last prefill key. If current key differs AND amount equals the last prefilled value (user didn't manually edit),
+              // re-prefill with new category's most recent price.
+              var prefillAmt = String(+distinctRecent[0].amount);
+              var prefillCatKey = catKey + "|" + noteKey;
+              var shouldPrefill = false;
+              if(!ef.amount){
+                // Empty amount → always prefill
+                shouldPrefill = (ef._lastPrefillKey !== prefillCatKey);
+              } else if(ef._lastPrefillKey && ef._lastPrefillKey !== prefillCatKey && ef._lastPrefillAmt === ef.amount){
+                // Amount equals last prefilled value AND category changed → user didn't manually edit, refresh
+                shouldPrefill = true;
+              }
+              if(shouldPrefill){
+                Promise.resolve().then(function(){
+                  setEf(function(prev){
+                    // Skip if user typed something different than last prefill
+                    if(prev._lastPrefillKey && prev._lastPrefillAmt && prev.amount && prev.amount !== prev._lastPrefillAmt){
+                      return prev;
+                    }
+                    return Object.assign({}, prev, {amount: prefillAmt, _lastPrefillKey: prefillCatKey, _lastPrefillAmt: prefillAmt});
                   });
-                }
+                });
               }
               return React.createElement('div', {style:{background:"#0A1828",border:"1px solid #2A4A6A",borderRadius:10,padding:"8px 10px",marginBottom:6}}
                 , React.createElement('div', {style:{fontSize:10,color:C.text3,marginBottom:6,letterSpacing:0.3}}
