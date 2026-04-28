@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-console.log("%cNYC Driver Tracker — version v295","color:#00D4FF;font-weight:bold;font-size:14px");
+console.log("%cNYC Driver Tracker — version v301","color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
 //   <script>window.SENTRY_DSN = "https://YOUR_KEY@oXXX.ingest.sentry.io/PROJECT";</script>
@@ -1095,7 +1095,7 @@ function App() {
   // (Step 1 = type selection, handled by showOnboarding above)
   var rWiz=useState(0),wizStep=rWiz[0],setWizStep=rWiz[1];
   // When user closes a wizard page (sf becomes null), advance to next step.
-  // Safeguards added v3.6.3: timeout to avoid race with React re-renders + reset on driverType change.
+  // Safeguards added v3.6.9: timeout to avoid race with React re-renders + reset on driverType change.
   useEffect(function(){
     if(wizStep===0) return;
     if(sf!==null) return;  // wait until current page closed
@@ -1175,6 +1175,13 @@ function App() {
   var yAllExps=function(){return yExps.concat(yMons.reduce(function(acc,m){return acc.concat(genFixed(fl,m));},[]));}; var hourlyRate=tHours>0?Math.round(tInc/tHours*100)/100:0,lastMo=prevMo(mo),lmStmts=sl.filter(function(x){return x.month===lastMo;}),lmWeeks=wl.filter(function(w){return w.weekStart.slice(0,7)===lastMo;}),lmFixMo=genFixed(fl,lastMo),lmDailies=dl.filter(function(d){return d.date&&d.date.slice(0,7)===lastMo;}),lmDlInc=lmDailies.reduce(function(s,d){return s+(+d.cash||0)+(+d.card||0)+(+d.tips||0);},0),lmDlLease=lmDailies.reduce(function(s,d){return s+(+d.lease||0);},0),lmDlHours=lmDailies.reduce(function(s,d){return s+(+d.hours||0);},0),lmFeAll=el.filter(function(e){var c=allC[e.category];if(c&&c.mo)return (e.statementMonth||e.date.slice(0,7))===lastMo;return e.date.slice(0,7)===lastMo;}).concat(lmFixMo),lmInc=lmStmts.reduce(function(s,x){return s+(+x.grossFare||0)+(+x.tips||0)+(+x.bonus||0)+(+x.tollReimbursed||0)+(+x.otherIncome||0);},0)+lmDlInc,lmExp=lmFeAll.reduce(function(s,e){return s+(+e.amount||0);},0)+lmDlLease,lmNet=lmInc-lmExp,lmHours=lmWeeks.reduce(function(s,w){return s+(+w.hours||0);},0)+lmDlHours,lmHourly=lmHours>0?Math.round(lmInc/lmHours*100)/100:0,nextExpiry=ll.filter(function(l){return l.expiryDate;}).sort(function(a,b){return a.expiryDate.localeCompare(b.expiryDate);})[0]; var achievements=[];if(tInc>=5000)achievements.push({icon:"🏆",text:lang==="en"?"Income > $5000":"本月收入破$5000",color:"#FFD700",bg:"#1A1400"});else if(tInc>=3000)achievements.push({icon:"⭐",text:lang==="en"?"Income > $3000":"本月收入破$3000",color:"#FFD700",bg:"#1A1400"});if(net>0&&tInc>0&&net>=tInc*0.5)achievements.push({icon:"💰",text:lang==="en"?"Profit > 50%":"净利润超50%",color:"#00E676",bg:"#0A1A0A"});if(tTrips>=200)achievements.push({icon:"🚗",text:lang==="en"?"200 trips this month":"本月200趟达成",color:"#00D4FF",bg:"#0A1428"});else if(tTrips>=100)achievements.push({icon:"🎯",text:lang==="en"?"100 trips this month":"本月100趟达成",color:"#00D4FF",bg:"#0A1428"});if(expiring.length===0&&expired.length===0&&ll.length>0)achievements.push({icon:"✅",text:lang==="en"?"All licenses valid":"证件全部有效",color:"#00E676",bg:"#0A1A0A"});if(yInc>=50000)achievements.push({icon:"👑",text:lang==="en"?"Annual income > $50000":"年收入破$50000",color:"#FFD700",bg:"#1A1400"}); var r40=useState(function(){return lsLoad("nyc_custGroups",[]);}),custGroups=r40[0],setCustGroups=r40[1]; var r41=useState(""),newGrpName=r41[0],setNewGrpName=r41[1]; var r42=useState("📁"),newGrpIcon=r42[0],setNewGrpIcon=r42[1]; var r43=useState("#A8D0E8"),newGrpColor=r43[0],setNewGrpColor=r43[1]; var r44=useState(new Date().getFullYear()+""),taxYr=r44[0],setTaxYr=r44[1]; var r45=useState(function(){return lsLoad("nyc_seRate",15.3);}),seRate=r45[0],_setSeRate=r45[1];function setSeRate(v){_setSeRate(v);try{localStorage.setItem("nyc_seRate",JSON.stringify(v));}catch(e){}} var r45b=useState(function(){return lsLoad("nyc_fedRate",12);}),fedRate=r45b[0],_setFedRate=r45b[1];function setFedRate(v){_setFedRate(v);try{localStorage.setItem("nyc_fedRate",JSON.stringify(v));}catch(e){}} var r45c=useState(function(){return lsLoad("nyc_stateRate",8.5);}),stateRate=r45c[0],_setStateRate=r45c[1];function setStateRate(v){_setStateRate(v);try{localStorage.setItem("nyc_stateRate",JSON.stringify(v));}catch(e){}} var r45d=useState(function(){return lsLoad("nyc_stdDed",14600);}),stdDed=r45d[0],_setStdDed=r45d[1];function setStdDed(v){_setStdDed(v);try{localStorage.setItem("nyc_stdDed",JSON.stringify(v));}catch(e){}} var r45e=useState(function(){return lsLoad("nyc_mtaRate",0.34);}),mtaRate=r45e[0],_setMtaRate=r45e[1];function setMtaRate(v){_setMtaRate(v);try{localStorage.setItem("nyc_mtaRate",JSON.stringify(v));}catch(e){}} var rSV=useState(function(){return lsLoad("nyc_savedVehicles",[]);}),savedVehicles=rSV[0],_setSavedVehicles=rSV[1];function setSavedVehicles(v){_setSavedVehicles(v);try{localStorage.setItem("nyc_savedVehicles",JSON.stringify(v));}catch(e){}} var r46=useState(false),taxLoading=r46[0],setTaxLoading=r46[1]; var r47=useState(""),taxRateNote=r47[0],setTaxRateNote=r47[1]; var r48=useState(function(){return lsLoad("nyc_notes",[]);}),notes=r48[0],setNotes=r48[1]; var rSnap=useState([]),snapshotList=rSnap[0],setSnapshotList=rSnap[1];
   // Undo banner: { msg, prevEl, until } (for bulk operations)
   var rUndo=useState(null),undoBanner=rUndo[0],setUndoBanner=rUndo[1];
+  // Tick to update countdown display
+  var rTick=useState(0),_undoTick=rTick[0],_setUndoTick=rTick[1];
+  useEffect(function(){
+    if(!undoBanner) return;
+    var iv = setInterval(function(){_setUndoTick(function(x){return x+1;});}, 1000);
+    return function(){ clearInterval(iv); };
+  }, [undoBanner]);
   // Drawer "Advanced" submenu toggle
   var rAdv=useState(false),showAdvanced=rAdv[0],setShowAdvanced=rAdv[1];
   // Simple mode: hide power-user features. Persisted.
@@ -1184,10 +1191,16 @@ function App() {
   var rToast=useState([]),toasts=rToast[0],setToasts=rToast[1];
   // Helper: trigger undo banner with a 30s timeout for any data restore
   function showUndo(msg, prevState){
-    setUndoBanner(Object.assign({msg:msg, until:Date.now()+30000}, prevState));
+    var until = Date.now()+20000;
+    setUndoBanner(Object.assign({msg:msg, until:until}, prevState));
+    // Clear the banner after 30s — but only if it's still the SAME banner (untilToken matches)
     setTimeout(function(){
-      setUndoBanner(function(b){return (b&&b.until<=Date.now())?null:b;});
-    }, 30100);
+      setUndoBanner(function(b){
+        // If banner exists and matches this until-token (within 100ms tolerance) → clear
+        if(b && Math.abs(b.until - until) < 100) return null;
+        return b;  // otherwise leave it (a newer banner replaced this one)
+      });
+    }, 20200);
   }
   function showToast(msg, type){
     var id=Date.now()+Math.random();
@@ -1931,9 +1944,18 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
       ) : null
       // === Undo Banner (5-30s grace period for bulk operations) ===
       , undoBanner ? React.createElement('div', {
-          style: {position:"fixed",top:0,left:0,right:0,zIndex:9999,background:"linear-gradient(135deg,#1A6030,#0A4020)",color:"#fff",padding:"12px 16px",display:"flex",alignItems:"center",gap:12,boxShadow:"0 2px 16px rgba(0,0,0,0.4)",borderBottom:"1px solid #2A8050"}
+          style: {position:"fixed",top:0,left:0,right:0,zIndex:9999,background:"linear-gradient(135deg,#1A6030,#0A4020)",color:"#fff",padding:"12px 16px 14px",display:"flex",alignItems:"center",gap:12,boxShadow:"0 2px 16px rgba(0,0,0,0.4)",borderBottom:"1px solid #2A8050"}
         }
-        , React.createElement('div', {style:{flex:1,fontSize:13,fontWeight:700}}, undoBanner.msg)
+        
+        , React.createElement('div', {style:{flex:1,fontSize:13,fontWeight:700}}
+            , undoBanner.msg
+            , React.createElement('span', {style:{marginLeft:10,fontSize:11,fontWeight:500,opacity:0.85}}
+              , (function(){
+                  var sec = Math.max(0, Math.ceil((undoBanner.until - Date.now())/1000));
+                  return "(" + sec + "s)";
+                }())
+            )
+          )
         , React.createElement('button', {
             onClick: function(){
               if(undoBanner.prevEl) setEl(undoBanner.prevEl);
@@ -1957,6 +1979,23 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
             onClick: function(){setUndoBanner(null);},
             style: {background:"transparent",border:"1px solid rgba(255,255,255,0.3)",borderRadius:8,padding:"6px 10px",color:"#fff",fontSize:11,cursor:"pointer"}
           }, "✕")
+        // Progress bar at bottom (shrinks from 100% to 0% over 30s)
+        , React.createElement('div', {
+            style: {position:"absolute",bottom:0,left:0,right:0,height:3,background:"rgba(0,0,0,0.25)"}
+          }
+          , React.createElement('div', {
+              style: {
+                height:"100%",
+                width: (function(){
+                  var pct = Math.max(0, Math.min(100, (undoBanner.until - Date.now())/20000*100));
+                  return pct.toFixed(1)+"%";
+                }()),
+                background:"linear-gradient(90deg,#FFD700,#FFA500)",
+                transition:"width 1s linear",
+                borderRadius:"0 2px 2px 0"
+              }
+            })
+        )
       ) : null
       , React.createElement('div', { style: {background:C.bg,padding:"10px 14px 8px",borderBottom:"1px solid "+C.border,position:"sticky",top:0,zIndex:50}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 242}}
         , React.createElement('div', { style: {display:"flex",alignItems:"center",gap:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 243}}
@@ -2286,7 +2325,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                   , React.createElement('div', { style: {fontSize:14,fontWeight:700,color:C.text,marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 309}}, lang==="en"?"Monthly Breakdown":"逐月明细")
                   , mData.map(function(m){if(m.inc===0&&m.exp===0)return null;var ncl=m.net>=0?"#00E676":"#FF5252",mcl=m.m===mo?"#00D4FF":C.text;return React.createElement('div', { key: m.m, onClick: function(){setMo(m.m);setDashV("month");}, style: {display:"grid",gridTemplateColumns:"2fr 2fr 2fr 2fr",padding:"7px 0",borderBottom:"1px solid #182030",cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 310}}, React.createElement('span', { style: Object.assign({fontSize:12,fontWeight:700},{color:mcl}), __self: this, __source: {fileName: _jsxFileName, lineNumber: 310}}, m.label), React.createElement('span', { style: {fontSize:12,color:"#00D4FF"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 310}}, m.inc>0?fmt(m.inc):"—"), React.createElement('span', { style: {fontSize:12,color:"#FF6B35"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 310}}, m.exp>0?fmt(m.exp):"—"), React.createElement('span', { style: Object.assign({fontSize:12,fontWeight:700},{color:ncl}), __self: this, __source: {fileName: _jsxFileName, lineNumber: 310}}, fmt(m.net)));})
                 )
-                // === Pie Chart for YEAR mode (NEW v3.6.3) ===
+                // === Pie Chart for YEAR mode (NEW v3.6.9) ===
                 , (function(){
                     if(yExp<=0) return null;
                     var allYE = yAllExps();
@@ -3312,7 +3351,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                 );
               }())
             )
-            , React.createElement('div', { style: {fontSize:10,color:C.text3,textAlign:"center",padding:"12px 18px 16px",borderTop:"1px solid "+C.border,letterSpacing:0.5} }, "NYC RIDESHARE TRACKER · v3.6.3"    )
+            , React.createElement('div', { style: {fontSize:10,color:C.text3,textAlign:"center",padding:"12px 18px 16px",borderTop:"1px solid "+C.border,letterSpacing:0.5} }, "NYC RIDESHARE TRACKER · v3.6.9"    )
           )
           , React.createElement('div', { style: {flex:1,background:"rgba(0,0,0,0.6)"}, onClick: function(){setShowDrawer(false);}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 606}} )
         )
