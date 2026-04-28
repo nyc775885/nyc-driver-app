@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-console.log("%cNYC Driver Tracker — version v255","color:#00D4FF;font-weight:bold;font-size:14px");
+console.log("%cNYC Driver Tracker — version v257","color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
 //   <script>window.SENTRY_DSN = "https://YOUR_KEY@oXXX.ingest.sentry.io/PROJECT";</script>
@@ -1165,10 +1165,10 @@ function App() {
   function showToast(msg, type){
     var id=Date.now()+Math.random();
     var t=type||"success";
-    setToasts(function(prev){return prev.concat([{id:id,msg:msg,type:t,until:Date.now()+2500}]);});
+    setToasts(function(prev){return prev.concat([{id:id,msg:msg,type:t,until:Date.now()+4000}]);});
     setTimeout(function(){
       setToasts(function(prev){return prev.filter(function(x){return x.id!==id;});});
-    }, 2600);
+    }, 4100);
   }
   var rDailyId=useState(function(){return lsLoad("nyc_driveDailyFileId",null);}),driveDailyFileId=rDailyId[0],_setDriveDailyFileId=rDailyId[1];function setDriveDailyFileId(v){_setDriveDailyFileId(v);try{if(v)localStorage.setItem("nyc_driveDailyFileId",JSON.stringify(v));else localStorage.removeItem("nyc_driveDailyFileId");}catch(e){}}
   var rDailyMod=useState(null),driveDailyModTime=rDailyMod[0],setDriveDailyModTime=rDailyMod[1];
@@ -1839,21 +1839,21 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
   );
   return (
       React.createElement('div', { style: {minHeight:"100vh",background:C.bg,fontFamily:"'Inter',-apple-system,BlinkMacSystemFont,'PingFang SC','Noto Sans SC','Segoe UI',Roboto,sans-serif",color:C.text}, className: "app-wrapper", __self: this, __source: {fileName: _jsxFileName, lineNumber: 241}}
-      // === Toast notifications (bottom-right, auto-dismiss 2.5s) ===
+      // === Toast notifications (extra visible) ===
       , toasts && toasts.length > 0 ? React.createElement('div', {
-          style: {position:"fixed",bottom:90,right:14,zIndex:10000,display:"flex",flexDirection:"column",gap:8,alignItems:"flex-end",pointerEvents:"none"}
+          style: {position:"fixed",bottom:100,left:0,right:0,zIndex:10000,display:"flex",flexDirection:"column",gap:8,alignItems:"center",pointerEvents:"none",padding:"0 14px"}
         },
         toasts.slice(-4).map(function(t){
           var colors={
-            success: {bg:"#0A4020",border:"#2A8050",text:"#5ADA7A"},
-            error:   {bg:"#3A1010",border:"#7A2020",text:"#FF7060"},
-            warn:    {bg:"#3A2800",border:"#7A5500",text:"#FFB300"},
-            info:    {bg:"#0A2840",border:"#2A5080",text:"#5AACFF"}
+            success: {bg:"linear-gradient(135deg,#00C853,#1B5E20)",border:"#5ADA7A",text:"#FFFFFF"},
+            error:   {bg:"linear-gradient(135deg,#D32F2F,#7F1818)",border:"#FF7060",text:"#FFFFFF"},
+            warn:    {bg:"linear-gradient(135deg,#FF9100,#7A4500)",border:"#FFB300",text:"#FFFFFF"},
+            info:    {bg:"linear-gradient(135deg,#2196F3,#0D47A1)",border:"#5AACFF",text:"#FFFFFF"}
           };
           var c=colors[t.type]||colors.success;
           return React.createElement('div', {
             key: t.id,
-            style: {background:c.bg,border:"1px solid "+c.border,color:c.text,padding:"10px 14px",borderRadius:10,fontSize:13,fontWeight:600,boxShadow:"0 4px 14px rgba(0,0,0,0.5)",maxWidth:280,minWidth:120,animation:"toastIn 0.25s ease-out"}
+            style: {background:c.bg,border:"2px solid "+c.border,color:c.text,padding:"14px 22px",borderRadius:14,fontSize:15,fontWeight:800,boxShadow:"0 8px 24px rgba(0,0,0,0.6), 0 0 20px rgba(90,218,122,0.4)",minWidth:200,maxWidth:380,textAlign:"center",animation:"toastIn 0.3s ease-out"}
           }, t.msg);
         })
       ) : null
@@ -3024,7 +3024,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
             , React.createElement('div', { style: {padding:"10px 0",flex:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 602}}
               , [{icon:"📝",label:lang==="en"?"Notes":"记事本",action:function(){setShowDrawer(false);setSf("notes");}},{icon:"🏥",label:lang==="en"?"Health Check":"数据健康检查",action:function(){setShowDrawer(false);setSf("health_check");}},{icon:"🗂",label:lang==="en"?"Categories":"支出类别",action:function(){setShowDrawer(false);setSf("manage_cats");}},{icon:"&#128197;",label:T.fixedFees,action:function(){setShowDrawer(false);setSf("drawer_fixed");}},{icon:"🧾",label:lang==="en"?"Tax Center":"税务中心",action:function(){setShowDrawer(false);setSf("tax_center");}},{icon:"&#128190;",label:T.backup,action:function(){setShowDrawer(false);setShowBackup(true);}},{icon:"&#128276;",label:T.reminder,action:function(){setShowDrawer(false);setShowRemMgr(true);}},{icon:"&#128203;",label:T.license,action:function(){setShowDrawer(false);setSf("drawer_lic");}},{icon:"&#128241;",label:T.platform,action:function(){setShowDrawer(false);setShowPlatMgr(true);}},{icon:"&#128663;",label:T.vehicle,action:function(){setShowDrawer(false);setSf("drawer_veh");}},{icon:"🚖",label:lang==="en"?"Driver Type":"切换司机类型",action:function(){setShowDrawer(false);setDriverType(null);setOnboardingDismissed(false);}},{icon:"🔒",label:lang==="en"?"PIN Lock":"PIN 锁屏",action:function(){setShowDrawer(false);setSf("pin_settings");}},{icon:"🚪",label:lang==="en"?"Sign Out":"退出登录",action:function(){if(!confirm(lang==="en"?"Sign out of Google?":"确认退出 Google 登录？"))return;setGUser(null);try{localStorage.removeItem("nyc_user");localStorage.removeItem("nyc_tab");}catch(e){}setTab(0);setSf(null);setShowDrawer(false);setShowBackup(false);setShowPlatMgr(false);setShowRemMgr(false);},color:"#FF5252"},].map(function(item,i){return React.createElement('button', { key: i, onClick: item.action, style: {display:"flex",alignItems:"center",gap:14,width:"100%",background:"none",border:"none",padding:"14px 18px",cursor:"pointer",textAlign:"left",borderBottom:"1px solid "+C.border,color:item.color||C.text}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 603}}, React.createElement('span', { style: {fontSize:20}, dangerouslySetInnerHTML: {__html:item.icon}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 603}} ), React.createElement('span', { style: {fontSize:14,color:C.text,fontWeight:600}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 603}}, item.label), React.createElement('span', { style: {marginLeft:"auto",color:C.text3,fontSize:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 603}}, ">"));})
             )
-            , React.createElement('div', { style: {fontSize:10,color:C.text3,textAlign:"center",padding:"12px 18px 16px",borderTop:"1px solid "+C.border,letterSpacing:0.5} }, "NYC RIDESHARE TRACKER · v3.2.3"    )
+            , React.createElement('div', { style: {fontSize:10,color:C.text3,textAlign:"center",padding:"12px 18px 16px",borderTop:"1px solid "+C.border,letterSpacing:0.5} }, "NYC RIDESHARE TRACKER · v3.2.5"    )
           )
           , React.createElement('div', { style: {flex:1,background:"rgba(0,0,0,0.6)"}, onClick: function(){setShowDrawer(false);}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 606}} )
         )
