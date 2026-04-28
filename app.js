@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-console.log("%cNYC Driver Tracker — version v233","color:#00D4FF;font-weight:bold;font-size:14px");
+console.log("%cNYC Driver Tracker — version v235","color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
 //   <script>window.SENTRY_DSN = "https://YOUR_KEY@oXXX.ingest.sentry.io/PROJECT";</script>
@@ -267,7 +267,19 @@ function parseUberStatement(text){
   // Strategy: split text at "(from previous weeks)" if present.
   var prevWeekIdx = text.indexOf("(from previous weeks)");
   var currentText = prevWeekIdx >= 0 ? text.slice(0, prevWeekIdx) : text;
-  var prevText = prevWeekIdx >= 0 ? text.slice(prevWeekIdx) : "";
+  // prevText: only the immediate (from previous weeks) section, NOT all text after
+  // Bound by next "Mike L X of X" footer or next "Breakdown of" or 500 chars max
+  var prevText = "";
+  if(prevWeekIdx >= 0){
+    var prevTail = text.slice(prevWeekIdx);
+    // End at next page footer or next Breakdown header or 500 chars
+    var endIdx = prevTail.length;
+    var p1 = prevTail.indexOf("Mike L", 50);  // skip past current footer
+    var p2 = prevTail.indexOf("Breakdown of", 50);
+    var p3 = prevTail.indexOf("Weekly Uber service fee");
+    [p1,p2,p3].forEach(function(p){ if(p>0 && p<endIdx) endIdx = p; });
+    prevText = prevTail.slice(0, Math.min(endIdx, 500));
+  }
   
   // Current week tip — tolerate "Tip" or "Tips" with optional + sign
   var tipMatches=[];
@@ -322,6 +334,31 @@ function parseUberStatement(text){
   var earnRe=/Your earnings\s+\$([0-9,]+\.\d{2})/;
   var earnM=text.match(earnRe);
   var statedEarnings=earnM?parseFloat(earnM[1].replace(/,/g,"")):0;
+  
+  // SELF-HEALING: if fare + tip != statedEarnings (off by >$1), reverse-calculate tip.
+  // Trust statedEarnings (appears prominently in summary) and fare (always matches max).
+  // This handles cases where mobile PDF copy misorders text.
+  var tipReverseUsed = false;
+  if(statedEarnings > 0 && fare > 0){
+    var calc = fare + tip;
+    if(Math.abs(calc - statedEarnings) > 1.0){
+      // Try reverse-calc — only adopt if result is sane (positive, < earnings)
+      var revTip = statedEarnings - fare;
+      if(revTip >= 0 && revTip < statedEarnings){
+        tip = Math.round(revTip * 100) / 100;
+        tipReverseUsed = true;
+      }
+    }
+  }
+  
+  // SELF-HEALING for prevWeekTip: trust the "Events from previous weeks $X" summary line
+  // which is unambiguous (appears in main summary, not buried).
+  // (Already done above via prevSummaryRe — but reinforce: prefer summary over breakdown extraction)
+  if(prevSummaryM){
+    var prevSummary2 = parseFloat(prevSummaryM[1].replace(/,/g,""));
+    // Override prevWeekTip with summary value (more reliable)
+    prevWeekTip = prevSummary2;
+  }
   // ============ AUDIT: cross-check Uber-stated totals vs our extracted values ============
   // Look for "Refunds & Expenses $X" total (in Weekly Summary)
   var refundsSummaryRe = /Refunds & Expenses\s+\$([0-9,]+\.\d{2})/;
@@ -337,10 +374,15 @@ function parseUberStatement(text){
   var audit = { warnings: [] };
   
   // Check 1: Fare + Tip should equal Your earnings (within $0.50).
-  // Note: statedEarnings is "Your earnings" from CURRENT-week section only.
-  // Previous-week tip ($3.81) is separately reported as "Events from previous weeks"
-  // and should NOT be added when comparing against current-week stated earnings.
-  if(statedEarnings > 0){
+  if(tipReverseUsed){
+    audit.warnings.push({
+      type: "tip_reversed",
+      msg: "Tip auto-corrected via reverse-calculation (text copy may have been incomplete). Original parsed tip didn\'t match Uber\'s stated earnings.",
+      msgCn: "小费已自动修正（粘贴文字可能不完整，已用 Uber 显示收入反推）。请核对小费是否正确。",
+      severity: "med"
+    });
+  }
+  if(statedEarnings > 0 && !tipReverseUsed){
     var calcEarnings = fare + tip;
     var earnDiff = Math.abs(calcEarnings - statedEarnings);
     if(earnDiff >= 0.5){
@@ -2814,7 +2856,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
             , React.createElement('div', { style: {padding:"10px 0",flex:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 602}}
               , [{icon:"📝",label:lang==="en"?"Notes":"记事本",action:function(){setShowDrawer(false);setSf("notes");}},{icon:"🏥",label:lang==="en"?"Health Check":"数据健康检查",action:function(){setShowDrawer(false);setSf("health_check");}},{icon:"🗂",label:lang==="en"?"Categories":"支出类别",action:function(){setShowDrawer(false);setSf("manage_cats");}},{icon:"&#128197;",label:T.fixedFees,action:function(){setShowDrawer(false);setSf("drawer_fixed");}},{icon:"🧾",label:lang==="en"?"Tax Center":"税务中心",action:function(){setShowDrawer(false);setSf("tax_center");}},{icon:"&#128190;",label:T.backup,action:function(){setShowDrawer(false);setShowBackup(true);}},{icon:"&#128276;",label:T.reminder,action:function(){setShowDrawer(false);setShowRemMgr(true);}},{icon:"&#128203;",label:T.license,action:function(){setShowDrawer(false);setSf("drawer_lic");}},{icon:"&#128241;",label:T.platform,action:function(){setShowDrawer(false);setShowPlatMgr(true);}},{icon:"&#128663;",label:T.vehicle,action:function(){setShowDrawer(false);setSf("drawer_veh");}},{icon:"🚖",label:lang==="en"?"Driver Type":"切换司机类型",action:function(){setShowDrawer(false);setDriverType(null);setOnboardingDismissed(false);}},{icon:"🔒",label:lang==="en"?"PIN Lock":"PIN 锁屏",action:function(){setShowDrawer(false);setSf("pin_settings");}},{icon:"🚪",label:lang==="en"?"Sign Out":"退出登录",action:function(){if(!confirm(lang==="en"?"Sign out of Google?":"确认退出 Google 登录？"))return;setGUser(null);try{localStorage.removeItem("nyc_user");localStorage.removeItem("nyc_tab");}catch(e){}setTab(0);setSf(null);setShowDrawer(false);setShowBackup(false);setShowPlatMgr(false);setShowRemMgr(false);},color:"#FF5252"},].map(function(item,i){return React.createElement('button', { key: i, onClick: item.action, style: {display:"flex",alignItems:"center",gap:14,width:"100%",background:"none",border:"none",padding:"14px 18px",cursor:"pointer",textAlign:"left",borderBottom:"1px solid "+C.border,color:item.color||C.text}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 603}}, React.createElement('span', { style: {fontSize:20}, dangerouslySetInnerHTML: {__html:item.icon}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 603}} ), React.createElement('span', { style: {fontSize:14,color:C.text,fontWeight:600}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 603}}, item.label), React.createElement('span', { style: {marginLeft:"auto",color:C.text3,fontSize:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 603}}, ">"));})
             )
-            , React.createElement('div', { style: {fontSize:10,color:C.text3,textAlign:"center",padding:"12px 18px 16px",borderTop:"1px solid "+C.border,letterSpacing:0.5} }, "NYC RIDESHARE TRACKER · v3.0.1"    )
+            , React.createElement('div', { style: {fontSize:10,color:C.text3,textAlign:"center",padding:"12px 18px 16px",borderTop:"1px solid "+C.border,letterSpacing:0.5} }, "NYC RIDESHARE TRACKER · v3.0.3"    )
           )
           , React.createElement('div', { style: {flex:1,background:"rgba(0,0,0,0.6)"}, onClick: function(){setShowDrawer(false);}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 606}} )
         )
