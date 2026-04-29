@@ -949,7 +949,7 @@ function LockScreen(p){
   );
 }
 function App() {
-  var r0=useState(function(){try{var t=localStorage.getItem("nyc_tab");return t?+t:0;}catch(e){return 0;}}()),tab=r0[0],_setTab=r0[1];function setTab(v){_setTab(v);try{localStorage.setItem("nyc_tab",""+v);}catch(e){}} var r1=useState("month"),dashV=r1[0],setDashV=r1[1]; var r1c=useState("month"),incV=r1c[0],setIncV=r1c[1]; var r1d=useState("all"),expModeF=r1d[0],setExpModeF=r1d[1];
+  var r0=useState(0),tab=r0[0],setTab=r0[1]; var r1=useState("month"),dashV=r1[0],setDashV=r1[1]; var r1c=useState("month"),incV=r1c[0],setIncV=r1c[1]; var r1d=useState("all"),expModeF=r1d[0],setExpModeF=r1d[1];
   var r2=useState("month"),repP=r2[0],setRepP=r2[1]; var r3=useState(curMo()),mo=r3[0],setMo=r3[1];
   var r4=useState(curYr()),yr=r4[0],setYr=r4[1]; var r5=useState("ops"),incT=r5[0],setIncT=r5[1];
   var r6=useState(function(){try{var s=localStorage.getItem("nyc_sf");return s||null;}catch(e){return null;}}()),sf=r6[0],_setSf=r6[1];function setSf(v){_setSf(v);try{if(v)localStorage.setItem("nyc_sf",v);else localStorage.removeItem("nyc_sf");}catch(e){}} var r7=useState("month"),expV=r7[0],setExpV=r7[1];
@@ -2839,7 +2839,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
               
               // ========== Version footer ==========
               , React.createElement('div', {style:{textAlign:"center",fontSize:11,color:C.text3,padding:"10px 0"}}
-                , "NYC Driver Tracker · v4.0.5"
+                , "NYC Driver Tracker · v4.0.7"
                 , React.createElement('br')
                 , lang==="en"?"Built for NYC drivers who care about their numbers.":"为认真对待数字的 NYC 司机而做。"
               )
