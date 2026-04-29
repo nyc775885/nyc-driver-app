@@ -2795,7 +2795,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
               
               // ========== Version footer ==========
               , React.createElement('div', {style:{textAlign:"center",fontSize:11,color:C.text3,padding:"10px 0"}}
-                , "NYC Driver Tracker · v4.1.5"
+                , "NYC Driver Tracker · v4.1.9"
                 , React.createElement('br')
                 , lang==="en"?"Built for NYC drivers who care about their numbers.":"为认真对待数字的 NYC 司机而做。"
               )
@@ -3487,7 +3487,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                 );
               }())
             )
-            , React.createElement('div', { style: {fontSize:10,color:C.text3,textAlign:"center",padding:"12px 18px 16px",borderTop:"1px solid "+C.border,letterSpacing:0.5} }, "NYC RIDESHARE TRACKER · v4.1.5"    )
+            , React.createElement('div', { style: {fontSize:10,color:C.text3,textAlign:"center",padding:"12px 18px 16px",borderTop:"1px solid "+C.border,letterSpacing:0.5} }, "NYC RIDESHARE TRACKER · v4.1.9"    )
           )
           , React.createElement('div', { style: {flex:1,background:"rgba(0,0,0,0.6)"}, onClick: function(){setShowDrawer(false);}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 606}} )
         )
@@ -4138,12 +4138,12 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                   , React.createElement('div', { style: {padding:"14px 16px",background:"#1A1000",border:"1px solid #5A3A00",borderRadius:10,marginBottom:12} }
                     , React.createElement('div', { style: {fontSize:14,fontWeight:800,color:"#FFB300",marginBottom:10} }, "✓ " , pasteUberTaxResult.isMonthly ? (lang==="en"?"Monthly Statement · ":"月度账单 · ")+pasteUberTaxResult.year+"-"+(pasteUberTaxResult.monthNum<10?"0":"")+pasteUberTaxResult.monthNum : (lang==="en"?"Tax Year ":"税务年度 ")+pasteUberTaxResult.year)
                     , React.createElement('div', { style: {display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,fontSize:12,marginBottom:8} }
-                      , React.createElement('div', {}, "💵 1099-K: ", React.createElement('b',{style:{color:"#00D4FF"}}, "$"+pasteUberTaxResult.kTotal.toFixed(2)))
-                      , React.createElement('div', {}, "⭐ 1099-NEC: ", React.createElement('b',{style:{color:"#00E676"}}, "$"+pasteUberTaxResult.necTotal.toFixed(2)))
-                      , React.createElement('div', {}, "🌉 " , lang==="en"?"Tolls":"过桥退款" , ": ", React.createElement('b',{style:{color:"#FFD700"}}, "$"+pasteUberTaxResult.tollTotal.toFixed(2)))
-                      , React.createElement('div', {}, "💸 " , lang==="en"?"Uber Fees":"Uber 抽成" , ": ", React.createElement('b',{style:{color:"#FF6B35"}}, "$"+pasteUberTaxResult.feesTotal.toFixed(2)))
-                      , React.createElement('div', {}, "🚗 " , T.trips , ": ", React.createElement('b', null, pasteUberTaxResult.totalTrips.toLocaleString()))
-                      , React.createElement('div', {}, "🛣 " , T.miles , ": ", React.createElement('b', null, pasteUberTaxResult.totalMiles.toLocaleString()))
+                      , React.createElement('div', {}, "💵 1099-K: ", pasteUberTaxResult.kTotal>0 ? React.createElement('b',{style:{color:"#00D4FF"}}, "$"+pasteUberTaxResult.kTotal.toFixed(2)) : React.createElement('span',{style:{color:C.text3,fontStyle:"italic"}}, lang==="en"?"none":"无"))
+                      , React.createElement('div', {}, "⭐ 1099-NEC: ", pasteUberTaxResult.necTotal>0 ? React.createElement('b',{style:{color:"#00E676"}}, "$"+pasteUberTaxResult.necTotal.toFixed(2)) : React.createElement('span',{style:{color:C.text3,fontStyle:"italic"}}, lang==="en"?"none":"无"))
+                      , React.createElement('div', {}, "🌉 " , lang==="en"?"Tolls":"过桥退款" , ": ", pasteUberTaxResult.tollTotal>0 ? React.createElement('b',{style:{color:"#FFD700"}}, "$"+pasteUberTaxResult.tollTotal.toFixed(2)) : React.createElement('span',{style:{color:C.text3,fontStyle:"italic"}}, lang==="en"?"none":"无"))
+                      , React.createElement('div', {}, "💸 " , lang==="en"?"Uber Fees":"Uber 抽成" , ": ", pasteUberTaxResult.feesTotal>0 ? React.createElement('b',{style:{color:"#FF6B35"}}, "$"+pasteUberTaxResult.feesTotal.toFixed(2)) : React.createElement('span',{style:{color:C.text3,fontStyle:"italic"}}, lang==="en"?"none":"无"))
+                      , React.createElement('div', {}, "🚗 " , T.trips , ": ", pasteUberTaxResult.totalTrips>0 ? React.createElement('b', null, pasteUberTaxResult.totalTrips.toLocaleString()) : React.createElement('span',{style:{color:C.text3,fontStyle:"italic"}}, lang==="en"?"none":"无"))
+                      , React.createElement('div', {}, "🛣 " , T.miles , ": ", pasteUberTaxResult.totalMiles>0 ? React.createElement('b', null, pasteUberTaxResult.totalMiles.toLocaleString()) : React.createElement('span',{style:{color:C.text3,fontStyle:"italic"}}, lang==="en"?"none":"无"))
                     )
                   )
                   , (pasteUberTaxResult.hasMonthly && pasteUberTaxResult.hasTrips) ? React.createElement('div', { style: {marginBottom:12} }
@@ -4155,10 +4155,15 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                               var k=pasteUberTaxResult.monthlyK[mo]||0;
                               var t=pasteUberTaxResult.monthlyTrips[mo]||0;
                               var mi=pasteUberTaxResult.monthlyMiles[mo]||0;
-                              return React.createElement('div', { key: mo, style: {display:"flex",justifyContent:"space-between",padding:"2px 0",borderBottom:i<11?"1px solid #1A2A44":"none"} }
+                              var isEmpty = k===0 && t===0 && mi===0;
+                              return React.createElement('div', { key: mo, style: {display:"flex",justifyContent:"space-between",padding:"2px 0",borderBottom:i<11?"1px solid #1A2A44":"none",opacity:isEmpty?0.5:1} }
                                 , React.createElement('span', {style:{color:C.text3,minWidth:90}}, pasteUberTaxResult.year+"-"+(i+1<10?"0":"")+(i+1))
-                                , React.createElement('span', {style:{color:"#00D4FF"}}, "$"+k.toFixed(2))
-                                , React.createElement('span', {style:{color:C.text2}}, t+"t · "+mi+"mi")
+                                , isEmpty
+                                  ? React.createElement('span', {style:{color:C.text3,fontStyle:"italic",fontSize:10}}, lang==="en"?"— no income —":"— 无收入 —")
+                                  : React.createElement('span', {style:{color:"#00D4FF"}}, "$"+k.toFixed(2))
+                                , isEmpty
+                                  ? React.createElement('span', {style:{color:"transparent"}}, "—")
+                                  : React.createElement('span', {style:{color:C.text2}}, t+"t · "+mi+"mi")
                               );
                             });
                           })()
