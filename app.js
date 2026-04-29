@@ -556,7 +556,7 @@ function ExpItem(p){var item=p.item,aC=p.allC,isEn=p.lang==="en",cat=aC[item.cat
 // Hide placeholder times from imported data ("12:00" charging, "08:00" coffee, "23:59" month-end)
 var hideTime=item.time==="12:00"||item.time==="08:00"||item.time==="23:59";
 var dateStr=isMo?moPrefix+(item.statementMonth||item.date.slice(0,7)):(item.time&&!hideTime?fmtDate(item.date)+" "+item.time:fmtDate(item.date));
-var L_FIXED=isEn?"Fixed":"固定",L_EDIT=isEn?"Edit":"编辑";return React.createElement(Card, {style:{cursor:"pointer"}, onClick: p.onEdit, __self: this, __source: {fileName: _jsxFileName, lineNumber: 48}}, React.createElement('div', { style: {display:"flex",gap:10,alignItems:"flex-start"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 48}}, React.createElement('span', { style: {fontSize:22,marginTop:2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 48}}, icon), React.createElement('div', { style: {flex:1,minWidth:0}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 48}}, React.createElement('div', { style: {fontSize:15,fontWeight:600,marginBottom:2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 48}}, label), React.createElement('div', { style: {fontSize:13,color:"#B8D8EC",display:"flex",alignItems:"center",gap:6} }, dateStr, item.mode==="rideshare"?React.createElement('svg',{width:11,height:14,viewBox:"0 0 14 18",fill:"none",style:{opacity:0.6,flexShrink:0}},React.createElement('rect',{x:1.5,y:1.5,width:11,height:15,rx:2,stroke:"#C8E4F8",strokeWidth:1.3}),React.createElement('circle',{cx:7,cy:13.5,r:0.8,fill:"#C8E4F8"})):null, item.mode==="taxi"?React.createElement('svg',{width:14,height:11,viewBox:"0 0 18 14",fill:"none",style:{opacity:0.6,flexShrink:0}},React.createElement('path',{d:"M2 8 L4 4 L14 4 L16 8 L16 11 L2 11 Z",stroke:"#C8E4F8",strokeWidth:1.3,strokeLinejoin:"round"}),React.createElement('circle',{cx:5,cy:11,r:1.4,stroke:"#C8E4F8",strokeWidth:1.1}),React.createElement('circle',{cx:13,cy:11,r:1.4,stroke:"#C8E4F8",strokeWidth:1.1}),React.createElement('rect',{x:6,y:1,width:6,height:2,fill:"#C8E4F8"})):null, item.mode==="shared"?React.createElement('svg',{width:13,height:13,viewBox:"0 0 14 14",fill:"none",style:{opacity:0.55,flexShrink:0}},React.createElement('rect',{x:1.5,y:4,width:11,height:8.5,stroke:"#C8E4F8",strokeWidth:1.3}),React.createElement('path',{d:"M1.5 4 L4 1.5 L10 1.5 L12.5 4",stroke:"#C8E4F8",strokeWidth:1.3,strokeLinejoin:"round"}),React.createElement('line',{x1:7,y1:4,x2:7,y2:12.5,stroke:"#C8E4F8",strokeWidth:1.1})):null ), item.notes?React.createElement('div', { style: {fontSize:13,color:"#B0D4E4"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 48}}, item.notes):null, item.odometer?React.createElement('div', { style: {fontSize:12,color:"#FFD700",marginTop:2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 48}}, "🛣 " , (+item.odometer).toLocaleString(), " mi", p.distFromLast?" (+"+p.distFromLast+(isEn?" mi since last":" mi 距上次")+")":""):null, item.isFixed?React.createElement('span', { style: {fontSize:12,background:"#0D2010",borderRadius:6,padding:"2px 8px",color:"#5ADA7A",display:"inline-block",marginTop:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 48}}, L_FIXED):null), React.createElement('div', { style: {textAlign:"right"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 48}}, React.createElement('div', { style: {fontSize:15,fontWeight:700,color:"#E8EAF0"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 48}}, "-", fmt(item.amount)), React.createElement('div', { style: {fontSize:11,color:"#6AACEE",marginTop:3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 48}}, L_EDIT, " ›"))));}
+var L_FIXED=isEn?"Fixed":"固定",L_EDIT=isEn?"Edit":"编辑";return React.createElement(Card, {style:{cursor:"pointer"}, onClick: p.onEdit, __self: this, __source: {fileName: _jsxFileName, lineNumber: 48}}, React.createElement('div', { style: {display:"flex",gap:10,alignItems:"flex-start"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 48}}, React.createElement('span', { style: {fontSize:22,marginTop:2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 48}}, icon), React.createElement('div', { style: {flex:1,minWidth:0}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 48}}, React.createElement('div', { style: {fontSize:15,fontWeight:600,marginBottom:2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 48}}, label), React.createElement('div', { style: {fontSize:13,color:"#B8D8EC",display:"flex",alignItems:"center",gap:6} }, dateStr ), item.notes?React.createElement('div', { style: {fontSize:13,color:"#B0D4E4"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 48}}, item.notes):null, item.odometer?React.createElement('div', { style: {fontSize:12,color:"#FFD700",marginTop:2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 48}}, "🛣 " , (+item.odometer).toLocaleString(), " mi", p.distFromLast?" (+"+p.distFromLast+(isEn?" mi since last":" mi 距上次")+")":""):null, item.isFixed?React.createElement('span', { style: {fontSize:12,background:"#0D2010",borderRadius:6,padding:"2px 8px",color:"#5ADA7A",display:"inline-block",marginTop:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 48}}, L_FIXED):null), React.createElement('div', { style: {textAlign:"right"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 48}}, React.createElement('div', { style: {fontSize:15,fontWeight:700,color:"#E8EAF0"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 48}}, "-", fmt(item.amount)), React.createElement('div', { style: {fontSize:11,color:"#6AACEE",marginTop:3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 48}}, L_EDIT, " ›"))));}
 // Module-level expansion state (not React state, so it persists across re-renders without hooks)
 var __bucketExpanded = {};
 function BucketList(p){
@@ -949,7 +949,7 @@ function LockScreen(p){
   );
 }
 function App() {
-  var r0=useState(0),tab=r0[0],setTab=r0[1]; var r1=useState("month"),dashV=r1[0],setDashV=r1[1]; var r1c=useState("month"),incV=r1c[0],setIncV=r1c[1]; var r1d=useState("all"),expModeF=r1d[0],setExpModeF=r1d[1];
+  var r0=useState(0),tab=r0[0],setTab=r0[1]; var r1=useState("month"),dashV=r1[0],setDashV=r1[1]; var r1c=useState("month"),incV=r1c[0],setIncV=r1c[1];
   var r2=useState("month"),repP=r2[0],setRepP=r2[1]; var r3=useState(curMo()),mo=r3[0],setMo=r3[1];
   var r4=useState(curYr()),yr=r4[0],setYr=r4[1]; var r5=useState("ops"),incT=r5[0],setIncT=r5[1];
   var r6=useState(function(){try{var s=localStorage.getItem("nyc_sf");return s||null;}catch(e){return null;}}()),sf=r6[0],_setSf=r6[1];function setSf(v){_setSf(v);try{if(v)localStorage.setItem("nyc_sf",v);else localStorage.removeItem("nyc_sf");}catch(e){}} var r7=useState("month"),expV=r7[0],setExpV=r7[1];
@@ -2533,65 +2533,21 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
         , tab===2 ? (
           React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 342}}
             , React.createElement(SegBtn, { val: expV, set: setExpV, opts: [["month",T.thisMonth],["year",T.thisYear]], __self: this, __source: {fileName: _jsxFileName, lineNumber: 343}} )
-            , (function(){
-                var src = expV==="month" ? feAll : yAllExps();
-                if(!src||!src.length) return null;
-                var rsExp=src.reduce(function(s,e){return s+(e.mode==="rideshare"?(+e.amount||0):0);},0);
-                var txExp=src.reduce(function(s,e){return s+(e.mode==="taxi"?(+e.amount||0):0);},0);
-                var shExp=src.reduce(function(s,e){return s+(e.mode==="shared"?(+e.amount||0):0);},0);
-                var unExp=src.reduce(function(s,e){return s+((!e.mode||(e.mode!=="rideshare"&&e.mode!=="taxi"&&e.mode!=="shared"))?(+e.amount||0):0);},0);
-                if(simpleMode) return null;  // hidden in simple mode
-                if(rsExp===0&&txExp===0&&shExp===0) return null;  // nothing classified yet
-                var showRs = driverType!=="taxi";
-                var showTx = driverType!=="rideshare";
-                return React.createElement('div', {style:{display:"flex",gap:8,fontSize:11,marginBottom:10,padding:"6px 10px",background:C.bg3,borderRadius:8,flexWrap:"wrap"}}
-                  , (showRs && rsExp>0) ? React.createElement('span', null, "📱 ", React.createElement('b',{style:{color:"#5AACFF"}}, fmt(rsExp))) : null
-                  , (showTx && txExp>0) ? React.createElement('span', null, "🚖 ", React.createElement('b',{style:{color:"#FFB300"}}, fmt(txExp))) : null
-                  , shExp>0 ? React.createElement('span', null, "📦 ", React.createElement('b',{style:{color:C.text2}}, fmt(shExp))) : null
-                  , unExp>0 ? React.createElement('span', {style:{color:C.text3}}, "❓ ", React.createElement('b', null, fmt(unExp))) : null
-                );
-              }())
-            , (function(){
-                // Mode filter buttons — only show if there are mode-tagged entries
-                var src = expV==="month" ? feAll : yAllExps();
-                if(!src||!src.length) return null;
-                var hasModeData = src.some(function(e){return e.mode==="rideshare"||e.mode==="taxi"||e.mode==="shared";});
-                if(!hasModeData) return null;
-                if(simpleMode) return null;  // hidden in simple mode
-                var opts=[
-                  {v:"all",l:lang==="en"?"All":"全部",cl:C.text2,bg:"#1A2A44"},
-                  {v:"rideshare",l:lang==="en"?"📱 RS":"📱 网约车",cl:"#5AACFF",bg:"#0A2040"},
-                  {v:"taxi",l:lang==="en"?"🚖 Taxi":"🚖 出租车",cl:"#FFB300",bg:"#1A1000"},
-                  {v:"shared",l:lang==="en"?"📦 Shared":"📦 共用",cl:C.text2,bg:C.bg3},
-                  {v:"unclassified",l:lang==="en"?"❓ Unset":"❓ 未分类",cl:C.text3,bg:C.bg3}
-                ];
-                // Hide rideshare option if user is taxi mode (and no rs data); same for taxi
-                opts = opts.filter(function(o){
-                  if(o.v==="rideshare" && driverType==="taxi" && !src.some(function(e){return e.mode==="rideshare";})) return false;
-                  if(o.v==="taxi" && driverType==="rideshare" && !src.some(function(e){return e.mode==="taxi";})) return false;
-                  if(o.v==="unclassified" && !src.some(function(e){return !e.mode||(e.mode!=="rideshare"&&e.mode!=="taxi"&&e.mode!=="shared");})) return false;
-                  return true;
-                });
-                return React.createElement('div', {style:{display:"flex",gap:5,marginBottom:10,flexWrap:"wrap"}},
-                  opts.map(function(o){
-                    var sel=expModeF===o.v;
-                    return React.createElement('button',{key:o.v,onClick:function(){setExpModeF(o.v);},style:{flex:o.v==="all"?"0 0 auto":"1",padding:"5px 10px",borderRadius:6,border:"1px solid "+(sel?o.cl:"#1A2A44"),background:sel?o.bg:"transparent",color:sel?o.cl:C.text3,fontSize:12,fontWeight:sel?700:500,cursor:"pointer"}},o.l);
-                  })
-                );
-              }())
+
+
             , expV==="month" ? (
               React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 345}}
                 , React.createElement(MoNav, { val: mo, set: setMo, lang: lang, onPick: function(){setMpState({value:mo,onChange:function(v){setMo(v);}});}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 346}} )
                 , fixMo.length > 0 ? React.createElement(Card, { style: {background:"#0D1E10",border:"1px solid #1A3A20",display:"flex",justifyContent:"space-between",alignItems:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 347}}, React.createElement('span', { style: {fontSize:14,color:"#5ADA7A",fontWeight:700}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 347}}, T.fixedFees+" "+fixMo.length), React.createElement('span', { style: {fontSize:14,fontWeight:700,color:"#FF9A65"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 347}}, "-", fmt(tFix))) : null
                 , React.createElement(Card, { style: {display:"flex",justifyContent:"space-between"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 348}}, React.createElement('span', { style: {fontSize:14,color:C.text2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 348}}, T.totalExpense), React.createElement('span', { style: {fontSize:18,fontWeight:800,color:"#FF6B35"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 348}}, fmt(tExp)))
-                , React.createElement(BucketList, { items: (function(){if(expModeF==="all")return feAll; if(expModeF==="unclassified") return feAll.filter(function(e){return !e.mode||(e.mode!=="rideshare"&&e.mode!=="taxi"&&e.mode!=="shared");}); return feAll.filter(function(e){return e.mode===expModeF;});}()), allC: allC, lang: lang, el: el, setEl: setEl, allEl: el, forceRerender: forceRerender, showUndo: showUndo, emptyText: T.noData, onEditFixed: function(item){setEditFx({id:item.id,amount:item.amount,notes:item.notes||"",fixedLabel:item.fixedLabel});}, onEditExp: function(item){setEf(Object.assign({},item,{qty:item.qty||"",isRecurring:false}));setSf("exp_edit_"+item.id);}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 349}} )
+                , React.createElement(BucketList, { items: feAll, allC: allC, lang: lang, el: el, setEl: setEl, allEl: el, forceRerender: forceRerender, showUndo: showUndo, emptyText: T.noData, onEditFixed: function(item){setEditFx({id:item.id,amount:item.amount,notes:item.notes||"",fixedLabel:item.fixedLabel});}, onEditExp: function(item){setEf(Object.assign({},item,{qty:item.qty||"",isRecurring:false}));setSf("exp_edit_"+item.id);}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 349}} )
               )
             ) : null
             , expV==="year" ? (
               React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 353}}
                 , React.createElement(YrNav, { val: yr, set: setYr, lang: lang, onPick: function(){var y=prompt(lang==="en"?"Enter year:":"输入年份:",yr);if(y&&/^[0-9]{4}$/.test(y))setYr(y);}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 354}} )
                 , React.createElement(Card, { style: {display:"flex",justifyContent:"space-between",marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 355}}, React.createElement('span', { style: {fontSize:14,color:C.text2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 355}}, T.totalExpense), React.createElement('span', { style: {fontSize:18,fontWeight:800,color:"#FF6B35"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 355}}, fmt(yExp)))
-                , (function(){var allYE_raw=yAllExps(); var allYE=expModeF==="all"?allYE_raw:(expModeF==="unclassified"?allYE_raw.filter(function(e){return !e.mode||(e.mode!=="rideshare"&&e.mode!=="taxi"&&e.mode!=="shared");}):allYE_raw.filter(function(e){return e.mode===expModeF;})); if(!allYE.length)return React.createElement(Empty, { text: T.noData, __self: this, __source: {fileName: _jsxFileName, lineNumber: 356}} );return React.createElement(BucketList, { items: allYE, allC: allC, lang: lang, el: el, setEl: setEl, allEl: el, forceRerender: forceRerender, showUndo: showUndo, emptyText: "", onEditFixed: function(item){setEditFx({id:item.id,amount:item.amount,notes:item.notes||"",fixedLabel:item.fixedLabel});}, onEditExp: function(item){setEf(Object.assign({},item,{qty:item.qty||"",isRecurring:false}));setSf("exp_edit_"+item.id);}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 356}} );}())
+                , (function(){var allYE_raw=yAllExps(); var allYE=allYE_raw; if(!allYE.length)return React.createElement(Empty, { text: T.noData, __self: this, __source: {fileName: _jsxFileName, lineNumber: 356}} );return React.createElement(BucketList, { items: allYE, allC: allC, lang: lang, el: el, setEl: setEl, allEl: el, forceRerender: forceRerender, showUndo: showUndo, emptyText: "", onEditFixed: function(item){setEditFx({id:item.id,amount:item.amount,notes:item.notes||"",fixedLabel:item.fixedLabel});}, onEditExp: function(item){setEf(Object.assign({},item,{qty:item.qty||"",isRecurring:false}));setSf("exp_edit_"+item.id);}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 356}} );}())
                 , Object.keys(cc).length > 0 ? React.createElement('div', { style: {marginTop:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 357}}, React.createElement('div', { style: {fontSize:14,fontWeight:700,color:C.text,marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 357}}, lang==="en"?"Custom Categories":"我的自定义类别"), Object.entries(cc).map(function(entry){var key=entry[0],cat=entry[1];return React.createElement(Card, { key: key, style: {display:"flex",alignItems:"center",gap:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 357}}, React.createElement('span', { style: {fontSize:22}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 357}}, cat.icon), React.createElement('div', { style: {flex:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 357}}, React.createElement('div', { style: {fontSize:14,fontWeight:600}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 357}}, cat.label), React.createElement('div', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 357}}, cat.group)), React.createElement('button', { onClick: function(){setCf({label:cat.label,icon:cat.icon,group:cat.group,_editKey:key});setSf("cc");}, style: {background:"none",border:"1px solid #2A4A6A",borderRadius:8,padding:"4px 10px",color:"#6AACEE",cursor:"pointer",fontSize:13}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 357}}, T.edit), React.createElement('button', { onClick: function(){if(!confirm(lang==="en"?"Delete this category?":"确认删除这个类别？"))return;var prev=Object.assign({},cc);var u=Object.assign({},cc);delete u[key];setCc(u);showUndo((lang==="en"?"✓ Category deleted":"✓ 类别已删除"), {prevCc:prev});}, style: {background:"none",border:"1px solid #3A1A1A",borderRadius:8,padding:"4px 10px",color:"#FF5252",cursor:"pointer",fontSize:13}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 357}}, T.del));})) : null
                 , React.createElement('div', { style: {marginTop:14,textAlign:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 358}}, React.createElement('button', { onClick: function(){setCf({label:"",icon:"&#128296;",group:"车辆"});setSf("cc");}, style: {background:"#1A2A44",border:"1px dashed #2A3A54",borderRadius:10,padding:"10px 18px",color:C.text2,fontSize:14,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 358}}, "+ " , lang==="en"?"Custom Category":"新增自定义类别"))
               )
@@ -2839,7 +2795,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
               
               // ========== Version footer ==========
               , React.createElement('div', {style:{textAlign:"center",fontSize:11,color:C.text3,padding:"10px 0"}}
-                , "NYC Driver Tracker · v4.0.7"
+                , "NYC Driver Tracker · v4.1.5"
                 , React.createElement('br')
                 , lang==="en"?"Built for NYC drivers who care about their numbers.":"为认真对待数字的 NYC 司机而做。"
               )
@@ -3428,16 +3384,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
             , React.createElement('div', { style: {width:24,height:24,borderRadius:6,background:"#1A2A44",border:"2px solid #2A4A6A",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,flexShrink:0}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 545}}, ef.isRecurring?"✓":"")
             , React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 546}}, React.createElement('div', { style: {fontSize:14,fontWeight:600,color:C.text}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 546}}, T.fixedMonthly), React.createElement('div', { style: {fontSize:12,color:C.text3,marginTop:2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 546}}, T.fixedMonthlyDesc))
           ) : null
-          // Mode toggle (hidden in simple mode)
-          , !simpleMode ? React.createElement('div', {style:{display:"flex",alignItems:"center",gap:8,marginTop:2}},
-              React.createElement('span', {style:{fontSize:11,color:C.text3,minWidth:40}}, "🏷 ", lang==="en"?"Tag":"记给"),
-              React.createElement('div', {style:{display:"flex",gap:5,flex:1}},
-                [{v:"rideshare",l:lang==="en"?"📱":"📱",cl:"#5AACFF",bg:"#0A2040"},{v:"taxi",l:"🚖",cl:"#FFB300",bg:"#1A1000"},{v:"shared",l:"📦",cl:C.text3,bg:C.bg3}].map(function(opt){
-                  var sel=ef.mode===opt.v;
-                  return React.createElement('button',{key:opt.v||"shared",onClick:function(){setEf(Object.assign({},ef,{mode:opt.v}));},style:{flex:1,padding:"5px 4px",borderRadius:6,border:"1px solid "+(sel?opt.cl:"#2A3A54"),background:sel?opt.bg:"transparent",color:sel?opt.cl:C.text3,fontSize:13,fontWeight:sel?700:400,cursor:"pointer"}},opt.l + (sel ? (opt.v==="rideshare"?(lang==="en"?" Rideshare":" 网约车"):opt.v==="taxi"?(lang==="en"?" Taxi":" 出租车"):(lang==="en"?" Shared":" 共用")):""));
-                })
-              )
-            ) : null
+
           , sf.startsWith("exp_edit_") ? React.createElement('button', { onClick: function(){if(!confirm(lang==="en"?"Delete this expense?":"确认删除这笔支出？"))return;var eid=+sf.replace("exp_edit_","");var prev=el.slice();setEl(el.filter(function(x){return x.id!==eid;}));setSf(null);showUndo((lang==="en"?"✓ Expense deleted":"✓ 支出已删除"), {prevEl:prev});}, style: {width:"100%",background:"#2A1010",border:"1px solid #5A2020",color:"#FF7060",fontSize:14,fontWeight:700,padding:"12px",borderRadius:10,cursor:"pointer",marginTop:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 547}}, "🗑 " , lang==="en"?"Delete":"删除") : null
         )
       ) : null
@@ -3495,14 +3442,14 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
             , React.createElement('div', { style: {padding:"10px 0",flex:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 602}}
               , (function(){
                 var mainItems = [
-                  {icon:"📖",label:lang==="en"?"User Guide":"使用指南",action:function(){setShowDrawer(false);setSf("help");}},
+                  {icon:"📝",label:lang==="en"?"Notes":"记事本",action:function(){setShowDrawer(false);setSf("notes");}},
                   {icon:"🧾",label:lang==="en"?"Tax Center":"税务中心",action:function(){setShowDrawer(false);setSf("tax_center");}},
                   {icon:"&#128190;",label:T.backup,action:function(){setShowDrawer(false);setShowBackup(true);}},
                   {icon:"&#128276;",label:T.reminder,action:function(){setShowDrawer(false);setShowRemMgr(true);}},
                   {icon:"&#128663;",label:T.vehicle,action:function(){setShowDrawer(false);setSf("drawer_veh");}},
                   {icon:"&#128241;",label:T.platform,action:function(){setShowDrawer(false);setShowPlatMgr(true);}},
-                  {icon:"📝",label:lang==="en"?"Notes":"记事本",action:function(){setShowDrawer(false);setSf("notes");}},
-                  {icon:"🚖",label:lang==="en"?"Driver Type":"切换司机类型",action:function(){setShowDrawer(false);setDriverType(null);setOnboardingDismissed(false);}}
+                  {icon:"🚖",label:lang==="en"?"Driver Type":"切换司机类型",action:function(){setShowDrawer(false);setDriverType(null);setOnboardingDismissed(false);}},
+                  {icon:"📖",label:lang==="en"?"User Guide":"使用指南",action:function(){setShowDrawer(false);setSf("help");}}
                 ];
                 var advancedItems = [
                   {icon:simpleMode?"🎯":"⚡", label:(simpleMode?(lang==="en"?"Simple Mode (ON)":"精简模式（开启）"):(lang==="en"?"Simple Mode (OFF)":"精简模式（关闭）")), action:function(){setSimpleMode(!simpleMode);showToast(simpleMode?(lang==="en"?"Full mode":"完整模式"):(lang==="en"?"✓ Simple mode":"✓ 精简模式"));}, color:simpleMode?"#5ADA7A":C.text2},
@@ -3540,7 +3487,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                 );
               }())
             )
-            , React.createElement('div', { style: {fontSize:10,color:C.text3,textAlign:"center",padding:"12px 18px 16px",borderTop:"1px solid "+C.border,letterSpacing:0.5} }, "NYC RIDESHARE TRACKER · v3.7.3"    )
+            , React.createElement('div', { style: {fontSize:10,color:C.text3,textAlign:"center",padding:"12px 18px 16px",borderTop:"1px solid "+C.border,letterSpacing:0.5} }, "NYC RIDESHARE TRACKER · v4.1.5"    )
           )
           , React.createElement('div', { style: {flex:1,background:"rgba(0,0,0,0.6)"}, onClick: function(){setShowDrawer(false);}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 606}} )
         )
@@ -4869,30 +4816,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                 alert(msg);
               }catch(err){setSyncStatus(lang==="en"?"✗ Import failed":"✗ 导入失败");setTimeout(function(){setSyncStatus("");},2500);alert((lang==="en"?"Error: ":"错误：")+err.message);}inputEl.value="";},100);});};reader.readAsText(file);}, style: {width:"100%",background:C.bg3,border:"1px solid #2A3A54",borderRadius:8,padding:"8px",color:C.text,fontSize:13,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 808}} )
             )
-            , React.createElement('div', { style: {background:C.bg3,border:"1px solid "+C.border,borderRadius:12,padding:14,marginBottom:10} }
-              , React.createElement('div', { style: {fontSize:15,fontWeight:700,color:C.text2,marginBottom:4} }, "🏷 " , lang==="en"?"Bulk Re-tag Shared Expenses":"批量归类共用支出")
-              , React.createElement('div', { style: {fontSize:11,color:C.text3,marginBottom:10,lineHeight:1.5} }, lang==="en"?"Convert all expenses tagged as 📦 Shared to a specific mode at once. Useful for old data.":"把所有标为 📦 共用 的支出一键改成指定类型。适合处理历史老数据。")
-              , (function(){
-                  var sharedCnt=el.filter(function(e){return e.mode==="shared";}).length;
-                  return React.createElement('div', {style:{fontSize:11,color:C.text3,marginBottom:10}}, (lang==="en"?"Currently shared: ":"当前共用：") , React.createElement('b',{style:{color:"#FFD700"}}, sharedCnt + " " + (lang==="en"?"entries":"条")));
-                }())
-              , React.createElement('div', { style: {display:"grid",gridTemplateColumns:"1fr 1fr",gap:8} }
-                , React.createElement('button', { onClick: function(){
-                    var sharedItems=el.filter(function(e){return e.mode==="shared";});
-                    if(!sharedItems.length){alert(lang==="en"?"No shared expenses to convert.":"没有共用支出可转换");return;}
-                    if(!confirm((lang==="en"?"Convert ":"将 ")+sharedItems.length+(lang==="en"?" shared expenses to 📱 Rideshare?":" 条共用支出改为 📱 网约车？")))return;
-                    setEl(el.map(function(item){return item.mode==="shared"?Object.assign({},item,{mode:"rideshare"}):item;}));
-                    showToast(lang==="en"?"✓ Done":"✓ 已转换");
-                  }, style: {background:"#0A2040",border:"1px solid #2A5080",borderRadius:10,padding:"10px",color:"#5AACFF",fontSize:12,fontWeight:700,cursor:"pointer"} }, "📱 → " , lang==="en"?"Rideshare":"网约车")
-                , React.createElement('button', { onClick: function(){
-                    var sharedItems=el.filter(function(e){return e.mode==="shared";});
-                    if(!sharedItems.length){alert(lang==="en"?"No shared expenses to convert.":"没有共用支出可转换");return;}
-                    if(!confirm((lang==="en"?"Convert ":"将 ")+sharedItems.length+(lang==="en"?" shared expenses to 🚖 Taxi?":" 条共用支出改为 🚖 出租车？")))return;
-                    setEl(el.map(function(item){return item.mode==="shared"?Object.assign({},item,{mode:"taxi"}):item;}));
-                    showToast(lang==="en"?"✓ Done":"✓ 已转换");
-                  }, style: {background:"#1A1000",border:"1px solid #3A2800",borderRadius:10,padding:"10px",color:"#FFB300",fontSize:12,fontWeight:700,cursor:"pointer"} }, "🚖 → " , lang==="en"?"Taxi":"出租车")
-              )
-            )
+
             )
           )
         )
