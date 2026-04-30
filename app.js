@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-console.log("%cNYC Driver Tracker — version v316","color:#00D4FF;font-weight:bold;font-size:14px");
+console.log("%cNYC Driver Tracker — version v319","color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
 //   <script>window.SENTRY_DSN = "https://YOUR_KEY@oXXX.ingest.sentry.io/PROJECT";</script>
@@ -11,7 +11,7 @@ console.log("%cNYC Driver Tracker — version v316","color:#00D4FF;font-weight:b
       window.Sentry.init({
         dsn:window.SENTRY_DSN,
         environment:(location.hostname==="localhost"||location.hostname==="127.0.0.1")?"development":"production",
-        release:"nyc-driver-tracker@1.0.18",
+        release:"nyc-driver-tracker@1.0.21",
         tracesSampleRate:0.1,
         // Don't send events from local dev
         beforeSend:function(event){
@@ -763,6 +763,41 @@ function TimePicker(p){
 }
 
 // Custom month picker — for "Billing Month", "Statement Month" etc.
+// InputModal — replacement for native prompt() with theme-consistent UI.
+function InputModal(p){
+  var isEn = p.lang === "en";
+  var r1 = useState(p.defaultValue||""); var val = r1[0], setVal = r1[1];
+  var doSubmit = function(){
+    var trimmed = (val||"").trim();
+    if(p.required && !trimmed) return; // disallow empty if required
+    p.onSubmit(trimmed);
+  };
+  return React.createElement('div',{
+    style:{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1500,padding:16,animation:"fadeIn 0.15s ease-out"},
+    onClick:function(e){if(e.target===e.currentTarget)p.onCancel();}
+  },
+    React.createElement('div',{style:{background:C.bg2,borderRadius:14,padding:20,width:"100%",maxWidth:340,border:"1px solid #1F3A5A",boxShadow:"0 8px 32px rgba(0,0,0,0.5)"}},
+      p.title?React.createElement('div',{style:{textAlign:"center",fontSize:16,fontWeight:700,color:C.text,marginBottom:8}},p.title):null,
+      p.message?React.createElement('div',{style:{fontSize:13,color:C.text2,marginBottom:14,lineHeight:1.5,textAlign:"center"}},p.message):null,
+      React.createElement('input',{
+        type:p.inputType||"text",
+        inputMode:p.inputMode||undefined,
+        pattern:p.pattern||undefined,
+        value:val,
+        onChange:function(e){setVal(e.target.value);},
+        onKeyDown:function(e){if(e.key==="Enter")doSubmit();},
+        autoFocus:true,
+        placeholder:p.placeholder||"",
+        style:{width:"100%",background:"#0A1828",border:"1px solid "+C.border,borderRadius:10,padding:"12px 14px",color:C.text,fontSize:15,fontWeight:500,marginBottom:14,outline:"none",boxSizing:"border-box"}
+      }),
+      React.createElement('div',{style:{display:"flex",gap:10}},
+        React.createElement('button',{onClick:p.onCancel,style:{flex:1,background:"#1A2A44",border:"1px solid #2A3A54",color:C.text2,fontSize:14,fontWeight:600,padding:"10px",borderRadius:8,cursor:"pointer"}},isEn?"Cancel":"取消"),
+        React.createElement('button',{onClick:doSubmit,style:{flex:1,background:"linear-gradient(135deg,#00D4FF,#0055FF)",border:"none",color:"#fff",fontSize:14,fontWeight:700,padding:"10px",borderRadius:8,cursor:"pointer"}},p.confirmLabel||(isEn?"OK":"确定"))
+      )
+    )
+  );
+}
+
 // ConfirmModal — lightweight confirmation for routine actions (delete with undo, etc.)
 // Unlike DangerConfirm, does NOT require typing — just OK/Cancel.
 function ConfirmModal(p){
@@ -1342,6 +1377,23 @@ function App() {
   var r52f=useState(null),dangerConfirm=r52f[0],setDangerConfirm=r52f[1];
   // Lightweight confirm modal state (replaces native confirm() for routine deletes)
   var r52g=useState(null),confirmState=r52g[0],setConfirmState=r52g[1];
+  // Input modal state (replaces native prompt())
+  var r52j=useState(null),inputState=r52j[0],setInputState=r52j[1];
+  function inputAction(opts){
+    setInputState({
+      title: opts.title,
+      message: opts.message,
+      placeholder: opts.placeholder,
+      defaultValue: opts.defaultValue,
+      confirmLabel: opts.confirmLabel,
+      inputType: opts.inputType,
+      inputMode: opts.inputMode,
+      pattern: opts.pattern,
+      required: opts.required!==false,
+      onSubmit: function(v){setInputState(null);opts.onSubmit(v);},
+      onCancel: function(){setInputState(null);if(opts.onCancel)opts.onCancel();}
+    });
+  }
   // Expense search & filter
   var r52h=useState(""),expSearch=r52h[0],setExpSearch=r52h[1];
   var r52i=useState([]),expFilterCat=r52i[0],setExpFilterCat=r52i[1];
@@ -2156,41 +2208,46 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
           React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 262}}
             , React.createElement(SegBtn, { val: dashV, set: setDashV, opts: [["month",T.thisMonth],["year",T.thisYear]], __self: this, __source: {fileName: _jsxFileName, lineNumber: 263}} )
 
-            // === SMART INSIGHTS CARD: monthly summary + IRS mileage deduction ===
+            // === SMART INSIGHTS CARD: month view → vs last month; year view → IRS mileage deduction ===
             , (function(){
                 var hasInsights=false;
-                var monthSummary=null;
+                var summarySection=null;
                 var mileageDeduction=null;
-                // Monthly summary: only show if last month has meaningful data
-                if(lmInc>0||lmExp>0){
-                  hasInsights=true;
-                  var dInc=lmInc>0?Math.round((tInc-lmInc)/lmInc*100):0;
-                  var dirSym=dInc>0?"↑":(dInc<0?"↓":"→");
-                  var dirCol=dInc>0?"#00E676":(dInc<0?"#FF7060":"#7A9AB8");
-                  monthSummary=React.createElement('div',{style:{paddingBottom:hasInsights&&yMiles>0?10:0,borderBottom:yMiles>0?"1px solid "+C.border:"none",marginBottom:yMiles>0?10:0}},
-                    React.createElement('div',{style:{fontSize:11,color:C.text3,marginBottom:4,letterSpacing:0.3}},lang==="en"?"VS LAST MONTH":"对比上月"),
-                    React.createElement('div',{style:{fontSize:13,color:C.text,lineHeight:1.6}},
-                      lang==="en"
-                        ? React.createElement('span',null,"Net ",React.createElement('b',{style:{color:net>=0?"#00E676":"#FF7060"}},fmt(net))," ",lmInc>0?React.createElement('span',{style:{color:dirCol,fontWeight:600}},dirSym," ",Math.abs(dInc),"%"):null,hourlyRate>0?React.createElement('span',{style:{color:C.text3}},"  ·  ",fmt(hourlyRate),"/hr"):null)
-                        : React.createElement('span',null,"净利润 ",React.createElement('b',{style:{color:net>=0?"#00E676":"#FF7060"}},fmt(net))," ",lmInc>0?React.createElement('span',{style:{color:dirCol,fontWeight:600}},dirSym," ",Math.abs(dInc),"%"):null,hourlyRate>0?React.createElement('span',{style:{color:C.text3}},"  ·  时薪 ",fmt(hourlyRate)):null)
-                    )
-                  );
+
+                if(dashV==="month"){
+                  // MONTH VIEW: show "vs last month" comparison
+                  if(lmInc>0||lmExp>0){
+                    hasInsights=true;
+                    var dInc=lmInc>0?Math.round((tInc-lmInc)/lmInc*100):0;
+                    var dirSym=dInc>0?"↑":(dInc<0?"↓":"→");
+                    var dirCol=dInc>0?"#00E676":(dInc<0?"#FF7060":"#7A9AB8");
+                    summarySection=React.createElement('div',null,
+                      React.createElement('div',{style:{fontSize:11,color:C.text3,marginBottom:4,letterSpacing:0.3}},lang==="en"?"VS LAST MONTH":"对比上月"),
+                      React.createElement('div',{style:{fontSize:13,color:C.text,lineHeight:1.6}},
+                        lang==="en"
+                          ? React.createElement('span',null,"Net ",React.createElement('b',{style:{color:net>=0?"#00E676":"#FF7060"}},fmt(net))," ",lmInc>0?React.createElement('span',{style:{color:dirCol,fontWeight:600}},dirSym," ",Math.abs(dInc),"%"):null,hourlyRate>0?React.createElement('span',{style:{color:C.text3}},"  ·  ",fmt(hourlyRate),"/hr"):null)
+                          : React.createElement('span',null,"净利润 ",React.createElement('b',{style:{color:net>=0?"#00E676":"#FF7060"}},fmt(net))," ",lmInc>0?React.createElement('span',{style:{color:dirCol,fontWeight:600}},dirSym," ",Math.abs(dInc),"%"):null,hourlyRate>0?React.createElement('span',{style:{color:C.text3}},"  ·  时薪 ",fmt(hourlyRate)):null)
+                      )
+                    );
+                  }
+                } else {
+                  // YEAR VIEW: show IRS mileage deduction (annual concept)
+                  if(yMiles>0){
+                    hasInsights=true;
+                    var deduction=Math.round(yMiles*(+mileageRate)*100)/100;
+                    mileageDeduction=React.createElement('div',null,
+                      React.createElement('div',{style:{fontSize:11,color:C.text3,marginBottom:4,letterSpacing:0.3}},lang==="en"?"IRS MILEAGE DEDUCTION · "+yr:"里程抵税 · "+yr+"年"),
+                      React.createElement('div',{style:{display:"flex",justifyContent:"space-between",alignItems:"baseline"}},
+                        React.createElement('div',{style:{fontSize:13,color:C.text2}},
+                          React.createElement('b',{style:{color:"#FFD700",fontSize:18}},"$"+deduction.toLocaleString()),
+                          React.createElement('span',{style:{fontSize:11,color:C.text3,marginLeft:6}},yMiles.toLocaleString()+(lang==="en"?" mi × $":" mi × $")+(+mileageRate).toFixed(2))
+                        ),
+                        React.createElement('div',{style:{fontSize:10,color:C.text3,fontStyle:"italic"}},lang==="en"?"Est. — confirm w/ accountant":"参考 · 请询会计师")
+                      )
+                    );
+                  }
                 }
-                // IRS mileage deduction: only if any miles tracked this year
-                if(yMiles>0){
-                  hasInsights=true;
-                  var deduction=Math.round(yMiles*(+mileageRate)*100)/100;
-                  mileageDeduction=React.createElement('div',null,
-                    React.createElement('div',{style:{fontSize:11,color:C.text3,marginBottom:4,letterSpacing:0.3}},lang==="en"?"IRS MILEAGE DEDUCTION · "+yr:"里程抵税 · "+yr+"年"),
-                    React.createElement('div',{style:{display:"flex",justifyContent:"space-between",alignItems:"baseline"}},
-                      React.createElement('div',{style:{fontSize:13,color:C.text2}},
-                        React.createElement('b',{style:{color:"#FFD700",fontSize:18}},"$"+deduction.toLocaleString()),
-                        React.createElement('span',{style:{fontSize:11,color:C.text3,marginLeft:6}},yMiles.toLocaleString()+(lang==="en"?" mi × $":" mi × $")+(+mileageRate).toFixed(2))
-                      ),
-                      React.createElement('div',{style:{fontSize:10,color:C.text3,fontStyle:"italic"}},lang==="en"?"Est. — confirm w/ accountant":"参考 · 请询会计师")
-                    )
-                  );
-                }
+
                 if(!hasInsights)return null;
                 // Backup reminder: if user is on Drive and hasn't synced in 7+ days, show gentle hint
                 var backupReminder=null;
@@ -2208,7 +2265,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                 }catch(e){}
                 return React.createElement(Card,{style:{marginBottom:10,padding:"12px 14px",background:"linear-gradient(180deg,#0F1F35 0%,#0A1828 100%)",border:"1px solid #1F3A5A"}},
                   React.createElement('div',{style:{fontSize:13,fontWeight:700,color:"#00D4FF",marginBottom:8,letterSpacing:0.3}},"💡 ",lang==="en"?"Smart Insights":"智能洞察"),
-                  monthSummary,
+                  summarySection,
                   mileageDeduction,
                   backupReminder
                 );
@@ -2476,7 +2533,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
             ) : null
             , dashV==="year" ? (
               React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 299}}
-                , React.createElement(YrNav, { val: yr, set: setYr, lang: lang, onPick: function(){var y=prompt(lang==="en"?"Enter year:":"输入年份:",yr);if(y&&/^[0-9]{4}$/.test(y))setYr(y);}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 300}} )
+                , React.createElement(YrNav, { val: yr, set: setYr, lang: lang, onPick: function(){inputAction({title:lang==="en"?"Enter year":"输入年份",defaultValue:yr,inputMode:"numeric",pattern:"[0-9]{4}",onSubmit:function(y){if(y&&/^[0-9]{4}$/.test(y))setYr(y);}});}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 300}} )
                 , (function(){var hm=mData.filter(function(m){return m.inc>0;});if(hm.length<2)return null;var mx=Math.max.apply(null,hm.map(function(m){return m.inc;}));return React.createElement(Card, { style: {marginBottom:8,padding:"12px 14px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 301}}, React.createElement('div', { style: {fontSize:13,fontWeight:700,color:C.text2,marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 301}}, "📊 " , lang==="en"?("Income Trend · "+yr):("收入趋势 · "+yr+"年")), React.createElement('div', { style: {display:"flex",alignItems:"center",gap:3,height:60}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 301}}, mData.map(function(m,i){if(!m.inc)return React.createElement('div', { key: i, style: {flex:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 301}} );var h=Math.round(8+m.inc/mx*48);var isCur=m.m===mo;return React.createElement('div', { key: i, onClick: function(){setMo(m.m);setDashV("month");}, style: {flex:1,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 301}}, React.createElement('div', { style: {width:"100%",height:h,borderRadius:"3px 3px 0 0",background:isCur?"#00D4FF":m.net>=0?"#00E676":"#FF5252",opacity:isCur?1:0.7}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 301}} ));}), " " ), React.createElement('div', { style: {display:"flex",fontSize:10,color:C.text3,marginTop:3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 301}}, mData.map(function(m,i){return React.createElement('div', { key: i, style: {flex:1,textAlign:"center",color:m.m===mo?"#00D4FF":"#7A9AB8"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 301}}, m.label.slice(0,3));})));}())
                 , React.createElement(Card, { style: {marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 302}}
                   , React.createElement('div', { style: {fontSize:13,color:"#8ACCA8",marginBottom:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 303}}, yr+" "+(lang==="en"?"Annual":"全年"))
@@ -2595,7 +2652,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
             , React.createElement(SegBtn, { val: incV, set: setIncV, opts: [["month",T.thisMonth],["year",T.thisYear]] } )
             , incV==="month"
               ? React.createElement(MoNav, { val: mo, set: setMo, lang: lang, onPick: function(){setMpState({value:mo,onChange:function(v){setMo(v);}});} } )
-              : React.createElement(YrNav, { val: yr, set: setYr, lang: lang, onPick: function(){var y=prompt(lang==="en"?"Enter year:":"输入年份:",yr);if(y&&/^[0-9]{4}$/.test(y))setYr(y);} } )
+              : React.createElement(YrNav, { val: yr, set: setYr, lang: lang, onPick: function(){inputAction({title:lang==="en"?"Enter year":"输入年份",defaultValue:yr,inputMode:"numeric",pattern:"[0-9]{4}",onSubmit:function(y){if(y&&/^[0-9]{4}$/.test(y))setYr(y);}});} } )
             , React.createElement('div', { style: {display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 321}}
               , React.createElement('button', { onClick: function(){setStf({month:mo,platform:"Uber",grossFare:"",tips:"",bonus:"",tollReimbursed:"",otherIncome:"",trips:"",onlineHours:"",miles:"",notes:""});setSf("stmt");}, style: {background:C.bg3,border:"1px solid "+C.border,borderRadius:10,padding:"10px 8px",cursor:"pointer",textAlign:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 322}}
                 , React.createElement('div', { style: {fontSize:28,marginBottom:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 323}}, "💵")
@@ -2767,7 +2824,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
             ) : null
             , expV==="year" ? (
               React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 353}}
-                , React.createElement(YrNav, { val: yr, set: setYr, lang: lang, onPick: function(){var y=prompt(lang==="en"?"Enter year:":"输入年份:",yr);if(y&&/^[0-9]{4}$/.test(y))setYr(y);}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 354}} )
+                , React.createElement(YrNav, { val: yr, set: setYr, lang: lang, onPick: function(){inputAction({title:lang==="en"?"Enter year":"输入年份",defaultValue:yr,inputMode:"numeric",pattern:"[0-9]{4}",onSubmit:function(y){if(y&&/^[0-9]{4}$/.test(y))setYr(y);}});}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 354}} )
                 , React.createElement(Card, { style: {display:"flex",justifyContent:"space-between",marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 355}}, React.createElement('span', { style: {fontSize:14,color:C.text2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 355}}, T.totalExpense), React.createElement('span', { style: {fontSize:18,fontWeight:800,color:"#FF6B35"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 355}}, fmt(yExp)))
                 , (function(){var allYE_raw=yAllExps(); var allYE=window.__filterExp?window.__filterExp(allYE_raw):allYE_raw; if(!allYE.length)return React.createElement(Empty, { text: (expSearch||expFilterCat.length>0)?(lang==="en"?"No matching expenses":"无匹配的支出"):T.noData, __self: this, __source: {fileName: _jsxFileName, lineNumber: 356}} );return React.createElement(BucketList, { items: allYE, allC: allC, lang: lang, el: el, setEl: setEl, allEl: el, forceRerender: forceRerender, showUndo: showUndo, emptyText: "", onEditFixed: function(item){setEditFx({id:item.id,amount:item.amount,notes:item.notes||"",fixedLabel:item.fixedLabel});}, onEditExp: function(item){var _i=Object.assign({},item,{qty:item.qty||"",isRecurring:false});if((item.category==="fuel"||item.category==="charging")&&item.amount&&item.qty&&+item.qty>0){_i.unitPrice=(+item.amount/+item.qty).toFixed(3);_i._editOrder=["qty","amount"];}setEf(_i);setSf("exp_edit_"+item.id);}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 356}} );}())
                 , Object.keys(cc).length > 0 ? React.createElement('div', { style: {marginTop:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 357}}, React.createElement('div', { style: {fontSize:14,fontWeight:700,color:C.text,marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 357}}, lang==="en"?"Custom Categories":"我的自定义类别"), Object.entries(cc).map(function(entry){var key=entry[0],cat=entry[1];return React.createElement(Card, { key: key, style: {display:"flex",alignItems:"center",gap:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 357}}, React.createElement('span', { style: {fontSize:22}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 357}}, cat.icon), React.createElement('div', { style: {flex:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 357}}, React.createElement('div', { style: {fontSize:14,fontWeight:600}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 357}}, cat.label), React.createElement('div', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 357}}, cat.group)), React.createElement('button', { onClick: function(){setCf({label:cat.label,icon:cat.icon,group:cat.group,_editKey:key});setSf("cc");}, style: {background:"none",border:"1px solid #2A4A6A",borderRadius:8,padding:"4px 10px",color:"#6AACEE",cursor:"pointer",fontSize:13}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 357}}, T.edit), React.createElement('button', { onClick: function(){confirmAction(lang==="en"?"Delete category?":"删除类别？", lang==="en"?"This category will be removed (with undo).":"此类别将被移除（可撤销）。", function(){var prev=Object.assign({},cc);var u=Object.assign({},cc);delete u[key];setCc(u);showUndo((lang==="en"?"✓ Category deleted":"✓ 类别已删除"), {prevCc:prev});});}, style: {background:"none",border:"1px solid #3A1A1A",borderRadius:8,padding:"4px 10px",color:"#FF5252",cursor:"pointer",fontSize:13}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 357}}, T.del));})) : null
@@ -2780,7 +2837,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
         , tab===3 ? (
           React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 365}}
             , React.createElement(SegBtn, { val: repP, set: setRepP, opts: [["month",T.thisMonth],["year",T.thisYear]], __self: this, __source: {fileName: _jsxFileName, lineNumber: 366}} )
-            , repP==="month" ? React.createElement(MoNav, { val: mo, set: setMo, lang: lang, onPick: function(){setMpState({value:mo,onChange:function(v){setMo(v);}});}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 367}} ) : React.createElement(YrNav, { val: yr, set: setYr, lang: lang, onPick: function(){var y=prompt(lang==="en"?"Enter year:":"输入年份:",yr);if(y&&/^[0-9]{4}$/.test(y))setYr(y);}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 367}} )
+            , repP==="month" ? React.createElement(MoNav, { val: mo, set: setMo, lang: lang, onPick: function(){setMpState({value:mo,onChange:function(v){setMo(v);}});}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 367}} ) : React.createElement(YrNav, { val: yr, set: setYr, lang: lang, onPick: function(){inputAction({title:lang==="en"?"Enter year":"输入年份",defaultValue:yr,inputMode:"numeric",pattern:"[0-9]{4}",onSubmit:function(y){if(y&&/^[0-9]{4}$/.test(y))setYr(y);}});}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 367}} )
             , React.createElement('div', { style: {display:"flex",gap:8,marginBottom:14}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 368}}
               , React.createElement('button', { onClick: function(){var period=repP,label=period==="month"?mo:yr,srcExps=period==="month"?feAll:yAllExps(),r=bldRep(period),catMap={};srcExps.forEach(function(item){var cat=allC[item.category],key=item.isFixed?"fx_"+item.fixedLabel:item.category,lbl=item.isFixed?item.fixedLabel:(cat?cat.label:"Other"),grp=cat?(cat.g||cat.group||"Other"):"Other";if(!catMap[key]){catMap[key]={label:lbl,group:grp,total:0,count:0};}catMap[key].total+=(+item.amount||0);catMap[key].count+=1;});var byGroup={"车辆":[],"牌照":[],"平台":[],"其他":[]};Object.values(catMap).forEach(function(c){var g=byGroup[c.group]?c.group:"其他";byGroup[g].push(c);});["车辆","牌照","平台","其他"].forEach(function(g){byGroup[g].sort(function(a,b){return b.total-a.total;});});var isYear=period==="year";setReportData({type:"summary",r:r,label:label,byGroup:byGroup,stmts:isYear?yStmts:mStmts,isYear:isYear,mData:isYear?mData:null});}, style: {flex:1,background:"linear-gradient(135deg,#0A2040,#1A3060)",border:"1px solid #2A5080",borderRadius:10,padding:11,color:"#5AACFF",fontSize:13,fontWeight:700,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 369}}, "📊 " , T.report)
               , React.createElement('button', { onClick: function(){var period=repP,label=period==="month"?mo:yr,srcExps=period==="month"?feAll:yAllExps();var catMap={};srcExps.forEach(function(item){var cat=allC[item.category],key=item.isFixed?"fx_"+item.fixedLabel:item.category,lbl=item.isFixed?item.fixedLabel:(cat?cat.label:"Other"),grp=cat?(cat.g||cat.group||"Other"):"Other",ico=item.isFixed?item.fixedIcon:getIcon(item.category,allC);if(!catMap[key]){catMap[key]={label:lbl,group:grp,icon:ico,total:0,items:[]};}catMap[key].total+=(+item.amount||0);catMap[key].items.push(item);});var byGroup={"车辆":[],"牌照":[],"平台":[],"其他":[]};Object.values(catMap).forEach(function(c){var g=byGroup[c.group]?c.group:"其他";byGroup[g].push(c);});["车辆","牌照","平台","其他"].forEach(function(g){byGroup[g].sort(function(a,b){return b.total-a.total;});});var total=srcExps.reduce(function(s,e){return s+(+e.amount||0);},0);setReportData({type:"exp",label:label,byGroup:byGroup,total:total});}, style: {flex:1,background:"linear-gradient(135deg,#1A0820,#2A1040)",border:"1px solid #3A1560",borderRadius:10,padding:11,color:"#CC88FF",fontSize:13,fontWeight:700,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 370}}, "💸 " , T.expense)
@@ -2824,11 +2881,17 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                   
                   // Save action
                   var doSave = function(){
-                    var label=prompt(lang==="en"?"Profile name (e.g. \"Tesla Y\", \"Camry rental\"):":"输入车辆名称（例如 \"Tesla Y\"、\"租来的 Camry\"）：", (veh.brand||"")+" "+(veh.model||""));
-                    if(!label||!label.trim()) return;
-                    var profile=Object.assign({},veh,{_savedName:label.trim(),_savedAt:new Date().toISOString()});
-                    setSavedVehicles((savedVehicles||[]).concat([profile]));
-                    showToast(lang==="en"?"✓ Saved":"✓ 已保存");
+                    inputAction({
+                      title: lang==="en"?"Profile name":"车辆名称",
+                      message: lang==="en"?"e.g. \"Tesla Y\", \"Camry rental\"":"例如 \"Tesla Y\"、\"租来的 Camry\"",
+                      defaultValue: (veh.brand||"")+" "+(veh.model||""),
+                      onSubmit: function(label){
+                        if(!label||!label.trim()) return;
+                        var profile=Object.assign({},veh,{_savedName:label.trim(),_savedAt:new Date().toISOString()});
+                        setSavedVehicles((savedVehicles||[]).concat([profile]));
+                        showToast(lang==="en"?"✓ Saved":"✓ 已保存");
+                      }
+                    });
                   };
                   
                   // EMPTY state — friendly intro + warning if vehicle has data
@@ -2897,7 +2960,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                 , React.createElement(Field, { label: T.carType, value: veh.type, onChange: function(v){setVeh(Object.assign({},veh,{type:v}));}, options: [["",T.pleaseSelect],["petrol",T.petrol],["electric",T.electric],["hybrid",T.hybrid]], __self: this, __source: {fileName: _jsxFileName, lineNumber: 398}} )
                 , React.createElement(Field, { label: T.plate, value: veh.plate, onChange: function(v){setVeh(Object.assign({},veh,{plate:v.toUpperCase()}));}, placeholder: "ABC1234", __self: this, __source: {fileName: _jsxFileName, lineNumber: 399}} )
                 , React.createElement(Field, { label: "TLC Plate" , value: veh.tlcPlate||"", onChange: function(v){setVeh(Object.assign({},veh,{tlcPlate:v.toUpperCase()}));}, placeholder: "TLC", __self: this, __source: {fileName: _jsxFileName, lineNumber: 400}} )
-                , React.createElement(Field, { label: T.brand, value: veh.brand||"", onChange: function(v){if(v==="__new__"){var n=prompt(lang==="en"?"New brand name:":"新品牌名称:");if(n&&n.trim()){var nm=n.trim();setCustBrands(custBrands.concat([nm]));setVeh(Object.assign({},veh,{brand:nm}));}return;}setVeh(Object.assign({},veh,{brand:v}));}, options: [["",T.selectBrand]].concat(CARBRANDS.slice(0,-1).map(function(b){return [b,b];})).concat(custBrands.map(function(b){return [b,b];})).concat([[lang==="en"?"Other":"其他",lang==="en"?"Other":"其他"],["__new__",lang==="en"?"+ Add new brand...":"+ 添加新品牌..."]]), __self: this, __source: {fileName: _jsxFileName, lineNumber: 401}} )
+                , React.createElement(Field, { label: T.brand, value: veh.brand||"", onChange: function(v){if(v==="__new__"){inputAction({title:lang==="en"?"New brand name":"新品牌名称",placeholder:lang==="en"?"e.g. Tesla":"如 特斯拉",onSubmit:function(n){if(n&&n.trim()){var nm=n.trim();setCustBrands(custBrands.concat([nm]));setVeh(Object.assign({},veh,{brand:nm}));}}});return;}setVeh(Object.assign({},veh,{brand:v}));}, options: [["",T.selectBrand]].concat(CARBRANDS.slice(0,-1).map(function(b){return [b,b];})).concat(custBrands.map(function(b){return [b,b];})).concat([[lang==="en"?"Other":"其他",lang==="en"?"Other":"其他"],["__new__",lang==="en"?"+ Add new brand...":"+ 添加新品牌..."]]), __self: this, __source: {fileName: _jsxFileName, lineNumber: 401}} )
                 , React.createElement(Field, { label: lang==="en"?"Model":"车型", value: veh.model||"", onChange: function(v){setVeh(Object.assign({},veh,{model:v}));}, placeholder: lang==="en"?"e.g. Model Y":"如 Model Y", __self: this, __source: {fileName: _jsxFileName, lineNumber: 401}} )
                 , React.createElement(Field, { label: lang==="en"?"Year":"年份", type:"number", value: veh.year||"", onChange: function(v){setVeh(Object.assign({},veh,{year:v}));}, placeholder: "2023", __self: this, __source: {fileName: _jsxFileName, lineNumber: 401}} )
                 , React.createElement(Field, { label: lang==="en"?"Color":"车身颜色", value: veh.color||"", onChange: function(v){setVeh(Object.assign({},veh,{color:v}));}, placeholder: lang==="en"?"e.g. White":"如 白色", __self: this, __source: {fileName: _jsxFileName, lineNumber: 401}} )
@@ -2925,7 +2988,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
               , insExpDiff !== null ? React.createElement('div', { style: {background:"#1A1400",border:"1px solid #00E676",borderRadius:8,padding:"8px 12px",fontSize:14,color:"#00E676",marginTop:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 412}}, insExpDiff < 0 ? (lang==="en"?"Insurance expired":"保险已过期") : (lang==="en"?"Insurance: "+Math.round(insExpDiff)+" days left":"保险还剩 "+Math.round(insExpDiff)+" 天")) : null
               , React.createElement('div', { style: {fontSize:13,fontWeight:700,color:"#90EAF8",marginBottom:10,marginTop:14}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 413}}, lang==="en"?"Financing":"车辆融资")
               , React.createElement('div', { style: {display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 414}}
-                , React.createElement(Field, { label: T.loanType, value: veh.loanType||"loan", onChange: function(v){if(v==="__new__"){var n=prompt(lang==="en"?"New ownership type:":"新持有方式:");if(n&&n.trim()){var nm=n.trim();setCustLoanTypes(custLoanTypes.concat([nm]));setVeh(Object.assign({},veh,{loanType:nm}));}return;}setVeh(Object.assign({},veh,{loanType:v}));}, options: [["loan",T.loan],["lease",T.lease],["own",T.own],["rental",T.rental]].concat(custLoanTypes.map(function(l){return [l,l];})).concat([["__new__",lang==="en"?"+ Add new...":"+ 添加新选项..."]]), __self: this, __source: {fileName: _jsxFileName, lineNumber: 415}} )
+                , React.createElement(Field, { label: T.loanType, value: veh.loanType||"loan", onChange: function(v){if(v==="__new__"){inputAction({title:lang==="en"?"New ownership type":"新持有方式",onSubmit:function(n){if(n&&n.trim()){var nm=n.trim();setCustLoanTypes(custLoanTypes.concat([nm]));setVeh(Object.assign({},veh,{loanType:nm}));}}});return;}setVeh(Object.assign({},veh,{loanType:v}));}, options: [["loan",T.loan],["lease",T.lease],["own",T.own],["rental",T.rental]].concat(custLoanTypes.map(function(l){return [l,l];})).concat([["__new__",lang==="en"?"+ Add new...":"+ 添加新选项..."]]), __self: this, __source: {fileName: _jsxFileName, lineNumber: 415}} )
                 , React.createElement(Field, { label: T.loanAmt, type: "number", value: veh.loanAmt||"", onChange: function(v){setVeh(Object.assign({},veh,{loanAmt:v}));}, money: true, placeholder: "0.00", __self: this, __source: {fileName: _jsxFileName, lineNumber: 416}} )
               )
             )
@@ -3666,7 +3729,27 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                       });
                     });
                     if(allFavs.length===0) return null;
-                    return React.createElement('details',{style:{position:"absolute",right:6,top:4}, ref:function(d){if(d)d._allFavs=allFavs;}},
+                    return React.createElement('details',{
+                      style:{position:"absolute",right:6,top:4},
+                      ref:function(d){
+                        if(!d) return;
+                        d._allFavs=allFavs;
+                        // Bind document-level click handler ONCE per element to close on outside click
+                        if(!d._outsideBound){
+                          d._outsideBound = true;
+                          var handler = function(ev){
+                            if(d.open && !d.contains(ev.target)) d.open = false;
+                          };
+                          // Use capture phase so we beat any internal stopPropagation
+                          document.addEventListener("click", handler, true);
+                          // Also close on Escape key
+                          var keyHandler = function(ev){
+                            if(ev.key === "Escape" && d.open) d.open = false;
+                          };
+                          document.addEventListener("keydown", keyHandler);
+                        }
+                      }
+                    },
                       React.createElement('summary',{style:{listStyle:"none",cursor:"pointer",background:"#1A2A44",border:"1px solid #2A4A6A",borderRadius:6,width:32,height:32,display:"flex",alignItems:"center",justifyContent:"center",color:"#00D4FF",fontSize:14}},"⏷"),
                       // Open UPWARD (bottom-anchored) — avoids covering the "Add as fixed monthly" toggle below notes
                       React.createElement('div',{style:{position:"absolute",right:0,bottom:36,background:C.bg2,border:"1px solid "+C.border,borderRadius:10,width:300,maxHeight:380,overflowY:"auto",boxShadow:"0 -4px 20px rgba(0,0,0,0.5)",zIndex:100}},
@@ -3695,14 +3778,9 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                             return React.createElement('div',{key:item.catKey+"_"+item.loc+"_"+i,style:{display:"flex",alignItems:"center",borderBottom:"1px solid #0F1C30"}},
                               React.createElement('button',{type:"button",onClick:function(ev){
                                   ev.preventDefault();
-                                  // Set notes AND switch category if different (also sync selGrp so dropdown is accurate)
-                                  var update={notes:item.loc};
-                                  if(item.catKey!==ef.category){
-                                    update.category=item.catKey;
-                                    var newCat=allC[item.catKey];
-                                    if(newCat&&newCat.g)setSelGrp(newCat.g);
-                                  }
-                                  setEf(Object.assign({},ef,update));
+                                  // Just set the notes — DO NOT change category. User has already chosen
+                                  // the category they want; selecting an address shouldn't switch them away.
+                                  setEf(Object.assign({},ef,{notes:item.loc}));
                                   ev.target.closest('details').open=false;
                                 }, style:{flex:1,textAlign:"left",background:"none",border:"none",padding:"8px 12px",color:C.text,fontSize:13,cursor:"pointer"}},
                                 React.createElement('div',{style:{fontSize:13,marginBottom:2}},item.loc),
@@ -3752,7 +3830,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
 
       , sf && (sf==="lic" || sf.startsWith("lic_edit_")) ? (
         React.createElement(Modal, { title: sf.startsWith("lic_edit_")?(T.edit+" "+(lang==="en"?"License":"执照")):(lang==="en"?"Add License":"添加执照/证件"), onClose: function(){setSf(null);}, onSave: function(){if(!lf.type)return;if(sf.startsWith("lic_edit_")){var lid=+sf.replace("lic_edit_","");setLl(ll.map(function(x){return x.id===lid?Object.assign({},lf,{id:lid}):x;}));}else{setLl([Object.assign({},lf,{id:Date.now()})].concat(ll));}setSf(null);showToast(lang==="en"?"✓ License saved":"✓ 证件已保存");}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 567}}
-          , React.createElement(Field, { label: T.licType, value: lf.type, onChange: function(v){if(v==="__new__"){var n=prompt(lang==="en"?"New license type:":"新证件类型:");if(n&&n.trim()){var nm=n.trim();setCustLicTypes(custLicTypes.concat([nm]));setLf(Object.assign({},lf,{type:nm}));}return;}setLf(Object.assign({},lf,{type:v}));}, options: [["",T.pleaseSelect]].concat((lang==="en"?LICTYPES_EN:LICTYPES_ZH).map(function(l){return [l,l];})).concat(custLicTypes.map(function(l){return [l,l];})).concat([["__new__",lang==="en"?"+ Add new type...":"+ 添加新证件..."]]), __self: this, __source: {fileName: _jsxFileName, lineNumber: 568}} )
+          , React.createElement(Field, { label: T.licType, value: lf.type, onChange: function(v){if(v==="__new__"){inputAction({title:lang==="en"?"New license type":"新证件类型",onSubmit:function(n){if(n&&n.trim()){var nm=n.trim();setCustLicTypes(custLicTypes.concat([nm]));setLf(Object.assign({},lf,{type:nm}));}}});return;}setLf(Object.assign({},lf,{type:v}));}, options: [["",T.pleaseSelect]].concat((lang==="en"?LICTYPES_EN:LICTYPES_ZH).map(function(l){return [l,l];})).concat(custLicTypes.map(function(l){return [l,l];})).concat([["__new__",lang==="en"?"+ Add new type...":"+ 添加新证件..."]]), __self: this, __source: {fileName: _jsxFileName, lineNumber: 568}} )
           , React.createElement(Field, { label: T.licNum, value: lf.number, onChange: function(v){setLf(Object.assign({},lf,{number:v}));}, placeholder: lang==="en"?"Optional":"编号（可选）", __self: this, __source: {fileName: _jsxFileName, lineNumber: 569}} )
           , React.createElement('div', { style: {display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 570}}
             , React.createElement(Field, { label: T.issueDate, type: "date", value: lf.issueDate, onChange: function(v){setLf(Object.assign({},lf,{issueDate:v}));}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 571}} )
@@ -3767,7 +3845,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
         React.createElement(Modal, { title: cf._editKey?(lang==="en"?"Edit Category":"编辑类别"):(lang==="en"?"Add Category":"添加类别"), onClose: function(){setSf(cf._returnTo||null);}, onSave: function(){if(!cf.label.trim())return;var key=cf._editKey||"cc_"+Date.now(),newCat={label:cf.label.trim(),icon:cf.icon,group:cf.group,g:cf.group},newCc=Object.assign({},cc);newCc[key]=newCat;setCc(newCc);if(cf._returnTo==="exp"){setEf(Object.assign({},ef,{category:key}));setSelGrp(cf.group);setSf("exp");}else{setSf(null);}}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 580}}
           , React.createElement(Field, { label: lang==="en"?"Name":"类别名称", value: cf.label, onChange: function(v){setCf(Object.assign({},cf,{label:v}));}, placeholder: lang==="en"?"e.g. Wheel Repair":"例：轮毂修复", __self: this, __source: {fileName: _jsxFileName, lineNumber: 581}} )
           , React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 582}}, React.createElement('div', { style: {fontSize:14,color:C.text2,marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 582}}, lang==="en"?"Icon":"图标"), React.createElement('div', { style: {display:"flex",flexWrap:"wrap",gap:5}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 582}}, ICONS.map(function(ic){var bdCol=cf.icon===ic?"#00D4FF":"#1A2A44",bgCol=cf.icon===ic?"#0A2040":"#111D30";return React.createElement('button', { key: ic, onClick: function(){setCf(Object.assign({},cf,{icon:ic}));}, style: {width:38,height:38,borderRadius:8,border:"2px solid "+bdCol,background:bgCol,fontSize:16,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 582}}, ic);}), " " ))
-          , React.createElement(Field, { label: lang==="en"?"Group":"归属大类", value: cf.group, onChange: function(v){if(v==="__new__"){var name=prompt(lang==="en"?"New group name:":"新大类名称：");if(name&&name.trim()){var trimmed=name.trim();setCustGroups(custGroups.concat([{name:trimmed,icon:"📁",color:"#A8D0E8"}]));setCf(Object.assign({},cf,{group:trimmed}));}return;}setCf(Object.assign({},cf,{group:v}));}, options: (function(){var GROUP_LABELS=lang==="en"?{"车辆":"Vehicle","牌照":"License","平台":"Platform","其他":"Other","自定义":"Custom"}:{"车辆":"车辆","牌照":"牌照","平台":"平台","其他":"其他","自定义":"自定义"};var opts=GROUPS.map(function(g){return [g,GROUP_LABELS[g]||g];});custGroups.forEach(function(cg){opts.push([cg.name,cg.icon+" "+cg.name]);});opts.push(["__new__",lang==="en"?"+ Add new group...":"+ 添加新大类..."]);return opts;})(), __self: this, __source: {fileName: _jsxFileName, lineNumber: 583}} )
+          , React.createElement(Field, { label: lang==="en"?"Group":"归属大类", value: cf.group, onChange: function(v){if(v==="__new__"){inputAction({title:lang==="en"?"New group name":"新大类名称",onSubmit:function(name){if(name&&name.trim()){var trimmed=name.trim();setCustGroups(custGroups.concat([{name:trimmed,icon:"📁",color:"#A8D0E8"}]));setCf(Object.assign({},cf,{group:trimmed}));}}});return;}setCf(Object.assign({},cf,{group:v}));}, options: (function(){var GROUP_LABELS=lang==="en"?{"车辆":"Vehicle","牌照":"License","平台":"Platform","其他":"Other","自定义":"Custom"}:{"车辆":"车辆","牌照":"牌照","平台":"平台","其他":"其他","自定义":"自定义"};var opts=GROUPS.map(function(g){return [g,GROUP_LABELS[g]||g];});custGroups.forEach(function(cg){opts.push([cg.name,cg.icon+" "+cg.name]);});opts.push(["__new__",lang==="en"?"+ Add new group...":"+ 添加新大类..."]);return opts;})(), __self: this, __source: {fileName: _jsxFileName, lineNumber: 583}} )
         )
       ) : null
 
@@ -5358,6 +5436,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
       , mpState ? React.createElement(MonthPicker, { value: mpState.value, lang: lang, onChange: mpState.onChange, onClose: function(){setMpState(null);} }) : null
       , dangerConfirm ? React.createElement(DangerConfirm, { lang: lang, title: dangerConfirm.title, message: dangerConfirm.message, onConfirm: dangerConfirm.onConfirm, onCancel: function(){setDangerConfirm(null);} }) : null
       , confirmState ? React.createElement(ConfirmModal, { lang: lang, title: confirmState.title, message: confirmState.message, confirmLabel: confirmState.confirmLabel, danger: confirmState.danger, onConfirm: confirmState.onConfirm, onCancel: confirmState.onCancel }) : null
+      , inputState ? React.createElement(InputModal, { lang: lang, title: inputState.title, message: inputState.message, placeholder: inputState.placeholder, defaultValue: inputState.defaultValue, confirmLabel: inputState.confirmLabel, inputType: inputState.inputType, inputMode: inputState.inputMode, pattern: inputState.pattern, required: inputState.required, onSubmit: inputState.onSubmit, onCancel: inputState.onCancel }) : null
       , locked ? React.createElement(LockScreen, { lang: lang, mode: "unlock", onSuccess: function(){setLocked(false);}, onForgot: function(){try{localStorage.removeItem("nyc_pin");localStorage.removeItem("nyc_user");}catch(e){}setHasPIN(false);setLocked(false);setGUser(null);setAccessToken(null);} }) : null
       , showPinSetup ? React.createElement(LockScreen, { lang: lang, mode: "setup", onSuccess: function(){setHasPIN(true);setShowPinSetup(false);showToast(lang==="en"?"✓ PIN set":"✓ PIN 设置成功");}, onCancel: function(){setShowPinSetup(false);} }) : null
     )
