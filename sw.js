@@ -7,13 +7,13 @@
 // Bump CACHE_VERSION whenever you change this file's caching logic.
 // The actual app.js cache busts via its ?v=N query string.
 
-const CACHE_VERSION = 'nyc-driver-v243';
+const CACHE_VERSION = 'nyc-driver-v249';
 
 // Things we precache on install (so the app works offline immediately after first visit)
 const PRECACHE_ASSETS = [
   './',
   './index.html',
-  './app.js?v=349',
+  './app.js?v=355',
   './manifest.json',
   './icon-192.png',
   './icon-512.png',
