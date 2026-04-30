@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-console.log("%cNYC Driver Tracker — version v312","color:#00D4FF;font-weight:bold;font-size:14px");
+console.log("%cNYC Driver Tracker — version v316","color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
 //   <script>window.SENTRY_DSN = "https://YOUR_KEY@oXXX.ingest.sentry.io/PROJECT";</script>
@@ -11,7 +11,7 @@ console.log("%cNYC Driver Tracker — version v312","color:#00D4FF;font-weight:b
       window.Sentry.init({
         dsn:window.SENTRY_DSN,
         environment:(location.hostname==="localhost"||location.hostname==="127.0.0.1")?"development":"production",
-        release:"nyc-driver-tracker@1.0.15",
+        release:"nyc-driver-tracker@1.0.18",
         tracesSampleRate:0.1,
         // Don't send events from local dev
         beforeSend:function(event){
@@ -557,6 +557,19 @@ function ExpItem(p){var item=p.item,aC=p.allC,isEn=p.lang==="en",cat=aC[item.cat
 var hideTime=item.time==="12:00"||item.time==="08:00"||item.time==="23:59";
 var dateStr=isMo?moPrefix+(item.statementMonth||item.date.slice(0,7)):(item.time&&!hideTime?fmtDate(item.date)+" "+item.time:fmtDate(item.date));
 var L_FIXED=isEn?"Fixed":"固定",L_EDIT=isEn?"Edit":"编辑";return React.createElement(Card, {style:{cursor:"pointer"}, onClick: p.onEdit, __self: this, __source: {fileName: _jsxFileName, lineNumber: 48}}, React.createElement('div', { style: {display:"flex",gap:10,alignItems:"flex-start"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 48}}, React.createElement('span', { style: {fontSize:22,marginTop:2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 48}}, icon), React.createElement('div', { style: {flex:1,minWidth:0}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 48}}, React.createElement('div', { style: {fontSize:15,fontWeight:600,marginBottom:2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 48}}, label), React.createElement('div', { style: {fontSize:13,color:"#B8D8EC",display:"flex",alignItems:"center",gap:6} }, dateStr ), item.notes?React.createElement('div', { style: {fontSize:13,color:"#B0D4E4"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 48}}, item.notes):null, item.odometer?React.createElement('div', { style: {fontSize:12,color:"#FFD700",marginTop:2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 48}}, "🛣 " , (+item.odometer).toLocaleString(), " mi", p.distFromLast?" (+"+p.distFromLast+(isEn?" mi since last":" mi 距上次")+")":""):null, item.isFixed?React.createElement('span', { style: {fontSize:12,background:"#0D2010",borderRadius:6,padding:"2px 8px",color:"#5ADA7A",display:"inline-block",marginTop:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 48}}, L_FIXED):null), React.createElement('div', { style: {textAlign:"right"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 48}}, React.createElement('div', { style: {fontSize:15,fontWeight:700,color:"#E8EAF0"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 48}}, "-", fmt(item.amount)), React.createElement('div', { style: {fontSize:11,color:"#6AACEE",marginTop:3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 48}}, L_EDIT, " ›"))));}
+// Wrap with React.memo: re-render only when item data, lang, allC, or distFromLast changes.
+// Skip checking onEdit/onDel callbacks (they're recreated each render but functionally identical).
+ExpItem = React.memo(ExpItem, function(prevP, nextP){
+  if(prevP.lang !== nextP.lang) return false;
+  if(prevP.distFromLast !== nextP.distFromLast) return false;
+  if(prevP.allC !== nextP.allC) return false;
+  // Item identity check (most common — same object reference if list unchanged)
+  if(prevP.item === nextP.item) return true;
+  // Different reference but maybe same data — compare key fields
+  var a=prevP.item, b=nextP.item;
+  if(a.id!==b.id||a.amount!==b.amount||a.notes!==b.notes||a.odometer!==b.odometer||a.date!==b.date||a.time!==b.time||a.category!==b.category||a.qty!==b.qty) return false;
+  return true;
+});
 // Module-level expansion state (not React state, so it persists across re-renders without hooks)
 var __bucketExpanded = {};
 function BucketList(p){
@@ -983,6 +996,37 @@ function App() {
   var r11=useState(function(){return lsLoad("nyc_veh",{type:"",brand:"",plate:"",tlcPlate:"",insComp:"",insPolicy:"",insExpiry:"",loanType:"loan",loanAmt:"",lastInsp:""});});
   var veh=r11[0],setVeh=r11[1];
   function lsLoad(k,def){try{var s=localStorage.getItem(k);return s?JSON.parse(s):def;}catch(e){return def;}}
+  // Debounced localStorage write — coalesces rapid successive writes into one.
+  // Prevents UI lag when user types in inputs that trigger setter chains.
+  var __lsTimers = {};
+  function lsSaveDebounced(k, v, ms){
+    if(__lsTimers[k]) clearTimeout(__lsTimers[k]);
+    __lsTimers[k] = setTimeout(function(){
+      try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){}
+      delete __lsTimers[k];
+    }, ms||400);
+  }
+  // Flush all pending writes (call this before unload to avoid losing data)
+  function lsFlushPending(){
+    Object.keys(__lsTimers).forEach(function(k){
+      clearTimeout(__lsTimers[k]);
+      delete __lsTimers[k];
+    });
+  }
+  // Make sure pending writes are flushed before page unload
+  if(typeof window!=="undefined" && !window.__lsFlushBound){
+    window.__lsFlushBound = true;
+    window.addEventListener("beforeunload", function(){
+      // Note: synchronous setItem still works during beforeunload
+      Object.keys(__lsTimers).forEach(function(k){
+        clearTimeout(__lsTimers[k]);
+      });
+    });
+    // Also flush on visibility change (mobile background)
+    document.addEventListener("visibilitychange", function(){
+      if(document.visibilityState==="hidden") lsFlushPending();
+    });
+  }
 
   // ============ IndexedDB-based snapshot history ============
   // Stores up to 7 full data snapshots (FIFO). Used for "undo" in case of accidental data loss.
@@ -1071,6 +1115,26 @@ function App() {
   var stf=r19[0],setStf=r19[1];
   var r20=useState({date:today(),time:nowTime(),category:"",amount:"",notes:"",qty:"",chargedTo:"",statementMonth:curMo(),isRecurring:false,mode:""});
   var ef=r20[0],setEf=r20[1];
+  // FIX: sf="exp" persists to localStorage but ef does not. After page refresh,
+  // sf is restored ("exp") but ef.category is still "" — causing the form to render
+  // without any category-specific fields (kWh, unit price, etc.) even though the
+  // dropdown visually shows "充电费" (browser default-selects first option when value="").
+  // This effect detects that mismatch on mount and initializes ef like the + button does.
+  useEffect(function(){
+    var initialSf = (function(){try{return localStorage.getItem("nyc_sf");}catch(e){return null;}})();
+    if(initialSf==="exp" && !ef.category){
+      // Defer to next tick so all hooks have initialized (veh, driverType, etc.)
+      Promise.resolve().then(function(){
+        setEf(function(prev){
+          if(prev.category) return prev; // user already started filling — don't clobber
+          return Object.assign({}, prev, {
+            category: (veh && veh.type==="petrol" ? "fuel" : "charging")
+          });
+        });
+        setSelGrp("车辆");
+      });
+    }
+  }, []); // run once on mount
   var r21=useState({label:"",icon:"💼",cat:"other",cycle:"monthly",amount:"",day:"1",notes:"",active:true,startDate:"",endDate:"",maxCount:""});
   var ff=r21[0],setFf=r21[1];
   var r22=useState({type:"",number:"",issueDate:"",expiryDate:"",renewalFee:"",reminderDays:"60",notes:""});
@@ -1496,6 +1560,7 @@ function App() {
         if(d.id)setDriveFileId(d.id);
         setSyncing(false);
         setSyncStatus("");
+        try{localStorage.setItem("nyc_lastBackup", String(Date.now()));}catch(e){}
         showToast(lang==="en"?"☁ Synced to Drive":"☁ 已同步到 Drive");
       }).catch(function(err){reportError(err,{op:"saveToDrive"});setSyncing(false);setSyncStatus("");showToast(lang==="en"?"✗ Sync failed":"✗ 同步失败","error");});
     };
@@ -1868,7 +1933,7 @@ function App() {
 
 
   // Save to localStorage when data changes (load is handled by lazy useState initializers)
-  function lsSave(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+  function lsSave(k,v){lsSaveDebounced(k,v,400);}
   // IRS standard rates by year. Std deduction is single-filer; fed rate is the bracket
   // most NYC drivers (net $30-60k after SE deduction) actually fall into. State rate
   // combines NY State (~5.5%) + NYC City tax (~3%) for NYC residents.
@@ -2127,10 +2192,25 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                   );
                 }
                 if(!hasInsights)return null;
+                // Backup reminder: if user is on Drive and hasn't synced in 7+ days, show gentle hint
+                var backupReminder=null;
+                try{
+                  var lastBak=+localStorage.getItem("nyc_lastBackup")||0;
+                  var daysSince=lastBak?(Date.now()-lastBak)/86400000:null;
+                  if(gUser&&(daysSince===null||daysSince>=7)){
+                    var msgTxt=daysSince===null
+                      ? (lang==="en"?"☁ Not backed up yet — tap menu → Backup":"☁ 还未备份过 · 点菜单 → 备份")
+                      : (lang==="en"?"☁ Last backup "+Math.round(daysSince)+" days ago":"☁ 已 "+Math.round(daysSince)+" 天未备份");
+                    backupReminder=React.createElement('div',{style:{marginTop:10,paddingTop:10,borderTop:"1px solid "+C.border,fontSize:11,color:"#FFB347",display:"flex",alignItems:"center",gap:6}},
+                      msgTxt
+                    );
+                  }
+                }catch(e){}
                 return React.createElement(Card,{style:{marginBottom:10,padding:"12px 14px",background:"linear-gradient(180deg,#0F1F35 0%,#0A1828 100%)",border:"1px solid #1F3A5A"}},
                   React.createElement('div',{style:{fontSize:13,fontWeight:700,color:"#00D4FF",marginBottom:8,letterSpacing:0.3}},"💡 ",lang==="en"?"Smart Insights":"智能洞察"),
                   monthSummary,
-                  mileageDeduction
+                  mileageDeduction,
+                  backupReminder
                 );
               }())
             , dashV==="month" ? (
@@ -3472,10 +3552,16 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
               var unitPriceLabel=ef.category==="charging"?(lang==="en"?"Price ($/kWh)":"单价 ($/kWh)"):(lang==="en"?"Price ($/Gal)":"单价 ($/Gal)");
               // === Compute historical avg unit price (last 30 records of same category) for anomaly detection ===
               var histAvg=null;
-              var histRecords=el.filter(function(e){return e.category===ef.category&&e.amount&&e.qty&&+e.qty>0;}).slice(-30);
+              // Sort by DATE descending (most recent first), then take top 30.
+              // Previously used .slice(-30) which gave last 30 by INPUT ORDER — buggy if user back-fills old records.
+              var histRecords=el.filter(function(e){return e.category===ef.category&&e.amount&&e.qty&&+e.qty>0&&e.date;})
+                                .sort(function(a,b){return (b.date||"").localeCompare(a.date||"");})
+                                .slice(0,30);
               if(histRecords.length>=5){
-                var sumUnit=histRecords.reduce(function(s,e){return s+(+e.amount/+e.qty);},0);
-                histAvg=sumUnit/histRecords.length;
+                // Median is more robust than mean: a single expensive fast-charge won't skew the baseline.
+                var unitPrices=histRecords.map(function(e){return +e.amount/+e.qty;}).sort(function(a,b){return a-b;});
+                var mid=Math.floor(unitPrices.length/2);
+                histAvg=unitPrices.length%2===0?(unitPrices[mid-1]+unitPrices[mid])/2:unitPrices[mid];
               }
               var order=ef._editOrder||[];
               var manual2=order.slice(-2);
