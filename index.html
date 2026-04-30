@@ -57,11 +57,14 @@
   <div id="root"></div>
   <!--
     Optional: Sentry error monitoring. Sign up at https://sentry.io (free tier),
-    create a project, then uncomment below and paste your DSN.
+    create a project, then:
+      1. Replace YOUR_DSN_HERE with your real DSN below
+      2. Remove the surrounding HTML comment markers (<!-- and -->)
+    Once enabled, you'll catch real-world bugs from users automatically.
   -->
   <!--
   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
-  <script>window.SENTRY_DSN = "https://YOUR_PUBLIC_KEY@oXXXXXX.ingest.us.sentry.io/PROJECT_ID";</script>
+  <script>window.SENTRY_DSN = "YOUR_DSN_HERE";</script>
   -->
   <!--
     React pinned to 18.3.1 (last stable 18.x). For production hardening, add SRI hashes:
@@ -70,7 +73,7 @@
   -->
   <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin="anonymous"></script>
   <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin="anonymous"></script>
-  <script src="app.js?v=357"></script>
+  <script src="app.js?v=359"></script>
   <script>
     // PWA service worker: aggressive auto-update strategy.
     // 1. Register on load

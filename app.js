@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-console.log("%cNYC Driver Tracker — version v307","color:#00D4FF;font-weight:bold;font-size:14px");
+console.log("%cNYC Driver Tracker — version v309","color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
 //   <script>window.SENTRY_DSN = "https://YOUR_KEY@oXXX.ingest.sentry.io/PROJECT";</script>
@@ -11,7 +11,7 @@ console.log("%cNYC Driver Tracker — version v307","color:#00D4FF;font-weight:b
       window.Sentry.init({
         dsn:window.SENTRY_DSN,
         environment:(location.hostname==="localhost"||location.hostname==="127.0.0.1")?"development":"production",
-        release:"nyc-driver-tracker@1.0.9",
+        release:"nyc-driver-tracker@1.0.11",
         tracesSampleRate:0.1,
         // Don't send events from local dev
         beforeSend:function(event){
@@ -1172,7 +1172,7 @@ function App() {
     insW={next:tY+"-"+p2(tM+1)+"-"+p2(tD),diff:Math.round((idEnd-todayMidnight)/86400000),isTlc:isTlc};}
   var insExpDiff=veh.insExpiry?daysFromToday(veh.insExpiry):null; var expiring=ll.filter(function(l){if(!l.expiryDate)return false;var d=daysFromToday(l.expiryDate);var rd=+(l.reminderDays||60);return d!==null&&d>=0&&d<=rd;});
   var expired=ll.filter(function(l){if(!l.expiryDate)return false;var d=daysFromToday(l.expiryDate);return d!==null&&d<0;}); var totalFix=fl.filter(function(f){return f.active&&f.amount;}).reduce(function(s,f){return s+(f.cycle==="annual"?Math.round(+f.amount/12*100)/100:+f.amount);},0); var bldRep=function(p){var isM=p==="month",ri=isM?tInc:yInc,rg=isM?tGross:yStmts.reduce(function(s,x){return s+(+x.grossFare||0);},0),rt=isM?tTips:yStmts.reduce(function(s,x){return s+(+x.tips||0);},0),rb=isM?tBonus:yStmts.reduce(function(s,x){return s+(+x.bonus||0);},0),rtr=isM?tToll:yStmts.reduce(function(s,x){return s+(+x.tollReimbursed||0);},0),rTot=isM?tExp:yExp,rn=ri-rTot,rT=isM?tTrips:yTrips,rH=isM?tHours:yHours,rM=isM?tMiles:yMiles;return {ri:ri,rg:rg,rt:rt,rb:rb,rtr:rtr,rTot:rTot,rn:rn,rTrips:rT,rHours:rH,rMiles:rM};};
-  var yAllExps=function(){return yExps.concat(yMons.reduce(function(acc,m){return acc.concat(genFixed(fl,m));},[]));}; var hourlyRate=tHours>0?Math.round(tInc/tHours*100)/100:0,lastMo=prevMo(mo),lmStmts=sl.filter(function(x){return x.month===lastMo;}),lmWeeks=wl.filter(function(w){return w.weekStart.slice(0,7)===lastMo;}),lmFixMo=genFixed(fl,lastMo),lmDailies=dl.filter(function(d){return d.date&&d.date.slice(0,7)===lastMo;}),lmDlInc=lmDailies.reduce(function(s,d){return s+(+d.cash||0)+(+d.card||0)+(+d.tips||0);},0),lmDlLease=lmDailies.reduce(function(s,d){return s+(+d.lease||0);},0),lmDlHours=lmDailies.reduce(function(s,d){return s+(+d.hours||0);},0),lmFeAll=el.filter(function(e){var c=allC[e.category];if(c&&c.mo)return (e.statementMonth||e.date.slice(0,7))===lastMo;return e.date.slice(0,7)===lastMo;}).concat(lmFixMo),lmInc=lmStmts.reduce(function(s,x){return s+(+x.grossFare||0)+(+x.tips||0)+(+x.bonus||0)+(+x.tollReimbursed||0)+(+x.otherIncome||0);},0)+lmDlInc,lmExp=lmFeAll.reduce(function(s,e){return s+(+e.amount||0);},0)+lmDlLease,lmNet=lmInc-lmExp,lmHours=lmWeeks.reduce(function(s,w){return s+(+w.hours||0);},0)+lmDlHours,lmHourly=lmHours>0?Math.round(lmInc/lmHours*100)/100:0,nextExpiry=ll.filter(function(l){return l.expiryDate;}).sort(function(a,b){return a.expiryDate.localeCompare(b.expiryDate);})[0]; var achievements=[];if(tInc>=5000)achievements.push({icon:"🏆",text:lang==="en"?"Income > $5000":"本月收入破$5000",color:"#FFD700",bg:"#1A1400"});else if(tInc>=3000)achievements.push({icon:"⭐",text:lang==="en"?"Income > $3000":"本月收入破$3000",color:"#FFD700",bg:"#1A1400"});if(net>0&&tInc>0&&net>=tInc*0.5)achievements.push({icon:"💰",text:lang==="en"?"Profit > 50%":"净利润超50%",color:"#00E676",bg:"#0A1A0A"});if(tTrips>=200)achievements.push({icon:"🚗",text:lang==="en"?"200 trips this month":"本月200趟达成",color:"#00D4FF",bg:"#0A1428"});else if(tTrips>=100)achievements.push({icon:"🎯",text:lang==="en"?"100 trips this month":"本月100趟达成",color:"#00D4FF",bg:"#0A1428"});if(expiring.length===0&&expired.length===0&&ll.length>0)achievements.push({icon:"✅",text:lang==="en"?"All licenses valid":"证件全部有效",color:"#00E676",bg:"#0A1A0A"});if(yInc>=50000)achievements.push({icon:"👑",text:lang==="en"?"Annual income > $50000":"年收入破$50000",color:"#FFD700",bg:"#1A1400"}); var r40=useState(function(){return lsLoad("nyc_custGroups",[]);}),custGroups=r40[0],setCustGroups=r40[1]; var r41=useState(""),newGrpName=r41[0],setNewGrpName=r41[1]; var r42=useState("📁"),newGrpIcon=r42[0],setNewGrpIcon=r42[1]; var r43=useState("#A8D0E8"),newGrpColor=r43[0],setNewGrpColor=r43[1]; var r44=useState(new Date().getFullYear()+""),taxYr=r44[0],setTaxYr=r44[1]; var r45=useState(function(){return lsLoad("nyc_seRate",15.3);}),seRate=r45[0],_setSeRate=r45[1];function setSeRate(v){_setSeRate(v);try{localStorage.setItem("nyc_seRate",JSON.stringify(v));}catch(e){}} var r45b=useState(function(){return lsLoad("nyc_fedRate",12);}),fedRate=r45b[0],_setFedRate=r45b[1];function setFedRate(v){_setFedRate(v);try{localStorage.setItem("nyc_fedRate",JSON.stringify(v));}catch(e){}} var r45c=useState(function(){return lsLoad("nyc_stateRate",8.5);}),stateRate=r45c[0],_setStateRate=r45c[1];function setStateRate(v){_setStateRate(v);try{localStorage.setItem("nyc_stateRate",JSON.stringify(v));}catch(e){}} var r45d=useState(function(){return lsLoad("nyc_stdDed",14600);}),stdDed=r45d[0],_setStdDed=r45d[1];function setStdDed(v){_setStdDed(v);try{localStorage.setItem("nyc_stdDed",JSON.stringify(v));}catch(e){}} var r45e=useState(function(){return lsLoad("nyc_mtaRate",0.34);}),mtaRate=r45e[0],_setMtaRate=r45e[1];function setMtaRate(v){_setMtaRate(v);try{localStorage.setItem("nyc_mtaRate",JSON.stringify(v));}catch(e){}} var rSV=useState(function(){return lsLoad("nyc_savedVehicles",[]);}),savedVehicles=rSV[0],_setSavedVehicles=rSV[1];function setSavedVehicles(v){_setSavedVehicles(v);try{localStorage.setItem("nyc_savedVehicles",JSON.stringify(v));}catch(e){}} var r46=useState(false),taxLoading=r46[0],setTaxLoading=r46[1]; var r47=useState(""),taxRateNote=r47[0],setTaxRateNote=r47[1]; var r48=useState(function(){return lsLoad("nyc_notes",[]);}),notes=r48[0],setNotes=r48[1]; var rSnap=useState([]),snapshotList=rSnap[0],setSnapshotList=rSnap[1];
+  var yAllExps=function(){return yExps.concat(yMons.reduce(function(acc,m){return acc.concat(genFixed(fl,m));},[]));}; var hourlyRate=tHours>0?Math.round(tInc/tHours*100)/100:0,lastMo=prevMo(mo),lmStmts=sl.filter(function(x){return x.month===lastMo;}),lmWeeks=wl.filter(function(w){return w.weekStart.slice(0,7)===lastMo;}),lmFixMo=genFixed(fl,lastMo),lmDailies=dl.filter(function(d){return d.date&&d.date.slice(0,7)===lastMo;}),lmDlInc=lmDailies.reduce(function(s,d){return s+(+d.cash||0)+(+d.card||0)+(+d.tips||0);},0),lmDlLease=lmDailies.reduce(function(s,d){return s+(+d.lease||0);},0),lmDlHours=lmDailies.reduce(function(s,d){return s+(+d.hours||0);},0),lmFeAll=el.filter(function(e){var c=allC[e.category];if(c&&c.mo)return (e.statementMonth||e.date.slice(0,7))===lastMo;return e.date.slice(0,7)===lastMo;}).concat(lmFixMo),lmInc=lmStmts.reduce(function(s,x){return s+(+x.grossFare||0)+(+x.tips||0)+(+x.bonus||0)+(+x.tollReimbursed||0)+(+x.otherIncome||0);},0)+lmDlInc,lmExp=lmFeAll.reduce(function(s,e){return s+(+e.amount||0);},0)+lmDlLease,lmNet=lmInc-lmExp,lmHours=lmWeeks.reduce(function(s,w){return s+(+w.hours||0);},0)+lmDlHours,lmHourly=lmHours>0?Math.round(lmInc/lmHours*100)/100:0,nextExpiry=ll.filter(function(l){return l.expiryDate;}).sort(function(a,b){return a.expiryDate.localeCompare(b.expiryDate);})[0]; var achievements=[];if(tInc>=5000)achievements.push({icon:"🏆",text:lang==="en"?"Income > $5000":"本月收入破$5000",color:"#FFD700",bg:"#1A1400"});else if(tInc>=3000)achievements.push({icon:"⭐",text:lang==="en"?"Income > $3000":"本月收入破$3000",color:"#FFD700",bg:"#1A1400"});if(net>0&&tInc>0&&net>=tInc*0.5)achievements.push({icon:"💰",text:lang==="en"?"Profit > 50%":"净利润超50%",color:"#00E676",bg:"#0A1A0A"});if(tTrips>=200)achievements.push({icon:"🚗",text:lang==="en"?"200 trips this month":"本月200趟达成",color:"#00D4FF",bg:"#0A1428"});else if(tTrips>=100)achievements.push({icon:"🎯",text:lang==="en"?"100 trips this month":"本月100趟达成",color:"#00D4FF",bg:"#0A1428"});if(expiring.length===0&&expired.length===0&&ll.length>0)achievements.push({icon:"✅",text:lang==="en"?"All licenses valid":"证件全部有效",color:"#00E676",bg:"#0A1A0A"});if(yInc>=50000)achievements.push({icon:"👑",text:lang==="en"?"Annual income > $50000":"年收入破$50000",color:"#FFD700",bg:"#1A1400"}); var r40=useState(function(){return lsLoad("nyc_custGroups",[]);}),custGroups=r40[0],setCustGroups=r40[1]; var r41=useState(""),newGrpName=r41[0],setNewGrpName=r41[1]; var r42=useState("📁"),newGrpIcon=r42[0],setNewGrpIcon=r42[1]; var r43=useState("#A8D0E8"),newGrpColor=r43[0],setNewGrpColor=r43[1]; var r44=useState(new Date().getFullYear()+""),taxYr=r44[0],setTaxYr=r44[1]; var r45=useState(function(){return lsLoad("nyc_seRate",15.3);}),seRate=r45[0],_setSeRate=r45[1];function setSeRate(v){_setSeRate(v);try{localStorage.setItem("nyc_seRate",JSON.stringify(v));}catch(e){}} var r45b=useState(function(){return lsLoad("nyc_fedRate",12);}),fedRate=r45b[0],_setFedRate=r45b[1];function setFedRate(v){_setFedRate(v);try{localStorage.setItem("nyc_fedRate",JSON.stringify(v));}catch(e){}} var r45c=useState(function(){return lsLoad("nyc_stateRate",8.5);}),stateRate=r45c[0],_setStateRate=r45c[1];function setStateRate(v){_setStateRate(v);try{localStorage.setItem("nyc_stateRate",JSON.stringify(v));}catch(e){}} var r45d=useState(function(){return lsLoad("nyc_stdDed",14600);}),stdDed=r45d[0],_setStdDed=r45d[1];function setStdDed(v){_setStdDed(v);try{localStorage.setItem("nyc_stdDed",JSON.stringify(v));}catch(e){}} var r45e=useState(function(){return lsLoad("nyc_mtaRate",0.34);}),mtaRate=r45e[0],_setMtaRate=r45e[1];function setMtaRate(v){_setMtaRate(v);try{localStorage.setItem("nyc_mtaRate",JSON.stringify(v));}catch(e){}} var r45f=useState(function(){return lsLoad("nyc_mileageRate",0.70);}),mileageRate=r45f[0],_setMileageRate=r45f[1];function setMileageRate(v){_setMileageRate(v);try{localStorage.setItem("nyc_mileageRate",JSON.stringify(v));}catch(e){}} var rSV=useState(function(){return lsLoad("nyc_savedVehicles",[]);}),savedVehicles=rSV[0],_setSavedVehicles=rSV[1];function setSavedVehicles(v){_setSavedVehicles(v);try{localStorage.setItem("nyc_savedVehicles",JSON.stringify(v));}catch(e){}} var r46=useState(false),taxLoading=r46[0],setTaxLoading=r46[1]; var r47=useState(""),taxRateNote=r47[0],setTaxRateNote=r47[1]; var r48=useState(function(){return lsLoad("nyc_notes",[]);}),notes=r48[0],setNotes=r48[1]; var rSnap=useState([]),snapshotList=rSnap[0],setSnapshotList=rSnap[1];
   // Undo banner: { msg, prevEl, until } (for bulk operations)
   var rUndo=useState(null),undoBanner=rUndo[0],setUndoBanner=rUndo[1];
   // Tick to update countdown display
@@ -2050,6 +2050,49 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
         , tab===0 ? (
           React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 262}}
             , React.createElement(SegBtn, { val: dashV, set: setDashV, opts: [["month",T.thisMonth],["year",T.thisYear]], __self: this, __source: {fileName: _jsxFileName, lineNumber: 263}} )
+
+            // === SMART INSIGHTS CARD: monthly summary + IRS mileage deduction ===
+            , (function(){
+                var hasInsights=false;
+                var monthSummary=null;
+                var mileageDeduction=null;
+                // Monthly summary: only show if last month has meaningful data
+                if(lmInc>0||lmExp>0){
+                  hasInsights=true;
+                  var dInc=lmInc>0?Math.round((tInc-lmInc)/lmInc*100):0;
+                  var dirSym=dInc>0?"↑":(dInc<0?"↓":"→");
+                  var dirCol=dInc>0?"#00E676":(dInc<0?"#FF7060":"#7A9AB8");
+                  monthSummary=React.createElement('div',{style:{paddingBottom:hasInsights&&yMiles>0?10:0,borderBottom:yMiles>0?"1px solid "+C.border:"none",marginBottom:yMiles>0?10:0}},
+                    React.createElement('div',{style:{fontSize:11,color:C.text3,marginBottom:4,letterSpacing:0.3}},lang==="en"?"VS LAST MONTH":"对比上月"),
+                    React.createElement('div',{style:{fontSize:13,color:C.text,lineHeight:1.6}},
+                      lang==="en"
+                        ? React.createElement('span',null,"Net ",React.createElement('b',{style:{color:net>=0?"#00E676":"#FF7060"}},fmt(net))," ",lmInc>0?React.createElement('span',{style:{color:dirCol,fontWeight:600}},dirSym," ",Math.abs(dInc),"%"):null,hourlyRate>0?React.createElement('span',{style:{color:C.text3}},"  ·  ",fmt(hourlyRate),"/hr"):null)
+                        : React.createElement('span',null,"净利润 ",React.createElement('b',{style:{color:net>=0?"#00E676":"#FF7060"}},fmt(net))," ",lmInc>0?React.createElement('span',{style:{color:dirCol,fontWeight:600}},dirSym," ",Math.abs(dInc),"%"):null,hourlyRate>0?React.createElement('span',{style:{color:C.text3}},"  ·  时薪 ",fmt(hourlyRate)):null)
+                    )
+                  );
+                }
+                // IRS mileage deduction: only if any miles tracked this year
+                if(yMiles>0){
+                  hasInsights=true;
+                  var deduction=Math.round(yMiles*(+mileageRate)*100)/100;
+                  mileageDeduction=React.createElement('div',null,
+                    React.createElement('div',{style:{fontSize:11,color:C.text3,marginBottom:4,letterSpacing:0.3}},lang==="en"?"IRS MILEAGE DEDUCTION · "+yr:"里程抵税 · "+yr+"年"),
+                    React.createElement('div',{style:{display:"flex",justifyContent:"space-between",alignItems:"baseline"}},
+                      React.createElement('div',{style:{fontSize:13,color:C.text2}},
+                        React.createElement('b',{style:{color:"#FFD700",fontSize:18}},"$"+deduction.toLocaleString()),
+                        React.createElement('span',{style:{fontSize:11,color:C.text3,marginLeft:6}},yMiles.toLocaleString()+(lang==="en"?" mi × $":" mi × $")+(+mileageRate).toFixed(2))
+                      ),
+                      React.createElement('div',{style:{fontSize:10,color:C.text3,fontStyle:"italic"}},lang==="en"?"Est. — confirm w/ accountant":"参考 · 请询会计师")
+                    )
+                  );
+                }
+                if(!hasInsights)return null;
+                return React.createElement(Card,{style:{marginBottom:10,padding:"12px 14px",background:"linear-gradient(180deg,#0F1F35 0%,#0A1828 100%)",border:"1px solid #1F3A5A"}},
+                  React.createElement('div',{style:{fontSize:13,fontWeight:700,color:"#00D4FF",marginBottom:8,letterSpacing:0.3}},"💡 ",lang==="en"?"Smart Insights":"智能洞察"),
+                  monthSummary,
+                  mileageDeduction
+                );
+              }())
             , dashV==="month" ? (
               React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 265}}
                 , React.createElement(MoNav, { val: mo, set: setMo, lang: lang, onPick: function(){setMpState({value:mo,onChange:function(v){setMo(v);}});}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 266}} )
@@ -3310,6 +3353,13 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
               var unitSuffix=ef.category==="charging"?"/kWh":"/Gal";
               var qtyLabel=ef.category==="charging"?(lang==="en"?"kWh Charged":"充电度数 (kWh)"):(lang==="en"?"Gallons (Gal)":"加油加仑 (Gal)");
               var unitPriceLabel=ef.category==="charging"?(lang==="en"?"Price ($/kWh)":"单价 ($/kWh)"):(lang==="en"?"Price ($/Gal)":"单价 ($/Gal)");
+              // === Compute historical avg unit price (last 30 records of same category) for anomaly detection ===
+              var histAvg=null;
+              var histRecords=el.filter(function(e){return e.category===ef.category&&e.amount&&e.qty&&+e.qty>0;}).slice(-30);
+              if(histRecords.length>=5){
+                var sumUnit=histRecords.reduce(function(s,e){return s+(+e.amount/+e.qty);},0);
+                histAvg=sumUnit/histRecords.length;
+              }
               var order=ef._editOrder||[];
               var manual2=order.slice(-2);
               var autoField=manual2.length>=2?FIELDS.find(function(f){return manual2.indexOf(f)<0;}):null;
@@ -3343,6 +3393,18 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                 );
               };
               var formulaStrip=null;
+              // Determine current effective unit price (auto or manual) for anomaly check
+              var effUnit=+ef.unitPrice;
+              if(!effUnit&&ef.amount&&ef.qty&&+ef.qty>0)effUnit=+ef.amount/+ef.qty;
+              var anomaly=null;
+              if(histAvg&&effUnit>0){
+                var dev=(effUnit-histAvg)/histAvg;
+                if(dev>=0.30){
+                  anomaly={type:"high",pct:Math.round(dev*100),avg:histAvg};
+                }else if(dev<=-0.20){
+                  anomaly={type:"low",pct:Math.round(Math.abs(dev)*100),avg:histAvg};
+                }
+              }
               if(autoField&&ef[autoField]){
                 var fmtN=function(v,d){return (+v).toFixed(d||2);};
                 var ftxt;
@@ -3353,11 +3415,25 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
               }else if(!autoField){
                 formulaStrip=React.createElement('div',{style:{padding:"6px 10px",fontSize:11,color:C.text3,textAlign:"center",letterSpacing:0.2}},lang==="en"?"Fill any 2 — the 3rd auto-calculates":"填任意两个，第三个自动算");
               }
+              // Anomaly banner: shown alongside formula strip when unit price is unusual
+              var anomalyBanner=null;
+              if(anomaly){
+                var aIsHigh=(anomaly.type==="high");
+                var aColBg=aIsHigh?"rgba(255,150,40,0.10)":"rgba(0,210,255,0.08)";
+                var aColBd=aIsHigh?"rgba(255,150,40,0.40)":"rgba(0,210,255,0.30)";
+                var aColTx=aIsHigh?"#FFB347":"#5BC8E5";
+                var aIcon=aIsHigh?"⚠️":"💚";
+                var aMsg=aIsHigh
+                  ? (lang==="en"?aIcon+" Unit price "+anomaly.pct+"% above your avg ($"+anomaly.avg.toFixed(3)+unitSuffix+") — confirm?":aIcon+" 单价比你均价高 "+anomaly.pct+"% (你均价 $"+anomaly.avg.toFixed(3)+unitSuffix+") · 确认下？")
+                  : (lang==="en"?aIcon+" Nice — "+anomaly.pct+"% below your avg ($"+anomaly.avg.toFixed(3)+unitSuffix+")":aIcon+" 划算！比你均价低 "+anomaly.pct+"% (均价 $"+anomaly.avg.toFixed(3)+unitSuffix+")");
+                anomalyBanner=React.createElement('div',{style:{background:aColBg,border:"1px solid "+aColBd,borderRadius:8,padding:"6px 10px",fontSize:11,color:aColTx,textAlign:"center",letterSpacing:0.2,marginTop:0}},aMsg);
+              }
               return React.createElement('div',{style:{display:"flex",flexDirection:"column",gap:6}},
                 smartField({field:"amount",label:T.amount,value:ef.amount,placeholder:"0.00",step:"0.01"}),
                 smartField({field:"qty",label:qtyLabel,value:ef.qty,placeholder:"0.0",step:"0.01"}),
                 smartField({field:"unitPrice",label:unitPriceLabel,value:ef.unitPrice,placeholder:"0.000",step:"0.001"}),
                 formulaStrip,
+                anomalyBanner,
                 ef.category==="charging"?React.createElement(Field,{label:lang==="en"?"Charged to (%)":"充到 (%)",type:"number",value:ef.chargedTo||"",onChange:function(v){setEf(Object.assign({},ef,{chargedTo:v}));},placeholder:"e.g. 80"}):null
               );
             }())
@@ -3415,9 +3491,13 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                             return React.createElement('div',{key:item.catKey+"_"+item.loc+"_"+i,style:{display:"flex",alignItems:"center",borderBottom:"1px solid #0F1C30"}},
                               React.createElement('button',{type:"button",onClick:function(ev){
                                   ev.preventDefault();
-                                  // Set notes AND switch category if different
+                                  // Set notes AND switch category if different (also sync selGrp so dropdown is accurate)
                                   var update={notes:item.loc};
-                                  if(item.catKey!==ef.category) update.category=item.catKey;
+                                  if(item.catKey!==ef.category){
+                                    update.category=item.catKey;
+                                    var newCat=allC[item.catKey];
+                                    if(newCat&&newCat.g)setSelGrp(newCat.g);
+                                  }
                                   setEf(Object.assign({},ef,update));
                                   ev.target.closest('details').open=false;
                                 }, style:{flex:1,textAlign:"left",background:"none",border:"none",padding:"8px 12px",color:C.text,fontSize:13,cursor:"pointer"}},
@@ -5063,7 +5143,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
         , (function(){
           var items=[{ti:0,icon:"&#128202;",label:T.dashboard},{ti:1,icon:"&#128181;",label:T.income},{ti:-1,icon:"+",label:T.addExpense,isPlus:true},{ti:2,icon:"&#128184;",label:T.expense},{ti:3,icon:"&#128200;",label:T.report}];
           return React.createElement('div', { style: {display:"contents"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 909}}, items.map(function(item,i){
-            if(item.isPlus){return React.createElement('button', { key: i, onClick: function(){setShowDrawer(false);setEf({date:today(),time:nowTime(),category:"fuel",amount:"",notes:"",qty:"",statementMonth:curMo(),isRecurring:false,mode:(driverType==="rideshare"||driverType==="taxi")?driverType:""});setSf("exp");}, style: {flex:1,padding:"6px 2px 10px",background:"none",border:"none",cursor:"pointer",textAlign:"center",display:"flex",flexDirection:"column",alignItems:"center",gap:2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 910}}, React.createElement('div', { style: {width:44,height:44,borderRadius:22,background:"linear-gradient(135deg,#00D4FF,#0055FF)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,color:"#fff",boxShadow:"0 2px 12px rgba(0,212,255,0.4)",marginTop:-18}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 910}}, "+"), React.createElement('span', { style: {fontSize:11,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 910}}, item.label));}
+            if(item.isPlus){return React.createElement('button', { key: i, onClick: function(){setShowDrawer(false);setSelGrp("车辆");setEf({date:today(),time:nowTime(),category:(veh&&veh.type==="petrol"?"fuel":"charging"),amount:"",notes:"",qty:"",statementMonth:curMo(),isRecurring:false,mode:(driverType==="rideshare"||driverType==="taxi")?driverType:""});setSf("exp");}, style: {flex:1,padding:"6px 2px 10px",background:"none",border:"none",cursor:"pointer",textAlign:"center",display:"flex",flexDirection:"column",alignItems:"center",gap:2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 910}}, React.createElement('div', { style: {width:44,height:44,borderRadius:22,background:"linear-gradient(135deg,#00D4FF,#0055FF)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,color:"#fff",boxShadow:"0 2px 12px rgba(0,212,255,0.4)",marginTop:-18}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 910}}, "+"), React.createElement('span', { style: {fontSize:11,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 910}}, item.label));}
             var active=tab===item.ti,cl=active?"#00D4FF":C.text3,bg=active?"#0A1828":"transparent";
             return React.createElement('button', { key: i, onClick: function(){setTab(item.ti);setShowDrawer(false);setSf(null);setShowBackup(false);setShowPlatMgr(false);setShowRemMgr(false);setShowGoal(false);setReportData(null);}, style: {flex:1,padding:"5px 2px 7px",background:bg,border:"none",fontSize:10,cursor:"pointer",color:cl,fontWeight:active?700:400,textAlign:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 912}}, React.createElement('div', { style: {fontSize:17,marginBottom:2}, dangerouslySetInnerHTML: {__html:item.icon}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 912}} ), item.label);
           }));
