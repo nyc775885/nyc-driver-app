@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-var APP_VERSION = "v333";  // ← single source of truth: bump this once per release
+var APP_VERSION = "v336";  // ← single source of truth: bump this once per release
 console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
@@ -12,7 +12,7 @@ console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-
       window.Sentry.init({
         dsn:window.SENTRY_DSN,
         environment:(location.hostname==="localhost"||location.hostname==="127.0.0.1")?"development":"production",
-        release:"nyc-driver-tracker@1.0.36",
+        release:"nyc-driver-tracker@1.0.38",
         tracesSampleRate:0.1,
         // Don't send events from local dev
         beforeSend:function(event){
@@ -1029,7 +1029,14 @@ function App() {
   var r6=useState(function(){try{var s=localStorage.getItem("nyc_sf");return s||null;}catch(e){return null;}}()),sf=r6[0],_setSf=r6[1];function setSf(v){_setSf(v);try{if(v)localStorage.setItem("nyc_sf",v);else localStorage.removeItem("nyc_sf");}catch(e){}} var r7=useState("month"),expV=r7[0],setExpV=r7[1];
   var r8=useState(false),mExpDet=r8[0],setMExpDet=r8[1]; var r9=useState(false),yExpDet=r9[0],setYExpDet=r9[1];
   var r10=useState("车辆"),selGrp=r10[0],setSelGrp=r10[1];
-  var r11=useState(function(){return lsLoad("nyc_veh",{type:"",brand:"",plate:"",tlcPlate:"",insComp:"",insPolicy:"",insExpiry:"",loanType:"loan",loanAmt:"",lastInsp:""});});
+  var r11=useState(function(){
+    var stored = lsLoad("nyc_veh",{type:"",brand:"",plate:"",tlcPlate:"",insComp:"",insPolicy:"",insExpiry:"",loanType:"loan",loanAmt:"",lastInsp:""});
+    // Migration: ensure every veh has a stable vehicleId for tagging expenses
+    if(!stored.vehicleId){
+      stored.vehicleId = "v_" + Date.now() + "_" + Math.random().toString(36).slice(2,8);
+    }
+    return stored;
+  });
   var veh=r11[0],setVeh=r11[1];
   function lsLoad(k,def){try{var s=localStorage.getItem(k);return s?JSON.parse(s):def;}catch(e){return def;}}
   // Debounced localStorage write — coalesces rapid successive writes into one.
@@ -1695,60 +1702,122 @@ function App() {
       }).catch(function(err){reportError(err,{op:"loadFromDrive"});setSyncStatus(lang==="en"?"Load failed":"加载失败");});
     });
   }
+  // Module-level lock: ensures only ONE saveToDrive runs at a time, preventing race-condition duplicates.
+  // If a save is in progress, additional calls wait for it to finish before starting.
+  var __driveSaveLock = null;
   function saveToDrive(tok,fid,dataObj){
-    setSyncing(true);
-    var body=JSON.stringify(dataObj);
-    var bound="-------nycdriverfoo";
-    var doUpload = function(folderId, useFid){
-      // For new file, include parents (folder); for update (PATCH), don't include parents
-      var meta = useFid
-        ? {name:DRIVE_FILE_NAME,mimeType:"application/json"}
-        : {name:DRIVE_FILE_NAME,mimeType:"application/json",parents:folderId?[folderId]:undefined};
-      var metaStr = JSON.stringify(meta);
-      var reqBody = "--"+bound+"\r\nContent-Type: application/json\r\n\r\n"+metaStr+"\r\n--"+bound+"\r\nContent-Type: application/json\r\n\r\n"+body+"\r\n--"+bound+"--";
-      var url = useFid
-        ? "https://www.googleapis.com/upload/drive/v3/files/"+useFid+"?uploadType=multipart"
-        : "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart";
-      var method = useFid ? "PATCH" : "POST";
-      fetch(url,{method:method,headers:{Authorization:"Bearer "+tok,"Content-Type":"multipart/related; boundary="+bound},body:reqBody})
-      .then(function(r){return r.json();})
-      .then(function(d){
-        if(d.id)setDriveFileId(d.id);
-        setSyncing(false);
-        setSyncStatus("");
-        try{localStorage.setItem("nyc_lastBackup", String(Date.now()));}catch(e){}
-        showToast(lang==="en"?"☁ Synced to Drive":"☁ 已同步到 Drive");
-      }).catch(function(err){reportError(err,{op:"saveToDrive"});setSyncing(false);setSyncStatus("");showToast(lang==="en"?"✗ Sync failed":"✗ 同步失败","error");});
-    };
-    if(fid){
-      // We already have a fileId — go straight to PATCH update
-      doUpload(null, fid);
-    }else{
-      // No fileId — RACE-SAFE check: search by name first to avoid creating duplicates
-      // (covers cases like: cache cleared, multi-device first sync, stale fileId after Drive cleanup)
-      getOrCreateFolder(tok,function(folderId){
-        if(!folderId){doUpload(null, null);return;}
-        var q = encodeURIComponent("name='"+DRIVE_FILE_NAME+"' and '"+folderId+"' in parents and trashed=false");
-        fetch("https://www.googleapis.com/drive/v3/files?q="+q+"&spaces=drive&fields=files(id,modifiedTime)&orderBy=modifiedTime desc",
-          {headers:{Authorization:"Bearer "+tok}})
+    // If another save is in flight, queue behind it (don't start a parallel POST/PATCH)
+    if(__driveSaveLock){
+      __driveSaveLock = __driveSaveLock.then(function(){return _saveToDriveInner(tok,fid,dataObj);}, function(){return _saveToDriveInner(tok,fid,dataObj);});
+    } else {
+      __driveSaveLock = _saveToDriveInner(tok,fid,dataObj);
+    }
+    // After this save completes (success or fail), release the lock
+    var current = __driveSaveLock;
+    current.finally(function(){
+      if(__driveSaveLock === current) __driveSaveLock = null;
+    });
+    return current;
+  }
+  function _saveToDriveInner(tok,fid,dataObj){
+    return new Promise(function(resolve){
+      setSyncing(true);
+      var body=JSON.stringify(dataObj);
+      var bound="-------nycdriverfoo";
+      var doUpload = function(folderId, useFid){
+        // For new file, include parents (folder); for update (PATCH), don't include parents
+        var meta = useFid
+          ? {name:DRIVE_FILE_NAME,mimeType:"application/json"}
+          : {name:DRIVE_FILE_NAME,mimeType:"application/json",parents:folderId?[folderId]:undefined};
+        var metaStr = JSON.stringify(meta);
+        var reqBody = "--"+bound+"\r\nContent-Type: application/json\r\n\r\n"+metaStr+"\r\n--"+bound+"\r\nContent-Type: application/json\r\n\r\n"+body+"\r\n--"+bound+"--";
+        var url = useFid
+          ? "https://www.googleapis.com/upload/drive/v3/files/"+useFid+"?uploadType=multipart"
+          : "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart";
+        var method = useFid ? "PATCH" : "POST";
+        fetch(url,{method:method,headers:{Authorization:"Bearer "+tok,"Content-Type":"multipart/related; boundary="+bound},body:reqBody})
         .then(function(r){return r.json();})
         .then(function(d){
-          if(d.files && d.files.length > 0){
-            // File(s) already exist — adopt the most recent and PATCH it instead of creating a new one
-            var existing = d.files[0];
-            setDriveFileId(existing.id);
-            doUpload(null, existing.id);
-            // If multiple, leave them — user can use the cleanup button. We don't auto-delete here for safety.
+          if(d.id)setDriveFileId(d.id);
+          setSyncing(false);
+          setSyncStatus("");
+          try{localStorage.setItem("nyc_lastBackup", String(Date.now()));}catch(e){}
+          // After CREATE (POST without useFid), do a final dedupe sweep:
+          // If somehow another file with the same name exists (race / leftover), trash the older ones.
+          if(!useFid && d.id && folderId){
+            setTimeout(function(){
+              var qq = encodeURIComponent("name='"+DRIVE_FILE_NAME+"' and '"+folderId+"' in parents and trashed=false");
+              fetch("https://www.googleapis.com/drive/v3/files?q="+qq+"&spaces=drive&fields=files(id,modifiedTime)&orderBy=modifiedTime desc",
+                {headers:{Authorization:"Bearer "+tok}})
+              .then(function(r){return r.json();})
+              .then(function(dd){
+                if(!dd.files || dd.files.length<=1){resolve(); return;}
+                // Multiple files exist — keep the one we just created/updated, trash the rest
+                var keep = d.id;
+                var toTrash = dd.files.filter(function(f){return f.id !== keep;});
+                var done = 0;
+                toTrash.forEach(function(f){
+                  fetch("https://www.googleapis.com/drive/v3/files/"+f.id, {method:"DELETE", headers:{Authorization:"Bearer "+tok}})
+                  .finally(function(){
+                    done++;
+                    if(done === toTrash.length){
+                      console.log("[drive] auto-trashed "+toTrash.length+" duplicate(s) after upload");
+                      resolve();
+                    }
+                  });
+                });
+              })
+              .catch(function(){resolve();});
+            }, 500); // wait briefly for Drive to index the new file
           } else {
-            // Truly no file → safe to create
-            doUpload(folderId, null);
+            resolve();
           }
-        }).catch(function(){
-          // Search failed → fall back to creating (best effort; may produce a duplicate but rare)
-          doUpload(folderId, null);
+          showToast(lang==="en"?"☁ Synced to Drive":"☁ 已同步到 Drive");
+        }).catch(function(err){
+          reportError(err,{op:"saveToDrive"});
+          setSyncing(false);
+          setSyncStatus("");
+          showToast(lang==="en"?"✗ Sync failed":"✗ 同步失败","error");
+          resolve();
         });
-      });
-    }
+      };
+      if(fid){
+        // We already have a fileId — go straight to PATCH update
+        doUpload(null, fid);
+      }else{
+        // No fileId — RACE-SAFE check: search by name first to avoid creating duplicates
+        // (covers cases like: cache cleared, multi-device first sync, stale fileId after Drive cleanup)
+        getOrCreateFolder(tok,function(folderId){
+          if(!folderId){doUpload(null, null);return;}
+          var q = encodeURIComponent("name='"+DRIVE_FILE_NAME+"' and '"+folderId+"' in parents and trashed=false");
+          fetch("https://www.googleapis.com/drive/v3/files?q="+q+"&spaces=drive&fields=files(id,modifiedTime)&orderBy=modifiedTime desc",
+            {headers:{Authorization:"Bearer "+tok}})
+          .then(function(r){return r.json();})
+          .then(function(d){
+            if(d.files && d.files.length > 0){
+              // File(s) already exist — adopt the most recent and PATCH it instead of creating a new one
+              var existing = d.files[0];
+              setDriveFileId(existing.id);
+              doUpload(null, existing.id);
+              // If multiple, auto-trash the older ones (silent cleanup)
+              if(d.files.length > 1){
+                var older = d.files.slice(1);
+                older.forEach(function(f){
+                  fetch("https://www.googleapis.com/drive/v3/files/"+f.id, {method:"DELETE", headers:{Authorization:"Bearer "+tok}}).catch(function(){});
+                });
+                console.log("[drive] auto-trashed "+older.length+" older duplicate(s) before upload");
+              }
+            } else {
+              // Truly no file → safe to create
+              doUpload(folderId, null);
+            }
+          }).catch(function(){
+            // Search failed → fall back to creating (best effort; may produce a duplicate but rare)
+            doUpload(folderId, null);
+          });
+        });
+      }
+    });
   }
 
   // Save data to a specific named file in Drive (for daily/monthly snapshots)
@@ -2140,6 +2209,31 @@ function App() {
   useEffect(function(){lsSave("nyc_reminders",reminders);}, [reminders]);
   useEffect(function(){lsSave("nyc_dl",dl);}, [dl]);
   useEffect(function(){lsSave("nyc_notes",notes);}, [notes]);
+  // === One-time migration: tag legacy expenses with current vehicleId ===
+  // Runs only once. Sets a flag in localStorage so it never runs again.
+  // For users with one car, this correctly attributes all history to it.
+  // For users who switched cars before this feature: history goes to current car;
+  // they can use "Reassign by date range" tool later to fix.
+  useEffect(function(){
+    try{
+      var migrated = localStorage.getItem("nyc_vehMigrated_v1");
+      if(migrated) return;
+      if(!veh.vehicleId) return; // wait for veh to be ready
+      var elNeedsTag = el.some(function(e){return !e.vehicleId;});
+      var dlNeedsTag = dl.some(function(d){return !d.vehicleId;});
+      if(!elNeedsTag && !dlNeedsTag){
+        localStorage.setItem("nyc_vehMigrated_v1","1");
+        return;
+      }
+      if(elNeedsTag){
+        setEl(el.map(function(e){return e.vehicleId ? e : Object.assign({}, e, {vehicleId: veh.vehicleId});}));
+      }
+      if(dlNeedsTag){
+        setDl(dl.map(function(d){return d.vehicleId ? d : Object.assign({}, d, {vehicleId: veh.vehicleId});}));
+      }
+      localStorage.setItem("nyc_vehMigrated_v1","1");
+    }catch(e){}
+  }, [veh.vehicleId]); // re-run if veh ID just got created
   // ============ Auto-snapshot to IndexedDB ============
   // Whenever core data changes, push a snapshot (throttled to once per 60s).
   var lastSnapTime = useState({t:0})[0];
@@ -3173,8 +3267,9 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
 // === Vehicle Profiles section ===
               , (function(){
                   var hasProfiles = savedVehicles && savedVehicles.length > 0;
-                  // Match current veh against saved profiles by plate
+                  // Match current veh against saved profiles: prefer vehicleId, fallback to plate
                   var currentIdx = hasProfiles ? savedVehicles.findIndex(function(p){
+                    if(p.vehicleId && veh.vehicleId && p.vehicleId === veh.vehicleId) return true;
                     return (p.plate && p.plate===veh.plate) || (p.tlcPlate && p.tlcPlate===veh.tlcPlate);
                   }) : -1;
                   
@@ -3232,10 +3327,26 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                               , React.createElement('div', { style: {fontSize:11,color:C.text3,marginTop:2} }, [p.year,p.brand,p.model].filter(Boolean).join(" "), p.plate?" · ["+p.plate+"]":"", p.tlcPlate?" · TLC ["+p.tlcPlate+"]":"")
                               , displayOdo > 0 ? React.createElement('div', { style: {fontSize:11,color:"#FFD700",marginTop:3,fontWeight:600} }, "🛣 " , displayOdo.toLocaleString(), " mi", React.createElement('span',{style:{color:C.text3,fontWeight:400,marginLeft:4,fontSize:10}}, "(", odoLabel, ")")) : null
                             )
+                            , React.createElement('button', { onClick: function(){
+                                // Open vehicle history sheet (works for both current and saved profiles)
+                                var pid = p.vehicleId || (isCurrent ? veh.vehicleId : null);
+                                if(!pid){
+                                  // Profile has no ID yet — assign one and persist it
+                                  pid = "v_" + Date.now() + "_" + Math.random().toString(36).slice(2,8);
+                                  setSavedVehicles(savedVehicles.map(function(sp,si){return si===i ? Object.assign({},sp,{vehicleId:pid}) : sp;}));
+                                }
+                                setSf("vehicle_history_"+pid);
+                              }, style: {background:"#0A2040",border:"1px solid #2A5080",borderRadius:6,padding:"5px 10px",color:"#FFB347",fontSize:11,fontWeight:700,cursor:"pointer"} }, "📊")
                             , !isCurrent ? React.createElement('button', { onClick: function(){
                                 if(!confirm(lang==="en"?"Switch to this vehicle? Current vehicle data will be replaced.":"切换到这辆车？当前车辆资料会被替换。"))return;
                                 var loaded=Object.assign({},p);
                                 delete loaded._savedName; delete loaded._savedAt; delete loaded._savedOdometer;
+                                // Ensure switched-to profile has a stable vehicleId (so its expenses can be tracked)
+                                if(!loaded.vehicleId){
+                                  loaded.vehicleId = "v_" + Date.now() + "_" + Math.random().toString(36).slice(2,8);
+                                  // Also persist this ID back to the saved profile so it's stable next time
+                                  setSavedVehicles(savedVehicles.map(function(sp,si){return si===i ? Object.assign({},sp,{vehicleId:loaded.vehicleId}) : sp;}));
+                                }
                                 setVeh(loaded);
                               }, style: {background:"#0A2040",border:"1px solid #2A5080",borderRadius:6,padding:"5px 12px",color:"#5AACFF",fontSize:11,fontWeight:700,cursor:"pointer"} }, lang==="en"?"Switch":"切换") : null
                             , React.createElement('button', { onClick: function(){
@@ -3604,6 +3715,162 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
         )
       ) : null
 
+      , (sf && sf.indexOf("vehicle_history_")===0) ? (function(){
+          var vid = sf.replace("vehicle_history_","");
+          // Find the vehicle (current veh OR saved profile)
+          var isCurrent = veh.vehicleId === vid;
+          var vp = isCurrent ? veh : (savedVehicles||[]).find(function(p){return p.vehicleId===vid;});
+          if(!vp){
+            // Vehicle not found — close
+            return React.createElement('div', { style: {position:"fixed",inset:0,background:C.bg,zIndex:600,padding:20,textAlign:"center"} },
+              React.createElement('button', {onClick:function(){setSf(null);}, style:{background:"#1E3050",border:"none",color:C.text,padding:"10px 20px",borderRadius:8,cursor:"pointer"}}, lang==="en"?"Close":"关闭"),
+              React.createElement('div', {style:{marginTop:40,color:C.text3}}, lang==="en"?"Vehicle not found":"未找到该车辆")
+            );
+          }
+          // Filter expenses for this vehicle
+          var vExps = el.filter(function(e){return e.vehicleId===vid;});
+          var vDailies = (dl||[]).filter(function(d){return d.vehicleId===vid;});
+          // Total spend
+          var totalSpend = vExps.reduce(function(s,e){return s+(+e.amount||0);},0);
+          var totalLease = vDailies.reduce(function(s,d){return s+(+d.lease||0);},0);
+          // Group by category
+          var byCat = {};
+          vExps.forEach(function(e){
+            var k = e.category || "other";
+            if(!byCat[k]) byCat[k] = {total:0,count:0,items:[]};
+            byCat[k].total += (+e.amount||0);
+            byCat[k].count++;
+            byCat[k].items.push(e);
+          });
+          var catList = Object.keys(byCat).sort(function(a,b){return byCat[b].total-byCat[a].total;});
+          // Date range
+          var dates = vExps.map(function(e){return e.date;}).filter(Boolean).sort();
+          var firstDate = dates[0] || "";
+          var lastDate = dates[dates.length-1] || "";
+          var daysSpan = (firstDate && lastDate) ? Math.round((new Date(lastDate)-new Date(firstDate))/86400000)+1 : 0;
+          // Odometer span
+          var odoEntries = vExps.filter(function(e){return e.odometer&&+e.odometer>0;}).sort(function(a,b){return a.date.localeCompare(b.date);});
+          var firstOdo = odoEntries[0]?+odoEntries[0].odometer:0;
+          var lastOdo = odoEntries[odoEntries.length-1]?+odoEntries[odoEntries.length-1].odometer:0;
+          var milesDriven = lastOdo>firstOdo ? lastOdo-firstOdo : 0;
+          // Maintenance timeline (specific categories: oil, tires, brakes, battery, repair, maint)
+          var maintCats = ["oil","tires","brakes","battery","repair","maint","carwash"];
+          var maintTimeline = vExps.filter(function(e){return maintCats.indexOf(e.category)>=0;}).sort(function(a,b){return (b.date||"").localeCompare(a.date||"");}).slice(0,15);
+          // Recent fuel/charging
+          var fuelCharge = vExps.filter(function(e){return (e.category==="fuel"||e.category==="charging")&&e.amount&&e.qty&&+e.qty>0;}).sort(function(a,b){return (b.date||"").localeCompare(a.date||"");}).slice(0,10);
+          var vehLabel = vp._savedName || ((vp.year?vp.year+" ":"")+(vp.brand||"")+(vp.model?" "+vp.model:""));
+          return React.createElement('div', { style: {position:"fixed",inset:0,background:C.bg,zIndex:600,overflowY:"auto"} }
+            , React.createElement('div', { style: {maxWidth:600,margin:"0 auto",padding:"0 0 80px"} }
+              // Header
+              , React.createElement('div', { style: {background:C.bg2,padding:"14px 18px",borderBottom:"1px solid "+C.border,display:"flex",justifyContent:"space-between",alignItems:"center",position:"sticky",top:0,zIndex:10} }
+                , React.createElement('button', { onClick: function(){setSf(null);}, style: {background:"#1E3050",border:"none",color:"#8ABCD0",fontSize:16,cursor:"pointer",width:34,height:34,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center"} }, "✕")
+                , React.createElement('div', { style: {fontSize:15,fontWeight:800,flex:1,textAlign:"center",padding:"0 8px",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"} }, "📊 ", vehLabel || (lang==="en"?"Vehicle History":"车辆履历"))
+                , React.createElement('div', {style:{width:34}}) // spacer
+              )
+              , React.createElement('div', { style: {padding:"14px"} }
+                // Vehicle summary card
+                , React.createElement(Card, { style: {marginBottom:12,padding:"14px"} }
+                  , React.createElement('div', { style: {fontSize:12,color:C.text3,marginBottom:8,letterSpacing:0.3} }, lang==="en"?"VEHICLE":"车辆")
+                  , React.createElement('div', { style: {fontSize:16,fontWeight:700,color:isCurrent?"#5ADA7A":C.text,marginBottom:4} },
+                      isCurrent ? "✓ " : "",
+                      vehLabel,
+                      isCurrent ? React.createElement('span',{style:{fontSize:10,padding:"1px 6px",borderRadius:4,background:"#2A6040",color:"#5ADA7A",fontWeight:600,marginLeft:6}},lang==="en"?"CURRENT":"当前") : null
+                    )
+                  , React.createElement('div', { style: {fontSize:12,color:C.text3,lineHeight:1.6} },
+                      vp.plate ? (lang==="en"?"Plate: ":"车牌: ")+vp.plate+"  " : "",
+                      vp.tlcPlate ? "TLC: "+vp.tlcPlate+"  " : "",
+                      vp.type ? (vp.type==="electric"?"⚡ "+(lang==="en"?"Electric":"电动"):vp.type==="petrol"?"⛽ "+(lang==="en"?"Petrol":"燃油"):vp.type==="hybrid"?"🔄 "+(lang==="en"?"Hybrid":"混动"):"") : "",
+                      vp.loanType ? "  · "+(vp.loanType==="loan"?(lang==="en"?"Loan":"贷款"):vp.loanType==="lease"?(lang==="en"?"Lease":"租赁"):vp.loanType==="own"?(lang==="en"?"Owned":"全款"):vp.loanType==="rental"?(lang==="en"?"Rental":"周租"):vp.loanType) : ""
+                    )
+                )
+                // Stats summary
+                , React.createElement(Card, { style: {marginBottom:12,padding:"14px",background:"linear-gradient(180deg,#0F1F35 0%,#0A1828 100%)",border:"1px solid #1F3A5A"} }
+                  , React.createElement('div', { style: {fontSize:12,fontWeight:700,color:"#00D4FF",marginBottom:10,letterSpacing:0.3} }, "💰 ", lang==="en"?"Lifetime Stats":"累计数据")
+                  , vExps.length === 0
+                    ? React.createElement('div', { style: {fontSize:13,color:C.text3,textAlign:"center",padding:"10px 0"} }, lang==="en"?"No expenses recorded yet for this vehicle":"还没有这辆车的支出记录")
+                    : React.createElement('div', null
+                      , React.createElement('div', { style: {display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:10} }
+                        , React.createElement('div', null
+                          , React.createElement('div', {style:{fontSize:11,color:C.text3,marginBottom:2}}, lang==="en"?"Total Spend":"累计支出")
+                          , React.createElement('div', {style:{fontSize:18,fontWeight:800,color:"#FF6B35"}}, fmt(totalSpend+totalLease))
+                        )
+                        , React.createElement('div', null
+                          , React.createElement('div', {style:{fontSize:11,color:C.text3,marginBottom:2}}, lang==="en"?"Records":"记录数")
+                          , React.createElement('div', {style:{fontSize:18,fontWeight:800,color:"#00D4FF"}}, vExps.length+vDailies.length)
+                        )
+                      )
+                      , milesDriven > 0 ? React.createElement('div', { style: {display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,paddingTop:8,borderTop:"1px solid "+C.border} }
+                        , React.createElement('div', null
+                          , React.createElement('div', {style:{fontSize:11,color:C.text3,marginBottom:2}}, lang==="en"?"Miles Driven":"行驶里程")
+                          , React.createElement('div', {style:{fontSize:16,fontWeight:700,color:"#FFD700"}}, milesDriven.toLocaleString()+" mi")
+                        )
+                        , totalSpend>0 && milesDriven>0 ? React.createElement('div', null
+                          , React.createElement('div', {style:{fontSize:11,color:C.text3,marginBottom:2}}, lang==="en"?"Cost / Mile":"每英里成本")
+                          , React.createElement('div', {style:{fontSize:16,fontWeight:700,color:"#FF9A65"}}, "$",((totalSpend+totalLease)/milesDriven).toFixed(3))
+                        ) : null
+                      ) : null
+                      , firstDate ? React.createElement('div', { style: {fontSize:11,color:C.text3,marginTop:8,textAlign:"center"} },
+                          lang==="en"?"From ":"从 ", firstDate, lang==="en"?" to ":" 至 ", lastDate,
+                          daysSpan>0 ? "  ("+daysSpan+(lang==="en"?" days":" 天")+")" : ""
+                        ) : null
+                    )
+                )
+                // Spending by category
+                , catList.length > 0 ? React.createElement(Card, { style: {marginBottom:12,padding:"14px"} }
+                  , React.createElement('div', { style: {fontSize:12,fontWeight:700,color:"#CC88FF",marginBottom:10,letterSpacing:0.3} }, "📂 ", lang==="en"?"Spending by Category":"按类别支出")
+                  , catList.map(function(k){
+                      var cat = allC[k] || {label:k, icon:"📌"};
+                      var d = byCat[k];
+                      var pct = totalSpend>0 ? Math.round(d.total/totalSpend*100) : 0;
+                      return React.createElement('div', {key:k, style:{marginBottom:8}}
+                        , React.createElement('div', {style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:3,fontSize:13}}
+                          , React.createElement('span', null, cat.icon, " ", cat.label, React.createElement('span',{style:{fontSize:10,color:C.text3,marginLeft:6}},"×",d.count))
+                          , React.createElement('span', {style:{color:"#FF9A65",fontWeight:700}}, fmt(d.total))
+                        )
+                        , React.createElement('div', {style:{height:4,borderRadius:2,background:"#1A2A40",overflow:"hidden"}}
+                          , React.createElement('div', {style:{height:4,borderRadius:2,width:pct+"%",background:"linear-gradient(90deg,#CC88FF,#FF9A65)"}})
+                        )
+                      );
+                    })
+                ) : null
+                // Recent fuel/charging
+                , fuelCharge.length > 0 ? React.createElement(Card, { style: {marginBottom:12,padding:"14px"} }
+                  , React.createElement('div', { style: {fontSize:12,fontWeight:700,color:"#FFD700",marginBottom:10,letterSpacing:0.3} }, vp.type==="electric"?"⚡":"⛽", " ", lang==="en"?"Recent Fills":"最近加注")
+                  , fuelCharge.map(function(e,idx){
+                      var unit = e.amount/e.qty;
+                      var unitLabel = e.category==="charging"?"/kWh":"/Gal";
+                      return React.createElement('div', {key:e.id||idx, style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0",borderBottom:idx<fuelCharge.length-1?"1px solid #0F1C30":"none",fontSize:13}}
+                        , React.createElement('div', null
+                          , React.createElement('div', {style:{color:C.text}}, fmt(e.amount), "  ", React.createElement('span',{style:{fontSize:11,color:C.text3}}, e.qty, e.category==="charging"?" kWh":" Gal"))
+                          , React.createElement('div', {style:{fontSize:10,color:C.text3,marginTop:1}}, e.date, e.notes?" · "+e.notes:"")
+                        )
+                        , React.createElement('div', {style:{fontSize:13,fontWeight:700,color:"#5AACFF"}}, "$"+unit.toFixed(3), unitLabel)
+                      );
+                    })
+                ) : null
+                // Maintenance timeline
+                , maintTimeline.length > 0 ? React.createElement(Card, { style: {marginBottom:12,padding:"14px"} }
+                  , React.createElement('div', { style: {fontSize:12,fontWeight:700,color:"#5ADA7A",marginBottom:10,letterSpacing:0.3} }, "🔧 ", lang==="en"?"Maintenance Timeline":"维修保养履历")
+                  , maintTimeline.map(function(e,idx){
+                      var cat = allC[e.category] || {label:e.category, icon:"🔧"};
+                      return React.createElement('div', {key:e.id||idx, style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",padding:"6px 0",borderBottom:idx<maintTimeline.length-1?"1px solid #0F1C30":"none",fontSize:13,gap:8}}
+                        , React.createElement('div', {style:{flex:1,minWidth:0}}
+                          , React.createElement('div', {style:{color:C.text}}, cat.icon, " ", cat.label)
+                          , React.createElement('div', {style:{fontSize:10,color:C.text3,marginTop:1}}, e.date, e.odometer?" · "+(+e.odometer).toLocaleString()+" mi":"", e.notes?" · "+e.notes:"")
+                        )
+                        , React.createElement('div', {style:{fontSize:13,fontWeight:700,color:"#FF9A65",flexShrink:0}}, fmt(e.amount))
+                      );
+                    })
+                ) : null
+                // Empty state
+                , vExps.length === 0 ? React.createElement('div', { style: {padding:"30px 20px",textAlign:"center",color:C.text3,fontSize:13,lineHeight:1.6} },
+                    lang==="en"?"This vehicle has no expense records yet. New expenses you add while this vehicle is current will appear here automatically.":"这辆车还没有支出记录。在它是当前车辆时新增的支出会自动归入这里。"
+                  ) : null
+              )
+            )
+          );
+        })() : null
+
       , sf==="drawer_lic" ? (
         React.createElement('div', { style: {position:"fixed",inset:0,background:C.bg,zIndex:300,overflowY:"auto"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 424}}
           , React.createElement('div', { style: {maxWidth:600,margin:"0 auto",padding:"0 0 80px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 425}}
@@ -3834,7 +4101,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
       ) : null
 
       , sf && (sf==="exp" || sf.startsWith("exp_edit_")) ? (
-        React.createElement(Modal, { title: sf.startsWith("exp_edit_")?(T.edit+" "+(lang==="en"?"Expense":"支出")):(lang==="en"?"Add Expense":"添加支出"), onClose: function(){setSf(null);}, onSave: function(){if(!ef.amount)return;if(sf.startsWith("exp_edit_")){var eid=+sf.replace("exp_edit_","");setEl(el.map(function(x){return x.id===eid?Object.assign({},ef,{id:eid}):x;}));}else if(ef.isRecurring){setFl(fl.concat([{id:Date.now(),label:allC[ef.category]?allC[ef.category].label:ef.notes||"Fixed",icon:allC[ef.category]?allC[ef.category].icon:"💼",cat:ef.category,cycle:"monthly",amount:ef.amount,day:new Date().getDate()+"",notes:ef.notes,active:true,startDate:"",endDate:"",maxCount:""}]));}else{var nel=[Object.assign({},ef,{id:Date.now()})].concat(el);setEl(nel);autoSave({el:nel});}setSf(null);showToast(lang==="en"?"✓ Expense saved":"✓ 支出已保存");}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 520}}
+        React.createElement(Modal, { title: sf.startsWith("exp_edit_")?(T.edit+" "+(lang==="en"?"Expense":"支出")):(lang==="en"?"Add Expense":"添加支出"), onClose: function(){setSf(null);}, onSave: function(){if(!ef.amount)return;if(sf.startsWith("exp_edit_")){var eid=+sf.replace("exp_edit_","");setEl(el.map(function(x){return x.id===eid?Object.assign({},ef,{id:eid,vehicleId:ef.vehicleId||x.vehicleId||veh.vehicleId}):x;}));}else if(ef.isRecurring){setFl(fl.concat([{id:Date.now(),label:allC[ef.category]?allC[ef.category].label:ef.notes||"Fixed",icon:allC[ef.category]?allC[ef.category].icon:"💼",cat:ef.category,cycle:"monthly",amount:ef.amount,day:new Date().getDate()+"",notes:ef.notes,active:true,startDate:"",endDate:"",maxCount:""}]));}else{var nel=[Object.assign({},ef,{id:Date.now(),vehicleId:veh.vehicleId})].concat(el);setEl(nel);autoSave({el:nel});}setSf(null);showToast(lang==="en"?"✓ Expense saved":"✓ 支出已保存");}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 520}}
           , (function(){
               if(sf.startsWith("exp_edit_")) return null;
               if(simpleMode) return null;  // hide in simple mode
