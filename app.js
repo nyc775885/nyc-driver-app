@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-console.log("%cNYC Driver Tracker — version v305","color:#00D4FF;font-weight:bold;font-size:14px");
+console.log("%cNYC Driver Tracker — version v307","color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
 //   <script>window.SENTRY_DSN = "https://YOUR_KEY@oXXX.ingest.sentry.io/PROJECT";</script>
@@ -11,7 +11,7 @@ console.log("%cNYC Driver Tracker — version v305","color:#00D4FF;font-weight:b
       window.Sentry.init({
         dsn:window.SENTRY_DSN,
         environment:(location.hostname==="localhost"||location.hostname==="127.0.0.1")?"development":"production",
-        release:"nyc-driver-tracker@1.0.7",
+        release:"nyc-driver-tracker@1.0.9",
         tracesSampleRate:0.1,
         // Don't send events from local dev
         beforeSend:function(event){
@@ -2540,14 +2540,14 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                 , React.createElement(MoNav, { val: mo, set: setMo, lang: lang, onPick: function(){setMpState({value:mo,onChange:function(v){setMo(v);}});}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 346}} )
                 , fixMo.length > 0 ? React.createElement(Card, { style: {background:"#0D1E10",border:"1px solid #1A3A20",display:"flex",justifyContent:"space-between",alignItems:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 347}}, React.createElement('span', { style: {fontSize:14,color:"#5ADA7A",fontWeight:700}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 347}}, T.fixedFees+" "+fixMo.length), React.createElement('span', { style: {fontSize:14,fontWeight:700,color:"#FF9A65"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 347}}, "-", fmt(tFix))) : null
                 , React.createElement(Card, { style: {display:"flex",justifyContent:"space-between"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 348}}, React.createElement('span', { style: {fontSize:14,color:C.text2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 348}}, T.totalExpense), React.createElement('span', { style: {fontSize:18,fontWeight:800,color:"#FF6B35"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 348}}, fmt(tExp)))
-                , React.createElement(BucketList, { items: feAll, allC: allC, lang: lang, el: el, setEl: setEl, allEl: el, forceRerender: forceRerender, showUndo: showUndo, emptyText: T.noData, onEditFixed: function(item){setEditFx({id:item.id,amount:item.amount,notes:item.notes||"",fixedLabel:item.fixedLabel});}, onEditExp: function(item){setEf(Object.assign({},item,{qty:item.qty||"",isRecurring:false}));setSf("exp_edit_"+item.id);}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 349}} )
+                , React.createElement(BucketList, { items: feAll, allC: allC, lang: lang, el: el, setEl: setEl, allEl: el, forceRerender: forceRerender, showUndo: showUndo, emptyText: T.noData, onEditFixed: function(item){setEditFx({id:item.id,amount:item.amount,notes:item.notes||"",fixedLabel:item.fixedLabel});}, onEditExp: function(item){var _i=Object.assign({},item,{qty:item.qty||"",isRecurring:false});if((item.category==="fuel"||item.category==="charging")&&item.amount&&item.qty&&+item.qty>0){_i.unitPrice=(+item.amount/+item.qty).toFixed(3);_i._editOrder=["qty","amount"];}setEf(_i);setSf("exp_edit_"+item.id);}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 349}} )
               )
             ) : null
             , expV==="year" ? (
               React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 353}}
                 , React.createElement(YrNav, { val: yr, set: setYr, lang: lang, onPick: function(){var y=prompt(lang==="en"?"Enter year:":"输入年份:",yr);if(y&&/^[0-9]{4}$/.test(y))setYr(y);}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 354}} )
                 , React.createElement(Card, { style: {display:"flex",justifyContent:"space-between",marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 355}}, React.createElement('span', { style: {fontSize:14,color:C.text2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 355}}, T.totalExpense), React.createElement('span', { style: {fontSize:18,fontWeight:800,color:"#FF6B35"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 355}}, fmt(yExp)))
-                , (function(){var allYE_raw=yAllExps(); var allYE=allYE_raw; if(!allYE.length)return React.createElement(Empty, { text: T.noData, __self: this, __source: {fileName: _jsxFileName, lineNumber: 356}} );return React.createElement(BucketList, { items: allYE, allC: allC, lang: lang, el: el, setEl: setEl, allEl: el, forceRerender: forceRerender, showUndo: showUndo, emptyText: "", onEditFixed: function(item){setEditFx({id:item.id,amount:item.amount,notes:item.notes||"",fixedLabel:item.fixedLabel});}, onEditExp: function(item){setEf(Object.assign({},item,{qty:item.qty||"",isRecurring:false}));setSf("exp_edit_"+item.id);}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 356}} );}())
+                , (function(){var allYE_raw=yAllExps(); var allYE=allYE_raw; if(!allYE.length)return React.createElement(Empty, { text: T.noData, __self: this, __source: {fileName: _jsxFileName, lineNumber: 356}} );return React.createElement(BucketList, { items: allYE, allC: allC, lang: lang, el: el, setEl: setEl, allEl: el, forceRerender: forceRerender, showUndo: showUndo, emptyText: "", onEditFixed: function(item){setEditFx({id:item.id,amount:item.amount,notes:item.notes||"",fixedLabel:item.fixedLabel});}, onEditExp: function(item){var _i=Object.assign({},item,{qty:item.qty||"",isRecurring:false});if((item.category==="fuel"||item.category==="charging")&&item.amount&&item.qty&&+item.qty>0){_i.unitPrice=(+item.amount/+item.qty).toFixed(3);_i._editOrder=["qty","amount"];}setEf(_i);setSf("exp_edit_"+item.id);}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 356}} );}())
                 , Object.keys(cc).length > 0 ? React.createElement('div', { style: {marginTop:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 357}}, React.createElement('div', { style: {fontSize:14,fontWeight:700,color:C.text,marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 357}}, lang==="en"?"Custom Categories":"我的自定义类别"), Object.entries(cc).map(function(entry){var key=entry[0],cat=entry[1];return React.createElement(Card, { key: key, style: {display:"flex",alignItems:"center",gap:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 357}}, React.createElement('span', { style: {fontSize:22}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 357}}, cat.icon), React.createElement('div', { style: {flex:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 357}}, React.createElement('div', { style: {fontSize:14,fontWeight:600}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 357}}, cat.label), React.createElement('div', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 357}}, cat.group)), React.createElement('button', { onClick: function(){setCf({label:cat.label,icon:cat.icon,group:cat.group,_editKey:key});setSf("cc");}, style: {background:"none",border:"1px solid #2A4A6A",borderRadius:8,padding:"4px 10px",color:"#6AACEE",cursor:"pointer",fontSize:13}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 357}}, T.edit), React.createElement('button', { onClick: function(){if(!confirm(lang==="en"?"Delete this category?":"确认删除这个类别？"))return;var prev=Object.assign({},cc);var u=Object.assign({},cc);delete u[key];setCc(u);showUndo((lang==="en"?"✓ Category deleted":"✓ 类别已删除"), {prevCc:prev});}, style: {background:"none",border:"1px solid #3A1A1A",borderRadius:8,padding:"4px 10px",color:"#FF5252",cursor:"pointer",fontSize:13}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 357}}, T.del));})) : null
                 , React.createElement('div', { style: {marginTop:14,textAlign:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 358}}, React.createElement('button', { onClick: function(){setCf({label:"",icon:"&#128296;",group:"车辆"});setSf("cc");}, style: {background:"#1A2A44",border:"1px dashed #2A3A54",borderRadius:10,padding:"10px 18px",color:C.text2,fontSize:14,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 358}}, "+ " , lang==="en"?"Custom Category":"新增自定义类别"))
               )
@@ -3251,7 +3251,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                     if(prev._lastPrefillKey && prev._lastPrefillAmt && prev.amount && prev.amount !== prev._lastPrefillAmt){
                       return prev;
                     }
-                    return Object.assign({}, prev, {amount: prefillAmt, _lastPrefillKey: prefillCatKey, _lastPrefillAmt: prefillAmt});
+                    return Object.assign({}, prev, {amount: prefillAmt, _lastPrefillKey: prefillCatKey, _lastPrefillAmt: prefillAmt, _editOrder: ((prev._editOrder||[]).filter(function(f){return f!=="amount";})).concat(["amount"])});
                   });
                 });
               }
@@ -3268,7 +3268,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                       return React.createElement('button', {
                         key:idx,
                         onClick: function(){
-                          setEf(Object.assign({},ef,{amount:String(+m.amount)}));
+                          setEf(Object.assign({},ef,{amount:String(+m.amount),_editOrder:((ef._editOrder||[]).filter(function(f){return f!=="amount";})).concat(["amount"])}));
                         },
                         style: {background:isCurrent?"#0A4020":"#0A2840",border:"1px solid "+(isCurrent?"#2A8050":"#2A5080"),borderRadius:8,padding:"6px 12px",color:isCurrent?"#5ADA7A":"#5AACFF",fontSize:13,fontWeight:700,cursor:"pointer"}
                       }, isCurrent?"✓ ":"", "$" + amtStr, React.createElement('span', {style:{fontSize:9,color:C.text3,marginLeft:4}}, m.date||""));
@@ -3297,8 +3297,70 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
             )
           )
           , (function(){var c=allC[ef.category],isMo=c&&c.mo;if(isMo){return React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 539}}, React.createElement('div', { style: {background:"#0A1428",border:"1px solid #1A3060",borderRadius:10,padding:"10px 13px",fontSize:14,color:C.text2,marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 539}}, lang==="en"?"Monthly billing item":"月结项目"), React.createElement(Field, { label: lang==="en"?"Billing Month":"账单月份", type: "month", value: ef.statementMonth, onChange: function(v){setEf(Object.assign({},ef,{statementMonth:v}));}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 539}} ));}var todayStr=today();var ydayDate=new Date();ydayDate.setDate(ydayDate.getDate()-1);var ydayStr=ydayDate.getFullYear()+"-"+p2(ydayDate.getMonth()+1)+"-"+p2(ydayDate.getDate());var dbyDate=new Date();dbyDate.setDate(dbyDate.getDate()-2);var dbyStr=dbyDate.getFullYear()+"-"+p2(dbyDate.getMonth()+1)+"-"+p2(dbyDate.getDate());var quickBtn=function(label,onClick,active){return React.createElement('button',{onClick:onClick,style:{flex:1,background:active?"#1A3060":"#0A1828",border:"1px solid "+(active?"#00D4FF":"#2A3A54"),borderRadius:6,padding:"4px 6px",color:active?"#00D4FF":"#90B8D0",fontSize:11,fontWeight:active?700:500,cursor:"pointer"}},label);};return React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 539}}, React.createElement('div',{style:{display:"flex",gap:5,marginBottom:5}},quickBtn(lang==="en"?"Today":"今天",function(){setEf(Object.assign({},ef,{date:todayStr,time:nowTime()}));},ef.date===todayStr),quickBtn(lang==="en"?"Yesterday":"昨天",function(){setEf(Object.assign({},ef,{date:ydayStr}));},ef.date===ydayStr),quickBtn(lang==="en"?"2 days ago":"前天",function(){setEf(Object.assign({},ef,{date:dbyStr}));},ef.date===dbyStr),quickBtn(lang==="en"?"Now":"现在",function(){setEf(Object.assign({},ef,{time:nowTime()}));})), React.createElement('div', {style:{display:"grid",gridTemplateColumns:"3fr 2fr",gap:6}}, React.createElement('input', { type: "date", value: ef.date, onChange: function(e){setEf(Object.assign({},ef,{date:e.target.value}));}, onClick: function(e){try{if(e.currentTarget.showPicker)e.currentTarget.showPicker();}catch(err){}}, style: Object.assign({},IS,{colorScheme:"dark",fontSize:13,padding:"8px",cursor:"pointer"}) } ), React.createElement('input', { type: "time", value: ef.time, onChange: function(e){setEf(Object.assign({},ef,{time:e.target.value}));}, onClick: function(e){try{if(e.currentTarget.showPicker)e.currentTarget.showPicker();}catch(err){}}, style: Object.assign({},IS,{colorScheme:"dark",fontSize:13,padding:"8px",cursor:"pointer"}) } )));}())
-          , React.createElement(Field, { label: T.amount, type: "number", value: ef.amount, onChange: function(v){setEf(Object.assign({},ef,{amount:v}));}, money: true, placeholder: "0.00", __self: this, __source: {fileName: _jsxFileName, lineNumber: 540}} )
-          , (ef.category==="fuel"||ef.category==="charging") ? React.createElement('div', {style:{display:"flex",flexDirection:"column",gap:5}}, React.createElement(Field, { label: ef.category==="charging"?(lang==="en"?"kWh Charged":"充电度数 (kWh)"):(lang==="en"?"Gallons (Gal)":"加油加仑 (Gal)"), type: "number", value: ef.qty, onChange: function(v){setEf(Object.assign({},ef,{qty:v}));}, placeholder: "0.0" } ), ef.category==="charging" ? React.createElement(Field, { label: lang==="en"?"Charged to (%)":"充到 (%)", type: "number", value: ef.chargedTo||"", onChange: function(v){setEf(Object.assign({},ef,{chargedTo:v}));}, placeholder: "e.g. 80" }) : null, ef.amount&&ef.qty&&+ef.qty>0?React.createElement('div', { style: {background:C.bg3,border:"1px solid "+C.border,borderRadius:10,padding:"10px 14px",display:"flex",justifyContent:"space-between"} }, React.createElement('span', { style: {fontSize:14,color:C.text2} }, ef.category==="charging"?(lang==="en"?"Per kWh":"每度电"):(lang==="en"?"Per Gallon":"每加仑")), React.createElement('span', { style: {fontSize:17,fontWeight:800,color:"#FFD700"} }, fmt(+ef.amount/+ef.qty), ef.category==="charging"?"/kWh":"/Gal")):null) : null
+          // === SMART 3-WAY CALC for fuel/charging ===
+          // Fill any 2 of {amount, qty, unitPrice} → 3rd auto-calculates.
+          // Track manual edit order in ef._editOrder (last 2 = manual; the other = auto).
+          // Edit the auto field → it becomes manual, oldest manual becomes new auto.
+          , (function(){
+              var isFuelChrg = (ef.category==="fuel"||ef.category==="charging");
+              if(!isFuelChrg){
+                return React.createElement(Field, { label: T.amount, type: "number", value: ef.amount, onChange: function(v){setEf(Object.assign({},ef,{amount:v}));}, money: true, placeholder: "0.00", __self: this, __source: {fileName: _jsxFileName, lineNumber: 540}} );
+              }
+              var FIELDS=["amount","qty","unitPrice"];
+              var unitSuffix=ef.category==="charging"?"/kWh":"/Gal";
+              var qtyLabel=ef.category==="charging"?(lang==="en"?"kWh Charged":"充电度数 (kWh)"):(lang==="en"?"Gallons (Gal)":"加油加仑 (Gal)");
+              var unitPriceLabel=ef.category==="charging"?(lang==="en"?"Price ($/kWh)":"单价 ($/kWh)"):(lang==="en"?"Price ($/Gal)":"单价 ($/Gal)");
+              var order=ef._editOrder||[];
+              var manual2=order.slice(-2);
+              var autoField=manual2.length>=2?FIELDS.find(function(f){return manual2.indexOf(f)<0;}):null;
+              var setSmart=function(field,value){
+                setEf(function(prev){
+                  var next=Object.assign({},prev);
+                  next[field]=value;
+                  var ord=(prev._editOrder||[]).filter(function(f){return f!==field;});
+                  if(value!==""&&value!=null&&+value>0)ord.push(field);
+                  next._editOrder=ord;
+                  if(ord.length>=2){
+                    var m2=ord.slice(-2);
+                    var auto=FIELDS.find(function(f){return m2.indexOf(f)<0;});
+                    var vAmt=+next.amount,vQty=+next.qty,vUnit=+next.unitPrice;
+                    var result=null;
+                    if(auto==="amount"&&vQty>0&&vUnit>0)result=(vQty*vUnit).toFixed(2);
+                    else if(auto==="qty"&&vAmt>0&&vUnit>0)result=(vAmt/vUnit).toFixed(3);
+                    else if(auto==="unitPrice"&&vAmt>0&&vQty>0)result=(vAmt/vQty).toFixed(3);
+                    if(result!==null&&isFinite(+result))next[auto]=result;
+                    else next[auto]="";
+                  }
+                  return next;
+                });
+              };
+              var smartField=function(opts){
+                var isAuto=(opts.field===autoField);
+                var inputStyle=Object.assign({},IS,isAuto?{borderColor:"#2A8050",background:"#0A2018",color:"#5ADA7A"}:{});
+                return React.createElement('label',{key:opts.field,style:{display:"flex",flexDirection:"column",gap:4,fontSize:12,color:"#C8E8F8",fontWeight:500}},
+                  React.createElement('span',null,opts.label,isAuto?React.createElement('span',{style:{background:"#2A8050",color:"#0A1828",fontSize:9,padding:"1px 6px",borderRadius:5,fontWeight:700,marginLeft:6,letterSpacing:0.05}},lang==="en"?"AUTO":"自动"):null),
+                  React.createElement('input',{type:"number",inputMode:"decimal",step:opts.step||"0.01",value:opts.value||"",placeholder:opts.placeholder||"",onChange:function(e){setSmart(opts.field,e.target.value);},style:inputStyle})
+                );
+              };
+              var formulaStrip=null;
+              if(autoField&&ef[autoField]){
+                var fmtN=function(v,d){return (+v).toFixed(d||2);};
+                var ftxt;
+                if(autoField==="amount")ftxt=fmtN(ef.qty,2)+(ef.category==="charging"?" kWh":" Gal")+" × $"+fmtN(ef.unitPrice,3)+" = $"+fmtN(ef.amount,2);
+                else if(autoField==="qty")ftxt="$"+fmtN(ef.amount,2)+" ÷ $"+fmtN(ef.unitPrice,3)+" = "+fmtN(ef.qty,3)+(ef.category==="charging"?" kWh":" Gal");
+                else ftxt="$"+fmtN(ef.amount,2)+" ÷ "+fmtN(ef.qty,2)+(ef.category==="charging"?" kWh":" Gal")+" = $"+fmtN(ef.unitPrice,3)+unitSuffix;
+                formulaStrip=React.createElement('div',{style:{background:"rgba(42,128,80,0.08)",border:"1px solid rgba(42,128,80,0.3)",borderRadius:8,padding:"6px 10px",fontSize:11,color:"#5ADA7A",textAlign:"center",letterSpacing:0.2}},"✓ ",ftxt);
+              }else if(!autoField){
+                formulaStrip=React.createElement('div',{style:{padding:"6px 10px",fontSize:11,color:C.text3,textAlign:"center",letterSpacing:0.2}},lang==="en"?"Fill any 2 — the 3rd auto-calculates":"填任意两个，第三个自动算");
+              }
+              return React.createElement('div',{style:{display:"flex",flexDirection:"column",gap:6}},
+                smartField({field:"amount",label:T.amount,value:ef.amount,placeholder:"0.00",step:"0.01"}),
+                smartField({field:"qty",label:qtyLabel,value:ef.qty,placeholder:"0.0",step:"0.01"}),
+                smartField({field:"unitPrice",label:unitPriceLabel,value:ef.unitPrice,placeholder:"0.000",step:"0.001"}),
+                formulaStrip,
+                ef.category==="charging"?React.createElement(Field,{label:lang==="en"?"Charged to (%)":"充到 (%)",type:"number",value:ef.chargedTo||"",onChange:function(v){setEf(Object.assign({},ef,{chargedTo:v}));},placeholder:"e.g. 80"}):null
+              );
+            }())
           , (function(){var c=allC[ef.category];if(c&&c.g==="车辆"){return React.createElement(Field, { label: (lang==="en"?"Odometer (mi)":"里程读数 (mi)")+" — "+(lang==="en"?"optional":"选填"), type: "number", value: ef.odometer||"", onChange: function(v){setEf(Object.assign({},ef,{odometer:v}));}, placeholder: "e.g. 45142", __self: this, __source: {fileName: _jsxFileName, lineNumber: 543}} );}return null;}())
           , (function(){
               var catKey=ef.category||"_default";
