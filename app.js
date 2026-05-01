@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-var APP_VERSION = "v3.9.0";  // ← single source of truth: bump this once per release
+var APP_VERSION = "v3.9.5";  // ← single source of truth: bump this once per release
 console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
@@ -12,7 +12,7 @@ console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-
       window.Sentry.init({
         dsn:window.SENTRY_DSN,
         environment:(location.hostname==="localhost"||location.hostname==="127.0.0.1")?"development":"production",
-        release:"nyc-driver-tracker@1.0.77",
+        release:"nyc-driver-tracker@1.0.81",
         tracesSampleRate:0.1,
         // Don't send events from local dev
         beforeSend:function(event){
@@ -4275,7 +4275,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
               // Header
               , React.createElement('div', { style: {background:C.bg2,padding:"14px 18px",borderBottom:"1px solid "+C.border,display:"flex",justifyContent:"space-between",alignItems:"center",position:"sticky",top:0,zIndex:10} }
                 , React.createElement('button', { onClick: function(){setSf(null);}, style: {background:"#1E3050",border:"none",color:"#8ABCD0",fontSize:16,cursor:"pointer",width:34,height:34,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center"} }, "✕")
-                , React.createElement('div', { style: {fontSize:15,fontWeight:800} }, "📅 ", lang==="en"?"Daily Log":"每日记录")
+                , React.createElement('div', { style: {fontSize:15,fontWeight:800} }, "📅 ", T.weekly)
                 , React.createElement('div', { style: {width:34} })
               )
               , React.createElement('div', { style: {padding:"14px"} }
@@ -4285,6 +4285,10 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                   , React.createElement('div', { style: {flex:1,textAlign:"center",fontSize:14,fontWeight:600,color:C.text} },
                       lang==="en" ? ("Week of "+ws) : (ws.slice(5)+" 那一周")
                     )
+                  , React.createElement('button', {
+                      onClick: function(){var t=today();setWcWeek(wkMon(t));setWcSel(t);},
+                      style: {background:wcSel===todayStr?"#0A4020":"#1A2A44",border:"1px solid "+(wcSel===todayStr?"#2A8050":"#2A4A6A"),borderRadius:8,padding:"8px 12px",color:wcSel===todayStr?"#5ADA7A":"#5AACFF",fontSize:12,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}
+                    }, lang==="en"?"Today":"今天")
                   , React.createElement('button', { onClick: nextWeek, style: {background:C.bg3,border:"1px solid "+C.border,borderRadius:8,padding:"8px 14px",color:C.text,fontSize:14,cursor:"pointer"} }, "›")
                 )
                 // 7-day calendar strip
@@ -5254,6 +5258,23 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                     var html="<!DOCTYPE html><html><head><meta charset=UTF-8><title>NYC Driver Tax Report "+esc(yr)+"</title><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;max-width:800px;margin:40px auto;padding:20px;color:#1a1a1a}h1{color:#1a3a6a;border-bottom:3px solid #1a3a6a;padding-bottom:10px;margin-bottom:20px}h2{color:#2a5a9a;margin:25px 0 10px}table{width:100%;border-collapse:collapse;margin:10px 0}td,th{padding:10px 14px;border:1px solid #ddd;text-align:left}th{background:#f0f4ff;font-weight:bold}tr:nth-child(even){background:#f8f9ff}.total{font-weight:bold;background:#e8f0ff!important}.green{color:#1a8a1a}.red{color:#cc1a1a}.note{color:#666;font-size:13px;margin-bottom:8px}.print-btn{margin-top:30px;padding:12px 24px;background:#1a3a6a;color:white;border:none;border-radius:6px;cursor:pointer;font-size:15px}@media print{.print-btn{display:none}}</style></head><body>";
                     html+="<h1>🚖 NYC Rideshare Driver - Tax Report "+esc(yr)+"</h1>";
                     html+="<p class=note>Generated: "+esc(new Date().toLocaleDateString())+(gUser?" | "+esc(gUser.email):"")+". Estimates only — confirm with a CPA before filing.</p>";
+                    // Driver & Vehicle information block
+                    var drvForPdf = (driver && (driver.name || driver.tlcHack || driver.dmvLic)) ? driver : (veh.driver||{});
+                    var hasDriverInfo = !!(drvForPdf.name||drvForPdf.tlcHack||drvForPdf.dmvLic||drvForPdf.phone||drvForPdf.email);
+                    var hasVehInfo = !!(veh.brand||veh.model||veh.plate||veh.tlcPlate||veh.vin);
+                    if(hasDriverInfo||hasVehInfo){
+                      html+="<h2>👤 Driver & Vehicle Info</h2><table>";
+                      if(drvForPdf.name) html+="<tr><th>Name</th><td>"+esc(drvForPdf.name)+"</td></tr>";
+                      if(drvForPdf.tlcHack) html+="<tr><th>TLC Hack #</th><td>"+esc(drvForPdf.tlcHack)+"</td></tr>";
+                      if(drvForPdf.dmvLic) html+="<tr><th>DMV License #</th><td>"+esc(drvForPdf.dmvLic)+"</td></tr>";
+                      if(drvForPdf.phone) html+="<tr><th>Phone</th><td>"+esc(drvForPdf.phone)+"</td></tr>";
+                      if(drvForPdf.email) html+="<tr><th>Email</th><td>"+esc(drvForPdf.email)+"</td></tr>";
+                      if(veh.year||veh.brand||veh.model) html+="<tr><th>Vehicle</th><td>"+esc((veh.year||"")+" "+(veh.brand||"")+" "+(veh.model||"")).replace(/\s+/g," ").trim()+"</td></tr>";
+                      if(veh.plate) html+="<tr><th>License Plate</th><td>"+esc(veh.plate)+"</td></tr>";
+                      if(veh.tlcPlate) html+="<tr><th>TLC Plate</th><td>"+esc(veh.tlcPlate)+"</td></tr>";
+                      if(veh.vin) html+="<tr><th>VIN</th><td>"+esc(veh.vin)+"</td></tr>";
+                      html+="</table>";
+                    }
                     html+="<h2>📋 Schedule C - Profit or Loss from Business</h2><table><tr><th>Line</th><th>Description</th><th>Amount</th></tr><tr><td>1</td><td>Gross receipts (1099-K / 1099-NEC)</td><td class=green>$"+grossInc.toFixed(2)+"</td></tr><tr><td>9</td><td>Standard mileage ("+yMi+" mi × $"+mileRate.toFixed(3)+")</td><td class=red>$"+mileDed.toFixed(2)+"</td></tr><tr><td>28</td><td>Other business expenses</td><td class=red>$"+totalExp.toFixed(2)+"</td></tr><tr class=total><td>31</td><td>Net profit or loss</td><td class="+(netP>=0?"green":"red")+">$"+netP.toFixed(2)+"</td></tr></table>";
                     html+="<h2>📋 Schedule SE - Self-Employment Tax</h2><table><tr><th>Description</th><th>Amount</th></tr><tr><td>Net profit × 92.35%</td><td>$"+seBase.toFixed(2)+"</td></tr><tr><td>SE tax (×"+(seRate||15.3)+"%)</td><td class=red>$"+seTax.toFixed(2)+"</td></tr><tr class=total><td>Deductible portion (½ SE tax)</td><td class=green>$"+seDed.toFixed(2)+"</td></tr></table>";
                     html+="<h2>💰 Income Tax Estimate</h2><p class=note>Using your editable rates: federal "+fedRate+"%, state+city "+stateRate+"%, standard deduction $"+stdDed+".</p><table><tr><th>Description</th><th>Amount</th></tr><tr><td>Federal income tax ("+fedRate+"%)</td><td>$"+fedIncTax.toFixed(2)+"</td></tr><tr><td>State+City income tax ("+stateRate+"%)</td><td>$"+stateIncTax.toFixed(2)+"</td></tr><tr class=total><td>Total estimated annual tax</td><td>$"+totalTax.toFixed(2)+"</td></tr></table>";
@@ -6362,6 +6383,23 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                     '</style></head><body>';
                     html+='<h1>🚖 NYC DRIVER '+(rd.type==="exp"?(lang==="en"?"EXPENSE DETAIL":"支出明细"):(lang==="en"?"FINANCIAL REPORT":"财务报告"))+'</h1>';
                     html+='<div class=subtitle>'+esc(rd.label)+' · Generated '+new Date().toLocaleDateString()+'</div>';
+                    // Driver & Vehicle info block — adds identity to all PDF exports
+                    var drvForPdf = (driver && (driver.name || driver.tlcHack || driver.dmvLic)) ? driver : (veh.driver||{});
+                    var hasDriverInfo = !!(drvForPdf.name||drvForPdf.tlcHack||drvForPdf.dmvLic||drvForPdf.phone||drvForPdf.email);
+                    var hasVehInfo = !!(veh.brand||veh.model||veh.plate||veh.tlcPlate||veh.vin);
+                    if(hasDriverInfo||hasVehInfo){
+                      html+='<table>';
+                      if(drvForPdf.name) html+='<tr><th>'+(lang==="en"?"Name":"姓名")+'</th><td>'+esc(drvForPdf.name)+'</td></tr>';
+                      if(drvForPdf.tlcHack) html+='<tr><th>TLC Hack #</th><td>'+esc(drvForPdf.tlcHack)+'</td></tr>';
+                      if(drvForPdf.dmvLic) html+='<tr><th>DMV License #</th><td>'+esc(drvForPdf.dmvLic)+'</td></tr>';
+                      if(drvForPdf.phone) html+='<tr><th>'+(lang==="en"?"Phone":"电话")+'</th><td>'+esc(drvForPdf.phone)+'</td></tr>';
+                      if(drvForPdf.email) html+='<tr><th>Email</th><td>'+esc(drvForPdf.email)+'</td></tr>';
+                      if(veh.year||veh.brand||veh.model) html+='<tr><th>'+(lang==="en"?"Vehicle":"车辆")+'</th><td>'+esc(((veh.year||"")+" "+(veh.brand||"")+" "+(veh.model||"")).replace(/\s+/g," ").trim())+'</td></tr>';
+                      if(veh.plate) html+='<tr><th>'+(lang==="en"?"License Plate":"车牌")+'</th><td>'+esc(veh.plate)+'</td></tr>';
+                      if(veh.tlcPlate) html+='<tr><th>TLC Plate</th><td>'+esc(veh.tlcPlate)+'</td></tr>';
+                      if(veh.vin) html+='<tr><th>VIN</th><td>'+esc(veh.vin)+'</td></tr>';
+                      html+='</table>';
+                    }
                     var grpLabels={"车辆":"Vehicle","牌照":"License","平台":"Platform","其他":"Other"};
                     if(rd.type==="exp"){
                       html+='<h2>Expenses</h2><table><tr><th>Category</th><th class=amt>Count</th><th class=amt>Amount</th></tr>';
@@ -6402,6 +6440,23 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                     html+='<style>body{font-family:-apple-system,Helvetica,Arial,sans-serif;max-width:800px;margin:30px auto;padding:20px;color:#222;line-height:1.5;background:#fff;}h1{font-size:22px;border-bottom:3px solid #000;padding-bottom:8px;margin-bottom:4px;}h2{font-size:16px;border-bottom:1px solid #888;padding-bottom:4px;margin-top:24px;color:#000;}.subtitle{font-size:12px;color:#666;margin-bottom:20px;}table{width:100%;border-collapse:collapse;margin:8px 0 16px;font-size:12px;}th,td{padding:6px 10px;border-bottom:1px solid #ddd;text-align:left;}th{background:#f0f0f0;font-weight:700;}td.amt{text-align:right;font-variant-numeric:tabular-nums;}tr.subtotal td{font-weight:700;background:#f8f8f8;border-top:1px solid #888;}tr.total td{font-weight:800;background:#222;color:#fff;font-size:13px;}tr.section td{background:#e8e8e8;font-weight:700;font-size:11px;letter-spacing:0.5px;}.print-btn{display:inline-block;margin:30px 0 0;padding:10px 20px;background:#0055FF;color:#fff;border:none;border-radius:6px;font-size:14px;cursor:pointer;}@media print{.print-btn{display:none;}}</style></head><body>';
                     html+='<h1>🚖 NYC DRIVER '+(rd.type==="exp"?(lang==="en"?"EXPENSE DETAIL":"支出明细"):(lang==="en"?"FINANCIAL REPORT":"财务报告"))+'</h1>';
                     html+='<div class=subtitle>'+esc(rd.label)+' · Generated '+new Date().toLocaleDateString()+'</div>';
+                    // Driver & Vehicle info block — adds identity to all PDF exports
+                    var drvForPdf = (driver && (driver.name || driver.tlcHack || driver.dmvLic)) ? driver : (veh.driver||{});
+                    var hasDriverInfo = !!(drvForPdf.name||drvForPdf.tlcHack||drvForPdf.dmvLic||drvForPdf.phone||drvForPdf.email);
+                    var hasVehInfo = !!(veh.brand||veh.model||veh.plate||veh.tlcPlate||veh.vin);
+                    if(hasDriverInfo||hasVehInfo){
+                      html+='<table>';
+                      if(drvForPdf.name) html+='<tr><th>'+(lang==="en"?"Name":"姓名")+'</th><td>'+esc(drvForPdf.name)+'</td></tr>';
+                      if(drvForPdf.tlcHack) html+='<tr><th>TLC Hack #</th><td>'+esc(drvForPdf.tlcHack)+'</td></tr>';
+                      if(drvForPdf.dmvLic) html+='<tr><th>DMV License #</th><td>'+esc(drvForPdf.dmvLic)+'</td></tr>';
+                      if(drvForPdf.phone) html+='<tr><th>'+(lang==="en"?"Phone":"电话")+'</th><td>'+esc(drvForPdf.phone)+'</td></tr>';
+                      if(drvForPdf.email) html+='<tr><th>Email</th><td>'+esc(drvForPdf.email)+'</td></tr>';
+                      if(veh.year||veh.brand||veh.model) html+='<tr><th>'+(lang==="en"?"Vehicle":"车辆")+'</th><td>'+esc(((veh.year||"")+" "+(veh.brand||"")+" "+(veh.model||"")).replace(/\s+/g," ").trim())+'</td></tr>';
+                      if(veh.plate) html+='<tr><th>'+(lang==="en"?"License Plate":"车牌")+'</th><td>'+esc(veh.plate)+'</td></tr>';
+                      if(veh.tlcPlate) html+='<tr><th>TLC Plate</th><td>'+esc(veh.tlcPlate)+'</td></tr>';
+                      if(veh.vin) html+='<tr><th>VIN</th><td>'+esc(veh.vin)+'</td></tr>';
+                      html+='</table>';
+                    }
                     var grpLabels={"车辆":"Vehicle","牌照":"License","平台":"Platform","其他":"Other"};
                     if(rd.type==="exp"){
                       html+='<h2>Expenses</h2><table><tr><th>Category</th><th class=amt>Count</th><th class=amt>Amount</th></tr>';
