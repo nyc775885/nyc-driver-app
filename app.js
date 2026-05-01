@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-var APP_VERSION = "v3.5.3";  // ← single source of truth: bump this once per release
+var APP_VERSION = "v3.5.5";  // ← single source of truth: bump this once per release
 console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
@@ -12,7 +12,7 @@ console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-
       window.Sentry.init({
         dsn:window.SENTRY_DSN,
         environment:(location.hostname==="localhost"||location.hostname==="127.0.0.1")?"development":"production",
-        release:"nyc-driver-tracker@1.0.55",
+        release:"nyc-driver-tracker@1.0.56",
         tracesSampleRate:0.1,
         // Don't send events from local dev
         beforeSend:function(event){
@@ -633,7 +633,14 @@ function BucketList(p){
             )
           )
           , isExp ? React.createElement('div', { style: {paddingLeft:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 49}}
-            , cat.items.map(function(item){return React.createElement(ExpItem, { key: item.id, item: item, allC: aC, lang: p.lang, distFromLast: distMap[item.id]||null, onDel: function(){var prev=p.el.slice();p.setEl(p.el.filter(function(x){return x.id!==item.id;}));if(p.showUndo){p.showUndo((p.lang==="en"?"✓ Expense deleted":"✓ 支出已删除"), {prevEl:prev});}else if(typeof showToast==="function"){showToast(p.lang==="en"?"✓ Expense deleted":"✓ 支出已删除");}}, onEdit: function(){if(item.isFixed){p.onEditFixed&&p.onEditFixed(item);}else{p.onEditExp&&p.onEditExp(item);}}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 49}} );})
+            , cat.items.slice().sort(function(a,b){
+                // Sort by date desc; for fixed monthly items use statementMonth, otherwise date.
+                var ad = a.isFixed ? (a.statementMonth||"") : (a.date||"");
+                var bd = b.isFixed ? (b.statementMonth||"") : (b.date||"");
+                if(ad !== bd) return bd.localeCompare(ad);
+                // Tiebreak by time (HH:MM) within same date
+                return (b.time||"").localeCompare(a.time||"");
+              }).map(function(item){return React.createElement(ExpItem, { key: item.id, item: item, allC: aC, lang: p.lang, distFromLast: distMap[item.id]||null, onDel: function(){var prev=p.el.slice();p.setEl(p.el.filter(function(x){return x.id!==item.id;}));if(p.showUndo){p.showUndo((p.lang==="en"?"✓ Expense deleted":"✓ 支出已删除"), {prevEl:prev});}else if(typeof showToast==="function"){showToast(p.lang==="en"?"✓ Expense deleted":"✓ 支出已删除");}}, onEdit: function(){if(item.isFixed){p.onEditFixed&&p.onEditFixed(item);}else{p.onEditExp&&p.onEditExp(item);}}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 49}} );})
           ) : null
         );
       })
