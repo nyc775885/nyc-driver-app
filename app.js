@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-var APP_VERSION = "v3.6.3";  // ← single source of truth: bump this once per release
+var APP_VERSION = "v3.6.5";  // ← single source of truth: bump this once per release
 console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
@@ -12,7 +12,7 @@ console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-
       window.Sentry.init({
         dsn:window.SENTRY_DSN,
         environment:(location.hostname==="localhost"||location.hostname==="127.0.0.1")?"development":"production",
-        release:"nyc-driver-tracker@1.0.65",
+        release:"nyc-driver-tracker@1.0.66",
         tracesSampleRate:0.1,
         // Don't send events from local dev
         beforeSend:function(event){
@@ -2459,8 +2459,10 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                     var dInc=lmInc>0?Math.round((tInc-lmInc)/lmInc*100):0;
                     var dirSym=dInc>0?"↑":(dInc<0?"↓":"→");
                     var dirCol=dInc>0?"#00E676":(dInc<0?"#FF7060":"#7A9AB8");
+                    // Format last-month label same way as last-year-month label
+                    var lmLabel = lastMo.slice(0,4) + (lang==="en"?" "+["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][+lastMo.slice(5,7)-1]:" 年 "+lastMo.slice(5,7)+" 月");
                     summarySection=React.createElement('div',null,
-                      React.createElement('div',{style:{fontSize:12,color:C.text3,marginBottom:4,letterSpacing:0.3}},lang==="en"?"VS LAST MONTH":"对比上月"),
+                      React.createElement('div',{style:{fontSize:12,color:C.text3,marginBottom:4,letterSpacing:0.3}},lang==="en"?"VS LAST MONTH · "+lmLabel:"对比上月 · "+lmLabel),
                       React.createElement('div',{style:{fontSize:13,color:C.text,lineHeight:1.6}},
                         lang==="en"
                           ? React.createElement('span',null,"Net ",React.createElement('b',{style:{color:net>=0?"#00E676":"#FF7060"}},fmt(net))," ",lmInc>0?React.createElement('span',{style:{color:dirCol,fontWeight:600}},dirSym," ",Math.abs(dInc),"%"):null,hourlyRate>0?React.createElement('span',{style:{color:C.text3}},"  ·  ",fmt(hourlyRate),"/hr"):null)
