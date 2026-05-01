@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-var APP_VERSION = "v3.6.9";  // ← single source of truth: bump this once per release
+var APP_VERSION = "v3.9.0";  // ← single source of truth: bump this once per release
 console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
@@ -12,7 +12,7 @@ console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-
       window.Sentry.init({
         dsn:window.SENTRY_DSN,
         environment:(location.hostname==="localhost"||location.hostname==="127.0.0.1")?"development":"production",
-        release:"nyc-driver-tracker@1.0.70",
+        release:"nyc-driver-tracker@1.0.77",
         tracesSampleRate:0.1,
         // Don't send events from local dev
         beforeSend:function(event){
@@ -585,7 +585,8 @@ function BucketList(p){
   }
   // Force-render counter to make toggle work without hooks
   var forceRerender=p.forceRerender||function(){};
-  var toggle=function(k){__bucketExpanded[k]=__bucketExpanded[k]===false?true:false;forceRerender();};
+  // Default: collapsed. Explicitly set true = expanded.
+  var toggle=function(k){__bucketExpanded[k]=__bucketExpanded[k]===true?false:true;forceRerender();};
   // Group by bucket then by category
   var B={"车辆":{label:isEn?"🚗 Vehicle":"🚗 车辆",color:"#00D4FF",items:[]},"牌照":{label:isEn?"📋 License":"📋 牌照",color:"#FFD700",items:[]},"平台":{label:isEn?"📱 Platform":"📱 平台",color:"#AB47BC",items:[]},"其他":{label:isEn?"💼 Other":"💼 其他",color:"#C8E8F8",items:[]}};
   items.forEach(function(x){var g=catGrp(x.category,aC);B[g]?B[g].items.push(x):B["其他"].items.push(x);});
@@ -613,11 +614,7 @@ function BucketList(p){
       , catKeys.map(function(ck){
         var cat=byCat[ck];
         var groupKey=bk+"|"+ck;
-        var isExp=__bucketExpanded[groupKey]!==false;  // default expanded — explicit false = collapsed
-        if(cat.items.length===1){
-          var item=cat.items[0];
-          return React.createElement(ExpItem, { key: item.id, item: item, allC: aC, lang: p.lang, distFromLast: distMap[item.id]||null, onDel: function(){var prev=p.el.slice();p.setEl(p.el.filter(function(x){return x.id!==item.id;}));if(p.showUndo){p.showUndo((p.lang==="en"?"✓ Expense deleted":"✓ 支出已删除"), {prevEl:prev});}else if(typeof showToast==="function"){showToast(p.lang==="en"?"✓ Expense deleted":"✓ 支出已删除");}}, onEdit: function(){if(item.isFixed){p.onEditFixed&&p.onEditFixed(item);}else{p.onEditExp&&p.onEditExp(item);}}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 49}} );
-        }
+        var isExp=__bucketExpanded[groupKey]===true;  // default collapsed — must be explicitly opened
         return React.createElement('div', { key: ck, style: {marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 49}}
           , React.createElement('button', { onClick: function(){toggle(groupKey);}, style: {width:"100%",background:C.bg2,border:"1px solid "+C.border,borderRadius:10,padding:"10px 14px",display:"flex",justifyContent:"space-between",alignItems:"center",cursor:"pointer",marginBottom:isExp?8:0}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 49}}
             , React.createElement('div', { style: {display:"flex",alignItems:"center",gap:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 49}}
@@ -633,7 +630,45 @@ function BucketList(p){
             )
           )
           , isExp ? React.createElement('div', { style: {paddingLeft:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 49}}
-            , cat.items.slice().sort(function(a,b){
+            , p.groupByMonth ? (function(){
+                // Year view: aggregate items by month
+                var byMo={};
+                cat.items.forEach(function(it){
+                  var m = it.isFixed ? (it.statementMonth||(it.date||"").slice(0,7)) : (it.date||"").slice(0,7);
+                  if(!m) return;
+                  if(!byMo[m]) byMo[m] = {month:m, total:0, count:0, items:[]};
+                  byMo[m].total += (+it.amount||0);
+                  byMo[m].count++;
+                  byMo[m].items.push(it);
+                });
+                var months = Object.values(byMo).sort(function(a,b){return b.month.localeCompare(a.month);});
+                return months.map(function(mo){
+                  var moExpKey = "ym_"+groupKey+"_"+mo.month;
+                  var moIsExp = __bucketExpanded[moExpKey]===true;
+                  var moLabel = isEn ? (mo.month.slice(0,4)+"-"+mo.month.slice(5)) : (mo.month.slice(0,4)+"年"+(+mo.month.slice(5))+"月");
+                  return React.createElement('div', {key:mo.month, style:{marginBottom:4}},
+                    React.createElement('button', {
+                      onClick: function(){__bucketExpanded[moExpKey]=!moIsExp;forceRerender();},
+                      style: {width:"100%",display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 12px",background:moIsExp?"#0F1A2A":C.bg2,border:"1px solid "+C.border,borderRadius:8,cursor:"pointer",textAlign:"left"}
+                    },
+                      React.createElement('span', {style:{fontSize:13,color:C.text2}}, "📅 ", moLabel, React.createElement('span', {style:{fontSize:11,color:C.text3,marginLeft:6}}, "×", mo.count)),
+                      React.createElement('span', {style:{display:"flex",alignItems:"center",gap:6}},
+                        React.createElement('span', {style:{fontSize:13,fontWeight:700,color:"#FF9A65"}}, fmt(mo.total)),
+                        React.createElement('span', {style:{fontSize:11,color:C.text3,minWidth:12}}, moIsExp?"▲":"▼")
+                      )
+                    ),
+                    // Expanded: show individual items in this month
+                    moIsExp ? React.createElement('div', {style:{paddingTop:4}},
+                      mo.items.slice().sort(function(a,b){
+                        var ad = a.isFixed ? (a.statementMonth||"") : (a.date||"");
+                        var bd = b.isFixed ? (b.statementMonth||"") : (b.date||"");
+                        if(ad !== bd) return bd.localeCompare(ad);
+                        return (b.time||"").localeCompare(a.time||"");
+                      }).map(function(item){return React.createElement(ExpItem, { key: item.id, item: item, allC: aC, lang: p.lang, distFromLast: distMap[item.id]||null, onDel: function(){var prev=p.el.slice();p.setEl(p.el.filter(function(x){return x.id!==item.id;}));if(p.showUndo){p.showUndo((p.lang==="en"?"✓ Expense deleted":"✓ 支出已删除"), {prevEl:prev});}else if(typeof showToast==="function"){showToast(p.lang==="en"?"✓ Expense deleted":"✓ 支出已删除");}}, onEdit: function(){if(item.isFixed){p.onEditFixed&&p.onEditFixed(item);}else{p.onEditExp&&p.onEditExp(item);}} });})
+                    ) : null
+                  );
+                });
+              }()) : cat.items.slice().sort(function(a,b){
                 // Sort by date desc; for fixed monthly items use statementMonth, otherwise date.
                 var ad = a.isFixed ? (a.statementMonth||"") : (a.date||"");
                 var bd = b.isFixed ? (b.statementMonth||"") : (b.date||"");
@@ -647,7 +682,61 @@ function BucketList(p){
     );
   }));
 }
-function CatBreakdown(p){if(!p.items.length)return null;var cm={};p.items.forEach(function(e){var k=e.isFixed?"fx_"+e.fixedLabel:e.category,cat=p.allC[e.category],lbl=e.isFixed?e.fixedLabel:(cat?cat.label:"其他"),ico=e.isFixed?e.fixedIcon:getIcon(e.category,p.allC);if(!cm[k]){cm[k]={label:lbl,icon:ico,total:0,count:0};}cm[k].total+=(+e.amount||0);cm[k].count++;});var sorted=Object.values(cm).sort(function(a,b){return b.total-a.total;}),mx=sorted[0]?sorted[0].total:1;var isEn=p.lang==="en";return React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 50}}, sorted.map(function(c){var pct=Math.round(c.total/p.total*100),bw=Math.max(3,Math.round(c.total/mx*100))+"%";return React.createElement('div', { key: c.label, style: {marginBottom:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 50}}, React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 50}}, React.createElement('span', { style: {fontSize:14,color:C.text}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 50}}, c.icon, " " , c.label, React.createElement('span', { style: {fontSize:12,color:C.text3,marginLeft:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 50}}, "×", c.count)), React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 50}}, React.createElement('span', { style: {fontSize:14,fontWeight:700,color:"#FF9A65"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 50}}, fmt(c.total)), React.createElement('span', { style: {fontSize:12,color:"#B8D8EC",marginLeft:5}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 50}}, pct, "%"))), React.createElement('div', { style: {height:5,borderRadius:3,background:"#1A2A44"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 50}}, React.createElement('div', { style: {height:5,borderRadius:3,width:bw,background:"linear-gradient(90deg,#FF6B35,#FF9A65)"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 50}})));}));}
+function CatBreakdown(p){
+  if(!p.items.length)return null;
+  var cm={};
+  p.items.forEach(function(e){
+    var k=e.isFixed?"fx_"+e.fixedLabel:e.category,cat=p.allC[e.category],lbl=e.isFixed?e.fixedLabel:(cat?cat.label:"其他"),ico=e.isFixed?e.fixedIcon:getIcon(e.category,p.allC);
+    if(!cm[k]){cm[k]={label:lbl,icon:ico,total:0,count:0,items:[],_key:k};}
+    cm[k].total+=(+e.amount||0);
+    cm[k].count++;
+    cm[k].items.push(e);
+  });
+  var sorted=Object.values(cm).sort(function(a,b){return b.total-a.total;}),mx=sorted[0]?sorted[0].total:1;
+  var isEn=p.lang==="en";
+  var forceRerender=p.forceRerender||function(){};
+  return React.createElement('div', null, sorted.map(function(c){
+    var pct=Math.round(c.total/p.total*100),bw=Math.max(3,Math.round(c.total/mx*100))+"%";
+    var expKey="cb_"+(p.scope||"")+"_"+c._key;
+    var isExp=__bucketExpanded[expKey]===true;
+    return React.createElement('div', {key:c.label, style:{marginBottom:12}},
+      // Header (clickable)
+      React.createElement('button', {
+        onClick: function(){__bucketExpanded[expKey]=!isExp;forceRerender();},
+        style:{width:"100%",background:isExp?"#0F1A2A":"transparent",border:"none",padding:"4px 6px",borderRadius:6,cursor:"pointer",textAlign:"left"}
+      },
+        React.createElement('div', {style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}},
+          React.createElement('span', {style:{fontSize:14,color:C.text}}, c.icon, " ", c.label, React.createElement('span', {style:{fontSize:12,color:C.text3,marginLeft:6}}, "×", c.count)),
+          React.createElement('div', {style:{display:"flex",alignItems:"center",gap:6}},
+            React.createElement('span', {style:{fontSize:14,fontWeight:700,color:"#FF9A65"}}, fmt(c.total)),
+            React.createElement('span', {style:{fontSize:12,color:"#B8D8EC"}}, pct, "%"),
+            React.createElement('span', {style:{fontSize:11,color:C.text3,minWidth:12,textAlign:"right"}}, isExp?"▲":"▼")
+          )
+        ),
+        React.createElement('div', {style:{height:5,borderRadius:3,background:"#1A2A44"}},
+          React.createElement('div', {style:{height:5,borderRadius:3,width:bw,background:"linear-gradient(90deg,#FF6B35,#FF9A65)"}})
+        )
+      ),
+      // Expanded items list
+      isExp ? React.createElement('div', {style:{padding:"6px 6px 8px 24px",background:"#0A1422",borderRadius:6,marginTop:4}},
+        c.items.slice().sort(function(a,b){
+          var ad=a.isFixed?(a.statementMonth||""):(a.date||"");
+          var bd=b.isFixed?(b.statementMonth||""):(b.date||"");
+          return bd.localeCompare(ad);
+        }).map(function(it,ix){
+          var dateStr=it.isFixed?(it.statementMonth||it.date||""):(it.date||"");
+          return React.createElement('div', {key:it.id||ix, style:{display:"flex",justifyContent:"space-between",padding:"4px 0",fontSize:12,borderBottom:ix<c.items.length-1?"1px solid #0F1C30":"none"}},
+            React.createElement('div', {style:{flex:1,minWidth:0}},
+              React.createElement('div', {style:{color:C.text3,fontSize:11}}, dateStr),
+              it.notes ? React.createElement('div', {style:{color:C.text2,marginTop:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}, it.notes) : null
+            ),
+            React.createElement('span', {style:{color:C.text,fontWeight:600,marginLeft:8,flexShrink:0}}, fmt(it.amount))
+          );
+        })
+      ) : null
+    );
+  }));
+}
 function CatDetail(p){var aC=p.allC,items=p.items,total=p.total;var cm={};items.forEach(function(e){var k=e.isFixed?"fx_"+e.fixedLabel:e.category,cat=aC[e.category],lbl=e.isFixed?e.fixedLabel:(cat?cat.label:"其他"),ico=e.isFixed?e.fixedIcon:getIcon(e.category,aC),grp=catGrp(e.category,aC);if(!cm[k]){cm[k]={label:lbl,icon:ico,total:0,count:0,grp:grp};}cm[k].total+=(+e.amount||0);cm[k].count++;});var sorted=Object.values(cm).sort(function(a,b){return b.total-a.total;});var isEn=p.lang==="en";var totalCount=items.length;return React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 51}}
   , React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0 10px",borderBottom:"1px solid #182540",marginBottom:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 51}}
     , React.createElement('span', { style: {fontSize:13,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 51}}, isEn?"Total entries":"总笔数")
@@ -1202,7 +1291,7 @@ function App() {
   var r16=useState(function(){return lsLoad("nyc_ll",[]);}),ll=r16[0],setLl=r16[1]; var r17=useState(function(){return lsLoad("nyc_cc",{});}),cc=r17[0],setCc=r17[1];
   var r18=useState({weekStart:wkMon(today()),platform:"Uber",trips:"",hours:"",onlineHours:"",miles:"",grossFare:"",tips:"",bonus:"",tollReimbursed:"",payoutAmount:"",payoutDate:"",notes:""});
   var wf=r18[0],setWf=r18[1];
-  var r19=useState({month:curMo(),platform:"Uber",grossFare:"",tips:"",bonus:"",tollReimbursed:"",otherIncome:"",trips:"",onlineHours:"",miles:"",acceptRate:"",completionRate:"",notes:""});
+  var r19=useState({month:curMo(),platform:"Uber",grossFare:"",tips:"",bonus:"",tollReimbursed:"",otherIncome:"",platformFee:"",trips:"",onlineHours:"",miles:"",acceptRate:"",completionRate:"",notes:""});
   var stf=r19[0],setStf=r19[1];
   var r20=useState({date:today(),time:nowTime(),category:"",amount:"",notes:"",qty:"",chargedTo:"",statementMonth:curMo(),isRecurring:false,mode:""});
   var ef=r20[0],setEf=r20[1];
@@ -1262,7 +1351,11 @@ function App() {
   var rCmpf=useState({currentMile:"",intervalMile:""}),cmpf=rCmpf[0],setCmpf=rCmpf[1];
   // Daily income log (for taxi drivers — one entry per day)
   var r53=useState(function(){return lsLoad("nyc_dl",[]);}),dl=r53[0],setDl=r53[1];
-  var r54=useState({date:today(),cash:"",card:"",tips:"",trips:"",hours:"",miles:"",lease:"",notes:""}),dlf=r54[0],setDlf=r54[1];
+  // dlf is the form state for daily log entry. Supports BOTH:
+  //   - taxi mode: cash, card, tips, lease (driver keeps cash directly)
+  //   - rideshare mode: grossFare, tips, bonus, tollReimbursed, platformFee, per-platform
+  // mode field stores which type. platform stores which platform (Uber/Lyft/etc) for rideshare.
+  var r54=useState({date:today(),mode:"",platform:"Uber",cash:"",card:"",grossFare:"",tips:"",bonus:"",tollReimbursed:"",platformFee:"",trips:"",hours:"",miles:"",lease:"",notes:""}),dlf=r54[0],setDlf=r54[1];
   // Driver type: "rideshare" / "taxi" / null (null triggers onboarding)
   var r55=useState(function(){return lsLoad("nyc_driverType",null);}),driverType=r55[0],_setDriverType=r55[1];
   function setDriverType(v){_setDriverType(v);try{if(v===null){localStorage.removeItem("nyc_driverType");}else{localStorage.setItem("nyc_driverType",JSON.stringify(v));}}catch(e){}}
@@ -1291,7 +1384,7 @@ function App() {
           setDlf({date:today(),cash:"",card:"",tips:"",trips:"",hours:"",miles:"",lease:"",notes:""});
           setSf("daily");
         } else {
-          setStf({month:curMo(),platform:"Uber",grossFare:"",tips:"",bonus:"",tollReimbursed:"",otherIncome:"",trips:"",onlineHours:"",miles:"",acceptRate:"",completionRate:"",notes:""});
+          setStf({month:curMo(),platform:"Uber",grossFare:"",tips:"",bonus:"",tollReimbursed:"",otherIncome:"",platformFee:"",trips:"",onlineHours:"",miles:"",acceptRate:"",completionRate:"",notes:""});
           setSf("stmt");
         }
         setWizStep(4);
@@ -1310,8 +1403,8 @@ function App() {
   var r31=useState(null),editFx=r31[0],setEditFx=r31[1];
   var allC=Object.assign({},lang==="en"?CATS_EN:CATS_ZH,cc),allPlat=defPlat.concat(custPlat);
   var isDark=true;
-  var T_ZH={dashboard:"仪表盘",income:"收入",expense:"支出",report:"报告",thisMonth:"本月",thisYear:"全年",netIncome:"本月净收入",totalIncome:"总收入",totalExpense:"总支出",netProfit:"净利润",weekly:"每周运营",monthly:"月度账单",addExpense:"记账",vehicle:"车辆信息",license:"执照 & 证件",fixedFees:"固定月费管理",reminder:"自定义提醒",platform:"平台管理",backup:"备份 & 同步",menu:"菜单",edit:"编辑",del:"删除",save:"确认保存",cancel:"取消",add:"添加",date:"日期",time:"时间",qty:"数量",tips:"小费",bonus:"奖励",toll:"过桥退款",otherIncome:"其他",profitRate:"利润率",hourlyRate:"时薪",vsLastMonth:"vs 上月",lastMonth:"上月",subtotal:"小计",perHour:"/时",perMonth:"/月",amount:"金额",brand:"品牌",carType:"车辆类型",category:"类别",cycleMonthly:"每月",cycleAnnual:"每年",day:"日",dayOfMonth:"每月几号",electric:"电动",endMonth:"结束月份",expiryDate:"到期日期",fixedMonthly:"添加为固定月费",fixedMonthlyDesc:"以后每月自动出现在支出里",grossFare:"总车费",hybrid:"混合动力",insComp:"保险公司",insExpiry:"保险到期",issueDate:"发出日期",lastInsp:"上次检验日期",lease:"租赁",licNum:"证件编号",licType:"证件类型",loan:"贷款",loanAmt:"贷款月供",loanType:"持有方式",miles:"里程",month_lbl:"月份",newPlatform:"新平台名称",noData:"暂无记录",notes:"备注",onlineHours:"在线时长",optional:"选填",own:"全款",pause:"暂停",petrol:"燃油",plate:"车牌",platform_lbl:"平台",pleaseSelect:"-- 请选择 --",quickAdd:"快速添加常见项",remDate:"提醒日期",remDays:"提前天数",remNote:"备注",remTitle:"提醒标题",rental:"周租",renewalFee:"更新费",reminderDays:"提前提醒天数",resume:"启用",selectBrand:"选择品牌",startMonth:"开始月份",weekStart:"周起始日",trips:"趟数",days30:"30 天",days60:"60 天",days90:"90 天",days180:"180 天",day1:"1 天",day3:"3 天",day7:"7 天",day14:"14 天"};
-  var T_EN={dashboard:"Dashboard",income:"Income",expense:"Expense",report:"Report",thisMonth:"This Month",thisYear:"This Year",netIncome:"Net Income",totalIncome:"Total Income",totalExpense:"Total Expense",netProfit:"Net Profit",weekly:"Weekly Ops",monthly:"Monthly Stmt",addExpense:"Add Expense",vehicle:"Vehicle",license:"License",fixedFees:"Fixed Fees",reminder:"Reminders",platform:"Platforms",backup:"Backup",menu:"Menu",edit:"Edit",del:"Delete",save:"Save",cancel:"Cancel",add:"Add",date:"Date",time:"Time",qty:"Qty",tips:"Tips",bonus:"Bonus",toll:"Toll",otherIncome:"Other",profitRate:"Profit %",hourlyRate:"$/hr",vsLastMonth:"vs Last Mo",lastMonth:"Last Mo",subtotal:"Subtotal",perHour:"/hr",perMonth:"/mo",amount:"Amount",brand:"Brand",carType:"Car Type",category:"Category",cycleMonthly:"Monthly",cycleAnnual:"Annual",day:"Day",dayOfMonth:"Day of month",electric:"Electric",endMonth:"End month",expiryDate:"Expiry date",fixedMonthly:"Add as fixed monthly",fixedMonthlyDesc:"Auto-appears in expenses each month",grossFare:"Gross Fare",hybrid:"Hybrid",insComp:"Insurance Co.",insExpiry:"Insurance expiry",issueDate:"Issue date",lastInsp:"Last inspection",lease:"Lease",licNum:"License No.",licType:"License Type",loan:"Loan",loanAmt:"Monthly payment",loanType:"Ownership",miles:"Miles",month_lbl:"Month",newPlatform:"New platform name",noData:"No records",notes:"Notes",onlineHours:"Online hours",optional:"Optional",own:"Owned",pause:"Pause",petrol:"Petrol",plate:"Plate",platform_lbl:"Platform",pleaseSelect:"-- Please Select --",quickAdd:"Quick add common items",remDate:"Reminder date",remDays:"Days before",remNote:"Notes",remTitle:"Reminder title",rental:"Weekly rental",renewalFee:"Renewal fee",reminderDays:"Days notice",resume:"Resume",selectBrand:"Select brand",startMonth:"Start month",weekStart:"Week start",trips:"Trips",days30:"30 days",days60:"60 days",days90:"90 days",days180:"180 days",day1:"1 day",day3:"3 days",day7:"7 days",day14:"14 days"};
+  var T_ZH={dashboard:"仪表盘",income:"收入",expense:"支出",report:"报告",thisMonth:"本月",thisYear:"全年",netIncome:"本月净收入",totalIncome:"总营业额",totalExpense:"总支出",netProfit:"净利润",weekly:"每周运营",monthly:"月度账单",addExpense:"记账",vehicle:"车辆信息",license:"执照 & 证件",fixedFees:"固定月费管理",reminder:"自定义提醒",platform:"平台管理",backup:"备份 & 同步",menu:"菜单",edit:"编辑",del:"删除",save:"确认保存",cancel:"取消",add:"添加",date:"日期",time:"时间",qty:"数量",tips:"小费",bonus:"奖励",toll:"过桥退款",otherIncome:"其他",profitRate:"利润率",hourlyRate:"时薪",vsLastMonth:"vs 上月",lastMonth:"上月",subtotal:"小计",perHour:"/时",perMonth:"/月",amount:"金额",brand:"品牌",carType:"车辆类型",category:"类别",cycleMonthly:"每月",cycleAnnual:"每年",day:"日",dayOfMonth:"每月几号",electric:"电动",endMonth:"结束月份",expiryDate:"到期日期",fixedMonthly:"添加为固定月费",fixedMonthlyDesc:"以后每月自动出现在支出里",grossFare:"总车费",hybrid:"混合动力",insComp:"保险公司",insExpiry:"保险到期",issueDate:"发出日期",lastInsp:"上次检验日期",lease:"租赁",licNum:"证件编号",licType:"证件类型",loan:"贷款",loanAmt:"贷款月供",loanType:"持有方式",miles:"里程",month_lbl:"月份",newPlatform:"新平台名称",noData:"暂无记录",notes:"备注",onlineHours:"在线时长",optional:"选填",own:"全款",pause:"暂停",petrol:"燃油",plate:"车牌",platform_lbl:"平台",pleaseSelect:"-- 请选择 --",quickAdd:"快速添加常见项",remDate:"提醒日期",remDays:"提前天数",remNote:"备注",remTitle:"提醒标题",rental:"周租",renewalFee:"更新费",reminderDays:"提前提醒天数",resume:"启用",selectBrand:"选择品牌",startMonth:"开始月份",weekStart:"周起始日",trips:"趟数",days30:"30 天",days60:"60 天",days90:"90 天",days180:"180 天",day1:"1 天",day3:"3 天",day7:"7 天",day14:"14 天"};
+  var T_EN={dashboard:"Dashboard",income:"Income",expense:"Expense",report:"Report",thisMonth:"This Month",thisYear:"This Year",netIncome:"Net Income",totalIncome:"Gross Revenue",totalExpense:"Total Expense",netProfit:"Net Profit",weekly:"Weekly Ops",monthly:"Monthly Stmt",addExpense:"Add Expense",vehicle:"Vehicle",license:"License",fixedFees:"Fixed Fees",reminder:"Reminders",platform:"Platforms",backup:"Backup",menu:"Menu",edit:"Edit",del:"Delete",save:"Save",cancel:"Cancel",add:"Add",date:"Date",time:"Time",qty:"Qty",tips:"Tips",bonus:"Bonus",toll:"Toll",otherIncome:"Other",profitRate:"Profit %",hourlyRate:"$/hr",vsLastMonth:"vs Last Mo",lastMonth:"Last Mo",subtotal:"Subtotal",perHour:"/hr",perMonth:"/mo",amount:"Amount",brand:"Brand",carType:"Car Type",category:"Category",cycleMonthly:"Monthly",cycleAnnual:"Annual",day:"Day",dayOfMonth:"Day of month",electric:"Electric",endMonth:"End month",expiryDate:"Expiry date",fixedMonthly:"Add as fixed monthly",fixedMonthlyDesc:"Auto-appears in expenses each month",grossFare:"Gross Fare",hybrid:"Hybrid",insComp:"Insurance Co.",insExpiry:"Insurance expiry",issueDate:"Issue date",lastInsp:"Last inspection",lease:"Lease",licNum:"License No.",licType:"License Type",loan:"Loan",loanAmt:"Monthly payment",loanType:"Ownership",miles:"Miles",month_lbl:"Month",newPlatform:"New platform name",noData:"No records",notes:"Notes",onlineHours:"Online hours",optional:"Optional",own:"Owned",pause:"Pause",petrol:"Petrol",plate:"Plate",platform_lbl:"Platform",pleaseSelect:"-- Please Select --",quickAdd:"Quick add common items",remDate:"Reminder date",remDays:"Days before",remNote:"Notes",remTitle:"Reminder title",rental:"Weekly rental",renewalFee:"Renewal fee",reminderDays:"Days notice",resume:"Resume",selectBrand:"Select brand",startMonth:"Start month",weekStart:"Week start",trips:"Trips",days30:"30 days",days60:"60 days",days90:"90 days",days180:"180 days",day1:"1 day",day3:"3 days",day7:"7 days",day14:"14 days"};
   var T=lang==="en"?T_EN:T_ZH;
   var getAppData=function(){return JSON.stringify({v:1,wl:wl,sl:sl,el:el,fl:fl,ll:ll,veh:veh,cc:cc,custPlat:custPlat,driver:driver});};
   var loadData=function(j){try{var d=JSON.parse(j);if(d.wl)setWl(d.wl);if(d.sl)setSl(d.sl);if(d.el)setEl(d.el);if(d.fl)setFl(d.fl);if(d.ll)setLl(d.ll);if(d.veh)setVeh(d.veh);if(d.driver)setDriver(d.driver);if(d.cc)setCc(d.cc);if(d.custPlat)setCustPlat(d.custPlat);if(Array.isArray(d.dl))setDl(d.dl);if(d.driverType==="rideshare"||d.driverType==="taxi")setDriverType(d.driverType);return true;}catch(e){return false;}};
@@ -1321,14 +1414,38 @@ function App() {
   var mWeeks=useMemo(function(){return wl.filter(function(w){return w.weekStart.slice(0,7)===mo;});},[wl,mo]);
   var fixMo=useMemo(function(){return genFixed(fl,mo);},[fl,mo]);
   var feAll=useMemo(function(){return el.filter(function(e){var c=allC[e.category];if(c&&c.mo)return (e.statementMonth||e.date.slice(0,7))===mo;return e.date.slice(0,7)===mo;}).concat(fixMo);},[el,allC,mo,fixMo]);
-  var mDailies=useMemo(function(){return dl.filter(function(d){return d.date&&d.date.slice(0,7)===mo;});},[dl,mo]);var mDailyInc=mDailies.reduce(function(s,d){return s+(+d.cash||0)+(+d.card||0)+(+d.tips||0);},0);var mDailyLease=mDailies.reduce(function(s,d){return s+(+d.lease||0);},0);var tInc=mStmts.reduce(function(s,x){return s+(+x.grossFare||0)+(+x.tips||0)+(+x.bonus||0)+(+x.tollReimbursed||0)+(+x.otherIncome||0);},0)+mDailyInc;
+  var mDailies=useMemo(function(){return dl.filter(function(d){return d.date&&d.date.slice(0,7)===mo;});},[dl,mo]);
+  // dl supports BOTH modes. For income aggregation:
+  //   - taxi entry: cash + card + tips
+  //   - rideshare entry: grossFare + tips + bonus + tollReimbursed
+  var mDailyInc=mDailies.reduce(function(s,d){
+    if(d.mode==="rideshare"){
+      return s + (+d.grossFare||0) + (+d.tips||0) + (+d.bonus||0) + (+d.tollReimbursed||0);
+    }
+    return s + (+d.cash||0) + (+d.card||0) + (+d.tips||0);
+  },0);
+  var mDailyLease=mDailies.reduce(function(s,d){return s+(+d.lease||0);},0);
+  // Per-month rideshare platform fees (entered on daily entries, not statement) — used for "bank pay" calc
+  var mDlPlatformFee=mDailies.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.platformFee||0):0);},0);
+  var tInc=mStmts.reduce(function(s,x){return s+(+x.grossFare||0)+(+x.tips||0)+(+x.bonus||0)+(+x.tollReimbursed||0)+(+x.otherIncome||0);},0)+mDailyInc;
   // For taxi mode: cash+card maps to grossFare; tips maps to tips
-  var mDlCash=mDailies.reduce(function(s,d){return s+(+d.cash||0);},0);
-  var mDlCard=mDailies.reduce(function(s,d){return s+(+d.card||0);},0);
+  var mDlCash=mDailies.reduce(function(s,d){return s+(d.mode==="rideshare"?0:(+d.cash||0));},0);
+  var mDlCard=mDailies.reduce(function(s,d){return s+(d.mode==="rideshare"?0:(+d.card||0));},0);
   var mDlTipsSum=mDailies.reduce(function(s,d){return s+(+d.tips||0);},0);
-  var tGross=mStmts.reduce(function(s,x){return s+(+x.grossFare||0);},0)+mDlCash+mDlCard,tTips=mStmts.reduce(function(s,x){return s+(+x.tips||0);},0)+mDlTipsSum;
-  var tBonus=mStmts.reduce(function(s,x){return s+(+x.bonus||0);},0),tToll=mStmts.reduce(function(s,x){return s+(+x.tollReimbursed||0);},0);
-  var tExp=feAll.reduce(function(s,e){return s+(+e.amount||0);},0)+mDailyLease,tFix=fixMo.reduce(function(s,e){return s+(+e.amount||0);},0),net=tInc-tExp;
+  // For rideshare daily entries — count gross fare and bonus/toll into proper aggregates
+  var mDlRideGross=mDailies.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.grossFare||0):0);},0);
+  var mDlRideBonus=mDailies.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.bonus||0):0);},0);
+  var mDlRideToll=mDailies.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.tollReimbursed||0):0);},0);
+  var tGross=mStmts.reduce(function(s,x){return s+(+x.grossFare||0);},0)+mDlCash+mDlCard+mDlRideGross,tTips=mStmts.reduce(function(s,x){return s+(+x.tips||0);},0)+mDlTipsSum;
+  var tBonus=mStmts.reduce(function(s,x){return s+(+x.bonus||0);},0)+mDlRideBonus,tToll=mStmts.reduce(function(s,x){return s+(+x.tollReimbursed||0);},0)+mDlRideToll;
+  // Platform service fees (Uber service fee, Lyft commission) — captured directly on monthly statement.
+  // tNetPay = "What hits your bank" (Gross Revenue - Platform Fee, before other expenses).
+  // NOTE: platformFee is also a deductible business expense for taxes, but we do NOT add it to tExp here
+  // because it would double-count if the user also recorded it as a 📱 platform fee expense.
+  // For Schedule C, the PDF export adds it as Line 10 "Commissions and fees" separately.
+  var tPlatformFee=mStmts.reduce(function(s,x){return s+(+x.platformFee||0);},0)+mDlPlatformFee;
+  var tNetPay=tInc-tPlatformFee; // What you actually receive in your bank from platforms
+  var tExp=feAll.reduce(function(s,e){return s+(+e.amount||0);},0)+mDailyLease,tFix=fixMo.reduce(function(s,e){return s+(+e.amount||0);},0),net=tInc-tExp-tPlatformFee;
   var tTrips=mWeeks.reduce(function(s,w){return s+(+w.trips||0);},0)+mDailies.reduce(function(s,d){return s+(+d.trips||0);},0);
   var tHours=mWeeks.reduce(function(s,w){return s+(+w.hours||0);},0)+mDailies.reduce(function(s,d){return s+(+d.hours||0);},0);
   var tOnl=mWeeks.reduce(function(s,w){return s+(+w.onlineHours||0);},0),tMiles=mWeeks.reduce(function(s,w){return s+(+w.miles||0);},0)+mDailies.reduce(function(s,d){return s+(+d.miles||0);},0);
@@ -1336,7 +1453,15 @@ function App() {
   var yStmts=useMemo(function(){return sl.filter(function(x){return x.month.slice(0,4)===yr;});},[sl,yr]); var yWeeks=useMemo(function(){return wl.filter(function(w){return w.weekStart&&w.weekStart.slice(0,4)===yr;});},[wl,yr]);
   var yExps=useMemo(function(){return el.filter(function(e){return e.date.slice(0,4)===yr;});},[el,yr]);
   var yFixT=yMons.reduce(function(s,m){return s+genFixed(fl,m).reduce(function(a,e){return a+(+e.amount||0);},0);},0);
-  var yDailies=dl.filter(function(d){return d.date&&d.date.slice(0,4)===yr;});var yDailyInc=yDailies.reduce(function(s,d){return s+(+d.cash||0)+(+d.card||0)+(+d.tips||0);},0);var yDailyLease=yDailies.reduce(function(s,d){return s+(+d.lease||0);},0);var yInc=yStmts.reduce(function(s,x){return s+(+x.grossFare||0)+(+x.tips||0)+(+x.bonus||0)+(+x.tollReimbursed||0)+(+x.otherIncome||0);},0)+yDailyInc;
+  var yDailies=dl.filter(function(d){return d.date&&d.date.slice(0,4)===yr;});
+  var yDailyInc=yDailies.reduce(function(s,d){
+    if(d.mode==="rideshare"){
+      return s + (+d.grossFare||0) + (+d.tips||0) + (+d.bonus||0) + (+d.tollReimbursed||0);
+    }
+    return s + (+d.cash||0) + (+d.card||0) + (+d.tips||0);
+  },0);
+  var yDailyLease=yDailies.reduce(function(s,d){return s+(+d.lease||0);},0);
+  var yInc=yStmts.reduce(function(s,x){return s+(+x.grossFare||0)+(+x.tips||0)+(+x.bonus||0)+(+x.tollReimbursed||0)+(+x.otherIncome||0);},0)+yDailyInc;
   var yExp=yExps.reduce(function(s,e){return s+(+e.amount||0);},0)+yFixT+yDailyLease,yNet=yInc-yExp;
   var yTrips=wl.filter(function(w){return w.weekStart.slice(0,4)===yr;}).reduce(function(s,w){return s+(+w.trips||0);},0)+yDailies.reduce(function(s,d){return s+(+d.trips||0);},0);
   var yHours=wl.filter(function(w){return w.weekStart.slice(0,4)===yr;}).reduce(function(s,w){return s+(+w.hours||0);},0)+yDailies.reduce(function(s,d){return s+(+d.hours||0);},0);
@@ -1434,6 +1559,11 @@ function App() {
       showToast(lang==="en"?"✓ Toast works! Save anything to test":"✓ Toast 正常！保存任何东西测试一下", "success");
     }, 800);
   }, []);
+  // Week calendar state: current week's Monday + selected day in week
+  var rWcWeek=useState(wkMon(today())),wcWeek=rWcWeek[0],setWcWeek=rWcWeek[1];
+  var rWcSel=useState(today()),wcSel=rWcSel[0],setWcSel=rWcSel[1];
+  // showPlatform: false = single combined entry per day; true = per-platform entries
+  var rWcPlat=useState(false),wcShowPlatform=rWcPlat[0],setWcShowPlatform=rWcPlat[1];
   var rDailyId=useState(function(){return lsLoad("nyc_driveDailyFileId",null);}),driveDailyFileId=rDailyId[0],_setDriveDailyFileId=rDailyId[1];function setDriveDailyFileId(v){_setDriveDailyFileId(v);try{if(v)localStorage.setItem("nyc_driveDailyFileId",JSON.stringify(v));else localStorage.removeItem("nyc_driveDailyFileId");}catch(e){}}
   var rDailyMod=useState(null),driveDailyModTime=rDailyMod[0],setDriveDailyModTime=rDailyMod[1];
   var rMonthlyId=useState(function(){return lsLoad("nyc_driveMonthlyFileId",null);}),driveMonthlyFileId=rMonthlyId[0],_setDriveMonthlyFileId=rMonthlyId[1];function setDriveMonthlyFileId(v){_setDriveMonthlyFileId(v);try{if(v)localStorage.setItem("nyc_driveMonthlyFileId",JSON.stringify(v));else localStorage.removeItem("nyc_driveMonthlyFileId");}catch(e){}}
@@ -2517,6 +2647,36 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                 };
 
                 if(dashV==="month"){
+                  // MONTH VIEW: revenue breakdown (3 layers — only shown if platform fee is recorded)
+                  var revBreakdownSection = null;
+                  if(tPlatformFee > 0){
+                    hasInsights = true;
+                    revBreakdownSection = React.createElement('div', {style:{marginBottom:summarySection?0:0}},
+                      React.createElement('div',{style:{fontSize:12,color:C.text3,marginBottom:4,letterSpacing:0.3}},lang==="en"?"REVENUE BREAKDOWN":"收入分层"),
+                      React.createElement('div',{style:{display:"flex",flexDirection:"column",gap:3,fontSize:13,lineHeight:1.5}},
+                        React.createElement('div',{style:{display:"flex",justifyContent:"space-between"}},
+                          React.createElement('span',{style:{color:C.text2}},"💰 ",lang==="en"?"Gross Revenue":"总营业额"),
+                          React.createElement('b',{style:{color:"#5AACFF"}},fmt(tInc))
+                        ),
+                        React.createElement('div',{style:{display:"flex",justifyContent:"space-between"}},
+                          React.createElement('span',{style:{color:C.text3,paddingLeft:14}},"− ",lang==="en"?"Platform fee":"平台抽成"),
+                          React.createElement('span',{style:{color:"#FF7060"}},"−",fmt(tPlatformFee))
+                        ),
+                        React.createElement('div',{style:{display:"flex",justifyContent:"space-between",paddingTop:3,borderTop:"1px dashed #1F3A5A"}},
+                          React.createElement('span',{style:{color:C.text2}},"🏦 ",lang==="en"?"Bank pay":"银行到手"),
+                          React.createElement('b',{style:{color:"#FFD700"}},fmt(tNetPay))
+                        ),
+                        React.createElement('div',{style:{display:"flex",justifyContent:"space-between"}},
+                          React.createElement('span',{style:{color:C.text3,paddingLeft:14}},"− ",lang==="en"?"Other expenses":"其他支出"),
+                          React.createElement('span',{style:{color:"#FF7060"}},"−",fmt(tExp))
+                        ),
+                        React.createElement('div',{style:{display:"flex",justifyContent:"space-between",paddingTop:3,borderTop:"1px dashed #1F3A5A"}},
+                          React.createElement('span',{style:{color:C.text}},"✅ ",lang==="en"?"Net profit":"净利润"),
+                          React.createElement('b',{style:{color:net>=0?"#00E676":"#FF7060"}},fmt(net))
+                        )
+                      )
+                    );
+                  }
                   // MONTH VIEW: vs last month
                   if(lmInc>0||lmExp>0){
                     hasInsights=true;
@@ -2602,6 +2762,10 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                 }catch(e){}
                 return React.createElement(Card,{style:{marginBottom:10,padding:"12px 14px",background:"linear-gradient(180deg,#0F1F35 0%,#0A1828 100%)",border:"1px solid #1F3A5A"}},
                   React.createElement('div',{style:{fontSize:13,fontWeight:700,color:"#00D4FF",marginBottom:8,letterSpacing:0.3}},"💡 ",lang==="en"?"Smart Insights":"智能洞察"),
+                  // Revenue breakdown (month view, only if platform fee recorded)
+                  typeof revBreakdownSection !== "undefined" ? revBreakdownSection : null,
+                  // Divider before vs-last-month if both present
+                  typeof revBreakdownSection !== "undefined" && revBreakdownSection && summarySection ? React.createElement('div',{style:{borderTop:"1px solid "+C.border,marginTop:10,marginBottom:10}}) : null,
                   summarySection,
                   yoyMonthSection,
                   yoyYearSection,
@@ -2878,7 +3042,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                       , React.createElement('div', { style: {fontSize:14,fontWeight:700,color:C.text2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 288}}, T.expense)
                       , React.createElement('button', { onClick: function(){setMExpDet(!mExpDet);}, style: {background:"none",border:"1px solid #2A4A6A",borderRadius:8,padding:"4px 10px",color:"#90B8D0",fontSize:12,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 289}}, mExpDet?(lang==="en"?"By Group":"按大类"):(lang==="en"?"By Item":"按小类"))
                     )
-                    , mExpDet ? React.createElement(Card, {__self: this, __source: {fileName: _jsxFileName, lineNumber: 291}}, React.createElement(CatDetail, { items: feAll, total: tExp, allC: allC, lang: lang, __self: this, __source: {fileName: _jsxFileName, lineNumber: 291}} )) : React.createElement(CatBreakdown, { items: feAll, total: tExp, allC: allC, lang: lang, __self: this, __source: {fileName: _jsxFileName, lineNumber: 291}} )
+                    , mExpDet ? React.createElement(Card, {__self: this, __source: {fileName: _jsxFileName, lineNumber: 291}}, React.createElement(CatDetail, { items: feAll, total: tExp, allC: allC, lang: lang, __self: this, __source: {fileName: _jsxFileName, lineNumber: 291}} )) : React.createElement(CatBreakdown, { items: feAll, total: tExp, allC: allC, lang: lang, scope: "dash_m", forceRerender: forceRerender, __self: this, __source: {fileName: _jsxFileName, lineNumber: 291}} )
                   , tInc>0&&tExp>0 ? (function(){var grps={"车辆":0,"牌照":0,"平台":0,"其他":0};feAll.forEach(function(e){var cat=allC[e.category];var g=cat?(cat.g||"其他"):"其他";if(grps[g]!==undefined)grps[g]+=(+e.amount||0);else grps["其他"]+=(+e.amount||0);});var gcols={"车辆":"#00D4FF","牌照":"#FFD700","平台":"#CC88FF","其他":"#A8D0E8"};var glbls=lang==="en"?{"车辆":"Vehicle","牌照":"License","平台":"Platform","其他":"Other"}:{"车辆":"车辆","牌照":"牌照","平台":"平台","其他":"其他"};if(!Object.values(grps).some(function(v){return v>0;}))return null;return React.createElement(Card, { style: {marginTop:8,padding:"12px 14px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, React.createElement('div', { style: {fontSize:13,fontWeight:700,marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, lang==="en"?"Expense Breakdown":"支出分布"), React.createElement('div', { style: {display:"flex",height:10,borderRadius:5,overflow:"hidden",marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, Object.entries(grps).map(function(kv){if(!kv[1])return null;return React.createElement('div', { key: kv[0], style: {width:Math.round(kv[1]/tExp*100)+"%",background:gcols[kv[0]],minWidth:2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}} );})), React.createElement('div', { style: {display:"grid",gridTemplateColumns:"1fr 1fr",gap:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, Object.entries(grps).map(function(kv){if(!kv[1])return null;return React.createElement('div', { key: kv[0], style: {display:"flex",alignItems:"center",gap:5}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, React.createElement('div', { style: {width:10,height:10,borderRadius:2,background:gcols[kv[0]],flexShrink:0}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}} ), React.createElement('span', { style: {fontSize:12,color:C.text2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, glbls[kv[0]]), React.createElement('span', { style: {fontSize:12,fontWeight:700,color:gcols[kv[0]],marginLeft:"auto"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, Math.round(kv[1]/tExp*100), "%"));}), " " ), React.createElement('div', { style: {borderTop:"1px solid #1E3050",marginTop:8,paddingTop:6,display:"flex",justifyContent:"space-between"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, React.createElement('span', { style: {fontSize:12,color:C.text2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, lang==="en"?"Net Rate":"净利润率"), React.createElement('span', { style: {fontSize:13,fontWeight:800,color:net>=0?"#00E676":"#FF5252"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, tInc>0?Math.round(net/tInc*100):0, "%")));}()) : null
                     , tInc>0&&tExp>0 ? React.createElement('div', { style: {marginTop:8,background:C.bg3,borderRadius:10,padding:"10px 14px",border:"1px solid #151F30"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 293}}, React.createElement('div', { style: {display:"flex",justifyContent:"space-between",marginBottom:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 293}}, React.createElement('span', { style: {fontSize:12,color:"#7AB8A8"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 293}}, lang==="en"?"Expense Ratio":"支出占比"), React.createElement('span', { style: Object.assign({fontSize:13,fontWeight:700},{color:tExp/tInc>0.8?"#FF5252":tExp/tInc>0.5?"#FFB300":"#00E676"}), __self: this, __source: {fileName: _jsxFileName, lineNumber: 293}}, Math.round(tExp/tInc*100), "%")), React.createElement('div', { style: {height:8,borderRadius:4,background:"#1A2A40",overflow:"hidden"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 293}}, React.createElement('div', { style: {height:8,borderRadius:4,width:Math.min(100,Math.round(tExp/tInc*100))+"%",background:tExp/tInc>0.8?"linear-gradient(90deg,#FF5252,#FF8855)":tExp/tInc>0.5?"linear-gradient(90deg,#FFB300,#FFD700)":"linear-gradient(90deg,#00E676,#00D4FF)"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 293}}))) : null
                   )
@@ -3100,14 +3264,14 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                   : React.createElement('button', { onClick: function(){setShowGoal(true);}, style: {width:"100%",background:C.bg3,border:"1px dashed #2A4A6A",borderRadius:10,padding:"8px 14px",color:C.text3,fontSize:12,cursor:"pointer",marginBottom:14,textAlign:"left"} }, "🎯 " , lang==="en"?"Set monthly goal...":"设定本月收入目标...")
               ) : null
             , React.createElement('div', { style: {display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:12} }
-              , React.createElement('button', { onClick: function(){setStf({month:mo,platform:"Uber",grossFare:"",tips:"",bonus:"",tollReimbursed:"",otherIncome:"",trips:"",onlineHours:"",miles:"",notes:""});setSf("stmt");}, style: {background:C.bg3,border:"1px solid "+C.border,borderRadius:8,padding:"8px 10px",cursor:"pointer",display:"flex",alignItems:"center",gap:8,textAlign:"left"} }
+              , React.createElement('button', { onClick: function(){setStf({month:mo,platform:"Uber",grossFare:"",tips:"",bonus:"",tollReimbursed:"",otherIncome:"",platformFee:"",trips:"",onlineHours:"",miles:"",notes:""});setSf("stmt");}, style: {background:C.bg3,border:"1px solid "+C.border,borderRadius:8,padding:"8px 10px",cursor:"pointer",display:"flex",alignItems:"center",gap:8,textAlign:"left"} }
                 , React.createElement('div', { style: {fontSize:20,flexShrink:0} }, "💵")
                 , React.createElement('div', { style: {flex:1,minWidth:0} }
                   , React.createElement('div', { style: {fontSize:13,fontWeight:700,color:C.text2,lineHeight:1.2} }, T.monthly)
                   , React.createElement('div', { style: {fontSize:11,color:C.text3,marginTop:1} }, "Uber/Lyft")
                 )
               )
-              , React.createElement('button', { onClick: function(){setSf("week");}, style: {background:C.bg3,border:"1px solid "+C.border,borderRadius:8,padding:"8px 10px",cursor:"pointer",display:"flex",alignItems:"center",gap:8,textAlign:"left"} }
+              , React.createElement('button', { onClick: function(){if(driverType==="rideshare"){setSf("week_cal");}else{setSf("week");}}, style: {background:C.bg3,border:"1px solid "+C.border,borderRadius:8,padding:"8px 10px",cursor:"pointer",display:"flex",alignItems:"center",gap:8,textAlign:"left"} }
                 , React.createElement('div', { style: {fontSize:20,flexShrink:0} }, "📅")
                 , React.createElement('div', { style: {flex:1,minWidth:0} }
                   , React.createElement('div', { style: {fontSize:13,fontWeight:700,color:"#00E676",lineHeight:1.2} }, T.weekly)
@@ -3293,7 +3457,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
               React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 353}}
                 , React.createElement(YrNav, { val: yr, set: setYr, lang: lang, onPick: function(){inputAction({title:lang==="en"?"Enter year":"输入年份",defaultValue:yr,inputMode:"numeric",pattern:"[0-9]{4}",onSubmit:function(y){if(y&&/^[0-9]{4}$/.test(y))setYr(y);}});}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 354}} )
                 , React.createElement(Card, { style: {display:"flex",justifyContent:"space-between",marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 355}}, React.createElement('span', { style: {fontSize:14,color:C.text2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 355}}, T.totalExpense), React.createElement('span', { style: {fontSize:18,fontWeight:800,color:"#FF6B35"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 355}}, fmt(yExp)))
-                , (function(){var allYE_raw=yAllExps(); var allYE=window.__filterExp?window.__filterExp(allYE_raw):allYE_raw; if(!allYE.length)return React.createElement(Empty, { text: (expSearch||expFilterCat.length>0)?(lang==="en"?"No matching expenses":"无匹配的支出"):T.noData, __self: this, __source: {fileName: _jsxFileName, lineNumber: 356}} );return React.createElement(BucketList, { items: allYE, allC: allC, lang: lang, el: el, setEl: setEl, allEl: el, forceRerender: forceRerender, showUndo: showUndo, emptyText: "", onEditFixed: function(item){setEditFx({id:item.id,amount:item.amount,notes:item.notes||"",fixedLabel:item.fixedLabel});}, onEditExp: function(item){var _i=Object.assign({},item,{qty:item.qty||"",isRecurring:false});if((item.category==="fuel"||item.category==="charging")&&item.amount&&item.qty&&+item.qty>0){_i.unitPrice=(+item.amount/+item.qty).toFixed(3);_i._editOrder=["qty","amount"];}setEf(_i);setSf("exp_edit_"+item.id);}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 356}} );}())
+                , (function(){var allYE_raw=yAllExps(); var allYE=window.__filterExp?window.__filterExp(allYE_raw):allYE_raw; if(!allYE.length)return React.createElement(Empty, { text: (expSearch||expFilterCat.length>0)?(lang==="en"?"No matching expenses":"无匹配的支出"):T.noData, __self: this, __source: {fileName: _jsxFileName, lineNumber: 356}} );return React.createElement(BucketList, { items: allYE, allC: allC, lang: lang, el: el, setEl: setEl, allEl: el, forceRerender: forceRerender, showUndo: showUndo, emptyText: "", groupByMonth: true, onEditFixed: function(item){setEditFx({id:item.id,amount:item.amount,notes:item.notes||"",fixedLabel:item.fixedLabel});}, onEditExp: function(item){var _i=Object.assign({},item,{qty:item.qty||"",isRecurring:false});if((item.category==="fuel"||item.category==="charging")&&item.amount&&item.qty&&+item.qty>0){_i.unitPrice=(+item.amount/+item.qty).toFixed(3);_i._editOrder=["qty","amount"];}setEf(_i);setSf("exp_edit_"+item.id);}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 356}} );}())
                 , Object.keys(cc).length > 0 ? React.createElement('div', { style: {marginTop:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 357}}, React.createElement('div', { style: {fontSize:14,fontWeight:700,color:C.text,marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 357}}, lang==="en"?"Custom Categories":"我的自定义类别"), Object.entries(cc).map(function(entry){var key=entry[0],cat=entry[1];return React.createElement(Card, { key: key, style: {display:"flex",alignItems:"center",gap:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 357}}, React.createElement('span', { style: {fontSize:22}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 357}}, cat.icon), React.createElement('div', { style: {flex:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 357}}, React.createElement('div', { style: {fontSize:14,fontWeight:600}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 357}}, cat.label), React.createElement('div', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 357}}, cat.group)), React.createElement('button', { onClick: function(){setCf({label:cat.label,icon:cat.icon,group:cat.group,_editKey:key});setSf("cc");}, style: {background:"none",border:"1px solid #2A4A6A",borderRadius:8,padding:"4px 10px",color:"#6AACEE",cursor:"pointer",fontSize:13}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 357}}, T.edit), React.createElement('button', { onClick: function(){confirmAction(lang==="en"?"Delete category?":"删除类别？", lang==="en"?"This category will be removed (with undo).":"此类别将被移除（可撤销）。", function(){var prev=Object.assign({},cc);var u=Object.assign({},cc);delete u[key];setCc(u);showUndo((lang==="en"?"✓ Category deleted":"✓ 类别已删除"), {prevCc:prev});});}, style: {background:"none",border:"1px solid #3A1A1A",borderRadius:8,padding:"4px 10px",color:"#FF5252",cursor:"pointer",fontSize:13}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 357}}, T.del));})) : null
                 , React.createElement('div', { style: {marginTop:14,textAlign:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 358}}, React.createElement('button', { onClick: function(){setCf({label:"",icon:"&#128296;",group:"车辆"});setSf("cc");}, style: {background:"#1A2A44",border:"1px dashed #2A3A54",borderRadius:10,padding:"10px 18px",color:C.text2,fontSize:14,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 358}}, "+ " , lang==="en"?"Custom Category":"新增自定义类别"))
               )
@@ -4061,6 +4225,214 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
         )
       ) : null
 
+      , sf==="week_cal" ? (function(){
+          // Compute the 7 days of the current week (Monday → Sunday)
+          var ws = wkMon(wcWeek);
+          var days = [];
+          var startD = new Date(ws+"T00:00:00");
+          for(var i=0;i<7;i++){
+            var d = new Date(startD); d.setDate(startD.getDate()+i);
+            var dStr = d.getFullYear()+"-"+p2(d.getMonth()+1)+"-"+p2(d.getDate());
+            days.push(dStr);
+          }
+          // Get all rideshare daily entries for this week's days
+          var weekEntries = dl.filter(function(d){return d.mode==="rideshare"&&days.indexOf(d.date)>=0;});
+          // Per-day stats (for the badge under each date)
+          var dayStats = {};
+          days.forEach(function(d){
+            var entries = weekEntries.filter(function(e){return e.date===d;});
+            var inc = entries.reduce(function(s,e){return s+(+e.grossFare||0)+(+e.tips||0)+(+e.bonus||0)+(+e.tollReimbursed||0);},0);
+            dayStats[d] = {entries:entries, inc:inc, hasData:inc>0};
+          });
+          // Get entries for selected day
+          var selEntries = weekEntries.filter(function(e){return e.date===wcSel;});
+          // Helper: prev/next week
+          var prevWeek = function(){var p=new Date(ws+"T00:00:00");p.setDate(p.getDate()-7);setWcWeek(p.getFullYear()+"-"+p2(p.getMonth()+1)+"-"+p2(p.getDate()));};
+          var nextWeek = function(){var p=new Date(ws+"T00:00:00");p.setDate(p.getDate()+7);setWcWeek(p.getFullYear()+"-"+p2(p.getMonth()+1)+"-"+p2(p.getDate()));};
+          // Week totals
+          var wkInc = days.reduce(function(s,d){return s+dayStats[d].inc;},0);
+          var wkTrips = weekEntries.reduce(function(s,e){return s+(+e.trips||0);},0);
+          var wkHours = weekEntries.reduce(function(s,e){return s+(+e.hours||0);},0);
+          var wkMiles = weekEntries.reduce(function(s,e){return s+(+e.miles||0);},0);
+          var todayStr = today();
+          var dayLabels = lang==="en" ? ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"] : ["一","二","三","四","五","六","日"];
+          // Save individual entry helper
+          var saveEntry = function(entry){
+            // entry: {id?, date, platform, grossFare, tips, bonus, tollReimbursed, platformFee, trips, hours, miles, notes}
+            var newEntry = Object.assign({mode:"rideshare", vehicleId: veh.vehicleId}, entry);
+            if(entry.id){
+              setDl(dl.map(function(x){return x.id===entry.id ? Object.assign({},x,newEntry) : x;}));
+            } else {
+              newEntry.id = Date.now() + Math.floor(Math.random()*1000);
+              setDl([newEntry].concat(dl));
+            }
+          };
+          var deleteEntry = function(id){
+            setDl(dl.filter(function(x){return x.id!==id;}));
+          };
+          return React.createElement('div', { style: {position:"fixed",inset:0,background:C.bg,zIndex:600,overflowY:"auto"} }
+            , React.createElement('div', { style: {maxWidth:600,margin:"0 auto",padding:"0 0 80px"} }
+              // Header
+              , React.createElement('div', { style: {background:C.bg2,padding:"14px 18px",borderBottom:"1px solid "+C.border,display:"flex",justifyContent:"space-between",alignItems:"center",position:"sticky",top:0,zIndex:10} }
+                , React.createElement('button', { onClick: function(){setSf(null);}, style: {background:"#1E3050",border:"none",color:"#8ABCD0",fontSize:16,cursor:"pointer",width:34,height:34,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center"} }, "✕")
+                , React.createElement('div', { style: {fontSize:15,fontWeight:800} }, "📅 ", lang==="en"?"Daily Log":"每日记录")
+                , React.createElement('div', { style: {width:34} })
+              )
+              , React.createElement('div', { style: {padding:"14px"} }
+                // Week navigation
+                , React.createElement('div', { style: {display:"flex",alignItems:"center",gap:8,marginBottom:12} }
+                  , React.createElement('button', { onClick: prevWeek, style: {background:C.bg3,border:"1px solid "+C.border,borderRadius:8,padding:"8px 14px",color:C.text,fontSize:14,cursor:"pointer"} }, "‹")
+                  , React.createElement('div', { style: {flex:1,textAlign:"center",fontSize:14,fontWeight:600,color:C.text} },
+                      lang==="en" ? ("Week of "+ws) : (ws.slice(5)+" 那一周")
+                    )
+                  , React.createElement('button', { onClick: nextWeek, style: {background:C.bg3,border:"1px solid "+C.border,borderRadius:8,padding:"8px 14px",color:C.text,fontSize:14,cursor:"pointer"} }, "›")
+                )
+                // 7-day calendar strip
+                , React.createElement('div', { style: {display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:4,marginBottom:14} }
+                  , days.map(function(d,i){
+                      var stats = dayStats[d];
+                      var isSel = d===wcSel;
+                      var isToday = d===todayStr;
+                      var dayNum = +d.slice(8);
+                      // Color: green if has data, blue if selected, gray otherwise
+                      var bg = isSel ? "#1A3060" : (stats.hasData ? "#0A2018" : C.bg3);
+                      var bd = isSel ? "#00D4FF" : (stats.hasData ? "#2A6040" : C.border);
+                      var fg = stats.hasData ? "#5ADA7A" : C.text2;
+                      return React.createElement('button', {
+                        key:d,
+                        onClick: function(){setWcSel(d);},
+                        style: {background:bg,border:"1.5px solid "+bd,borderRadius:8,padding:"6px 2px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:2,minHeight:62}
+                      },
+                        React.createElement('div', {style:{fontSize:9,color:C.text3,letterSpacing:0.3}}, dayLabels[i]),
+                        React.createElement('div', {style:{fontSize:15,fontWeight:700,color:isSel?"#00D4FF":(stats.hasData?fg:C.text)}}, dayNum, isToday?React.createElement('span',{style:{color:"#FFD700",marginLeft:1,fontSize:10}},"•"):null),
+                        stats.hasData ? React.createElement('div', {style:{fontSize:9,color:fg,fontWeight:600}}, "$"+Math.round(stats.inc)) : React.createElement('div', {style:{fontSize:9,color:C.text3}}, "—")
+                      );
+                    })
+                )
+                // Week totals
+                , wkInc>0 ? React.createElement(Card, { style: {marginBottom:14,padding:"10px 14px",background:"#0A2040",border:"1px solid #1A4080"} }
+                  , React.createElement('div', {style:{fontSize:11,color:C.text3,marginBottom:4,letterSpacing:0.3}}, lang==="en"?"WEEK TOTAL":"本周累计")
+                  , React.createElement('div', {style:{display:"flex",justifyContent:"space-between",alignItems:"baseline"}}
+                    , React.createElement('div', {style:{fontSize:20,fontWeight:800,color:"#5ADA7A"}}, fmt(wkInc))
+                    , React.createElement('div', {style:{fontSize:12,color:C.text3}},
+                        wkTrips>0?wkTrips+" "+T.trips:"",
+                        wkHours>0?(wkTrips>0?" · ":"")+wkHours+"h":"",
+                        wkMiles>0?(wkTrips||wkHours?" · ":"")+wkMiles+" mi":""
+                      )
+                  )
+                ) : null
+                // Selected day editing area
+                , React.createElement('div', { style: {borderTop:"2px solid #1A2A40",paddingTop:14,marginBottom:10} }
+                  , React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10} }
+                    , React.createElement('div', {style:{fontSize:14,fontWeight:700,color:C.text}},
+                        "📝 ", wcSel,
+                        wcSel===todayStr ? React.createElement('span',{style:{fontSize:11,color:"#FFD700",marginLeft:6}}, lang==="en"?"(today)":"(今天)") : null
+                      )
+                    , React.createElement('label', {style:{display:"flex",alignItems:"center",gap:6,fontSize:11,color:C.text3,cursor:"pointer"}}
+                      , React.createElement('input',{type:"checkbox",checked:wcShowPlatform,onChange:function(e){setWcShowPlatform(e.target.checked);},style:{cursor:"pointer"}})
+                      , lang==="en"?"Per platform":"分平台"
+                    )
+                  )
+                  // List existing entries for this day
+                  , selEntries.length>0 ? React.createElement('div', {style:{marginBottom:10}}
+                    , selEntries.map(function(e){
+                        var inc = (+e.grossFare||0)+(+e.tips||0)+(+e.bonus||0)+(+e.tollReimbursed||0);
+                        return React.createElement('div', {key:e.id, style:{background:C.bg3,border:"1px solid "+C.border,borderRadius:8,padding:"8px 12px",marginBottom:6,display:"flex",justifyContent:"space-between",alignItems:"center"}}
+                          , React.createElement('div', {style:{flex:1,minWidth:0}}
+                            , React.createElement('div', {style:{fontSize:13,fontWeight:600,color:C.text}}, e.platform||"Uber", " · ", fmt(inc))
+                            , React.createElement('div', {style:{fontSize:11,color:C.text3,marginTop:1}},
+                                e.trips?e.trips+" "+T.trips:"",
+                                e.hours?(e.trips?" · ":"")+e.hours+"h":"",
+                                e.miles?(e.trips||e.hours?" · ":"")+e.miles+" mi":"",
+                                (+e.platformFee||0)>0?(e.trips||e.hours||e.miles?" · ":"")+"抽 "+fmt(e.platformFee):""
+                              )
+                          )
+                          , React.createElement('div', {style:{display:"flex",gap:6}}
+                            , React.createElement('button', {onClick:function(){
+                                setDlf(Object.assign({},{date:wcSel,mode:"rideshare",platform:"Uber",grossFare:"",tips:"",bonus:"",tollReimbursed:"",platformFee:"",trips:"",hours:"",miles:"",notes:""},e));
+                                setSf("dl_edit");
+                              }, style:{background:"none",border:"1px solid #2A4A6A",borderRadius:6,padding:"4px 10px",color:"#6AACEE",fontSize:12,cursor:"pointer"}}, T.edit)
+                            , React.createElement('button', {onClick:function(){
+                                confirmAction(lang==="en"?"Delete entry?":"删除记录？", lang==="en"?"This entry will be removed.":"此条记录将被移除。", function(){deleteEntry(e.id);showToast(lang==="en"?"✓ Deleted":"✓ 已删除");});
+                              }, style:{background:"none",border:"1px solid #5A2020",borderRadius:6,padding:"4px 10px",color:"#FF5252",fontSize:12,cursor:"pointer"}}, T.del)
+                          )
+                        );
+                      })
+                  ) : null
+                  // Add entry button
+                  , React.createElement('button', {
+                      onClick: function(){
+                        setDlf({date:wcSel,mode:"rideshare",platform:"Uber",grossFare:"",tips:"",bonus:"",tollReimbursed:"",platformFee:"",trips:"",hours:"",miles:"",notes:""});
+                        setSf("dl_edit");
+                      },
+                      style: {width:"100%",background:"linear-gradient(135deg,#0A4020,#1A6030)",border:"1px solid #2A8050",borderRadius:10,padding:"12px",color:"#5ADA7A",fontSize:14,fontWeight:700,cursor:"pointer"}
+                    }, "+ ", selEntries.length===0 ? (lang==="en"?"Add entry for this day":"添加这一天的记录") : (lang==="en"?"Add another platform":"再加一个平台")
+                  )
+                )
+                // Help text
+                , React.createElement('div', {style:{fontSize:11,color:C.text3,padding:"10px 12px",background:C.bg3,borderRadius:8,lineHeight:1.6,marginTop:14}}
+                  , "💡 ", lang==="en"?"Tap any day to edit it. Days with data show in green. Cross-month weeks are split automatically.":"点击任何一天来填写。已填的天会变绿。跨月的周自动按日期归到对应月份。"
+                )
+              )
+            )
+          );
+        }()) : null
+
+      , sf==="dl_edit" ? (
+        React.createElement(Modal, {
+          title: dlf.id ? (lang==="en"?"Edit Entry":"编辑记录") : (lang==="en"?"New Entry":"新增记录"),
+          onClose: function(){setSf("week_cal");},
+          onSave: function(){
+            if(!dlf.grossFare && !dlf.tips && !dlf.trips && !dlf.miles){
+              showToast(lang==="en"?"⚠ Fill at least one field":"⚠ 至少填写一个字段","warn");
+              return;
+            }
+            var entry = Object.assign({}, dlf, {mode:"rideshare", vehicleId: veh.vehicleId});
+            if(dlf.id){
+              setDl(dl.map(function(x){return x.id===dlf.id ? entry : x;}));
+            } else {
+              entry.id = Date.now() + Math.floor(Math.random()*1000);
+              setDl([entry].concat(dl));
+            }
+            setSf("week_cal");
+            showToast(lang==="en"?"✓ Saved":"✓ 已保存");
+          }
+        }
+          , React.createElement('div', { style: {fontSize:13,color:C.text2,marginBottom:8} }, "📅 ", dlf.date)
+          , React.createElement(Field, {
+              label: T.platform_lbl,
+              value: dlf.platform||"Uber",
+              onChange: function(v){
+                if(v==="__new__"){
+                  inputAction({title:lang==="en"?"New platform":"新平台",onSubmit:function(n){if(n&&n.trim()){var nm=n.trim();if(allPlat.indexOf(nm)<0)setCustPlat(custPlat.concat([nm]));setDlf(Object.assign({},dlf,{platform:nm}));}}});return;
+                }
+                setDlf(Object.assign({},dlf,{platform:v}));
+              },
+              options: allPlat.map(function(p){return [p,p];}).concat([["__new__",lang==="en"?"+ Add new platform...":"+ 添加新平台..."]])
+            })
+          , React.createElement('div', {style:{background:"#0A2010",border:"1px solid #2A6030",borderRadius:10,padding:"12px",marginBottom:6}}
+            , React.createElement('div', {style:{fontSize:11,color:"#5ADA7A",fontWeight:700,marginBottom:8,letterSpacing:0.3}}, "💰 ", lang==="en"?"Income":"收入")
+            , React.createElement('div', {style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}
+              , React.createElement(Field, { label: T.grossFare+" ($)", type: "number", value: dlf.grossFare||"", onChange: function(v){setDlf(Object.assign({},dlf,{grossFare:v}));}, money: true, placeholder: "0.00" })
+              , React.createElement(Field, { label: T.tips+" ($)", type: "number", value: dlf.tips||"", onChange: function(v){setDlf(Object.assign({},dlf,{tips:v}));}, money: true, placeholder: "0.00" })
+              , React.createElement(Field, { label: T.bonus+" ($)", type: "number", value: dlf.bonus||"", onChange: function(v){setDlf(Object.assign({},dlf,{bonus:v}));}, money: true, placeholder: "0.00" })
+              , React.createElement(Field, { label: T.toll+" ($)", type: "number", value: dlf.tollReimbursed||"", onChange: function(v){setDlf(Object.assign({},dlf,{tollReimbursed:v}));}, money: true, placeholder: "0.00" })
+            )
+            , React.createElement(Field, { label: (lang==="en"?"Platform fee":"平台抽成")+" ($)", type: "number", value: dlf.platformFee||"", onChange: function(v){setDlf(Object.assign({},dlf,{platformFee:v}));}, money: true, placeholder: "0.00" })
+          )
+          , React.createElement('div', {style:{background:C.bg3,border:"1px solid "+C.border,borderRadius:10,padding:"12px",marginTop:6}}
+            , React.createElement('div', {style:{fontSize:11,color:C.text3,fontWeight:700,marginBottom:8,letterSpacing:0.3}}, "📊 ", lang==="en"?"Operations":"运营数据")
+            , React.createElement('div', {style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}
+              , React.createElement(Field, { label: T.trips, type: "number", value: dlf.trips||"", onChange: function(v){setDlf(Object.assign({},dlf,{trips:v}));}, placeholder: "0" })
+              , React.createElement(Field, { label: lang==="en"?"Hours":"小时", type: "number", value: dlf.hours||"", onChange: function(v){setDlf(Object.assign({},dlf,{hours:v}));}, placeholder: "0" })
+              , React.createElement(Field, { label: T.miles, type: "number", value: dlf.miles||"", onChange: function(v){setDlf(Object.assign({},dlf,{miles:v}));}, placeholder: "0" })
+            )
+          )
+          , React.createElement(Field, { label: T.notes, value: dlf.notes||"", onChange: function(v){setDlf(Object.assign({},dlf,{notes:v}));}, placeholder: T.optional })
+          , dlf.id ? React.createElement('button', { onClick: function(){confirmAction(lang==="en"?"Delete entry?":"删除记录？", lang==="en"?"This entry will be removed.":"此条记录将被移除。", function(){setDl(dl.filter(function(x){return x.id!==dlf.id;}));setSf("week_cal");showToast(lang==="en"?"✓ Deleted":"✓ 已删除");});}, style: {width:"100%",background:"#2A1010",border:"1px solid #5A2020",color:"#FF7060",fontSize:14,fontWeight:700,padding:"12px",borderRadius:10,cursor:"pointer",marginTop:8} }, "🗑 " + (lang==="en"?"Delete":"删除")) : null
+        )
+      ) : null
+
       , sf==="week" ? (
         React.createElement(Modal, { title: T.weekly, onClose: function(){setSf(null);setWf({weekStart:wkMon(today()),platform:"Uber",trips:"",hours:"",onlineHours:"",miles:"",grossFare:"",tips:"",bonus:"",tollReimbursed:"",payoutAmount:"",payoutDate:"",notes:""});}, onSave: function(){if(!wf.trips&&!wf.hours&&!wf.miles&&!wf.grossFare)return;var ws=wkMon(wf.weekStart);if(wf.id){setWl(wl.map(function(x){return x.id===wf.id?Object.assign({},wf,{weekStart:ws}):x;}));}else{var ex=wl.find(function(w){return w.weekStart===ws&&w.platform===wf.platform;});if(ex){setWl(wl.map(function(w){return w.id===ex.id?Object.assign({},wf,{weekStart:ws,id:ex.id}):w;}));}else{var nwl=[Object.assign({},wf,{weekStart:ws,id:Date.now()})].concat(wl);setWl(nwl);autoSave({sl:sl,el:el,fl:fl});}}setSf(null);showToast(lang==="en"?"✓ Week saved":"✓ 周记录已保存");}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 483}}
           , React.createElement(Field, { label: T.weekStart, type: "date", value: wf.weekStart, onChange: function(v){setWf(Object.assign({},wf,{weekStart:wkMon(v)}));}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 484}} )
@@ -4168,6 +4540,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
               );
             }())
           , React.createElement(Field, { label: T.otherIncome+" ($)", type: "number", value: stf.otherIncome, onChange: function(v){setStf(Object.assign({},stf,{otherIncome:v}));}, money: true, placeholder: "0.00", __self: this, __source: {fileName: _jsxFileName, lineNumber: 506}} )
+          , React.createElement(Field, { label: (lang==="en"?"Platform Service Fee":"平台抽成 / Uber 服务费")+" ($)", type: "number", value: stf.platformFee||"", onChange: function(v){setStf(Object.assign({},stf,{platformFee:v}));}, money: true, placeholder: "0.00" } )
           , React.createElement('div', { style: {borderTop:"1px solid #1A2A40",paddingTop:14}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 507}}
             , React.createElement('div', { style: {fontSize:13,color:C.text3,marginBottom:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 508}}, lang==="en"?"Operations (optional)":"运营数据（可选）")
             , React.createElement('div', { style: {display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 509}}
@@ -4830,7 +5203,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                 var qDates=["Apr 15","Jun 15","Sep 15","Jan 15"];
                 return React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 714}}
                   , React.createElement(Card, { style: {marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 715}}, React.createElement('div', { style: {fontSize:14,fontWeight:800,color:"#FFD700",marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 715}}, "📋 Schedule C"  )
-                    , React.createElement(Row, { label: lang==="en"?"Gross Income":"总收入", value: fmt(grossInc), color: "#00D4FF", __self: this, __source: {fileName: _jsxFileName, lineNumber: 716}} )
+                    , React.createElement(Row, { label: lang==="en"?"Gross Revenue":"总营业额", value: fmt(grossInc), color: "#00D4FF", __self: this, __source: {fileName: _jsxFileName, lineNumber: 716}} )
                     , React.createElement(Row, { label: lang==="en"?"Business Expenses":"可抵扣支出", value: fmt(totalExp), color: "#FF6B35", __self: this, __source: {fileName: _jsxFileName, lineNumber: 717}} )
                     , yMi>0?React.createElement(Row, { label: (lang==="en"?"Mileage (":"里程 (")+yMi+"mi × $"+mileRate.toFixed(3)+")", value: "-"+fmt(mileDed), color: "#00E676", __self: this, __source: {fileName: _jsxFileName, lineNumber: 718}} ):null
                     , React.createElement(Row, { label: lang==="en"?"Net Profit":"净利润", value: fmt(netP), color: netP>=0?"#00E676":"#FF5252", bold: true, __self: this, __source: {fileName: _jsxFileName, lineNumber: 719}} )
@@ -5013,7 +5386,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                       }
                       // Net Profit
                       html+='<h2>Net Profit Summary</h2><table>';
-                      html+='<tr><td>Total Income</td><td class=amt>$'+totalInc.toFixed(2)+'</td></tr>';
+                      html+='<tr><td>Total Revenue</td><td class=amt>$'+totalInc.toFixed(2)+'</td></tr>';
                       html+='<tr><td>Less: Total Deductible Expenses</td><td class=amt>($'+totalDed.toFixed(2)+')</td></tr>';
                       html+='<tr class=total><td>NET PROFIT (Schedule C Line 31)</td><td class=amt>$'+netProfit.toFixed(2)+'</td></tr>';
                       html+='</table>';
@@ -5312,6 +5685,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                             tips:r.monthlyTips.toFixed(2),
                             bonus:r.necTotal.toFixed(2),
                             tollReimbursed:r.tollTotal.toFixed(2),
+                            platformFee:r.feesTotal.toFixed(2),
                             trips:String(r.totalTrips||""),
                             miles:String(r.totalMiles||""),
                             notes:"Imported from Uber "+monthStr+" Monthly Summary"
@@ -5327,6 +5701,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                           bonus:r.necTotal.toFixed(2),
                           tollReimbursed:r.tollTotal.toFixed(2),
                           otherIncome:"0.00",
+                          platformFee:r.feesTotal.toFixed(2),
                           trips:String(r.totalTrips||""),
                           onlineHours:"",
                           miles:String(r.totalMiles||""),
@@ -5566,7 +5941,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                       if(!hasVeh){ setSf("drawer_veh"); setWizStep(2); }
                       else if(!hasLic){ setSf("drawer_lic"); setWizStep(3); }
                       else {
-                        setStf({month:curMo(),platform:"Uber",grossFare:"",tips:"",bonus:"",tollReimbursed:"",otherIncome:"",trips:"",onlineHours:"",miles:"",acceptRate:"",completionRate:"",notes:""});
+                        setStf({month:curMo(),platform:"Uber",grossFare:"",tips:"",bonus:"",tollReimbursed:"",otherIncome:"",platformFee:"",trips:"",onlineHours:"",miles:"",acceptRate:"",completionRate:"",notes:""});
                         setSf("stmt"); setWizStep(4);
                       }
                     }
@@ -6079,7 +6454,38 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                   );})()
                   , ["车辆","牌照","平台","其他"].map(function(g){var cats=reportData.byGroup[g];if(!cats||!cats.length)return null;var gTotal=cats.reduce(function(s,c){return s+c.total;},0);var gcl=g==="车辆"?"#00D4FF":g==="牌照"?"#FFD700":g==="平台"?"#CC88FF":"#B0D4E8";var glbl=lang==="en"?(g==="车辆"?"Vehicle":g==="牌照"?"License":g==="平台"?"Platform":"Other"):g;return React.createElement('div', { key: g, style: {marginBottom:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 851}}
                     , React.createElement('div', { style: Object.assign({fontSize:13,fontWeight:700,marginBottom:8},{color:gcl}), __self: this, __source: {fileName: _jsxFileName, lineNumber: 852}}, glbl)
-                    , cats.map(function(cat){var ct=cat.items?cat.items.length:(cat.count||0);return React.createElement('div', { key: cat.label, style: {display:"flex",justifyContent:"space-between",padding:"3px 0 3px 16px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 853}}, React.createElement('span', { style: {fontSize:13,color:C.text2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 853}}, cat.icon, " " , cat.label, React.createElement('span', { style: {fontSize:12,color:C.text3,marginLeft:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 853}}, "×", ct)), React.createElement('span', { style: {fontSize:13,color:C.text}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 853}}, fmt(cat.total)));})
+                    , cats.map(function(cat){
+                        var ct=cat.items?cat.items.length:(cat.count||0);
+                        var key="rep_"+g+"_"+cat.label;
+                        var isExp=__bucketExpanded[key]===true;  // default collapsed
+                        var hasItems=cat.items && cat.items.length>0;
+                        return React.createElement('div', {key: cat.label, style: {marginBottom:2}},
+                          // Category header — clickable
+                          React.createElement('button', {
+                            onClick: hasItems ? function(){__bucketExpanded[key]=!isExp;forceRerender();} : null,
+                            style: {width:"100%",display:"flex",justifyContent:"space-between",alignItems:"center",padding:"5px 8px 5px 16px",background:isExp?"#0F1A2A":"transparent",border:"none",borderRadius:6,cursor:hasItems?"pointer":"default",textAlign:"left"}
+                          },
+                            React.createElement('span', {style:{fontSize:13,color:C.text2}}, cat.icon, " ", cat.label, React.createElement('span', {style:{fontSize:12,color:C.text3,marginLeft:6}}, "×", ct)),
+                            React.createElement('span', {style:{display:"flex",alignItems:"center",gap:8}},
+                              React.createElement('span', {style:{fontSize:13,color:C.text}}, fmt(cat.total)),
+                              hasItems ? React.createElement('span', {style:{fontSize:11,color:C.text3,minWidth:12}}, isExp?"▲":"▼") : null
+                            )
+                          ),
+                          // Expanded items list
+                          isExp && hasItems ? React.createElement('div', {style:{padding:"4px 8px 8px 28px",background:"#0A1422",borderRadius:6,marginTop:2}},
+                            cat.items.slice().sort(function(a,b){var ad=a.isFixed?(a.statementMonth||""):(a.date||"");var bd=b.isFixed?(b.statementMonth||""):(b.date||"");return bd.localeCompare(ad);}).map(function(it,ix){
+                              var dateStr = it.isFixed ? (it.statementMonth||it.date||"") : (it.date||"");
+                              return React.createElement('div', {key:it.id||ix, style:{display:"flex",justifyContent:"space-between",padding:"4px 0",fontSize:12,borderBottom:ix<cat.items.length-1?"1px solid #0F1C30":"none"}},
+                                React.createElement('div', {style:{flex:1,minWidth:0}},
+                                  React.createElement('div', {style:{color:C.text3,fontSize:11}}, dateStr),
+                                  it.notes ? React.createElement('div', {style:{color:C.text2,marginTop:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}, it.notes) : null
+                                ),
+                                React.createElement('span', {style:{color:C.text,fontWeight:600,marginLeft:8,flexShrink:0}}, fmt(it.amount))
+                              );
+                            })
+                          ) : null
+                        );
+                      })
                     , React.createElement('div', { style: {display:"flex",justifyContent:"space-between",padding:"6px 0 6px 16px",borderTop:"1px solid #1A2A40",marginTop:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 854}}, React.createElement('span', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 854}}, lang==="en"?"Subtotal":"小计"), React.createElement('span', { style: {fontSize:13,fontWeight:700,color:"#FF9A65"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 854}}, fmt(gTotal)))
                   );})
                   , React.createElement('div', { style: {borderTop:"2px solid #2A4060",padding:"12px 0",display:"flex",justifyContent:"space-between"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 856}}
@@ -6099,7 +6505,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                     , React.createElement('div', { style: {display:"flex",justifyContent:"space-between",padding:"6px 0 6px 16px",borderTop:"1px solid #1A2A40",marginTop:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 870}}, React.createElement('span', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 870}}, lang==="en"?"Subtotal":"小计"), React.createElement('span', { style: {fontSize:13,fontWeight:700,color:"#00E676"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 870}}, fmt(sub)))
                   );}) : React.createElement('div', { style: {fontSize:13,color:C.text3,padding:"8px 0 16px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 871}}, lang==="en"?"No income recorded":"暂无收入记录")
                   , React.createElement('div', { style: {display:"flex",justifyContent:"space-between",padding:"10px 0",borderTop:"1px solid #2A4060",marginBottom:20}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 872}}
-                    , React.createElement('span', { style: {fontSize:13,fontWeight:700,color:C.text2,letterSpacing:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 873}}, lang==="en"?"Total Income":"总收入")
+                    , React.createElement('span', { style: {fontSize:13,fontWeight:700,color:C.text2,letterSpacing:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 873}}, lang==="en"?"Total Revenue":"总营业额")
                     , React.createElement('span', { style: {fontSize:14,fontWeight:800,color:"#00D4FF"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 874}}, fmt(reportData.r.ri))
                   )
                   , React.createElement('div', { style: {borderTop:"1px solid #182540",marginBottom:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 876}} )
