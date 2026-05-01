@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-var APP_VERSION = "v3.6.5";  // ← single source of truth: bump this once per release
+var APP_VERSION = "v3.6.7";  // ← single source of truth: bump this once per release
 console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
@@ -12,7 +12,7 @@ console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-
       window.Sentry.init({
         dsn:window.SENTRY_DSN,
         environment:(location.hostname==="localhost"||location.hostname==="127.0.0.1")?"development":"production",
-        release:"nyc-driver-tracker@1.0.66",
+        release:"nyc-driver-tracker@1.0.68",
         tracesSampleRate:0.1,
         // Don't send events from local dev
         beforeSend:function(event){
@@ -1002,26 +1002,93 @@ function LockScreen(p){
     React.createElement('div',{style:{fontSize:48,marginBottom:12}},isSetup?"🔐":"🔒"),
     React.createElement('div',{style:{fontSize:20,fontWeight:800,color:"#E8EAF0",marginBottom:6,textAlign:"center"}},title),
     React.createElement('div',{style:{fontSize:13,color:"#90B8D0",marginBottom:30,textAlign:"center"}},subtitle),
-    // 4-dot indicator
-    React.createElement('div',{style:{display:"flex",gap:14,marginBottom:24}},
+    // 4-dot indicator — also acts as tap target for showing the system numeric keyboard
+    React.createElement('label',{style:{display:"flex",gap:14,marginBottom:24,cursor:"pointer",padding:"6px 10px",borderRadius:8},
+      onClick:function(){
+        // Force focus on the hidden input to bring up native numeric keyboard
+        var inp=document.getElementById("__nyc_pin_hidden_input");
+        if(inp){inp.value="";inp.focus();}
+      }
+    },
       [0,1,2,3].map(function(i){
         var filled = i < current.length;
         return React.createElement('div',{key:i,style:{width:18,height:18,borderRadius:9,background:filled?"#00D4FF":"transparent",border:"2px solid "+(filled?"#00D4FF":"#2A4A6A"),transition:"all 0.15s"}});
       })
     ),
+    // Hidden input — captures system numeric keyboard input.
+    // autoFocus on mount so keyboard appears immediately. Value is mirrored to `current`.
+    React.createElement('input',{
+      id:"__nyc_pin_hidden_input",
+      type:"tel",  // tel = numeric keyboard on iOS, no autocorrect
+      inputMode:"numeric",
+      pattern:"[0-9]*",
+      autoFocus:true,
+      maxLength:4,
+      value:current,
+      onChange:function(ev){
+        var v=(ev.target.value||"").replace(/[^0-9]/g,"").slice(0,4);
+        setCurrent(v);
+        setError("");
+        if(v.length===4){
+          setTimeout(function(){submit(v);},150);
+        }
+      },
+      style:{position:"absolute",opacity:0,pointerEvents:"none",height:1,width:1,top:0,left:0}
+    }),
     // Error message
     error ? React.createElement('div',{style:{fontSize:13,color:"#FF5252",marginBottom:16,minHeight:18}},error) : React.createElement('div',{style:{minHeight:18,marginBottom:16}}),
-    // Number pad
-    React.createElement('div',{style:{display:"grid",gridTemplateColumns:"repeat(3,72px)",gap:14,marginBottom:20}},
+    // Number pad — uses onPointerDown for instant response (no 300ms tap delay).
+    // Also adds visual press feedback + haptic vibration.
+    React.createElement('div',{style:{display:"grid",gridTemplateColumns:"repeat(3,76px)",gap:16,marginBottom:20}},
       [1,2,3,4,5,6,7,8,9].map(function(n){
-        return React.createElement('button',{key:n,onClick:function(){addDigit(""+n);},style:{width:72,height:72,borderRadius:36,background:"#0F1C30",border:"1px solid #1E3050",color:"#E8EAF0",fontSize:28,fontWeight:600,cursor:"pointer"}},n);
+        return React.createElement('button',{
+          key:n,
+          onPointerDown:function(ev){
+            ev.preventDefault();
+            try{if(navigator.vibrate)navigator.vibrate(15);}catch(e){}
+            addDigit(""+n);
+          },
+          // Fallback for non-pointer-event browsers (rare)
+          onClick:function(ev){ev.preventDefault();},
+          style:{width:76,height:76,borderRadius:38,background:"#0F1C30",border:"1px solid #1E3050",color:"#E8EAF0",fontSize:30,fontWeight:600,cursor:"pointer",userSelect:"none",WebkitUserSelect:"none",WebkitTapHighlightColor:"transparent",touchAction:"manipulation",transition:"transform 0.08s, background 0.08s"},
+          onPointerUp:function(ev){ev.currentTarget.style.transform="";ev.currentTarget.style.background="#0F1C30";},
+          onPointerLeave:function(ev){ev.currentTarget.style.transform="";ev.currentTarget.style.background="#0F1C30";},
+          onPointerCancel:function(ev){ev.currentTarget.style.transform="";ev.currentTarget.style.background="#0F1C30";},
+          onMouseDown:function(ev){ev.currentTarget.style.transform="scale(0.92)";ev.currentTarget.style.background="#1A3050";}
+        },n);
       }),
       // Empty slot
       React.createElement('div',{key:"empty"}),
       // 0
-      React.createElement('button',{key:"0",onClick:function(){addDigit("0");},style:{width:72,height:72,borderRadius:36,background:"#0F1C30",border:"1px solid #1E3050",color:"#E8EAF0",fontSize:28,fontWeight:600,cursor:"pointer"}},"0"),
+      React.createElement('button',{
+        key:"0",
+        onPointerDown:function(ev){
+          ev.preventDefault();
+          try{if(navigator.vibrate)navigator.vibrate(15);}catch(e){}
+          addDigit("0");
+        },
+        onClick:function(ev){ev.preventDefault();},
+        style:{width:76,height:76,borderRadius:38,background:"#0F1C30",border:"1px solid #1E3050",color:"#E8EAF0",fontSize:30,fontWeight:600,cursor:"pointer",userSelect:"none",WebkitUserSelect:"none",WebkitTapHighlightColor:"transparent",touchAction:"manipulation",transition:"transform 0.08s, background 0.08s"},
+        onPointerUp:function(ev){ev.currentTarget.style.transform="";ev.currentTarget.style.background="#0F1C30";},
+        onPointerLeave:function(ev){ev.currentTarget.style.transform="";ev.currentTarget.style.background="#0F1C30";},
+        onPointerCancel:function(ev){ev.currentTarget.style.transform="";ev.currentTarget.style.background="#0F1C30";},
+        onMouseDown:function(ev){ev.currentTarget.style.transform="scale(0.92)";ev.currentTarget.style.background="#1A3050";}
+      },"0"),
       // Backspace
-      React.createElement('button',{key:"del",onClick:delDigit,style:{width:72,height:72,borderRadius:36,background:"transparent",border:"1px solid #1E3050",color:"#90B8D0",fontSize:20,cursor:"pointer"}},"⌫")
+      React.createElement('button',{
+        key:"del",
+        onPointerDown:function(ev){
+          ev.preventDefault();
+          try{if(navigator.vibrate)navigator.vibrate(10);}catch(e){}
+          delDigit();
+        },
+        onClick:function(ev){ev.preventDefault();},
+        style:{width:76,height:76,borderRadius:38,background:"transparent",border:"1px solid #1E3050",color:"#90B8D0",fontSize:22,cursor:"pointer",userSelect:"none",WebkitUserSelect:"none",WebkitTapHighlightColor:"transparent",touchAction:"manipulation",transition:"transform 0.08s, background 0.08s"},
+        onPointerUp:function(ev){ev.currentTarget.style.transform="";ev.currentTarget.style.background="transparent";},
+        onPointerLeave:function(ev){ev.currentTarget.style.transform="";ev.currentTarget.style.background="transparent";},
+        onPointerCancel:function(ev){ev.currentTarget.style.transform="";ev.currentTarget.style.background="transparent";},
+        onMouseDown:function(ev){ev.currentTarget.style.transform="scale(0.92)";ev.currentTarget.style.background="#1A2A40";}
+      },"⌫")
     ),
     // Forgot PIN (unlock mode only)
     !isSetup ? React.createElement('button',{onClick:function(){if(confirm(isEn?"Forgot PIN? This will sign you out and require Google login again. Continue?":"忘记 PIN？这会让你退出登录，需要重新用 Google 登录。继续吗？"))p.onForgot();},style:{background:"none",border:"none",color:"#7A9AB8",fontSize:13,cursor:"pointer",marginTop:10}},isEn?"Forgot PIN?":"忘记 PIN？") : null,
