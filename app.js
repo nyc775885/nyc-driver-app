@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-var APP_VERSION = "v3.6.8";  // ← single source of truth: bump this once per release
+var APP_VERSION = "v3.6.9";  // ← single source of truth: bump this once per release
 console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
@@ -12,7 +12,7 @@ console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-
       window.Sentry.init({
         dsn:window.SENTRY_DSN,
         environment:(location.hostname==="localhost"||location.hostname==="127.0.0.1")?"development":"production",
-        release:"nyc-driver-tracker@1.0.69",
+        release:"nyc-driver-tracker@1.0.70",
         tracesSampleRate:0.1,
         // Don't send events from local dev
         beforeSend:function(event){
@@ -1530,8 +1530,22 @@ function App() {
   var r53a=useState(function(){return lsLoad("nyc_pinTimeout",5);}),pinTimeout=r53a[0],_setPinTimeout=r53a[1]; function setPinTimeout(v){_setPinTimeout(v);try{localStorage.setItem("nyc_pinTimeout",JSON.stringify(v));}catch(e){}}
   var r53b=useState(function(){var p="";try{p=localStorage.getItem("nyc_pin")||"";}catch(e){}return !!p;}),hasPIN=r53b[0],setHasPIN=r53b[1];
   // locked: true when PIN screen should be displayed.
-  // On every app launch: if a PIN exists, start LOCKED. User must enter PIN to access data.
-  var r53c=useState(function(){var p="";try{p=localStorage.getItem("nyc_pin")||"";}catch(e){}return !!p;}),locked=r53c[0],setLocked=r53c[1];
+  // Logic: if PIN is set, lock only if time since last unlock > pinTimeout minutes.
+  // This means a quick refresh / reopen within the timeout window won't re-prompt.
+  var r53c=useState(function(){
+    var p="";
+    try{p=localStorage.getItem("nyc_pin")||"";}catch(e){}
+    if(!p) return false; // No PIN set → never lock
+    var lastUnlock=0,timeoutMin=5;
+    try{lastUnlock=+localStorage.getItem("nyc_lastUnlock")||0;}catch(e){}
+    try{timeoutMin=+localStorage.getItem("nyc_pinTimeout")||5;}catch(e){}
+    if(timeoutMin<=0) return false; // user disabled idle timeout → never lock
+    var minutesSince = (Date.now()-lastUnlock)/60000;
+    // If never unlocked OR more than `timeoutMin` minutes since last unlock → lock
+    return !lastUnlock || minutesSince > timeoutMin;
+  }),locked=r53c[0],setLocked=r53c[1];
+  // Record successful unlock timestamp
+  function recordUnlock(){try{localStorage.setItem("nyc_lastUnlock",String(Date.now()));}catch(e){}}
   // showPinSetup: true when user is in "set up new PIN" flow
   var r53d=useState(false),showPinSetup=r53d[0],setShowPinSetup=r53d[1];
 
@@ -1539,16 +1553,25 @@ function App() {
   useEffect(function(){
     if(!hasPIN || pinTimeout<=0 || locked) return;
     var timer;
+    var lastWrite = Date.now();
     var resetTimer = function(){
       clearTimeout(timer);
       timer = setTimeout(function(){setLocked(true);}, pinTimeout*60*1000);
+      // Throttle localStorage writes — record activity at most every 30s
+      var now = Date.now();
+      if(now - lastWrite > 30000){
+        lastWrite = now;
+        try{localStorage.setItem("nyc_lastUnlock", String(now));}catch(e){}
+      }
     };
     var events = ["mousedown","keydown","touchstart","scroll"];
     events.forEach(function(ev){window.addEventListener(ev, resetTimer, {passive:true});});
     // Also lock when tab becomes hidden (user switches away)
     var onVisChange = function(){
       if(document.visibilityState === "hidden"){
-        // Start a shorter timer when tab is hidden
+        // Persist last activity timestamp before going to background
+        try{localStorage.setItem("nyc_lastUnlock", String(Date.now()));}catch(e){}
+        // Start a timer when tab is hidden
         clearTimeout(timer);
         timer = setTimeout(function(){setLocked(true);}, pinTimeout*60*1000);
       } else {
@@ -6124,7 +6147,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
       , dangerConfirm ? React.createElement(DangerConfirm, { lang: lang, title: dangerConfirm.title, message: dangerConfirm.message, onConfirm: dangerConfirm.onConfirm, onCancel: function(){setDangerConfirm(null);} }) : null
       , confirmState ? React.createElement(ConfirmModal, { lang: lang, title: confirmState.title, message: confirmState.message, confirmLabel: confirmState.confirmLabel, danger: confirmState.danger, onConfirm: confirmState.onConfirm, onCancel: confirmState.onCancel }) : null
       , inputState ? React.createElement(InputModal, { lang: lang, title: inputState.title, message: inputState.message, placeholder: inputState.placeholder, defaultValue: inputState.defaultValue, confirmLabel: inputState.confirmLabel, inputType: inputState.inputType, inputMode: inputState.inputMode, pattern: inputState.pattern, required: inputState.required, onSubmit: inputState.onSubmit, onCancel: inputState.onCancel }) : null
-      , locked ? React.createElement(LockScreen, { lang: lang, mode: "unlock", onSuccess: function(){setLocked(false);}, onForgot: function(){try{localStorage.removeItem("nyc_pin");localStorage.removeItem("nyc_user");}catch(e){}setHasPIN(false);setLocked(false);setGUser(null);setAccessToken(null);} }) : null
+      , locked ? React.createElement(LockScreen, { lang: lang, mode: "unlock", onSuccess: function(){recordUnlock();setLocked(false);}, onForgot: function(){try{localStorage.removeItem("nyc_pin");localStorage.removeItem("nyc_user");localStorage.removeItem("nyc_lastUnlock");}catch(e){}setHasPIN(false);setLocked(false);setGUser(null);setAccessToken(null);} }) : null
       , showPinSetup ? React.createElement(LockScreen, { lang: lang, mode: "setup", onSuccess: function(){setHasPIN(true);setShowPinSetup(false);showToast(lang==="en"?"✓ PIN set":"✓ PIN 设置成功");}, onCancel: function(){setShowPinSetup(false);} }) : null
     )
   );
