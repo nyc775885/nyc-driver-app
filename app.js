@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-var APP_VERSION = "v3.9.5";  // ← single source of truth: bump this once per release
+var APP_VERSION = "v3.10.1";  // ← single source of truth: bump this once per release
 console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
@@ -12,7 +12,7 @@ console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-
       window.Sentry.init({
         dsn:window.SENTRY_DSN,
         environment:(location.hostname==="localhost"||location.hostname==="127.0.0.1")?"development":"production",
-        release:"nyc-driver-tracker@1.0.81",
+        release:"nyc-driver-tracker@1.0.88",
         tracesSampleRate:0.1,
         // Don't send events from local dev
         beforeSend:function(event){
@@ -1466,7 +1466,7 @@ function App() {
   var yTrips=wl.filter(function(w){return w.weekStart.slice(0,4)===yr;}).reduce(function(s,w){return s+(+w.trips||0);},0)+yDailies.reduce(function(s,d){return s+(+d.trips||0);},0);
   var yHours=wl.filter(function(w){return w.weekStart.slice(0,4)===yr;}).reduce(function(s,w){return s+(+w.hours||0);},0)+yDailies.reduce(function(s,d){return s+(+d.hours||0);},0);
   var yMiles=wl.filter(function(w){return w.weekStart.slice(0,4)===yr;}).reduce(function(s,w){return s+(+w.miles||0);},0)+yDailies.reduce(function(s,d){return s+(+d.miles||0);},0);  var yStmtTrips=yStmts.reduce(function(s,x){return s+(+x.trips||0);},0),yStmtHours=yStmts.reduce(function(s,x){return s+(+x.onlineHours||0);},0),yStmtMiles=yStmts.reduce(function(s,x){return s+(+x.miles||0);},0);
-  var mData=yMons.map(function(m){var ms=sl.filter(function(x){return x.month===m;}),me=el.filter(function(e){return e.date.slice(0,7)===m;}),md=dl.filter(function(d){return d.date&&d.date.slice(0,7)===m;}),mf=genFixed(fl,m).reduce(function(s,e){return s+(+e.amount||0);},0),inc=ms.reduce(function(s,x){return s+(+x.grossFare||0)+(+x.tips||0)+(+x.bonus||0)+(+x.tollReimbursed||0)+(+x.otherIncome||0);},0)+md.reduce(function(s,d){return s+(+d.cash||0)+(+d.card||0)+(+d.tips||0);},0),exp=me.reduce(function(s,e){return s+(+e.amount||0);},0)+mf+md.reduce(function(s,d){return s+(+d.lease||0);},0);return {m:m,inc:inc,exp:exp,net:inc-exp,label:m.slice(5)+"月"};});
+  var mData=yMons.map(function(m){var ms=sl.filter(function(x){return x.month===m;}),me=el.filter(function(e){return e.date.slice(0,7)===m;}),md=dl.filter(function(d){return d.date&&d.date.slice(0,7)===m;}),mf=genFixed(fl,m).reduce(function(s,e){return s+(+e.amount||0);},0),inc=ms.reduce(function(s,x){return s+(+x.grossFare||0)+(+x.tips||0)+(+x.bonus||0)+(+x.tollReimbursed||0)+(+x.otherIncome||0);},0)+md.reduce(function(s,d){if(d.mode==="rideshare")return s+(+d.grossFare||0)+(+d.tips||0)+(+d.bonus||0)+(+d.tollReimbursed||0);return s+(+d.cash||0)+(+d.card||0)+(+d.tips||0);},0),exp=me.reduce(function(s,e){return s+(+e.amount||0);},0)+mf+md.reduce(function(s,d){return s+(+d.lease||0);},0);return {m:m,inc:inc,exp:exp,net:inc-exp,label:m.slice(5)+"月"};});
   var insW=null;if(veh.lastInsp){var ip=veh.lastInsp.split("-"),baseY=+ip[0],baseM=+ip[1]-1;var isTlc=!!(veh.tlcPlate&&veh.tlcPlate.trim());var addMonths=isTlc?4:12;
     // TLC counts by month, not by day. So "Jan inspection + 4 months" means valid through end of April.
     // The due date is the LAST day of (lastInspMonth + addMonths - 1).
@@ -1477,14 +1477,14 @@ function App() {
     insW={next:tY+"-"+p2(tM+1)+"-"+p2(tD),diff:Math.round((idEnd-todayMidnight)/86400000),isTlc:isTlc};}
   var insExpDiff=veh.insExpiry?daysFromToday(veh.insExpiry):null; var expiring=ll.filter(function(l){if(!l.expiryDate)return false;var d=daysFromToday(l.expiryDate);var rd=+(l.reminderDays||60);return d!==null&&d>=0&&d<=rd;});
   var expired=ll.filter(function(l){if(!l.expiryDate)return false;var d=daysFromToday(l.expiryDate);return d!==null&&d<0;}); var totalFix=fl.filter(function(f){return f.active&&f.amount;}).reduce(function(s,f){return s+(f.cycle==="annual"?Math.round(+f.amount/12*100)/100:+f.amount);},0); var bldRep=function(p){var isM=p==="month",ri=isM?tInc:yInc,rg=isM?tGross:yStmts.reduce(function(s,x){return s+(+x.grossFare||0);},0),rt=isM?tTips:yStmts.reduce(function(s,x){return s+(+x.tips||0);},0),rb=isM?tBonus:yStmts.reduce(function(s,x){return s+(+x.bonus||0);},0),rtr=isM?tToll:yStmts.reduce(function(s,x){return s+(+x.tollReimbursed||0);},0),rTot=isM?tExp:yExp,rn=ri-rTot,rT=isM?tTrips:yTrips,rH=isM?tHours:yHours,rM=isM?tMiles:yMiles;return {ri:ri,rg:rg,rt:rt,rb:rb,rtr:rtr,rTot:rTot,rn:rn,rTrips:rT,rHours:rH,rMiles:rM};};
-  var yAllExps=function(){return yExps.concat(yMons.reduce(function(acc,m){return acc.concat(genFixed(fl,m));},[]));}; var hourlyRate=tHours>0?Math.round(tInc/tHours*100)/100:0,lastMo=prevMo(mo),lmStmts=sl.filter(function(x){return x.month===lastMo;}),lmWeeks=wl.filter(function(w){return w.weekStart.slice(0,7)===lastMo;}),lmFixMo=genFixed(fl,lastMo),lmDailies=dl.filter(function(d){return d.date&&d.date.slice(0,7)===lastMo;}),lmDlInc=lmDailies.reduce(function(s,d){return s+(+d.cash||0)+(+d.card||0)+(+d.tips||0);},0),lmDlLease=lmDailies.reduce(function(s,d){return s+(+d.lease||0);},0),lmDlHours=lmDailies.reduce(function(s,d){return s+(+d.hours||0);},0),lmFeAll=el.filter(function(e){var c=allC[e.category];if(c&&c.mo)return (e.statementMonth||e.date.slice(0,7))===lastMo;return e.date.slice(0,7)===lastMo;}).concat(lmFixMo),lmInc=lmStmts.reduce(function(s,x){return s+(+x.grossFare||0)+(+x.tips||0)+(+x.bonus||0)+(+x.tollReimbursed||0)+(+x.otherIncome||0);},0)+lmDlInc,lmExp=lmFeAll.reduce(function(s,e){return s+(+e.amount||0);},0)+lmDlLease,lmNet=lmInc-lmExp,lmHours=lmWeeks.reduce(function(s,w){return s+(+w.hours||0);},0)+lmDlHours,lmHourly=lmHours>0?Math.round(lmInc/lmHours*100)/100:0,nextExpiry=ll.filter(function(l){return l.expiryDate;}).sort(function(a,b){return a.expiryDate.localeCompare(b.expiryDate);})[0]
+  var yAllExps=function(){return yExps.concat(yMons.reduce(function(acc,m){return acc.concat(genFixed(fl,m));},[]));}; var hourlyRate=tHours>0?Math.round(tInc/tHours*100)/100:0,lastMo=prevMo(mo),lmStmts=sl.filter(function(x){return x.month===lastMo;}),lmWeeks=wl.filter(function(w){return w.weekStart.slice(0,7)===lastMo;}),lmFixMo=genFixed(fl,lastMo),lmDailies=dl.filter(function(d){return d.date&&d.date.slice(0,7)===lastMo;}),lmDlInc=lmDailies.reduce(function(s,d){if(d.mode==="rideshare")return s+(+d.grossFare||0)+(+d.tips||0)+(+d.bonus||0)+(+d.tollReimbursed||0);return s+(+d.cash||0)+(+d.card||0)+(+d.tips||0);},0),lmDlLease=lmDailies.reduce(function(s,d){return s+(+d.lease||0);},0),lmDlHours=lmDailies.reduce(function(s,d){return s+(+d.hours||0);},0),lmFeAll=el.filter(function(e){var c=allC[e.category];if(c&&c.mo)return (e.statementMonth||e.date.slice(0,7))===lastMo;return e.date.slice(0,7)===lastMo;}).concat(lmFixMo),lmInc=lmStmts.reduce(function(s,x){return s+(+x.grossFare||0)+(+x.tips||0)+(+x.bonus||0)+(+x.tollReimbursed||0)+(+x.otherIncome||0);},0)+lmDlInc,lmExp=lmFeAll.reduce(function(s,e){return s+(+e.amount||0);},0)+lmDlLease,lmNet=lmInc-lmExp,lmHours=lmWeeks.reduce(function(s,w){return s+(+w.hours||0);},0)+lmDlHours,lmHourly=lmHours>0?Math.round(lmInc/lmHours*100)/100:0,nextExpiry=ll.filter(function(l){return l.expiryDate;}).sort(function(a,b){return a.expiryDate.localeCompare(b.expiryDate);})[0]
     // YEAR-OVER-YEAR comparisons
     // (a) Same month last year — for month-view comparison
     , lyMo = (function(){var p=mo.split("-");return (+p[0]-1)+"-"+p[1];})()
     , lyMoStmts = sl.filter(function(x){return x.month===lyMo;})
     , lyMoFixMo = genFixed(fl,lyMo)
     , lyMoDailies = dl.filter(function(d){return d.date&&d.date.slice(0,7)===lyMo;})
-    , lyMoDlInc = lyMoDailies.reduce(function(s,d){return s+(+d.cash||0)+(+d.card||0)+(+d.tips||0);},0)
+    , lyMoDlInc = lyMoDailies.reduce(function(s,d){if(d.mode==="rideshare")return s+(+d.grossFare||0)+(+d.tips||0)+(+d.bonus||0)+(+d.tollReimbursed||0);return s+(+d.cash||0)+(+d.card||0)+(+d.tips||0);},0)
     , lyMoDlLease = lyMoDailies.reduce(function(s,d){return s+(+d.lease||0);},0)
     , lyMoFeAll = el.filter(function(e){var c=allC[e.category];if(c&&c.mo)return (e.statementMonth||e.date.slice(0,7))===lyMo;return e.date.slice(0,7)===lyMo;}).concat(lyMoFixMo)
     , lyMoInc = lyMoStmts.reduce(function(s,x){return s+(+x.grossFare||0)+(+x.tips||0)+(+x.bonus||0)+(+x.tollReimbursed||0)+(+x.otherIncome||0);},0)+lyMoDlInc
@@ -1496,7 +1496,7 @@ function App() {
     , pyStmts = sl.filter(function(x){return x.month && x.month.slice(0,4)===prevYr;})
     , pyExpsList = el.filter(function(e){return e.date && e.date.slice(0,4)===prevYr;})
     , pyDailies = dl.filter(function(d){return d.date && d.date.slice(0,4)===prevYr;})
-    , pyDlInc = pyDailies.reduce(function(s,d){return s+(+d.cash||0)+(+d.card||0)+(+d.tips||0);},0)
+    , pyDlInc = pyDailies.reduce(function(s,d){if(d.mode==="rideshare")return s+(+d.grossFare||0)+(+d.tips||0)+(+d.bonus||0)+(+d.tollReimbursed||0);return s+(+d.cash||0)+(+d.card||0)+(+d.tips||0);},0)
     , pyDlLease = pyDailies.reduce(function(s,d){return s+(+d.lease||0);},0)
     , pyFixT = prevYrMons.reduce(function(s,m){return s+genFixed(fl,m).reduce(function(a,e){return a+(+e.amount||0);},0);},0)
     , pyInc = pyStmts.reduce(function(s,x){return s+(+x.grossFare||0)+(+x.tips||0)+(+x.bonus||0)+(+x.tollReimbursed||0)+(+x.otherIncome||0);},0)+pyDlInc
@@ -2907,6 +2907,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                     )
                   )
                 )
+                , tInc>0&&tExp>0 ? (function(){var grps={"车辆":0,"牌照":0,"平台":0,"其他":0};feAll.forEach(function(e){var cat=allC[e.category];var g=cat?(cat.g||"其他"):"其他";if(grps[g]!==undefined)grps[g]+=(+e.amount||0);else grps["其他"]+=(+e.amount||0);});var gcols={"车辆":"#00D4FF","牌照":"#FFD700","平台":"#CC88FF","其他":"#A8D0E8"};var glbls=lang==="en"?{"车辆":"Vehicle","牌照":"License","平台":"Platform","其他":"Other"}:{"车辆":"车辆","牌照":"牌照","平台":"平台","其他":"其他"};if(!Object.values(grps).some(function(v){return v>0;}))return null;return React.createElement(Card, { style: {marginTop:8,padding:"12px 14px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, React.createElement('div', { style: {fontSize:13,fontWeight:700,marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, lang==="en"?"Expense Breakdown":"支出分布"), React.createElement('div', { style: {display:"flex",height:10,borderRadius:5,overflow:"hidden",marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, Object.entries(grps).map(function(kv){if(!kv[1])return null;return React.createElement('div', { key: kv[0], style: {width:Math.round(kv[1]/tExp*100)+"%",background:gcols[kv[0]],minWidth:2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}} );})), React.createElement('div', { style: {display:"grid",gridTemplateColumns:"1fr 1fr",gap:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, Object.entries(grps).map(function(kv){if(!kv[1])return null;return React.createElement('div', { key: kv[0], style: {display:"flex",alignItems:"center",gap:5}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, React.createElement('div', { style: {width:10,height:10,borderRadius:2,background:gcols[kv[0]],flexShrink:0}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}} ), React.createElement('span', { style: {fontSize:12,color:C.text2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, glbls[kv[0]]), React.createElement('span', { style: {fontSize:12,fontWeight:700,color:gcols[kv[0]],marginLeft:"auto"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, Math.round(kv[1]/tExp*100), "%"));}), " " ), React.createElement('div', { style: {borderTop:"1px solid #1E3050",marginTop:8,paddingTop:6,display:"flex",justifyContent:"space-between"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, React.createElement('span', { style: {fontSize:12,color:C.text2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, lang==="en"?"Net Rate":"净利润率"), React.createElement('span', { style: {fontSize:13,fontWeight:800,color:net>=0?"#00E676":"#FF5252"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, tInc>0?Math.round(net/tInc*100):0, "%")));}()) : null
                 , achievements.length>0 ? React.createElement('div', { style: {display:"flex",flexWrap:"wrap",gap:8,marginBottom:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 275}}, achievements.map(function(a,i){return React.createElement(Badge, { key: i, icon: a.icon, text: a.text, color: a.color, bg: a.bg, __self: this, __source: {fileName: _jsxFileName, lineNumber: 275}} );})) : null
                 , tInc > 0 ? React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 276}}
                   , React.createElement('div', { style: {display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:6,marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 277}}, React.createElement(Stat, { sm: true, label: lang==="en"?"Gross":"总车费", value: fmt(tGross), color: "#00D4FF", __self: this, __source: {fileName: _jsxFileName, lineNumber: 277}} ), React.createElement(Stat, { sm: true, label: T.tips, value: fmt(tTips), color: "#00E676", __self: this, __source: {fileName: _jsxFileName, lineNumber: 277}} ), React.createElement(Stat, { sm: true, label: T.bonus, value: fmt(tBonus), color: "#FFD700", __self: this, __source: {fileName: _jsxFileName, lineNumber: 277}} ), React.createElement(Stat, { sm: true, label: T.toll, value: fmt(tToll), color: "#45B7D1", __self: this, __source: {fileName: _jsxFileName, lineNumber: 277}} ))
@@ -3043,7 +3044,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                       , React.createElement('button', { onClick: function(){setMExpDet(!mExpDet);}, style: {background:"none",border:"1px solid #2A4A6A",borderRadius:8,padding:"4px 10px",color:"#90B8D0",fontSize:12,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 289}}, mExpDet?(lang==="en"?"By Group":"按大类"):(lang==="en"?"By Item":"按小类"))
                     )
                     , mExpDet ? React.createElement(Card, {__self: this, __source: {fileName: _jsxFileName, lineNumber: 291}}, React.createElement(CatDetail, { items: feAll, total: tExp, allC: allC, lang: lang, __self: this, __source: {fileName: _jsxFileName, lineNumber: 291}} )) : React.createElement(CatBreakdown, { items: feAll, total: tExp, allC: allC, lang: lang, scope: "dash_m", forceRerender: forceRerender, __self: this, __source: {fileName: _jsxFileName, lineNumber: 291}} )
-                  , tInc>0&&tExp>0 ? (function(){var grps={"车辆":0,"牌照":0,"平台":0,"其他":0};feAll.forEach(function(e){var cat=allC[e.category];var g=cat?(cat.g||"其他"):"其他";if(grps[g]!==undefined)grps[g]+=(+e.amount||0);else grps["其他"]+=(+e.amount||0);});var gcols={"车辆":"#00D4FF","牌照":"#FFD700","平台":"#CC88FF","其他":"#A8D0E8"};var glbls=lang==="en"?{"车辆":"Vehicle","牌照":"License","平台":"Platform","其他":"Other"}:{"车辆":"车辆","牌照":"牌照","平台":"平台","其他":"其他"};if(!Object.values(grps).some(function(v){return v>0;}))return null;return React.createElement(Card, { style: {marginTop:8,padding:"12px 14px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, React.createElement('div', { style: {fontSize:13,fontWeight:700,marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, lang==="en"?"Expense Breakdown":"支出分布"), React.createElement('div', { style: {display:"flex",height:10,borderRadius:5,overflow:"hidden",marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, Object.entries(grps).map(function(kv){if(!kv[1])return null;return React.createElement('div', { key: kv[0], style: {width:Math.round(kv[1]/tExp*100)+"%",background:gcols[kv[0]],minWidth:2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}} );})), React.createElement('div', { style: {display:"grid",gridTemplateColumns:"1fr 1fr",gap:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, Object.entries(grps).map(function(kv){if(!kv[1])return null;return React.createElement('div', { key: kv[0], style: {display:"flex",alignItems:"center",gap:5}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, React.createElement('div', { style: {width:10,height:10,borderRadius:2,background:gcols[kv[0]],flexShrink:0}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}} ), React.createElement('span', { style: {fontSize:12,color:C.text2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, glbls[kv[0]]), React.createElement('span', { style: {fontSize:12,fontWeight:700,color:gcols[kv[0]],marginLeft:"auto"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, Math.round(kv[1]/tExp*100), "%"));}), " " ), React.createElement('div', { style: {borderTop:"1px solid #1E3050",marginTop:8,paddingTop:6,display:"flex",justifyContent:"space-between"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, React.createElement('span', { style: {fontSize:12,color:C.text2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, lang==="en"?"Net Rate":"净利润率"), React.createElement('span', { style: {fontSize:13,fontWeight:800,color:net>=0?"#00E676":"#FF5252"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, tInc>0?Math.round(net/tInc*100):0, "%")));}()) : null
+                  
                     , tInc>0&&tExp>0 ? React.createElement('div', { style: {marginTop:8,background:C.bg3,borderRadius:10,padding:"10px 14px",border:"1px solid #151F30"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 293}}, React.createElement('div', { style: {display:"flex",justifyContent:"space-between",marginBottom:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 293}}, React.createElement('span', { style: {fontSize:12,color:"#7AB8A8"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 293}}, lang==="en"?"Expense Ratio":"支出占比"), React.createElement('span', { style: Object.assign({fontSize:13,fontWeight:700},{color:tExp/tInc>0.8?"#FF5252":tExp/tInc>0.5?"#FFB300":"#00E676"}), __self: this, __source: {fileName: _jsxFileName, lineNumber: 293}}, Math.round(tExp/tInc*100), "%")), React.createElement('div', { style: {height:8,borderRadius:4,background:"#1A2A40",overflow:"hidden"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 293}}, React.createElement('div', { style: {height:8,borderRadius:4,width:Math.min(100,Math.round(tExp/tInc*100))+"%",background:tExp/tInc>0.8?"linear-gradient(90deg,#FF5252,#FF8855)":tExp/tInc>0.5?"linear-gradient(90deg,#FFB300,#FFD700)":"linear-gradient(90deg,#00E676,#00D4FF)"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 293}}))) : null
                   )
                 ) : null
@@ -3241,6 +3242,77 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                   })
                 );
               }())
+            // === Daily entries (rideshare per-day records from dl) ===
+            , (function(){
+                var dailySrc = incV==="month" ? mDailies : yDailies;
+                var rideEntries = dailySrc.filter(function(d){return d.mode==="rideshare";}).slice().sort(function(a,b){return (b.date||"").localeCompare(a.date||"");});
+                if(rideEntries.length===0) return null;
+                var totalInc = rideEntries.reduce(function(s,e){return s+(+e.grossFare||0)+(+e.tips||0)+(+e.bonus||0)+(+e.tollReimbursed||0);},0);
+                var totalTrips = rideEntries.reduce(function(s,e){return s+(+e.trips||0);},0);
+                var totalHours = rideEntries.reduce(function(s,e){return s+(+e.hours||0);},0);
+                var totalMiles = rideEntries.reduce(function(s,e){return s+(+e.miles||0);},0);
+                var uniqueDates = {}; rideEntries.forEach(function(e){if(e.date)uniqueDates[e.date]=true;});
+                var dayCount = Object.keys(uniqueDates).length;
+                return React.createElement('div', { style: {marginBottom:16} }
+                  , React.createElement('div', { style: {fontSize:12,color:C.text3,letterSpacing:1,marginBottom:8,display:"flex",justifyContent:"space-between",alignItems:"center"} }
+                    , React.createElement('span', null, "📅 ", lang==="en"?"Daily Entries · "+dayCount+" days":"每日记录 · "+dayCount+" 天")
+                    , React.createElement('button', {
+                        onClick: function(){var t=today();setWcWeek(wkMon(t));setWcSel(t);setSf("week_cal");},
+                        style: {background:"none",border:"1px solid #2A4A6A",borderRadius:6,padding:"2px 10px",color:"#5AACFF",fontSize:11,cursor:"pointer"}
+                      }, lang==="en"?"+ Add":"+ 添加")
+                  )
+                  , React.createElement(Card, { style: {background:C.bg3,border:"1px solid "+C.border,marginBottom:8,padding:"10px 14px"} }
+                    , React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:4} }
+                      , React.createElement('div', { style: {fontSize:18,fontWeight:800,color:"#00E676"} }, fmt(totalInc))
+                      , React.createElement('div', { style: {fontSize:11,color:C.text3} },
+                          totalTrips>0 ? totalTrips+(lang==="en"?" trips":" 趟") : "",
+                          totalHours>0 ? (totalTrips>0?" · ":"")+totalHours+"h" : "",
+                          totalMiles>0 ? (totalTrips||totalHours?" · ":"")+totalMiles+" mi" : ""
+                        )
+                    )
+                  )
+                  , (function(){
+                      var byDate = {};
+                      rideEntries.forEach(function(e){
+                        var d = e.date || "";
+                        if(!byDate[d]) byDate[d] = [];
+                        byDate[d].push(e);
+                      });
+                      var dateKeys = Object.keys(byDate).sort(function(a,b){return b.localeCompare(a);});
+                      return dateKeys.map(function(d){
+                        var entries = byDate[d];
+                        var dayInc = entries.reduce(function(s,e){return s+(+e.grossFare||0)+(+e.tips||0)+(+e.bonus||0)+(+e.tollReimbursed||0);},0);
+                        var dayTrips = entries.reduce(function(s,e){return s+(+e.trips||0);},0);
+                        var dayHours = entries.reduce(function(s,e){return s+(+e.hours||0);},0);
+                        var dayMiles = entries.reduce(function(s,e){return s+(+e.miles||0);},0);
+                        return React.createElement(Card, { key:d, style: {marginBottom:6,padding:"8px 12px",cursor:"pointer"},
+                          onClick: function(){setWcWeek(wkMon(d));setWcSel(d);setSf("week_cal");}
+                        }
+                          // Top row: date + day total
+                          , React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:entries.length>0?4:0} }
+                            , React.createElement('div', { style: {fontSize:13,fontWeight:700,color:C.text} }, d)
+                            , React.createElement('div', { style: {fontSize:14,fontWeight:700,color:"#00E676"} }, fmt(dayInc))
+                          )
+                          // Per-platform breakdown rows
+                          , entries.map(function(e,ei){
+                              var entryInc = (+e.grossFare||0)+(+e.tips||0)+(+e.bonus||0)+(+e.tollReimbursed||0);
+                              return React.createElement('div', {key:ei, style:{display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:12,paddingLeft:8,paddingTop:2,paddingBottom:2}}
+                                , React.createElement('div', {style:{display:"flex",alignItems:"center",gap:6,flex:1,minWidth:0}}
+                                  , React.createElement('span', {style:{fontSize:11,color:"#5AACFF",fontWeight:600}}, e.platform||"Uber")
+                                  , React.createElement('span', {style:{fontSize:10,color:C.text3}},
+                                      e.trips?e.trips+(lang==="en"?" trips":" 趟"):"",
+                                      e.hours?(e.trips?" · ":"")+e.hours+"h":"",
+                                      e.miles?(e.trips||e.hours?" · ":"")+e.miles+"mi":""
+                                    )
+                                )
+                                , React.createElement('span', {style:{fontSize:12,color:C.text2}}, fmt(entryInc))
+                              );
+                            })
+                        );
+                      });
+                    }())
+                );
+              }())
             // === Monthly income goal (only for month view) ===
             , (incV==="month") ? (
                 incGoal&&+incGoal>0
@@ -3271,7 +3343,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                   , React.createElement('div', { style: {fontSize:11,color:C.text3,marginTop:1} }, "Uber/Lyft")
                 )
               )
-              , React.createElement('button', { onClick: function(){if(driverType==="rideshare"){setSf("week_cal");}else{setSf("week");}}, style: {background:C.bg3,border:"1px solid "+C.border,borderRadius:8,padding:"8px 10px",cursor:"pointer",display:"flex",alignItems:"center",gap:8,textAlign:"left"} }
+              , React.createElement('button', { onClick: function(){setSf("week_cal");}, style: {background:C.bg3,border:"1px solid "+C.border,borderRadius:8,padding:"8px 10px",cursor:"pointer",display:"flex",alignItems:"center",gap:8,textAlign:"left"} }
                 , React.createElement('div', { style: {fontSize:20,flexShrink:0} }, "📅")
                 , React.createElement('div', { style: {flex:1,minWidth:0} }
                   , React.createElement('div', { style: {fontSize:13,fontWeight:700,color:"#00E676",lineHeight:1.2} }, T.weekly)
@@ -3295,10 +3367,14 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
               var vGross=isMonth?tGross:yStmts.reduce(function(s,x){return s+(+x.grossFare||0);},0)+yDailies.reduce(function(s,d){return s+(+d.cash||0)+(+d.card||0);},0);
               var vTips=isMonth?tTips:yStmts.reduce(function(s,x){return s+(+x.tips||0);},0)+yDailies.reduce(function(s,d){return s+(+d.tips||0);},0);
               var vBonus=isMonth?tBonus:yStmts.reduce(function(s,x){return s+(+x.bonus||0);},0);
-              // Mode breakdown — rideshare comes from sl, taxi from dl
-              var rsInc=isMonth?mStmts.reduce(function(s,x){return s+(+x.grossFare||0)+(+x.tips||0)+(+x.bonus||0)+(+x.tollReimbursed||0)+(+x.otherIncome||0);},0):yStmts.reduce(function(s,x){return s+(+x.grossFare||0)+(+x.tips||0)+(+x.bonus||0)+(+x.tollReimbursed||0)+(+x.otherIncome||0);},0);
-              var txInc=isMonth?mDailyInc:yDailyInc;
-              var txLease=isMonth?mDailyLease:yDailyLease;
+              // Mode breakdown — rideshare comes from sl + dl(rideshare), taxi comes from dl(taxi only)
+              var rsStmtInc = isMonth?mStmts.reduce(function(s,x){return s+(+x.grossFare||0)+(+x.tips||0)+(+x.bonus||0)+(+x.tollReimbursed||0)+(+x.otherIncome||0);},0):yStmts.reduce(function(s,x){return s+(+x.grossFare||0)+(+x.tips||0)+(+x.bonus||0)+(+x.tollReimbursed||0)+(+x.otherIncome||0);},0);
+              var dlSrc = isMonth ? mDailies : yDailies;
+              var rsDlInc = dlSrc.reduce(function(s,d){return d.mode==="rideshare" ? s+(+d.grossFare||0)+(+d.tips||0)+(+d.bonus||0)+(+d.tollReimbursed||0) : s;},0);
+              var rsInc = rsStmtInc + rsDlInc;
+              // Taxi: only entries WITHOUT mode==="rideshare" (legacy taxi-mode entries)
+              var txInc = dlSrc.reduce(function(s,d){return d.mode!=="rideshare" ? s+(+d.cash||0)+(+d.card||0)+(+d.tips||0) : s;},0);
+              var txLease = dlSrc.reduce(function(s,d){return d.mode!=="rideshare" ? s+(+d.lease||0) : s;},0);
               // Data source counts
               var slCnt=isMonth?mStmts.length:yStmts.length;
               var wlCnt=isMonth?mWeeks.length:yWeeks.length;
@@ -3358,7 +3434,13 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
             }())
             , (function(){var vS=incV==="month"?mStmts:yStmts; return vS.length > 0 ? React.createElement('div', { style: {marginBottom:16} }, React.createElement('div', { style: {fontSize:12,color:C.text3,letterSpacing:1,marginBottom:8} }, "💵 " , T.monthly), vS.slice().sort(function(a,b){return (b.month||"").localeCompare(a.month||"");}).map(function(s){var total=(+s.grossFare||0)+(+s.tips||0)+(+s.bonus||0)+(+s.tollReimbursed||0)+(+s.otherIncome||0);return React.createElement(Card, { key: s.id, __self: this, __source: {fileName: _jsxFileName, lineNumber: 334}}, React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 334}}, React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 334}}, React.createElement('div', { style: {fontSize:14,fontWeight:700,marginBottom:3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 334}}, s.platform, " · "  , s.month), React.createElement('div', { style: {fontSize:13,color:"#00E676",fontWeight:700}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 334}}, fmt(total)), React.createElement('div', { style: {display:"flex",gap:8,flexWrap:"wrap",marginTop:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 334}}, s.trips?React.createElement('span', { style: {fontSize:12,background:"#1A2A44",borderRadius:6,padding:"2px 7px",color:C.text2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 334}}, s.trips, " " , T.trips):null, s.onlineHours?React.createElement('span', { style: {fontSize:12,background:"#1A2A44",borderRadius:6,padding:"2px 7px",color:C.text2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 334}}, s.onlineHours, "h"):null, s.miles?React.createElement('span', { style: {fontSize:12,background:"#1A2A44",borderRadius:6,padding:"2px 7px",color:C.text2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 334}}, s.miles, "mi"):null)), React.createElement('div', { style: {display:"flex",gap:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 334}}, React.createElement('button', { onClick: function(){setStf(Object.assign({trips:"",onlineHours:"",miles:"",notes:""},s));setSf("stmt");}, style: {background:"none",border:"1px solid #2A4A6A",borderRadius:6,padding:"3px 8px",color:"#6AACEE",cursor:"pointer",fontSize:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 334}}, T.edit))));}), " " ) : null;}())
             , (function(){var vW=incV==="month"?mWeeks:yWeeks; return vW.length > 0 ? React.createElement('div', {}, (function(){var tw=vW.reduce(function(s,w){return {trips:s.trips+(+w.trips||0),hours:s.hours+(+w.hours||0),miles:s.miles+(+w.miles||0)};},{trips:0,hours:0,miles:0});if(!tw.trips&&!tw.hours)return null;return React.createElement(Card, { style: {background:C.bg3,border:"1px solid "+C.border,marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 335}}, React.createElement('div', { style: {display:"flex",justifyContent:"space-around"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 335}}, tw.trips?React.createElement('div', { style: {textAlign:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 335}}, React.createElement('div', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 335}}, T.trips), React.createElement('div', { style: {fontSize:18,fontWeight:800,color:"#00E676"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 335}}, tw.trips)):null, tw.hours?React.createElement('div', { style: {textAlign:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 335}}, React.createElement('div', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 335}}, lang==="en"?"Hours":"时长"), React.createElement('div', { style: {fontSize:18,fontWeight:800,color:"#00D4FF"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 335}}, tw.hours, "h")):null, tw.miles?React.createElement('div', { style: {textAlign:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 335}}, React.createElement('div', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 335}}, T.miles), React.createElement('div', { style: {fontSize:18,fontWeight:800,color:"#FFD700"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 335}}, tw.miles)):null, tw.hours>0&&tInc>0?React.createElement('div', { style: {textAlign:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 335}}, React.createElement('div', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 335}}, T.hourlyRate), React.createElement('div', { style: {fontSize:18,fontWeight:800,color:"#FF9A65"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 335}}, fmt(Math.round(tInc/tw.hours*100)/100))):null));}()), " " , React.createElement('div', { style: {fontSize:12,color:C.text3,letterSpacing:1,marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 335}}, "📅 " , T.weekly), vW.slice().sort(function(a,b){return b.weekStart.localeCompare(a.weekStart);}).map(function(w){return React.createElement(Card, { key: w.id, __self: this, __source: {fileName: _jsxFileName, lineNumber: 335}}, React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"flex-start"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 335}}, React.createElement('div', { style: {flex:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 335}}, React.createElement('div', { style: {fontSize:14,fontWeight:700,color:"#00E676",marginBottom:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 335}}, wkLabel(w.weekStart)), React.createElement('div', { style: {fontSize:13,color:C.text2,marginBottom:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 335}}, w.platform), (function(){var winc=(+w.grossFare||0)+(+w.tips||0)+(+w.bonus||0)+(+w.tollReimbursed||0);if(winc>0)return React.createElement('div', { style: {fontSize:15,fontWeight:800,color:"#00D4FF",marginBottom:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 335}}, "💵 " , fmt(winc));return null;}()), React.createElement('div', { style: {display:"flex",gap:6,flexWrap:"wrap"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 335}}, w.trips?React.createElement('span', { style: {fontSize:13,background:"#1A2A44",borderRadius:6,padding:"2px 8px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 335}}, w.trips, " " , T.trips):null, w.hours?React.createElement('span', { style: {fontSize:13,background:"#1A2A44",borderRadius:6,padding:"2px 8px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 335}}, w.hours, "h"):null, w.miles?React.createElement('span', { style: {fontSize:13,background:"#1A2A44",borderRadius:6,padding:"2px 8px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 335}}, w.miles, "mi"):null)), React.createElement('div', { style: {display:"flex",gap:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 335}}, React.createElement('button', { onClick: function(){setWf(Object.assign({},w));setSf("week");}, style: {background:"none",border:"1px solid #2A4A6A",borderRadius:6,padding:"3px 8px",color:"#6AACEE",cursor:"pointer",fontSize:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 335}}, T.edit))));}), " " ) : null;}())
-            , (incV==="month"?(mStmts.length===0&&mWeeks.length===0):(yStmts.length===0&&yWeeks.length===0)) ? React.createElement(Empty, { text: T.noData } ) : null
+            , (function(){
+                var hasStmts = incV==="month" ? mStmts.length>0 : yStmts.length>0;
+                var hasWeeks = incV==="month" ? mWeeks.length>0 : yWeeks.length>0;
+                var dailySrc = incV==="month" ? mDailies : yDailies;
+                var hasRide = dailySrc.some(function(d){return d.mode==="rideshare";});
+                return (!hasStmts && !hasWeeks && !hasRide) ? React.createElement(Empty, { text: T.noData } ) : null;
+              }())
             , null
           )
           )
@@ -4373,6 +4455,68 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                     }, "+ ", selEntries.length===0 ? (lang==="en"?"Add entry for this day":"添加这一天的记录") : (lang==="en"?"Add another platform":"再加一个平台")
                   )
                 )
+                // All days with data (overview of the whole week — no need to tap each day)
+                , (function(){
+                    var daysWithData = days.filter(function(d){return dayStats[d].hasData;});
+                    if(daysWithData.length<=1) return null;  // Only show if 2+ days have data
+                    return React.createElement('div', {style:{borderTop:"1px solid "+C.border,paddingTop:14,marginTop:14}}
+                      , React.createElement('div', {style:{fontSize:13,fontWeight:700,color:C.text2,marginBottom:10}}, "📋 ", lang==="en"?"All days this week":"本周所有记录")
+                      , daysWithData.map(function(d){
+                          var dEntries = dayStats[d].entries;
+                          var dayNum = +d.slice(8);
+                          var dowIdx = (new Date(d+"T00:00:00").getDay()+6)%7;  // Mon=0
+                          var dowLabel = dayLabels[dowIdx];
+                          var isToday = d===todayStr;
+                          var dayInc = dayStats[d].inc;
+                          var dayTrips = dEntries.reduce(function(s,e){return s+(+e.trips||0);},0);
+                          var dayHours = dEntries.reduce(function(s,e){return s+(+e.hours||0);},0);
+                          var dayMiles = dEntries.reduce(function(s,e){return s+(+e.miles||0);},0);
+                          return React.createElement('div', {key:d, style:{background:C.bg3,border:"1px solid "+C.border,borderRadius:8,padding:"8px 12px",marginBottom:6}}
+                            // Day header
+                            , React.createElement('div', {style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6,paddingBottom:6,borderBottom:"1px solid "+C.border}}
+                              , React.createElement('div', {style:{display:"flex",alignItems:"center",gap:8}}
+                                , React.createElement('span', {style:{fontSize:12,color:C.text3}}, dowLabel)
+                                , React.createElement('span', {style:{fontSize:14,fontWeight:700,color:isToday?"#FFD700":C.text}}, d.slice(5))
+                                , isToday?React.createElement('span',{style:{fontSize:10,color:"#FFD700"}},"•"):null
+                              )
+                              , React.createElement('div', {style:{textAlign:"right"}}
+                                , React.createElement('div', {style:{fontSize:14,fontWeight:700,color:"#5ADA7A"}}, fmt(dayInc))
+                                , (dayTrips||dayHours||dayMiles) ? React.createElement('div', {style:{fontSize:10,color:C.text3,marginTop:1}},
+                                    dayTrips?dayTrips+(lang==="en"?" trips":" 趟"):"",
+                                    dayHours?(dayTrips?" · ":"")+dayHours+"h":"",
+                                    dayMiles?(dayTrips||dayHours?" · ":"")+dayMiles+"mi":""
+                                  ) : null
+                              )
+                            )
+                            // Per-platform rows
+                            , dEntries.map(function(e,ei){
+                                var entryInc = (+e.grossFare||0)+(+e.tips||0)+(+e.bonus||0)+(+e.tollReimbursed||0);
+                                return React.createElement('div', {key:ei, style:{display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:12,padding:"3px 0"}}
+                                  , React.createElement('div', {style:{display:"flex",alignItems:"center",gap:8,flex:1,minWidth:0}}
+                                    , React.createElement('span', {style:{fontSize:12,color:"#5AACFF",fontWeight:600}}, e.platform||"Uber")
+                                    , React.createElement('span', {style:{fontSize:10,color:C.text3}},
+                                        e.trips?e.trips+(lang==="en"?" trips":" 趟"):"",
+                                        e.hours?(e.trips?" · ":"")+e.hours+"h":"",
+                                        e.miles?(e.trips||e.hours?" · ":"")+e.miles+"mi":"",
+                                        (+e.platformFee||0)>0?(e.trips||e.hours||e.miles?" · ":"")+(lang==="en"?"fee ":"抽 ")+fmt(e.platformFee):""
+                                      )
+                                  )
+                                  , React.createElement('div', {style:{display:"flex",alignItems:"center",gap:6,flexShrink:0}}
+                                    , React.createElement('span', {style:{fontSize:12,color:C.text2}}, fmt(entryInc))
+                                    , React.createElement('button', {
+                                        onClick: function(){
+                                          setDlf(Object.assign({},{date:d,mode:"rideshare",platform:"Uber",grossFare:"",tips:"",bonus:"",tollReimbursed:"",platformFee:"",trips:"",hours:"",miles:"",notes:""},e));
+                                          setSf("dl_edit");
+                                        },
+                                        style: {background:"none",border:"none",color:"#6AACEE",fontSize:14,cursor:"pointer",padding:"0 4px"}
+                                      }, "✎")
+                                  )
+                                );
+                              })
+                          );
+                        })
+                    );
+                  }())
                 // Help text
                 , React.createElement('div', {style:{fontSize:11,color:C.text3,padding:"10px 12px",background:C.bg3,borderRadius:8,lineHeight:1.6,marginTop:14}}
                   , "💡 ", lang==="en"?"Tap any day to edit it. Days with data show in green. Cross-month weeks are split automatically.":"点击任何一天来填写。已填的天会变绿。跨月的周自动按日期归到对应月份。"
@@ -5177,7 +5321,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                 var taxYMons=(function(){var ms=[];for(var i=1;i<=12;i++){ms.push(yn+"-"+(i<10?"0":"")+i);}return ms;})();
                 var yStAll=sl.filter(function(x){return x.month&&x.month.slice(0,4)===yn;});
                 var yDlAll=dl.filter(function(d){return d.date&&d.date.slice(0,4)===yn;});
-                var yDlInc=yDlAll.reduce(function(s,d){return s+(+d.cash||0)+(+d.card||0)+(+d.tips||0);},0);
+                var yDlInc=yDlAll.reduce(function(s,d){if(d.mode==="rideshare")return s+(+d.grossFare||0)+(+d.tips||0)+(+d.bonus||0)+(+d.tollReimbursed||0);return s+(+d.cash||0)+(+d.card||0)+(+d.tips||0);},0);
                 var yDlLease=yDlAll.reduce(function(s,d){return s+(+d.lease||0);},0);
                 // Synthetic lease expenses for category breakdown (under "rentalcar" → "车辆" group)
                 var yDlLeaseExps=yDlAll.filter(function(d){return (+d.lease||0)>0;}).map(function(d){return {id:"dl_"+d.id,date:d.date,category:"rentalcar",amount:+d.lease,notes:"Daily lease",isDailyLease:true};});
@@ -5232,7 +5376,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                     var yr=taxYr||(new Date().getFullYear()+"");
                     var yStmts=sl.filter(function(x){return x.month&&x.month.slice(0,4)===yr;});
                     var yDls=dl.filter(function(d){return d.date&&d.date.slice(0,4)===yr;});
-                    var yDlInc=yDls.reduce(function(s,d){return s+(+d.cash||0)+(+d.card||0)+(+d.tips||0);},0);
+                    var yDlInc=yDls.reduce(function(s,d){if(d.mode==="rideshare")return s+(+d.grossFare||0)+(+d.tips||0)+(+d.bonus||0)+(+d.tollReimbursed||0);return s+(+d.cash||0)+(+d.card||0)+(+d.tips||0);},0);
                     var yDlLease=yDls.reduce(function(s,d){return s+(+d.lease||0);},0);
                     var yDlLeaseExps=yDls.filter(function(d){return (+d.lease||0)>0;}).map(function(d){return {id:"dl_"+d.id,date:d.date,category:"rentalcar",amount:+d.lease,notes:"Daily lease",isDailyLease:true};});
                     var grossInc=yStmts.reduce(function(s,x){return s+(+x.grossFare||0)+(+x.tips||0)+(+x.bonus||0)+(+x.tollReimbursed||0)+(+x.otherIncome||0);},0)+yDlInc;
@@ -5290,7 +5434,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                       var yr=taxYr||(new Date().getFullYear()+"");
                       var yStmts=sl.filter(function(x){return x.month&&x.month.slice(0,4)===yr;});
                       var yDlAll=dl.filter(function(d){return d.date&&d.date.slice(0,4)===yr;});
-                      var yDlInc=yDlAll.reduce(function(s,d){return s+(+d.cash||0)+(+d.card||0)+(+d.tips||0);},0);
+                      var yDlInc=yDlAll.reduce(function(s,d){if(d.mode==="rideshare")return s+(+d.grossFare||0)+(+d.tips||0)+(+d.bonus||0)+(+d.tollReimbursed||0);return s+(+d.cash||0)+(+d.card||0)+(+d.tips||0);},0);
                       var yDlCash=yDlAll.reduce(function(s,d){return s+(+d.cash||0);},0);
                       var yDlCard=yDlAll.reduce(function(s,d){return s+(+d.card||0);},0);
                       var yDlTips=yDlAll.reduce(function(s,d){return s+(+d.tips||0);},0);
