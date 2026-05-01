@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-var APP_VERSION = "v3.5.5";  // ← single source of truth: bump this once per release
+var APP_VERSION = "v3.5.6";  // ← single source of truth: bump this once per release
 console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
@@ -12,7 +12,7 @@ console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-
       window.Sentry.init({
         dsn:window.SENTRY_DSN,
         environment:(location.hostname==="localhost"||location.hostname==="127.0.0.1")?"development":"production",
-        release:"nyc-driver-tracker@1.0.56",
+        release:"nyc-driver-tracker@1.0.57",
         tracesSampleRate:0.1,
         // Don't send events from local dev
         beforeSend:function(event){
@@ -4218,13 +4218,13 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
               , [["车辆","&#128663;","#00D4FF","Vehicle"],["牌照","&#128203;","#FFD700","License"],["平台","&#128241;","#AB47BC","Platform"],["其他","&#128188;","#B0D4E8","Other"]].map(function(gb){
                 var isA=selGrp===gb[0],bdCol=isA?gb[2]:"#243550",bgCol=isA?"#0A2040":"#0F1829",textCol=isA?gb[2]:C.text2,fw=isA?700:400;
                 var lbl=lang==="en"?gb[3]:gb[0];
-                return React.createElement('button', { key: gb[0], onClick: function(){setSelGrp(gb[0]);var first=Object.entries(allC).find(function(e){if(veh.type==="electric"&&e[0]==="fuel")return false;if(veh.type==="petrol"&&e[0]==="charging")return false;if(veh.type==="electric"&&e[0]==="oil")return false;return e[1].g===gb[0];});if(first)setEf(Object.assign({},ef,{category:first[0]}));}, style: {padding:"4px 2px",borderRadius:6,border:"1.5px solid "+bdCol,background:bgCol,color:textCol,fontSize:10,fontWeight:fw,cursor:"pointer",textAlign:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 527}}
+                return React.createElement('button', { key: gb[0], onClick: function(){setSelGrp(gb[0]);var first=Object.entries(allC).find(function(e){if(veh.type==="electric"&&e[0]==="fuel")return false;if(veh.type==="petrol"&&e[0]==="charging")return false;if(veh.type==="electric"&&e[0]==="oil")return false;return e[1].g===gb[0];});if(first)setEf(Object.assign({},ef,{category:first[0],amount:"",qty:"",unitPrice:"",chargedTo:"",_editOrder:[],_lastPrefillKey:"",_lastPrefillAmt:""}));}, style: {padding:"4px 2px",borderRadius:6,border:"1.5px solid "+bdCol,background:bgCol,color:textCol,fontSize:10,fontWeight:fw,cursor:"pointer",textAlign:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 527}}
                   , React.createElement('div', { style: {fontSize:14,marginBottom:0}, dangerouslySetInnerHTML: {__html:gb[1]}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 528}} ), React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 528}}, lbl)
                 );
               })
             )
             , React.createElement('div', { style: {display:"flex",gap:8,alignItems:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 532}}
-              , React.createElement('select', { value: ef.category, onChange: function(e){setEf(Object.assign({},ef,{category:e.target.value}));}, style: Object.assign({},IS,{flex:1}), __self: this, __source: {fileName: _jsxFileName, lineNumber: 533}}
+              , React.createElement('select', { value: ef.category, onChange: function(e){setEf(Object.assign({},ef,{category:e.target.value,amount:"",qty:"",unitPrice:"",chargedTo:"",_editOrder:[],_lastPrefillKey:"",_lastPrefillAmt:""}));}, style: Object.assign({},IS,{flex:1}), __self: this, __source: {fileName: _jsxFileName, lineNumber: 533}}
                 , Object.entries(allC).filter(function(e){if(veh.type==="electric"&&e[0]==="fuel")return false;if(veh.type==="petrol"&&e[0]==="charging")return false;if(veh.type==="electric"&&e[0]==="oil")return false;return e[1].g===selGrp;}).map(function(e){return React.createElement('option', { key: e[0], value: e[0], __self: this, __source: {fileName: _jsxFileName, lineNumber: 534}}, e[1].icon, " " , e[1].label);})
               )
               , React.createElement('button', { onClick: function(){setCf({label:"",icon:"&#128296;",group:selGrp,_returnTo:"exp"});setSf("cc");}, style: {flexShrink:0,width:38,height:38,borderRadius:8,border:"2px dashed #2A4A6A",background:C.bg3,color:"#6AACEE",fontSize:18,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 536}}, "+")
