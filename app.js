@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-var APP_VERSION = "v3.6.2";  // ← single source of truth: bump this once per release
+var APP_VERSION = "v3.6.3";  // ← single source of truth: bump this once per release
 console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
@@ -12,7 +12,7 @@ console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-
       window.Sentry.init({
         dsn:window.SENTRY_DSN,
         environment:(location.hostname==="localhost"||location.hostname==="127.0.0.1")?"development":"production",
-        release:"nyc-driver-tracker@1.0.63",
+        release:"nyc-driver-tracker@1.0.65",
         tracesSampleRate:0.1,
         // Don't send events from local dev
         beforeSend:function(event){
@@ -1488,8 +1488,9 @@ function App() {
   // PIN lock state
   var r53a=useState(function(){return lsLoad("nyc_pinTimeout",5);}),pinTimeout=r53a[0],_setPinTimeout=r53a[1]; function setPinTimeout(v){_setPinTimeout(v);try{localStorage.setItem("nyc_pinTimeout",JSON.stringify(v));}catch(e){}}
   var r53b=useState(function(){var p="";try{p=localStorage.getItem("nyc_pin")||"";}catch(e){}return !!p;}),hasPIN=r53b[0],setHasPIN=r53b[1];
-  // locked: true when PIN screen should be displayed (unlock mode)
-  var r53c=useState(false),locked=r53c[0],setLocked=r53c[1];
+  // locked: true when PIN screen should be displayed.
+  // On every app launch: if a PIN exists, start LOCKED. User must enter PIN to access data.
+  var r53c=useState(function(){var p="";try{p=localStorage.getItem("nyc_pin")||"";}catch(e){}return !!p;}),locked=r53c[0],setLocked=r53c[1];
   // showPinSetup: true when user is in "set up new PIN" flow
   var r53d=useState(false),showPinSetup=r53d[0],setShowPinSetup=r53d[1];
 
