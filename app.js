@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-var APP_VERSION = "v3.5.8";  // ← single source of truth: bump this once per release
+var APP_VERSION = "v3.6.2";  // ← single source of truth: bump this once per release
 console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
@@ -12,7 +12,7 @@ console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-
       window.Sentry.init({
         dsn:window.SENTRY_DSN,
         environment:(location.hostname==="localhost"||location.hostname==="127.0.0.1")?"development":"production",
-        release:"nyc-driver-tracker@1.0.59",
+        release:"nyc-driver-tracker@1.0.63",
         tracesSampleRate:0.1,
         // Don't send events from local dev
         beforeSend:function(event){
@@ -4204,8 +4204,8 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                             setEf(Object.assign({},ef,{amount:String(displayVal),_editOrder:((ef._editOrder||[]).filter(function(f){return f!=="amount";})).concat(["amount"])}));
                           }
                         },
-                        style: {flex:"0 0 auto",background:isCurrent?"#0A4020":"#0A2840",border:"1px solid "+(isCurrent?"#2A8050":"#2A5080"),borderRadius:8,padding:"6px 12px",color:isCurrent?"#5ADA7A":"#5AACFF",fontSize:13,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}
-                      }, isCurrent?"✓ ":"", "$" + valStr, isUnitMode?React.createElement('span',{style:{fontSize:11,color:C.text3,marginLeft:1}},unitSuffix):null, React.createElement('span', {style:{fontSize:10,color:C.text3,marginLeft:4}}, m.date||""));
+                        style: {flex:"1 1 0",minWidth:0,background:isCurrent?"#0A4020":"#0A2840",border:"1px solid "+(isCurrent?"#2A8050":"#2A5080"),borderRadius:8,padding:"6px 8px",color:isCurrent?"#5ADA7A":"#5AACFF",fontSize:13,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",textAlign:"center"}
+                      }, isCurrent?"✓ ":"", "$" + valStr, isUnitMode?React.createElement('span',{style:{fontSize:10,color:C.text3,marginLeft:1}},unitSuffix):null, React.createElement('span', {style:{fontSize:9,color:C.text3,marginLeft:3}}, m.date?(m.date.slice(5)+"-"+m.date.slice(2,4)):""));
                     })
                 )
               );
