@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-var APP_VERSION = "v3.10.87";  // ← single source of truth: bump this once per release
+var APP_VERSION = "v3.11.0";  // ← single source of truth: bump this once per release
 console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
@@ -12,7 +12,7 @@ console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-
       window.Sentry.init({
         dsn:window.SENTRY_DSN,
         environment:(location.hostname==="localhost"||location.hostname==="127.0.0.1")?"development":"production",
-        release:"nyc-driver-tracker@1.3.29",
+        release:"nyc-driver-tracker@1.5.0",
         tracesSampleRate:0.1,
         // Don't send events from local dev
         beforeSend:function(event){
@@ -5048,8 +5048,9 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                                 setVeh(loaded);
                               }, style: {background:"#0A2040",border:"1px solid #2A5080",borderRadius:6,padding:"5px 12px",color:C.accent2,fontSize:12,fontWeight:700,cursor:"pointer"} }, lang==="en"?"Switch":"切换") : null
                             , React.createElement('button', { onClick: function(){
-                                if(!confirm(lang==="en"?"Delete this profile? (Won\'t affect current vehicle data.)":"删除这个 profile？（不影响当前正在用的车辆资料）"))return;
-                                var prev=savedVehicles.slice();setSavedVehicles(savedVehicles.filter(function(_,j){return j!==i;}));showUndo((lang==="en"?"✓ Profile deleted":"✓ Profile 已删除"), {prevSavedVehicles:prev});
+                                confirmAction(lang==="en"?"Delete this profile?":"删除这个车辆 profile？", lang==="en"?"Won't affect current vehicle data.":"不影响当前正在用的车辆资料。", function(){
+                                  var prev=savedVehicles.slice();setSavedVehicles(savedVehicles.filter(function(_,j){return j!==i;}));showUndo((lang==="en"?"✓ Profile deleted":"✓ Profile 已删除"), {prevSavedVehicles:prev});
+                                });
                               }, style: {background:"none",border:"none",color:C.danger,fontSize:14,cursor:"pointer",padding:"4px 6px"} }, "✕")
                           );
                         })
@@ -5351,14 +5352,20 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                             // Action button — delete (only for el and reminders)
                             , (f.item && f.kind==="el") ? React.createElement('div', {style:{marginTop:6,display:"flex",gap:6}}
                                 , React.createElement('button', {onClick:function(){
-                                    if(!confirm(lang==="en"?"Delete this expense entry?":"删除这条支出记录？"))return;
-                                    setEl(el.filter(function(x){return x.id!==f.item.id;}));
+                                    confirmAction(lang==="en"?"Delete this expense entry?":"删除这条支出记录？", lang==="en"?"This expense will be removed (with undo).":"此支出将被移除（可撤销）。", function(){
+                                      var prev=el.slice();
+                                      setEl(el.filter(function(x){return x.id!==f.item.id;}));
+                                      showUndo((lang==="en"?"✓ Expense deleted":"✓ 支出已删除"), {prevEl:prev});
+                                    });
                                   },style:{background:"none",border:"1px solid #5A1A1A",borderRadius:6,padding:"4px 10px",color:C.danger,fontSize:12,cursor:"pointer"}}, "🗑 " , lang==="en"?"Delete":"删除")
                               ) : null
                             , (f.item && f.kind==="reminders") ? React.createElement('div', {style:{marginTop:6,display:"flex",gap:6}}
                                 , React.createElement('button', {onClick:function(){
-                                    if(!confirm(lang==="en"?"Delete this reminder?":"删除这条提醒？"))return;
-                                    setReminders(reminders.filter(function(x){return x.id!==f.item.id;}));
+                                    confirmAction(lang==="en"?"Delete this reminder?":"删除这条提醒？", lang==="en"?"This reminder will be removed (with undo).":"此提醒将被移除（可撤销）。", function(){
+                                      var prev=reminders.slice();
+                                      setReminders(reminders.filter(function(x){return x.id!==f.item.id;}));
+                                      showUndo((lang==="en"?"✓ Reminder deleted":"✓ 提醒已删除"), {prevReminders:prev});
+                                    });
                                   },style:{background:"none",border:"1px solid #5A1A1A",borderRadius:6,padding:"4px 10px",color:C.danger,fontSize:12,cursor:"pointer"}}, "🗑 " , lang==="en"?"Delete":"删除")
                               ) : null
                           );
@@ -6291,7 +6298,46 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
         }()) : null
 
       , sf && (sf==="exp" || sf.startsWith("exp_edit_")) ? (
-        React.createElement(Modal, { title: sf.startsWith("exp_edit_")?(T.edit+" "+(lang==="en"?"Expense":"支出")):(lang==="en"?"Add Expense":"添加支出"), onClose: function(){setSf(null);}, onSave: function(){if(!ef.amount)return;if(sf.startsWith("exp_edit_")){var eid=+sf.replace("exp_edit_","");var prevEl=el.slice();setEl(el.map(function(x){return x.id===eid?Object.assign({},ef,{id:eid,vehicleId:ef.vehicleId||x.vehicleId||veh.vehicleId}):x;}));setSf(null);showUndo(lang==="en"?"✓ Expense updated":"✓ 支出已更新", {prevEl:prevEl});return;}else if(ef.isRecurring){setFl(fl.concat([{id:Date.now(),label:allC[ef.category]?allC[ef.category].label:ef.notes||"Fixed",icon:allC[ef.category]?allC[ef.category].icon:"💼",cat:ef.category,cycle:"monthly",amount:ef.amount,day:new Date().getDate()+"",notes:ef.notes,active:true,startDate:"",endDate:"",maxCount:""}]));}else{var nel=[Object.assign({},ef,{id:Date.now(),vehicleId:veh.vehicleId})].concat(el);setEl(nel);autoSave({el:nel});}setSf(null);showToast(lang==="en"?"✓ Expense saved":"✓ 支出已保存");}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 520}}
+        React.createElement(Modal, { title: sf.startsWith("exp_edit_")?(T.edit+" "+(lang==="en"?"Expense":"支出")):(lang==="en"?"Add Expense":"添加支出"), onClose: function(){setSf(null);}, onSave: function(){
+          if(!ef.amount)return;
+          if(sf.startsWith("exp_edit_")){
+            var eid=+sf.replace("exp_edit_","");
+            var prevEl=el.slice();
+            setEl(el.map(function(x){return x.id===eid?Object.assign({},ef,{id:eid,vehicleId:ef.vehicleId||x.vehicleId||veh.vehicleId}):x;}));
+            setSf(null);
+            showUndo(lang==="en"?"✓ Expense updated":"✓ 支出已更新", {prevEl:prevEl});
+            return;
+          } else if(ef.isRecurring){
+            setFl(fl.concat([{id:Date.now(),label:allC[ef.category]?allC[ef.category].label:ef.notes||"Fixed",icon:allC[ef.category]?allC[ef.category].icon:"💼",cat:ef.category,cycle:"monthly",amount:ef.amount,day:new Date().getDate()+"",notes:ef.notes,active:true,startDate:"",endDate:"",maxCount:""}]));
+          } else {
+            // === DEDUP CHECK: warn if same MONTH + same MONTHLY category already has entries ===
+            // Only for monthly-billed categories (insurance, carloan, phone, toll, platform, etc.)
+            // — these should only have 1 entry per month. Skip warn for daily categories like coffee, parking.
+            var catDef = allC[ef.category];
+            var isMonthlyCat = catDef && catDef.mo === true;
+            if(isMonthlyCat){
+              var newMonth = (ef.date||"").slice(0,7);
+              var sameMonthSameCat = el.filter(function(e){
+                if(e.category !== ef.category) return false;
+                var emo = e.statementMonth || (e.date||"").slice(0,7);
+                return emo === newMonth;
+              });
+              if(sameMonthSameCat.length > 0){
+                var existingTotal = sameMonthSameCat.reduce(function(s,e){return s+(+e.amount||0);},0);
+                var catLbl = catDef.label;
+                var msg = lang==="en"?
+                  ("⚠ "+newMonth+" already has "+sameMonthSameCat.length+" "+catLbl+" entry/entries totaling $"+existingTotal.toFixed(2)+".\n\n"+catLbl+" is a monthly-billed category — usually only 1 entry per month.\n\nAdd this $"+(+ef.amount).toFixed(2)+" anyway?\n\n• OK = Add (in addition to existing)\n• Cancel = Don't add"):
+                  ("⚠ "+newMonth+" 已有 "+sameMonthSameCat.length+" 笔「"+catLbl+"」共 $"+existingTotal.toFixed(2)+"。\n\n「"+catLbl+"」是月结类别，通常每月只有 1 笔。\n\n继续添加 $"+(+ef.amount).toFixed(2)+" 吗？\n\n• 确定 = 添加（与现有累加）\n• 取消 = 不添加");
+                if(!confirm(msg)){ setSf(null); return; }
+              }
+            }
+            var nel=[Object.assign({},ef,{id:Date.now(),vehicleId:veh.vehicleId})].concat(el);
+            setEl(nel);
+            autoSave({el:nel});
+          }
+          setSf(null);
+          showToast(lang==="en"?"✓ Expense saved":"✓ 支出已保存");
+        }, __self: this, __source: {fileName: _jsxFileName, lineNumber: 520}}
           , (function(){
               if(sf.startsWith("exp_edit_")) return null;
               if(simpleMode) return null;  // hide in simple mode
@@ -7368,6 +7414,50 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                   // Import all SELECTED entries
                   var toImport = fuelioImportResult.entries.filter(function(_,i){return fuelioSelected[i];});
                   if(toImport.length === 0){ showToast(lang==="en"?"Select at least one":"请至少选一条","warn"); return; }
+                  // === MONTHLY CATEGORY CONFLICT CHECK ===
+                  // For monthly-billed categories (insurance, carloan, phone, toll, etc.),
+                  // check if same month + same category already has entries.
+                  // Group importing entries by month+category to detect conflicts.
+                  var importByMoCat = {};
+                  toImport.forEach(function(en){
+                    var c = allC[en.category];
+                    if(!c || !c.mo) return; // only monthly-billed
+                    var mo = (en.date||"").slice(0,7);
+                    var k = mo+"|"+en.category;
+                    if(!importByMoCat[k]) importByMoCat[k] = {month:mo, cat:en.category, label:c.label, importTotal:0, importCount:0};
+                    importByMoCat[k].importTotal += +en.amount;
+                    importByMoCat[k].importCount++;
+                  });
+                  // For each conflict, check existing el
+                  var conflicts = [];
+                  Object.values(importByMoCat).forEach(function(grp){
+                    var existSame = el.filter(function(e){
+                      if(e.category !== grp.cat) return false;
+                      var emo = e.statementMonth || (e.date||"").slice(0,7);
+                      return emo === grp.month;
+                    });
+                    if(existSame.length > 0){
+                      var existTotal = existSame.reduce(function(s,e){return s+(+e.amount||0);},0);
+                      conflicts.push({
+                        month: grp.month,
+                        label: grp.label,
+                        existCount: existSame.length,
+                        existTotal: existTotal,
+                        importCount: grp.importCount,
+                        importTotal: grp.importTotal
+                      });
+                    }
+                  });
+                  if(conflicts.length > 0){
+                    var msg = lang==="en"?"⚠ Conflict detected — these months already have entries for monthly categories:\n\n":"⚠ 检测到冲突 — 以下月份的月结类别已存在记录：\n\n";
+                    conflicts.forEach(function(c){
+                      msg += "• "+c.month+" "+c.label+": "+(lang==="en"?
+                        "existing "+c.existCount+" ($"+c.existTotal.toFixed(2)+") + importing "+c.importCount+" ($"+c.importTotal.toFixed(2)+")":
+                        "已有 "+c.existCount+" 笔 $"+c.existTotal.toFixed(2)+" + 要导入 "+c.importCount+" 笔 $"+c.importTotal.toFixed(2))+"\n";
+                    });
+                    msg += lang==="en"?"\nProceed with import? Existing entries will NOT be removed.\n• OK = Import anyway (will be in addition to existing)\n• Cancel = Don't import":"\n继续导入？现有记录不会被删除。\n• 确定 = 继续导入（与现有累加）\n• 取消 = 不导入";
+                    if(!confirm(msg)) return;
+                  }
                   // De-dup against existing el (same date + category + amount)
                   var existing = {};
                   el.forEach(function(e){
@@ -7531,6 +7621,45 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                       var r=pasteUberTaxResult;
                       var yr=r.year, mn=r.monthNum;
                       var monthStr=yr+"-"+(mn<10?"0":"")+mn;
+                      // === Pre-check: detect overlap with existing toll/platform expenses ===
+                      var relatedExp = el.filter(function(e){
+                        if(e.category !== "toll" && e.category !== "platform") return false;
+                        var emo = e.statementMonth || (e.date||"").slice(0,7);
+                        return emo === monthStr;
+                      });
+                      var deleteOverlap = false;
+                      if(relatedExp.length > 0){
+                        var byCat = {};
+                        relatedExp.forEach(function(e){
+                          if(!byCat[e.category]) byCat[e.category] = {count:0, total:0};
+                          byCat[e.category].count++;
+                          byCat[e.category].total += +e.amount||0;
+                        });
+                        var lines = [];
+                        Object.keys(byCat).forEach(function(c){
+                          var lbl = allC[c] ? allC[c].label : c;
+                          lines.push("  • "+lbl+": "+byCat[c].count+(lang==="en"?" entries $":" 笔 $")+byCat[c].total.toFixed(2));
+                        });
+                        var monthlyToll = (+r.tollTotal||0).toFixed(2);
+                        var monthlyFees = (+r.feesTotal||0).toFixed(2);
+                        // Three-way prompt: 1 = keep both, 2 = delete existing, 3 = cancel
+                        var msg = lang==="en"?
+                          ("⚠ "+monthStr+" already has expense entries that overlap with this monthly statement:\n\n"+lines.join("\n")+"\n\nThe monthly statement contains:\n  • Tolls reimbursement: $"+monthlyToll+"\n  • Platform fees: $"+monthlyFees+"\n\nWhat to do?\n  1 = Keep all (manual entries + monthly statement coexist)\n  2 = Delete existing manual entries, only use monthly statement\n  3 = Cancel (don't save monthly statement)\n\nEnter 1, 2, or 3:"):
+                          ("⚠ "+monthStr+" 已有以下支出，与即将粘贴的月度账单类别重叠：\n\n"+lines.join("\n")+"\n\n本月账单内含：\n  • 过桥退款：$"+monthlyToll+"\n  • 平台抽成：$"+monthlyFees+"\n\n如何处理？\n  1 = 都保留（手动记录 + 月度账单共存）\n  2 = 删除已有手动记录，只用月度账单\n  3 = 取消（不保存月度账单）\n\n输入 1、2 或 3：");
+                        var choice = prompt(msg, "1");
+                        if(choice === null || choice === "" || choice === "3") return;
+                        if(choice === "2"){ deleteOverlap = true; }
+                        // Otherwise (default "1") keep both
+                      }
+                      // Delete existing overlapping entries if user chose option 2
+                      if(deleteOverlap && relatedExp.length > 0){
+                        var keepIds = {};
+                        relatedExp.forEach(function(e){keepIds[e.id]=true;});
+                        var prevElForUndo = el.slice();
+                        var nelAfterDel = el.filter(function(e){return !keepIds[e.id];});
+                        setEl(nelAfterDel);
+                        // Note: undo is just for the sl save below; user's choice applied
+                      }
                       var existing=sl.find(function(x){return x.platform==="Uber"&&x.month===monthStr;});
                       if(existing){
                         if(!confirm(lang==="en"?"A statement for "+monthStr+" Uber already exists. Overwrite (operations fields like trips/miles will be preserved)?":monthStr+" Uber 已有记录。覆盖（趟数/里程等字段会保留）？"))return;
@@ -7564,8 +7693,13 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                           notes:"Imported from Uber "+monthStr+" Monthly Summary"
                         }].concat(sl));
                       }
+                      // NOTE: Monthly statement is INCOME ONLY (sl array).
                       setShowPasteUberTax(false);setPasteUberTaxText("");setPasteUberTaxResult(null);
-                      showToast(lang==="en"?"✓ Saved monthly statement":"✓ 月度账单已保存");
+                      var msgDone = lang==="en"?"✓ Saved monthly statement":"✓ 月度账单已保存";
+                      if(deleteOverlap){
+                        msgDone += lang==="en"?" (existing overlapping expenses removed)":"（已删除重叠支出）";
+                      }
+                      showToast(msgDone);
                     }, style: {width:"100%",background:"linear-gradient(135deg,#5A3A00,#3A2800)",border:"1px solid #7A5500",borderRadius:10,padding:"12px",color:"#fff",fontSize:14,fontWeight:800,cursor:"pointer"} }, "✓ " , (lang==="en"?"Save Monthly Statement":"保存月度账单"))
                   // Annual import button (12 statements)
                   : (pasteUberTaxResult.hasMonthly && pasteUberTaxResult.hasTrips) ? React.createElement('button', { onClick: function(){
@@ -7715,24 +7849,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                             notes:r.notes
                           });
                         }));
-                        // Also create platform fee expense if not duplicate
-                        if(r.uberServiceFee && +r.uberServiceFee > 0){
-                          var expDate2 = r.weekStart;
-                          var dup2 = el.some(function(e){
-                            return e.category==="platform" && e.date===expDate2 && Math.abs((+e.amount||0)-(+r.uberServiceFee))<0.01;
-                          });
-                          if(!dup2){
-                            setEl([{
-                              id:Date.now()+1,
-                              date:expDate2,
-                              category:"platform",
-                              amount:+r.uberServiceFee,
-                              notes:"Uber Service Fee · "+r.weekStart+" – "+r.weekEnd,
-                              isFixed:false,
-                              mode:"rideshare"
-                            }].concat(el));
-                          }
-                        }
+                        // NOTE: weekly is reference-only, no auto-expense creation.
                       }else{
                         setWl([{
                           id:Date.now(), weekStart:r.weekStart, platform:"Uber",
@@ -7742,29 +7859,13 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                           trips:"", hours:"", onlineHours:"", miles:"",
                           notes:r.notes
                         }].concat(wl));
-                        // Also create a platform fee expense entry for Uber Service Fee
-                        if(r.uberServiceFee && +r.uberServiceFee > 0){
-                          // Use weekStart date as the expense date
-                          var expDate = r.weekStart;
-                          // Avoid duplicates: check if expense already exists for same week + amount
-                          var dup = el.some(function(e){
-                            return e.category==="platform" && e.date===expDate && Math.abs((+e.amount||0)-(+r.uberServiceFee))<0.01;
-                          });
-                          if(!dup){
-                            setEl([{
-                              id:Date.now()+1,
-                              date:expDate,
-                              category:"platform",
-                              amount:+r.uberServiceFee,
-                              notes:"Uber Service Fee · "+r.weekStart+" – "+r.weekEnd,
-                              isFixed:false,
-                              mode:"rideshare"
-                            }].concat(el));
-                          }
-                        }
+                        // NOTE: Weekly logs are REFERENCE-ONLY — they don't affect income/expense calculations.
+                        // The monthly statement is the source of truth for taxes and totals.
+                        // So we do NOT auto-create platform fee or toll expenses from weekly imports —
+                        // that would conflict with the monthly statement's auto-generated entries.
                       }
                       setShowPasteUber(false);setPasteUberText("");setPasteUberResult(null);
-                      showToast(lang==="en"?"✓ Saved to weekly log":"✓ 已保存到周记录");
+                      showToast(lang==="en"?"✓ Saved to weekly log (reference only — totals come from monthly statement)":"✓ 已保存到周记录（仅供参考 — 总账以月度报表为准）");
                     }, style: {width:"100%",background:"linear-gradient(135deg,#1A6030,#0A4020)",border:"1px solid #2A8050",borderRadius:10,padding:"12px",color:"#fff",fontSize:14,fontWeight:800,cursor:"pointer",marginTop:14} }, "✓ " , lang==="en"?"Save to Weekly Log":"保存到周记录")
                 ) : null
             )
