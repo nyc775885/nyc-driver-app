@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-var APP_VERSION = "v3.10.78";  // ← single source of truth: bump this once per release
+var APP_VERSION = "v3.10.79";  // ← single source of truth: bump this once per release
 console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
@@ -12,7 +12,7 @@ console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-
       window.Sentry.init({
         dsn:window.SENTRY_DSN,
         environment:(location.hostname==="localhost"||location.hostname==="127.0.0.1")?"development":"production",
-        release:"nyc-driver-tracker@1.3.23",
+        release:"nyc-driver-tracker@1.3.25",
         tracesSampleRate:0.1,
         // Don't send events from local dev
         beforeSend:function(event){
@@ -4611,6 +4611,8 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                       }
                       showToast(lang==="en"?"📄 Reading Fuelio PDF...":"📄 读取 Fuelio PDF 中...", "info");
                       extractPdfText(f).then(function(text){
+                        // DEBUG: store full text for inspection
+                        try{ localStorage.setItem("nyc_debug_fuelio_pdf", text.slice(0, 50000)); }catch(e){}
                         var r = parseFuelioReport(text);
                         if(r.error || !r.entries || r.entries.length === 0){
                           showToast(lang==="en"?"No entries found — may not be a Fuelio report":"没找到记录，可能不是 Fuelio 月报", "error");
@@ -8003,6 +8005,25 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
               , React.createElement('div', { style: {fontSize:15,fontWeight:700,color:C.text2,marginBottom:3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 802}}, lang==="en"?"📤 Export JSON Backup":"📤 导出JSON备份")
               , React.createElement('div', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 803}}, lang==="en"?"Download all data as JSON":"下载所有数据为JSON文件")
             )
+            // === DEBUG: Export Fuelio PDF text ===
+            , (function(){
+                var dbgText = "";
+                try{ dbgText = localStorage.getItem("nyc_debug_fuelio_pdf") || ""; }catch(e){}
+                if(!dbgText) return null;
+                return React.createElement('button', { onClick: function(){
+                  var blob = new Blob([dbgText], {type:"text/plain"});
+                  var url = URL.createObjectURL(blob);
+                  var a = document.createElement("a");
+                  a.href = url;
+                  a.download = "fuelio-pdf-debug-"+today()+".txt";
+                  a.click();
+                  URL.revokeObjectURL(url);
+                  showToast(lang==="en"?"✓ Debug text downloaded":"✓ 调试文本已下载","success");
+                }, style: {width:"100%",background:"#1A0F00",border:"1px solid #5A3F00",borderRadius:12,padding:14,marginBottom:10,textAlign:"left",cursor:"pointer"} }
+                  , React.createElement('div', { style: {fontSize:15,fontWeight:700,color:"#FFB300",marginBottom:3} }, "🐛 ", lang==="en"?"Debug: Last Fuelio PDF Text":"🐛 调试：最后一次 Fuelio PDF 文本")
+                  , React.createElement('div', { style: {fontSize:12,color:C.text3} }, lang==="en"?"Download the raw text extracted from the PDF":"下载从 PDF 提取的原始文本")
+                );
+              }())
             // === Export Excel button ===
             , React.createElement('button', { onClick: function(){
                 if(!window.XLSX){ showToast(lang==="en"?"Excel library not ready, refresh app":"Excel 库未就绪，请刷新", "error"); return; }
