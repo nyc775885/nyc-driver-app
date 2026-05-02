@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-var APP_VERSION = "v3.10.79";  // ← single source of truth: bump this once per release
+var APP_VERSION = "v3.10.81";  // ← single source of truth: bump this once per release
 console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
@@ -12,7 +12,7 @@ console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-
       window.Sentry.init({
         dsn:window.SENTRY_DSN,
         environment:(location.hostname==="localhost"||location.hostname==="127.0.0.1")?"development":"production",
-        release:"nyc-driver-tracker@1.3.25",
+        release:"nyc-driver-tracker@1.3.26",
         tracesSampleRate:0.1,
         // Don't send events from local dev
         beforeSend:function(event){
@@ -430,11 +430,11 @@ function parseFuelioReport(text){
     if(skip){ i2++; continue; }
     // Year-month header (like "2023-08") — informational, skip
     if(/^\d{4}-\d{2}\s*$/.test(line)){ i2++; continue; }
-    // Category header: "Gas: $288.01" / "Tolls - EZpassNY: $456.98" / "(Home Made Coffee): $88.73"
-    // / "Phone Bill - Verizon 📱 💵 : $89.62" (with emoji)
-    // Allow leading parenthesis/bracket. Allow emoji and any non-newline chars in label.
-    // Negative amounts (income lines) also matched, will be filtered by categorize().
-    var catM = line.match(/^([(\[]?[A-Za-z][^\n]*?)\s*:?\s*-?\$([\d,]+\.\d{2})\s*$/);
+    // Category header: any line ending with ": $XX.XX" or just "$XX.XX"
+    // Examples: "Gas: $288.01" / "(Home Made Coffee): $88.73" / "☕ ☕ ☕ (Home Made Coffee): $88.73"
+    // / "Phone Bill - Verizon 📱 💵 : $89.62" / "保 险 费 ⼜ 起 价 了 UBER INCOME 🚖..."
+    // First char can be anything (emoji, unicode, parens, letters). categorize() validates.
+    var catM = line.match(/^(\S[^\n]*?)\s*:?\s*-?\$([\d,]+\.\d{2})\s*$/);
     if(catM){
       var label = catM[1].trim();
       var catId = categorize(label);
@@ -522,7 +522,7 @@ function parseFuelioReport(text){
       // Location (free text, 1 line) — only if we have amount
       if(amount > 0 && look < lines.length && !/^\d{2}-\d{2}-\d{4}/.test(lines[look]) && !/^\$/.test(lines[look])){
         // Don't grab if it looks like a category header
-        var locCatTest = lines[look].match(/^([(\[]?[A-Za-z][^\n]*?)\s*:?\s*-?\$[\d,]+\.\d{2}\s*$/);
+        var locCatTest = lines[look].match(/^(\S[^\n]*?)\s*:?\s*-?\$[\d,]+\.\d{2}\s*$/);
         if(!locCatTest){
           location = lines[look];
           look++;
@@ -535,7 +535,7 @@ function parseFuelioReport(text){
         if(/^\$[\d,]+\.\d{2}\s*$/.test(nl)) break;
         if(/^\d{4}-\d{2}\s*$/.test(nl)) break;
         // Stop at next category header (also allow parens/brackets/negative/emoji)
-        var ncatM = nl.match(/^([(\[]?[A-Za-z][^\n]*?)\s*:?\s*-?\$[\d,]+\.\d{2}\s*$/);
+        var ncatM = nl.match(/^(\S[^\n]*?)\s*:?\s*-?\$[\d,]+\.\d{2}\s*$/);
         if(ncatM){ break; }
         // Stop at income/skip lines (UBER INCOME, Uber Paid, etc) — they don't belong in notes
         var isSkipLine = false;
@@ -548,8 +548,8 @@ function parseFuelioReport(text){
         if(look - i2 > 5) break; // safety
       }
       if(currentCategory && amount > 0){
-        // Skip income
-        if(currentCategory === "income" || /^_ignore_/.test(currentCategory) || /UBER INCOME|Uber Paid/i.test(currentCategoryLabel)){
+        // Skip income (check label + notes + location for Uber Paid / UBER INCOME markers)
+        if(currentCategory === "income" || /^_ignore_/.test(currentCategory) || /UBER INCOME|Uber Paid/i.test(currentCategoryLabel + " " + notes + " " + location)){
           i2 = look; continue;
         }
         var noteText = location ? (location + (notes ? " · "+notes : "")) : notes;
