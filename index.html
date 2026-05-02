@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <!-- Allow user zoom for accessibility (use font-size:16px on inputs to prevent iOS zoom-on-focus) -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#1F1B26" />
+  <meta name="theme-color" content="#0A0E1A" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -18,8 +18,8 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     body {
-      background: #1F1B26;
-      color: #E8EAF0;
+      background: #0A0E1A;
+      color: #F5F7FA;
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Noto Sans SC', 'Segoe UI', Roboto, sans-serif;
       font-variant-numeric: tabular-nums;
       font-feature-settings: "tnum", "ss01", "cv11";
@@ -35,16 +35,28 @@
       font-size: 16px;
       font-variant-numeric: tabular-nums;
     }
-    select { color: #E8EAF0 !important; background: #080E1C !important; }
-    select option { background: #152135 !important; color: #E8EAF0 !important; }
-    input[type="date"], input[type="month"] { color-scheme: dark; color: #E8EAF0 !important; }
+    select { color: #F5F7FA !important; background: #0F1420 !important; }
+    select option { background: #1A2235 !important; color: #F5F7FA !important; }
+    input[type="date"], input[type="month"] { color-scheme: dark; color: #F5F7FA !important; }
     /* Remove spinner arrows from number inputs */
     input[type="number"]::-webkit-outer-spin-button,
     input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
     input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
     .noscript-msg { padding: 40px 20px; text-align: center; line-height: 1.7; }
-  @keyframes toastIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
-</style>
+    /* Smooth animations */
+    @keyframes toastIn{from{opacity:0;transform:translateY(8px) scale(0.96);}to{opacity:1;transform:translateY(0) scale(1);}}
+    @keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+    @keyframes slideUp{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+    /* Button hover effects (subtle on touch devices) */
+    @media (hover:hover){
+      button:hover{filter:brightness(1.1);}
+    }
+    /* Scrollbar styling */
+    ::-webkit-scrollbar{width:6px;height:6px;}
+    ::-webkit-scrollbar-track{background:transparent;}
+    ::-webkit-scrollbar-thumb{background:#1E2A3F;border-radius:3px;}
+    ::-webkit-scrollbar-thumb:hover{background:#2A3A55;}
+  </style>
 </head>
 <body>
   <noscript>
@@ -82,7 +94,7 @@
   </script>
   <!-- SheetJS for Excel/CSV import & export -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" crossorigin="anonymous"></script>
-  <script src="app.js?v=556"></script>
+  <script src="app.js?v=565"></script>
   <script>
     // PWA service worker: aggressive auto-update strategy.
     // 1. Register on load

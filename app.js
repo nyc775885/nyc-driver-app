@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-var APP_VERSION = "v3.10.33";  // ← single source of truth: bump this once per release
+var APP_VERSION = "v3.10.52";  // ← single source of truth: bump this once per release
 console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
@@ -12,7 +12,7 @@ console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-
       window.Sentry.init({
         dsn:window.SENTRY_DSN,
         environment:(location.hostname==="localhost"||location.hostname==="127.0.0.1")?"development":"production",
-        release:"nyc-driver-tracker@1.2.7",
+        release:"nyc-driver-tracker@1.3.5",
         tracesSampleRate:0.1,
         // Don't send events from local dev
         beforeSend:function(event){
@@ -58,15 +58,15 @@ class ErrorBoundary extends React.Component {
   componentDidCatch(err,info){reportError(err,{component:info.componentStack});}
   render(){
     if(this.state.hasError){
-      return React.createElement('div',{style:{padding:24,fontFamily:"sans-serif",color:"#E8EAF0",background:"#080C18",minHeight:"100vh"}},
+      return React.createElement('div',{style:{padding:24,fontFamily:"sans-serif",color:C.text,background:"#080C18",minHeight:"100vh"}},
         React.createElement('div',{style:{fontSize:48,marginBottom:16}},"⚠️"),
-        React.createElement('h2',{style:{color:"#FF5252",marginBottom:12}},"App crashed / 应用崩溃"),
+        React.createElement('h2',{style:{color:C.danger,marginBottom:12}},"App crashed / 应用崩溃"),
         React.createElement('p',{style:{marginBottom:8}},"Something went wrong. Your data is safe in localStorage."),
-        React.createElement('p',{style:{marginBottom:16,color:"#90B8D0",fontSize:13}},"出错了，但你的数据还在 localStorage 中。"),
-        React.createElement('button',{onClick:function(){location.reload();},style:{background:"#00D4FF",color:"#000",border:"none",borderRadius:8,padding:"10px 18px",fontSize:14,fontWeight:700,cursor:"pointer",marginRight:8}},"🔄 Reload / 刷新"),
-        React.createElement('details',{style:{marginTop:24,fontSize:12,color:"#7A9AB8"}},
+        React.createElement('p',{style:{marginBottom:16,color:C.text2,fontSize:13}},"出错了，但你的数据还在 localStorage 中。"),
+        React.createElement('button',{onClick:function(){location.reload();},style:{background:C.accent,color:"#000",border:"none",borderRadius:8,padding:"10px 18px",fontSize:14,fontWeight:700,cursor:"pointer",marginRight:8}},"🔄 Reload / 刷新"),
+        React.createElement('details',{style:{marginTop:24,fontSize:12,color:C.text3}},
           React.createElement('summary',{style:{cursor:"pointer"}},"Technical details / 技术详情"),
-          React.createElement('pre',{style:{background:"#0A1828",padding:12,borderRadius:8,overflow:"auto",marginTop:8}},String(this.state.err&&this.state.err.stack||this.state.err))
+          React.createElement('pre',{style:{background:C.bg3,padding:12,borderRadius:8,overflow:"auto",marginTop:8}},String(this.state.err&&this.state.err.stack||this.state.err))
         )
       );
     }
@@ -99,16 +99,51 @@ var LICTYPES_EN=["TLC Driver License (2yr·$252)","TLC FHV Vehicle License (1yr)
 var LICTYPES=LICTYPES_ZH;
 var CARBRANDS=["Acura","Audi","BMW","Buick","Cadillac","Chevrolet","Chrysler","Dodge","Ford","Genesis","GMC","Honda","Hyundai","Infiniti","Jaguar","Jeep","Kia","Land Rover","Lexus","Lincoln","Mazda","Mercedes-Benz","Mitsubishi","Nissan","Polestar","Porsche","Ram","Rivian","Subaru","Tesla","Toyota","Volkswagen","Volvo","Other"];
 var ICONS=["💼","🚗","⛽","💰","🔧","📱","🏠","🍔","☕","💊","🔑","💡","🎓","🏥","🛒","⚙","🔄","🛠","🛡","🏷","📶","⭐","🧾","🧮"];
-// Global color theme — needed by Btn, Card, Empty, Stat, etc. which are defined outside App()
-var C={bg:"#1F1B26",bg2:"#2A2532",bg3:"#36303E",border:"#4A4252",text:"#F5EFEA",text2:"#D8C9C0",text3:"#B5A399"};
+// Global color theme — Tesla-inspired dark tech aesthetic
+// Layered backgrounds (deep → mid → elevated) + neon accents + semantic colors
+var C={
+  // Backgrounds (3 layers for depth)
+  bg:    "#0A0E1A",    // deepest — page background, almost pure black with hint of blue
+  bg2:   "#121826",    // mid — card surface
+  bg3:   "#101828",    // mid-deep — for inset cards, secondary surfaces (was #1A2235, now darker for better depth)
+  bg4:   "#0F1420",    // sunken — input fields, code blocks
+  // Borders (subtle, almost invisible by default)
+  border:"#1E2A3F",    // default subtle border
+  border2:"#2A3A55",   // hover/focus border
+  // Text (high contrast on dark)
+  text:  "#F5F7FA",    // primary text, almost white
+  text2: "#A0B0C8",    // secondary, labels
+  text3: "#5A6B85",    // tertiary, hints
+  // Brand accents (Tesla-inspired neon)
+  accent:    C.accent, // primary cyan-blue (data, links, focus)
+  accent2:   C.accent2, // softer blue (icons, decorative)
+  // Semantic colors (status)
+  success:   C.success, // income, positive
+  successDim:"#0A4020", // success bg
+  warn:      "#FFB347", // warning amber
+  warnDim:   "#1A1400",
+  danger:    C.danger, // expense, negative
+  dangerDim: "#1A0808",
+  gold:      C.gold  // highlights, premium feel
+};
+// Design tokens — use these for spacing, radii, shadows
+var SPACE={xs:4, sm:8, md:12, lg:16, xl:24, xxl:32};
+var RADIUS={sm:8, md:12, lg:16, xl:20};
+var SHADOW={
+  sm: "0 1px 3px rgba(0,0,0,0.4)",
+  md: "0 4px 12px rgba(0,0,0,0.5)",
+  lg: "0 8px 24px rgba(0,0,0,0.6)",
+  glow:"0 0 20px rgba(0,212,255,0.15)" // cyan glow for primary CTAs
+};
+var FS={xs:10, sm:11, md:13, lg:15, xl:18, xxl:22, xxxl:28, hero:36};
 var FIXSUGG_ZH=[{label:"车贷月付",icon:"🏷",cat:"carloan",day:1},{label:"TLC保险",icon:"🛡",cat:"insurance",day:1},{label:"手机费",icon:"📱",cat:"phonebill",day:15},{label:"健康保险",icon:"🏥",cat:"health",day:1},{label:"Uber Pro",icon:"⭐",cat:"uberpro",day:1}];
 var FIXSUGG_EN=[{label:"Car Loan",icon:"🏷",cat:"carloan",day:1},{label:"TLC Insurance",icon:"🛡",cat:"insurance",day:1},{label:"Phone Bill",icon:"📱",cat:"phonebill",day:15},{label:"Health Insurance",icon:"🏥",cat:"health",day:1},{label:"Uber Pro",icon:"⭐",cat:"uberpro",day:1}];
-var IS={background:"#080E1C",border:"1px solid #243550",color:"#E8EAF0",borderRadius:8,padding:"8px 10px",fontSize:13,outline:"none",width:"100%",boxSizing:"border-box",transition:"border-color 0.2s"};
+var IS={background:C.bg4,border:"1px solid "+C.border,color:C.text,borderRadius:RADIUS.sm,padding:"10px 12px",fontSize:FS.md,outline:"none",width:"100%",boxSizing:"border-box",transition:"border-color 0.15s, background 0.15s"};
 var LINKS=[
-  {title:"TLC 官方",title_en:"TLC Official",color:"#00D4FF",links:[{label:"TLC 官网",label_en:"TLC Website",desc:"执照申请、更新、罚单",desc_en:"License apply, renewal, tickets",url:"https://www.nyc.gov/site/tlc"},{label:"LARS 系统",label_en:"LARS System",desc:"在线缴费、更新执照",desc_en:"Online payment, license renewal",url:"https://apps.nyc.gov/lars"},{label:"TLC UP 文件上传",label_en:"TLC UP File Upload",desc:"上传证件文件",desc_en:"Upload license documents",url:"https://tlcup.nyc.gov"}]},
-  {title:"背景调查 & 指纹",title_en:"Background & Fingerprint",color:"#FFD700",links:[{label:"指纹预约 IdentoGO",label_en:"IdentoGO Fingerprint",desc:"背景调查指纹预约（代码 15425Y）",desc_en:"Background check fingerprinting (code 15425Y)",url:"https://uenroll.identogo.com"},{label:"OCA 法院记录查询",label_en:"OCA Court Records",desc:"纽约法院案件记录",desc_en:"NY court case records",url:"https://iapps.courts.state.ny.us/webcivil/ecourtsMain"}]},
-  {title:"DDC 防御驾驶课程",title_en:"DDC Defensive Driving",color:"#00E676",links:[{label:"NSC 全国安全委员会",label_en:"NSC National Safety Council",desc:"NSC DDC 认证课程",desc_en:"NSC DDC certified course",url:"https://www.nsc.org/road-safety"},{label:"I Drive Safely",label_en:"I Drive Safely",desc:"在线DDC课程（TLC认证）",desc_en:"Online DDC course (TLC approved)",url:"https://www.idrivesafely.com"},{label:"DriversEd.com",label_en:"DriversEd.com",desc:"在线防御驾驶课程",desc_en:"Online defensive driving course",url:"https://www.driversed.com/defensive-driving/"}]},
-  {title:"纽约 311",title_en:"NYC 311",color:"#00E676",links:[{label:"311 网页版",label_en:"311 Web Portal",desc:"投诉、举报、城市服务请求",desc_en:"Complaints, reports, city service requests",url:"https://portal.311.nyc.gov"},{label:"311 地图查询",label_en:"311 Map Search",desc:"查看附近的服务请求",desc_en:"View nearby service requests",url:"https://maps.nyc.gov/311"}]},
+  {title:"TLC 官方",title_en:"TLC Official",color:C.accent,links:[{label:"TLC 官网",label_en:"TLC Website",desc:"执照申请、更新、罚单",desc_en:"License apply, renewal, tickets",url:"https://www.nyc.gov/site/tlc"},{label:"LARS 系统",label_en:"LARS System",desc:"在线缴费、更新执照",desc_en:"Online payment, license renewal",url:"https://apps.nyc.gov/lars"},{label:"TLC UP 文件上传",label_en:"TLC UP File Upload",desc:"上传证件文件",desc_en:"Upload license documents",url:"https://tlcup.nyc.gov"}]},
+  {title:"背景调查 & 指纹",title_en:"Background & Fingerprint",color:C.gold,links:[{label:"指纹预约 IdentoGO",label_en:"IdentoGO Fingerprint",desc:"背景调查指纹预约（代码 15425Y）",desc_en:"Background check fingerprinting (code 15425Y)",url:"https://uenroll.identogo.com"},{label:"OCA 法院记录查询",label_en:"OCA Court Records",desc:"纽约法院案件记录",desc_en:"NY court case records",url:"https://iapps.courts.state.ny.us/webcivil/ecourtsMain"}]},
+  {title:"DDC 防御驾驶课程",title_en:"DDC Defensive Driving",color:C.success,links:[{label:"NSC 全国安全委员会",label_en:"NSC National Safety Council",desc:"NSC DDC 认证课程",desc_en:"NSC DDC certified course",url:"https://www.nsc.org/road-safety"},{label:"I Drive Safely",label_en:"I Drive Safely",desc:"在线DDC课程（TLC认证）",desc_en:"Online DDC course (TLC approved)",url:"https://www.idrivesafely.com"},{label:"DriversEd.com",label_en:"DriversEd.com",desc:"在线防御驾驶课程",desc_en:"Online defensive driving course",url:"https://www.driversed.com/defensive-driving/"}]},
+  {title:"纽约 311",title_en:"NYC 311",color:C.success,links:[{label:"311 网页版",label_en:"311 Web Portal",desc:"投诉、举报、城市服务请求",desc_en:"Complaints, reports, city service requests",url:"https://portal.311.nyc.gov"},{label:"311 地图查询",label_en:"311 Map Search",desc:"查看附近的服务请求",desc_en:"View nearby service requests",url:"https://maps.nyc.gov/311"}]},
   {title:"平台司机中心",title_en:"Platform Driver Centers",color:"#AB47BC",links:[{label:"Uber 司机中心",label_en:"Uber Driver Center",desc:"Uber 账单、文件、支持",desc_en:"Uber bills, documents, support",url:"https://drivers.uber.com"},{label:"Lyft 司机中心",label_en:"Lyft Driver Center",desc:"Lyft 账单、文件、支持",desc_en:"Lyft bills, documents, support",url:"https://www.lyft.com/driver"},{label:"Via 司机",label_en:"Via Driver",desc:"Via 司机登录",desc_en:"Via driver login",url:"https://drivers.ridewithvia.com"}]},
   {title:"TLC 公开数据",title_en:"TLC Open Data",color:"#FF9A65",links:[{label:"TLC 行程记录数据",label_en:"TLC Trip Record Data",desc:"每月更新的历史行程数据",desc_en:"Monthly historical trip data",url:"https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page"},{label:"TLC 统计报告",label_en:"TLC Statistical Reports",desc:"行业报告、年度数据",desc_en:"Industry reports, annual data",url:"https://www.nyc.gov/site/tlc/about/data.page"},{label:"NYC Open Data",label_en:"NYC Open Data",desc:"纽约市全部公开数据集",desc_en:"All NYC open data sets",url:"https://opendata.cityofnewyork.us"}]},
   {title:"其他实用网站",title_en:"Other Useful Sites",color:"#B0D4E8",links:[{label:"DMV 纽约州驾照",label_en:"DMV NY State License",desc:"驾照更新、地址变更",desc_en:"License renewal, address change",url:"https://dmv.ny.gov"},{label:"IRS 自雇税指南",label_en:"IRS Self-Employment Tax",desc:"自雇人员税务信息",desc_en:"Self-employed tax info",url:"https://www.irs.gov/businesses/small-businesses-self-employed/self-employed-individuals-tax-center"}]},
@@ -900,13 +935,13 @@ function wkMon(dt){var a=dt.split("-"),d=new Date(+a[0],+a[1]-1,+a[2]),dy=d.getD
 function wkEnd(s){var a=s.split("-"),d=new Date(+a[0],+a[1]-1,+a[2]);d.setDate(d.getDate()+6);return d.getFullYear()+"-"+p2(d.getMonth()+1)+"-"+p2(d.getDate());}
 function wkLabel(s){var e=wkEnd(s);return s.slice(5).replace("-","/")+"-"+e.slice(5).replace("-","/")}
 function genFixed(fl,month){var now=new Date(),curMonth=now.getFullYear()+"-"+p2(now.getMonth()+1),today=now.getDate();return fl.filter(function(f){if(!f.active||!f.amount)return false;if(month>curMonth)return false;if(f.startDate&&month<f.startDate.slice(0,7))return false;if(f.endDate&&month>f.endDate.slice(0,7))return false;if(month===curMonth&&today<(+f.day||1))return false;return true;}).map(function(f){var amt=f.cycle==="annual"?Math.round(+f.amount/12*100)/100:+f.amount;return {id:"fx_"+f.id+"_"+month,date:month+"-"+p2(+f.day||1),category:f.cat||"other",amount:amt,notes:f.notes||"",isFixed:true,fixedLabel:f.label,fixedIcon:f.icon};});}
-function Btn(p){return React.createElement('button', { onClick: p.onClick, style: Object.assign({background:"linear-gradient(135deg,#00D4FF,#0055FF)",border:"none",borderRadius:10,padding:"10px 18px",color:"#fff",fontSize:14,fontWeight:700,cursor:"pointer"},p.style||{}), __self: this, __source: {fileName: _jsxFileName, lineNumber: 37}}, p.children);}
-function Card(p){return React.createElement('div', { className: "nyc-card", onClick: p.onClick, style: Object.assign({background:C.bg2,borderRadius:12,padding:"14px 16px",marginBottom:10,border:"1px solid "+C.border},p.style||{}), __self: this, __source: {fileName: _jsxFileName, lineNumber: 38}}, p.children);}
-function Empty(p){return React.createElement('div', { style: {textAlign:"center",padding:"36px 20px",color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 39}}, React.createElement('div', { style: {fontSize:36,marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 39}}, "📊"), React.createElement('div', { style: {fontSize:14,lineHeight:2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 39}}, p.text));}
-function Row(p){var fw=p.bold?800:600;var cl=p.color||"#E8EAF0";return React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 0",borderBottom:"1px solid #0F1C30"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 40}}, React.createElement('span', { style: {fontSize:14,color:"#C8E8F8"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 40}}, p.label), React.createElement('span', { style: Object.assign({fontSize:15},{fontWeight:fw,color:cl}), __self: this, __source: {fileName: _jsxFileName, lineNumber: 40}}, p.value));}
-function Stat(p){var pad=p.sm?"8px 6px":"12px 10px";var fs1=p.sm?11:12;var fs2=p.sm?15:16;var cl=p.color||"#E8EAF0";return React.createElement('div', { style: {background:C.bg2,borderRadius:10,padding:pad,border:"1px solid "+C.border,textAlign:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 41}}, React.createElement('div', { style: Object.assign({color:"#90B8D0",marginBottom:3},{fontSize:fs1}), __self: this, __source: {fileName: _jsxFileName, lineNumber: 41}}, p.label), React.createElement('div', { style: Object.assign({fontWeight:700},{fontSize:fs2,color:cl}), __self: this, __source: {fileName: _jsxFileName, lineNumber: 41}}, p.value));}
-function ABox(p){return React.createElement('div', { style: {margin:"8px 14px 0",background:p.bg,border:"1px solid "+p.color,borderRadius:10,padding:"10px 14px",fontSize:14,color:p.color,display:"flex",gap:8,alignItems:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 42}}, React.createElement('span', { style: {fontSize:18}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 42}}, p.icon), React.createElement('span', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 42}}, p.text));}
-function Field(p){var el;if(p.options){el=React.createElement('select', { value: p.value, onChange: function(e){p.onChange(e.target.value);}, style: IS, __self: this, __source: {fileName: _jsxFileName, lineNumber: 43}}, p.options.map(function(o){return React.createElement('option', { key: o[0], value: o[0], __self: this, __source: {fileName: _jsxFileName, lineNumber: 43}}, o[1]);}));}else{var isDateTime=p.type==="date"||p.type==="month"||p.type==="time";var baseStyle=isDateTime?Object.assign({},IS,{colorScheme:"dark",color:"#E8EAF0",fontSize:17,padding:"14px 16px",cursor:"pointer"}):IS;var inputProps={type:p.type||"text",value:p.value,onChange:function(e){p.onChange(e.target.value);},placeholder:p.placeholder||"",style:baseStyle,__self:this,__source:{fileName:_jsxFileName,lineNumber:43}};if(isDateTime){inputProps.onClick=function(e){try{if(e.currentTarget.showPicker)e.currentTarget.showPicker();}catch(err){}};}else if(p.type==="number"){inputProps.onFocus=function(e){try{e.target.select();}catch(err){}};}if(p.money){inputProps.step="0.01";inputProps.inputMode="decimal";inputProps.onFocus=function(e){try{e.target.select();}catch(err){}};inputProps.onBlur=function(e){var v=e.target.value;if(v===""||isNaN(+v))return;var formatted=(+v).toFixed(2);if(formatted!==v)p.onChange(formatted);};}var inputEl=React.createElement('input',inputProps);// For date/month inputs, wrap with a Today button
+function Btn(p){return React.createElement('button', { onClick: p.onClick, style: Object.assign({background:"linear-gradient(135deg,#00D4FF,#0055FF)",border:"none",borderRadius:RADIUS.sm,padding:"10px 18px",color:"#fff",fontSize:FS.md+1,fontWeight:700,cursor:"pointer",boxShadow:SHADOW.glow,transition:"transform 0.1s, box-shadow 0.15s",letterSpacing:0.2},p.style||{}), __self: this, __source: {fileName: _jsxFileName, lineNumber: 37}}, p.children);}
+function Card(p){return React.createElement('div', { className: "nyc-card", onClick: p.onClick, style: Object.assign({background:C.bg2,borderRadius:RADIUS.md,padding:"14px 16px",marginBottom:10,border:"1px solid "+C.border,boxShadow:SHADOW.sm},p.style||{}), __self: this, __source: {fileName: _jsxFileName, lineNumber: 38}}, p.children);}
+function Empty(p){return React.createElement('div', { style: {textAlign:"center",padding:"50px 20px",color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 39}}, React.createElement('div', { style: {fontSize:48,marginBottom:14,opacity:0.5}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 39}}, "📊"), React.createElement('div', { style: {fontSize:FS.md+1,lineHeight:1.7,fontWeight:500}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 39}}, p.text));}
+function Row(p){var fw=p.bold?800:600;var cl=p.color||C.text;return React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 0",borderBottom:"1px solid #0F1C30"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 40}}, React.createElement('span', { style: {fontSize:14,color:C.text2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 40}}, p.label), React.createElement('span', { style: Object.assign({fontSize:15},{fontWeight:fw,color:cl}), __self: this, __source: {fileName: _jsxFileName, lineNumber: 40}}, p.value));}
+function Stat(p){var pad=p.sm?"10px 8px":"14px 12px";var fs1=p.sm?FS.sm:FS.md;var fs2=p.sm?FS.lg:FS.xl;var cl=p.color||C.text;return React.createElement('div', { style: {background:C.bg2,borderRadius:RADIUS.md,padding:pad,border:"1px solid "+C.border,textAlign:"center",boxShadow:SHADOW.sm,transition:"transform 0.15s"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 41}}, React.createElement('div', { style: {color:C.text2,marginBottom:4,fontSize:fs1,letterSpacing:0.3,fontWeight:500}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 41}}, p.label), React.createElement('div', { style: {fontWeight:800,fontSize:fs2,color:cl,letterSpacing:-0.3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 41}}, p.value));}
+function ABox(p){return React.createElement('div', { style: {margin:"10px 14px 0",background:p.bg,border:"1px solid "+p.color,borderRadius:RADIUS.md,padding:"12px 14px",fontSize:FS.md+1,color:p.color,display:"flex",gap:10,alignItems:"center",boxShadow:SHADOW.sm,fontWeight:600,letterSpacing:0.1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 42}}, React.createElement('span', { style: {fontSize:20,filter:"drop-shadow(0 1px 2px rgba(0,0,0,0.4))"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 42}}, p.icon), React.createElement('span', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 42}}, p.text));}
+function Field(p){var el;if(p.options){el=React.createElement('select', { value: p.value, onChange: function(e){p.onChange(e.target.value);}, style: IS, __self: this, __source: {fileName: _jsxFileName, lineNumber: 43}}, p.options.map(function(o){return React.createElement('option', { key: o[0], value: o[0], __self: this, __source: {fileName: _jsxFileName, lineNumber: 43}}, o[1]);}));}else{var isDateTime=p.type==="date"||p.type==="month"||p.type==="time";var baseStyle=isDateTime?Object.assign({},IS,{colorScheme:"dark",color:C.text,fontSize:17,padding:"14px 16px",cursor:"pointer"}):IS;var inputProps={type:p.type||"text",value:p.value,onChange:function(e){p.onChange(e.target.value);},placeholder:p.placeholder||"",style:baseStyle,__self:this,__source:{fileName:_jsxFileName,lineNumber:43}};if(isDateTime){inputProps.onClick=function(e){try{if(e.currentTarget.showPicker)e.currentTarget.showPicker();}catch(err){}};}else if(p.type==="number"){inputProps.onFocus=function(e){try{e.target.select();}catch(err){}};}if(p.money){inputProps.step="0.01";inputProps.inputMode="decimal";inputProps.onFocus=function(e){try{e.target.select();}catch(err){}};inputProps.onBlur=function(e){var v=e.target.value;if(v===""||isNaN(+v))return;var formatted=(+v).toFixed(2);if(formatted!==v)p.onChange(formatted);};}var inputEl=React.createElement('input',inputProps);// For date/month inputs, wrap with a Today button
 if(p.type==="date"||p.type==="month"){
   var todayHandler=function(){
     var d=new Date();
@@ -919,18 +954,18 @@ if(p.type==="date"||p.type==="month"){
   };
   el=React.createElement('div',{style:{display:"flex",gap:6}},
     React.createElement('div',{style:{flex:1}},inputEl),
-    React.createElement('button',{onClick:function(e){e.preventDefault();e.stopPropagation();todayHandler();},type:"button",style:{background:"#1A2A44",border:"1px solid #2A4A6A",color:"#00D4FF",fontSize:13,fontWeight:600,padding:"0 14px",borderRadius:8,cursor:"pointer",whiteSpace:"nowrap"}}, (typeof document!=="undefined"&&document.documentElement.lang==="en")?"Today":"今天")
+    React.createElement('button',{onClick:function(e){e.preventDefault();e.stopPropagation();todayHandler();},type:"button",style:{background:"linear-gradient(135deg, rgba(0,212,255,0.15), rgba(0,85,255,0.1))",border:"1px solid rgba(0,212,255,0.3)",color:C.accent,fontSize:FS.md,fontWeight:700,padding:"0 16px",borderRadius:RADIUS.sm,cursor:"pointer",whiteSpace:"nowrap",transition:"all 0.15s"}}, (typeof document!=="undefined"&&document.documentElement.lang==="en")?"Today":"今天")
   );
-}else{el=inputEl;}}return React.createElement('label', { style: {display:"flex",flexDirection:"column",gap:6,fontSize:12,color:"#C8E8F8",fontWeight:500}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 43}}, p.label, el);}
-function Modal(p){return React.createElement('div', { style: {position:"fixed",inset:0,background:C.bg,display:"flex",alignItems:"stretch",justifyContent:"center",zIndex:600}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 44}}, React.createElement('div', { style: {background:C.bg2,borderRadius:0,width:"100%",maxWidth:"none",border:"none",height:"100vh",maxHeight:"100vh",display:"flex",flexDirection:"column",overflow:"hidden"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 44}}, React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"center",padding:"5px 12px",borderBottom:"1px solid #1A2A44",background:C.bg2,flexShrink:0}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 44}}, React.createElement('button', { onClick: p.onClose, style: {background:"#1E3050",border:"none",color:"#8ABCD0",fontSize:13,cursor:"pointer",width:26,height:26,borderRadius:6,display:"flex",alignItems:"center",justifyContent:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 44}}, "✕"), React.createElement('div', { style: {fontSize:16,fontWeight:800}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 44}}, p.title), React.createElement('button', { onClick: p.onSave, style: {background:"linear-gradient(135deg,#00CFFF,#0044EE)",border:"none",color:"#fff",fontSize:15,cursor:"pointer",width:26,height:26,borderRadius:6,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 10px rgba(0,207,255,0.3)"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 44}}, "✓")), React.createElement('div', { style: {padding:"6px 10px 30px",display:"flex",flexDirection:"column",gap:5,overflowY:"auto",flex:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 44}}, p.children)));}
-var MONTHS=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];function MoNav(p){var isEn=p.lang==="en";var moDisp=isEn?MONTHS[+p.val.slice(5)-1]+" "+p.val.slice(0,4):p.val.slice(0,4)+"年 "+p.val.slice(5)+"月";return React.createElement('div', { style: {display:"flex",alignItems:"center",gap:8,marginBottom:p.mb||12,position:"sticky",top:108,zIndex:35,background:C.bg,paddingTop:6,paddingBottom:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 45}}, React.createElement('button', { onClick: function(){p.set(prevMo(p.val));}, style: {background:C.bg2,border:"1px solid "+C.border,borderRadius:8,padding:"9px 14px",color:"#D8EEFF",fontSize:17,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 45}}, "<"), React.createElement('button', { onClick: function(){if(p.onPick)p.onPick();}, style: {flex:1,textAlign:"center",fontSize:17,fontWeight:800,background:"none",border:"none",color:C.text,cursor:p.onPick?"pointer":"default",padding:"9px 0"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 45}}, moDisp), React.createElement('button', { onClick: function(){p.set(nextMo(p.val));}, style: {background:C.bg2,border:"1px solid "+C.border,borderRadius:8,padding:"9px 14px",color:"#D8EEFF",fontSize:17,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 45}}, ">"), p.children);}
-function YrNav(p){var yrDisp=p.lang==="en"?p.val:p.val+" 年";return React.createElement('div', { style: {display:"flex",alignItems:"center",gap:10,marginBottom:14,position:"sticky",top:108,zIndex:35,background:C.bg,paddingTop:6,paddingBottom:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 46}}, React.createElement('button', { onClick: function(){p.set(String(+p.val-1));}, style: {background:C.bg2,border:"1px solid "+C.border,borderRadius:8,padding:"9px 14px",color:"#D8EEFF",fontSize:17,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 46}}, "<"), React.createElement('button', { onClick: function(){if(p.onPick)p.onPick();}, style: {flex:1,textAlign:"center",fontSize:19,fontWeight:800,background:"none",border:"none",color:C.text,cursor:p.onPick?"pointer":"default",padding:"9px 0"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 46}}, yrDisp), React.createElement('button', { onClick: function(){p.set(String(+p.val+1));}, style: {background:C.bg2,border:"1px solid "+C.border,borderRadius:8,padding:"9px 14px",color:"#D8EEFF",fontSize:17,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 46}}, ">"));}
-function SegBtn(p){return React.createElement('div', { style: {display:"flex",background:C.bg,borderRadius:12,padding:3,gap:2,marginBottom:p.mb||14,border:"1px solid #151F35",position:"sticky",top:48,zIndex:40}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 47}}, p.opts.map(function(o,i){var active=p.val===o[0];var bg=active?"#1A3060":"transparent";var cl=active?"#00D4FF":"#C8E8F8";var fw=active?700:400;return React.createElement('button', { key: i, onClick: function(){p.set(o[0]);}, style: {flex:1,padding:10,borderRadius:9,border:"none",background:bg,color:cl,fontSize:13,fontWeight:fw,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 47}}, o[1]);}));}
+}else{el=inputEl;}}return React.createElement('label', { style: {display:"flex",flexDirection:"column",gap:6,fontSize:FS.sm+1,color:C.text2,fontWeight:600,letterSpacing:0.2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 43}}, p.label, el);}
+function Modal(p){return React.createElement('div', { style: {position:"fixed",inset:0,background:C.bg,display:"flex",alignItems:"stretch",justifyContent:"center",zIndex:600,animation:"fadeIn 0.15s ease-out"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 44}}, React.createElement('div', { style: {background:C.bg2,borderRadius:0,width:"100%",maxWidth:"none",border:"none",height:"100vh",maxHeight:"100vh",display:"flex",flexDirection:"column",overflow:"hidden"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 44}}, React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 14px",borderBottom:"1px solid "+C.border,background:C.bg2,flexShrink:0}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 44}}, React.createElement('button', { onClick: p.onClose, style: {background:C.bg3,border:"1px solid "+C.border,color:C.text2,fontSize:13,cursor:"pointer",width:32,height:32,borderRadius:RADIUS.sm,display:"flex",alignItems:"center",justifyContent:"center",transition:"all 0.15s"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 44}}, "✕"), React.createElement('div', { style: {fontSize:FS.lg+1,fontWeight:800,color:C.text,letterSpacing:-0.2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 44}}, p.title), React.createElement('button', { onClick: p.onSave, style: {background:"linear-gradient(135deg,#00CFFF,#0044EE)",border:"none",color:"#fff",fontSize:15,cursor:"pointer",width:32,height:32,borderRadius:RADIUS.sm,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:SHADOW.glow,transition:"transform 0.1s"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 44}}, "✓")), React.createElement('div', { style: {padding:"12px 14px 40px",display:"flex",flexDirection:"column",gap:8,overflowY:"auto",flex:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 44}}, p.children)));}
+var MONTHS=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];function MoNav(p){var isEn=p.lang==="en";var moDisp=isEn?MONTHS[+p.val.slice(5)-1]+" "+p.val.slice(0,4):p.val.slice(0,4)+"年 "+p.val.slice(5)+"月";return React.createElement('div', { style: {display:"flex",alignItems:"center",gap:10,marginBottom:p.mb||14,position:"sticky",top:108,zIndex:35,background:"rgba(10,14,26,0.92)",backdropFilter:"blur(8px)",WebkitBackdropFilter:"blur(8px)",paddingTop:8,paddingBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 45}}, React.createElement('button', { onClick: function(){p.set(prevMo(p.val));}, style: {background:C.bg2,border:"1px solid "+C.border,borderRadius:RADIUS.sm,padding:"10px 16px",color:C.accent2,fontSize:18,cursor:"pointer",fontWeight:700,transition:"all 0.15s"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 45}}, "‹"), React.createElement('button', { onClick: function(){if(p.onPick)p.onPick();}, style: {flex:1,textAlign:"center",fontSize:FS.xl,fontWeight:800,background:C.bg2,border:"1px solid "+C.border,borderRadius:RADIUS.sm,color:C.text,cursor:p.onPick?"pointer":"default",padding:"10px 0",letterSpacing:0.3,boxShadow:SHADOW.sm}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 45}}, moDisp), React.createElement('button', { onClick: function(){p.set(nextMo(p.val));}, style: {background:C.bg2,border:"1px solid "+C.border,borderRadius:RADIUS.sm,padding:"10px 16px",color:C.accent2,fontSize:18,cursor:"pointer",fontWeight:700,transition:"all 0.15s"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 45}}, "›"), p.children);}
+function YrNav(p){var yrDisp=p.lang==="en"?p.val:p.val+" 年";return React.createElement('div', { style: {display:"flex",alignItems:"center",gap:10,marginBottom:14,position:"sticky",top:108,zIndex:35,background:"rgba(10,14,26,0.92)",backdropFilter:"blur(8px)",WebkitBackdropFilter:"blur(8px)",paddingTop:8,paddingBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 46}}, React.createElement('button', { onClick: function(){p.set(String(+p.val-1));}, style: {background:C.bg2,border:"1px solid "+C.border,borderRadius:RADIUS.sm,padding:"10px 16px",color:C.accent2,fontSize:18,cursor:"pointer",fontWeight:700,transition:"all 0.15s"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 46}}, "‹"), React.createElement('button', { onClick: function(){if(p.onPick)p.onPick();}, style: {flex:1,textAlign:"center",fontSize:FS.xl,fontWeight:800,background:C.bg2,border:"1px solid "+C.border,borderRadius:RADIUS.sm,color:C.text,cursor:p.onPick?"pointer":"default",padding:"10px 0",letterSpacing:0.3,boxShadow:SHADOW.sm}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 46}}, yrDisp), React.createElement('button', { onClick: function(){p.set(String(+p.val+1));}, style: {background:C.bg2,border:"1px solid "+C.border,borderRadius:RADIUS.sm,padding:"10px 16px",color:C.accent2,fontSize:18,cursor:"pointer",fontWeight:700,transition:"all 0.15s"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 46}}, "›"));}
+function SegBtn(p){return React.createElement('div', { style: {display:"flex",background:C.bg4,borderRadius:RADIUS.md,padding:4,gap:2,marginBottom:p.mb||14,border:"1px solid "+C.border,position:"sticky",top:48,zIndex:40,boxShadow:SHADOW.sm}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 47}}, p.opts.map(function(o,i){var active=p.val===o[0];var bg=active?"linear-gradient(135deg, rgba(0,212,255,0.15), rgba(0,85,255,0.1))":"transparent";var cl=active?C.accent:C.text2;var fw=active?700:500;return React.createElement('button', { key: i, onClick: function(){p.set(o[0]);}, style: {flex:1,padding:"10px 12px",borderRadius:RADIUS.sm+1,border:active?"1px solid rgba(0,212,255,0.3)":"1px solid transparent",background:bg,color:cl,fontSize:FS.md,fontWeight:fw,cursor:"pointer",transition:"all 0.15s",letterSpacing:0.2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 47}}, o[1]);}));}
 function ExpItem(p){var item=p.item,aC=p.allC,isEn=p.lang==="en",cat=aC[item.category]||{label:isEn?"Other":"其他"},icon=item.isFixed?item.fixedIcon:getIcon(item.category,aC),label=item.isFixed?item.fixedLabel:cat.label,isMo=cat.mo,moPrefix=isEn?"Monthly ":"月结 ";
 // Hide placeholder times from imported data ("12:00" charging, "08:00" coffee, "23:59" month-end)
 var hideTime=item.time==="12:00"||item.time==="08:00"||item.time==="23:59";
 var dateStr=isMo?moPrefix+(item.statementMonth||item.date.slice(0,7)):(item.time&&!hideTime?fmtDate(item.date)+" "+item.time:fmtDate(item.date));
-var L_FIXED=isEn?"Fixed":"固定",L_EDIT=isEn?"Edit":"编辑";return React.createElement(Card, {style:{cursor:"pointer"}, onClick: p.onEdit, __self: this, __source: {fileName: _jsxFileName, lineNumber: 48}}, React.createElement('div', { style: {display:"flex",gap:10,alignItems:"flex-start"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 48}}, React.createElement('span', { style: {fontSize:22,marginTop:2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 48}}, icon), React.createElement('div', { style: {flex:1,minWidth:0}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 48}}, React.createElement('div', { style: {fontSize:15,fontWeight:600,marginBottom:2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 48}}, label), React.createElement('div', { style: {fontSize:13,color:"#B8D8EC",display:"flex",alignItems:"center",gap:6} }, dateStr ), item.notes?React.createElement('div', { style: {fontSize:13,color:"#B0D4E4"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 48}}, item.notes):null, item.odometer?React.createElement('div', { style: {fontSize:12,color:"#FFD700",marginTop:2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 48}}, "🛣 " , (+item.odometer).toLocaleString(), " mi", p.distFromLast?" (+"+p.distFromLast+(isEn?" mi since last":" mi 距上次")+")":""):null, item.isFixed?React.createElement('span', { style: {fontSize:12,background:"#0D2010",borderRadius:6,padding:"2px 8px",color:"#5ADA7A",display:"inline-block",marginTop:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 48}}, L_FIXED):null), React.createElement('div', { style: {textAlign:"right"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 48}}, React.createElement('div', { style: {fontSize:15,fontWeight:700,color:"#E8EAF0"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 48}}, "-", fmt(item.amount)), React.createElement('div', { style: {fontSize:12,color:"#6AACEE",marginTop:3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 48}}, L_EDIT, " ›"))));}
+var L_FIXED=isEn?"Fixed":"固定";return React.createElement('div', {style:{cursor:"pointer",background:C.bg2,borderRadius:RADIUS.md,padding:"12px 14px",marginBottom:8,border:"1px solid "+C.border,boxShadow:SHADOW.sm,transition:"transform 0.1s, border-color 0.15s, background 0.15s"}, onClick: p.onEdit}, React.createElement('div', { style: {display:"flex",gap:12,alignItems:"flex-start"}}, React.createElement('div', {style:{width:40,height:40,borderRadius:RADIUS.sm,background:"linear-gradient(135deg, "+C.bg3+", "+C.bg4+")",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0,border:"1px solid "+C.border}}, icon), React.createElement('div', { style: {flex:1,minWidth:0}}, React.createElement('div', { style: {fontSize:FS.lg,fontWeight:700,marginBottom:3,color:C.text,letterSpacing:-0.1}}, label), React.createElement('div', { style: {fontSize:FS.md,color:C.text2,display:"flex",alignItems:"center",gap:6}}, dateStr ), item.notes?React.createElement('div', { style: {fontSize:FS.md-1,color:C.text3,marginTop:2,lineHeight:1.4}}, item.notes):null, item.odometer?React.createElement('div', { style: {fontSize:FS.sm+1,color:C.gold,marginTop:4,fontWeight:600}}, "🛣 " , (+item.odometer).toLocaleString(), " mi", p.distFromLast?" (+"+p.distFromLast+(isEn?" mi since last":" mi 距上次")+")":""):null, item.isFixed?React.createElement('span', { style: {fontSize:FS.xs+1,background:C.successDim,borderRadius:5,padding:"2px 8px",color:C.success,display:"inline-block",marginTop:5,fontWeight:600,letterSpacing:0.3}}, L_FIXED):null), React.createElement('div', { style: {textAlign:"right",flexShrink:0}}, React.createElement('div', { style: {fontSize:FS.xl,fontWeight:800,color:C.danger,letterSpacing:-0.3,fontVariantNumeric:"tabular-nums"}}, "−", fmt(item.amount)))));}
 // Wrap with React.memo: re-render only when item data, lang, allC, or distFromLast changes.
 // Skip checking onEdit/onDel callbacks (they're recreated each render but functionally identical).
 ExpItem = React.memo(ExpItem, function(prevP, nextP){
@@ -961,7 +996,7 @@ function BucketList(p){
   // Default: collapsed. Explicitly set true = expanded.
   var toggle=function(k){__bucketExpanded[k]=__bucketExpanded[k]===true?false:true;forceRerender();};
   // Group by bucket then by category
-  var B={"车辆":{label:isEn?"🚗 Vehicle":"🚗 车辆",color:"#00D4FF",items:[]},"牌照":{label:isEn?"📋 License":"📋 牌照",color:"#FFD700",items:[]},"平台":{label:isEn?"📱 Platform":"📱 平台",color:"#AB47BC",items:[]},"其他":{label:isEn?"💼 Other":"💼 其他",color:"#C8E8F8",items:[]}};
+  var B={"车辆":{label:isEn?"🚗 Vehicle":"🚗 车辆",color:C.accent,items:[]},"牌照":{label:isEn?"📋 License":"📋 牌照",color:C.gold,items:[]},"平台":{label:isEn?"📱 Platform":"📱 平台",color:"#AB47BC",items:[]},"其他":{label:isEn?"💼 Other":"💼 其他",color:C.text2,items:[]}};
   items.forEach(function(x){var g=catGrp(x.category,aC);B[g]?B[g].items.push(x):B["其他"].items.push(x);});
   return React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 49}}, ["车辆","牌照","平台","其他"].map(function(bk){
     var bkt=B[bk];if(!bkt.items.length)return null;
@@ -982,7 +1017,7 @@ function BucketList(p){
     return React.createElement('div', { key: bk, style: {marginBottom:18}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 49}}
       , React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8,paddingBottom:6,borderBottom:"2px solid #182540"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 49}}
         , React.createElement('span', { style: Object.assign({fontSize:15,fontWeight:700},{color:bcl}), __self: this, __source: {fileName: _jsxFileName, lineNumber: 49}}, bkt.label)
-        , React.createElement('span', { style: {fontSize:16,fontWeight:800,color:"#FF6B35"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 49}}, fmt(bT))
+        , React.createElement('span', { style: {fontSize:16,fontWeight:800,color:C.danger}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 49}}, fmt(bT))
       )
       , catKeys.map(function(ck){
         var cat=byCat[ck];
@@ -998,7 +1033,7 @@ function BucketList(p){
               )
             )
             , React.createElement('div', { style: {display:"flex",alignItems:"center",gap:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 49}}
-              , React.createElement('span', { style: {fontSize:14,fontWeight:600,color:"#E8EAF0"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 49}}, fmt(cat.total))
+              , React.createElement('span', { style: {fontSize:14,fontWeight:600,color:C.text}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 49}}, fmt(cat.total))
               , React.createElement('span', { style: {fontSize:13,color:C.text3,minWidth:14}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 49}}, isExp?"▲":"▼")
             )
           )
@@ -1082,11 +1117,11 @@ function CatBreakdown(p){
           React.createElement('span', {style:{fontSize:14,color:C.text}}, c.icon, " ", c.label, React.createElement('span', {style:{fontSize:12,color:C.text3,marginLeft:6}}, "×", c.count)),
           React.createElement('div', {style:{display:"flex",alignItems:"center",gap:6}},
             React.createElement('span', {style:{fontSize:14,fontWeight:700,color:"#FF9A65"}}, fmt(c.total)),
-            React.createElement('span', {style:{fontSize:12,color:"#B8D8EC"}}, pct, "%"),
+            React.createElement('span', {style:{fontSize:12,color:C.text2}}, pct, "%"),
             React.createElement('span', {style:{fontSize:11,color:C.text3,minWidth:12,textAlign:"right"}}, isExp?"▲":"▼")
           )
         ),
-        React.createElement('div', {style:{height:5,borderRadius:3,background:"#1A2A44"}},
+        React.createElement('div', {style:{height:5,borderRadius:3,background:C.border}},
           React.createElement('div', {style:{height:5,borderRadius:3,width:bw,background:"linear-gradient(90deg,#FF6B35,#FF9A65)"}})
         )
       ),
@@ -1113,9 +1148,9 @@ function CatBreakdown(p){
 function CatDetail(p){var aC=p.allC,items=p.items,total=p.total;var cm={};items.forEach(function(e){var k=e.isFixed?"fx_"+e.fixedLabel:e.category,cat=aC[e.category],lbl=e.isFixed?e.fixedLabel:(cat?cat.label:"其他"),ico=e.isFixed?e.fixedIcon:getIcon(e.category,aC),grp=catGrp(e.category,aC);if(!cm[k]){cm[k]={label:lbl,icon:ico,total:0,count:0,grp:grp};}cm[k].total+=(+e.amount||0);cm[k].count++;});var sorted=Object.values(cm).sort(function(a,b){return b.total-a.total;});var isEn=p.lang==="en";var totalCount=items.length;return React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 51}}
   , React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0 10px",borderBottom:"1px solid #182540",marginBottom:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 51}}
     , React.createElement('span', { style: {fontSize:13,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 51}}, isEn?"Total entries":"总笔数")
-    , React.createElement('span', { style: {fontSize:14,fontWeight:700,color:"#00D4FF"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 51}}, totalCount, " " , isEn?(totalCount===1?"entry":"entries"):"笔")
+    , React.createElement('span', { style: {fontSize:14,fontWeight:700,color:C.accent}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 51}}, totalCount, " " , isEn?(totalCount===1?"entry":"entries"):"笔")
   )
-  , sorted.map(function(c){var pct=Math.round(c.total/total*100),gcl=c.grp==="车辆"?"#00D4FF":c.grp==="牌照"?"#FFD700":c.grp==="平台"?"#AB47BC":"#B0D4E8";return React.createElement('div', { key: c.label, style: {padding:"8px 0",borderBottom:"1px solid #111D30"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 51}}, React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 51}}, React.createElement('span', { style: {fontSize:14,color:"#D8EEFF"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 51}}, c.icon, " " , c.label, React.createElement('span', { style: {fontSize:12,color:C.text3,marginLeft:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 51}}, "×", c.count)), React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 51}}, React.createElement('span', { style: {fontSize:14,fontWeight:700,color:"#FF9A65"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 51}}, fmt(c.total)), React.createElement('span', { style: {fontSize:12,color:"#90B8D0",marginLeft:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 51}}, pct, "%"))), React.createElement('div', { style: {height:4,borderRadius:2,background:"#1A2A44"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 51}}, React.createElement('div', { style: {height:4,borderRadius:2,width:pct+"%",background:gcl}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 51}})));})
+  , sorted.map(function(c){var pct=Math.round(c.total/total*100),gcl=c.grp==="车辆"?C.accent:c.grp==="牌照"?C.gold:c.grp==="平台"?"#AB47BC":"#B0D4E8";return React.createElement('div', { key: c.label, style: {padding:"8px 0",borderBottom:"1px solid #111D30"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 51}}, React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 51}}, React.createElement('span', { style: {fontSize:14,color:C.text2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 51}}, c.icon, " " , c.label, React.createElement('span', { style: {fontSize:12,color:C.text3,marginLeft:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 51}}, "×", c.count)), React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 51}}, React.createElement('span', { style: {fontSize:14,fontWeight:700,color:"#FF9A65"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 51}}, fmt(c.total)), React.createElement('span', { style: {fontSize:12,color:C.text2,marginLeft:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 51}}, pct, "%"))), React.createElement('div', { style: {height:4,borderRadius:2,background:C.border}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 51}}, React.createElement('div', { style: {height:4,borderRadius:2,width:pct+"%",background:gcl}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 51}})));})
 );}
 
 // Custom full-screen date picker — replaces native browser picker for better UX
@@ -1153,9 +1188,9 @@ function DatePicker(p){
     React.createElement('div',{style:{background:C.bg2,borderRadius:16,padding:18,width:"100%",maxWidth:380,border:"1px solid "+C.border,boxShadow:"0 8px 40px rgba(0,0,0,0.6)"}},
       // Header
       React.createElement('div',{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}},
-        React.createElement('button',{onClick:goPrev,style:{background:"#1A2A44",border:"none",color:"#00D4FF",fontSize:20,cursor:"pointer",width:40,height:40,borderRadius:10}},"<"),
+        React.createElement('button',{onClick:goPrev,style:{background:C.border,border:"none",color:C.accent,fontSize:20,cursor:"pointer",width:40,height:40,borderRadius:10}},"<"),
         React.createElement('div',{style:{fontSize:18,fontWeight:800,color:C.text}},monthDisp),
-        React.createElement('button',{onClick:goNext,style:{background:"#1A2A44",border:"none",color:"#00D4FF",fontSize:20,cursor:"pointer",width:40,height:40,borderRadius:10}},">")
+        React.createElement('button',{onClick:goNext,style:{background:C.border,border:"none",color:C.accent,fontSize:20,cursor:"pointer",width:40,height:40,borderRadius:10}},">")
       ),
       // Day-of-week headers
       React.createElement('div',{style:{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:4,marginBottom:6}},
@@ -1169,15 +1204,15 @@ function DatePicker(p){
           var isToday=dStr===todayStr;
           var isSelected=dStr===p.value;
           var isWeekend=di===0||di===6;
-          var bg=isSelected?"#0055FF":isToday?"#1A3060":"transparent";
-          var color=isSelected?"#fff":isToday?"#00D4FF":isWeekend?"#FF9A65":C.text;
+          var bg=isSelected?"#0055FF":isToday?C.bg3:"transparent";
+          var color=isSelected?"#fff":isToday?C.accent:isWeekend?"#FF9A65":C.text;
           return React.createElement('button',{key:wi+"-"+di,onClick:function(){pick(day);},style:{aspectRatio:"1",background:bg,border:isToday&&!isSelected?"1px solid #00D4FF":"1px solid transparent",borderRadius:10,color:color,fontSize:16,fontWeight:isSelected||isToday?700:500,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0}},day);
         });})
       ),
       // Quick buttons
       React.createElement('div',{style:{display:"flex",gap:8,marginTop:16}},
         React.createElement('button',{onClick:function(){p.onChange(todayStr);p.onClose();},style:{flex:1,background:"linear-gradient(135deg,#00D4FF,#0055FF)",border:"none",color:"#fff",fontSize:14,fontWeight:700,padding:"10px",borderRadius:10,cursor:"pointer"}},isEn?"Today":"今天"),
-        React.createElement('button',{onClick:function(){p.onChange(ydayStr);p.onClose();},style:{flex:1,background:"#1A2A44",border:"1px solid #2A3A54",color:C.text2,fontSize:14,fontWeight:600,padding:"10px",borderRadius:10,cursor:"pointer"}},isEn?"Yesterday":"昨天"),
+        React.createElement('button',{onClick:function(){p.onChange(ydayStr);p.onClose();},style:{flex:1,background:C.border,border:"1px solid #2A3A54",color:C.text2,fontSize:14,fontWeight:600,padding:"10px",borderRadius:10,cursor:"pointer"}},isEn?"Yesterday":"昨天"),
         React.createElement('button',{onClick:p.onClose,style:{flex:1,background:"transparent",border:"1px solid #2A3A54",color:C.text3,fontSize:14,fontWeight:600,padding:"10px",borderRadius:10,cursor:"pointer"}},isEn?"Cancel":"取消")
       )
     )
@@ -1205,25 +1240,25 @@ function TimePicker(p){
       React.createElement('div',{style:{display:"flex",alignItems:"center",justifyContent:"center",gap:8,marginBottom:20}},
         // Hour
         React.createElement('div',{style:{textAlign:"center"}},
-          React.createElement('button',{onClick:function(){setHour(hour+1);},style:{background:"#1A2A44",border:"none",color:"#00D4FF",fontSize:18,cursor:"pointer",width:60,height:36,borderRadius:8,marginBottom:4}},"▲"),
-          React.createElement('div',{style:{fontSize:48,fontWeight:900,color:"#00D4FF",fontFamily:"monospace",padding:"4px 0",minWidth:80}},p2(hour)),
-          React.createElement('button',{onClick:function(){setHour(hour-1);},style:{background:"#1A2A44",border:"none",color:"#00D4FF",fontSize:18,cursor:"pointer",width:60,height:36,borderRadius:8,marginTop:4}},"▼")
+          React.createElement('button',{onClick:function(){setHour(hour+1);},style:{background:C.border,border:"none",color:C.accent,fontSize:18,cursor:"pointer",width:60,height:36,borderRadius:8,marginBottom:4}},"▲"),
+          React.createElement('div',{style:{fontSize:48,fontWeight:900,color:C.accent,fontFamily:"monospace",padding:"4px 0",minWidth:80}},p2(hour)),
+          React.createElement('button',{onClick:function(){setHour(hour-1);},style:{background:C.border,border:"none",color:C.accent,fontSize:18,cursor:"pointer",width:60,height:36,borderRadius:8,marginTop:4}},"▼")
         ),
         React.createElement('div',{style:{fontSize:48,fontWeight:900,color:C.text3,padding:"0 4px"}},":"),
         // Minute
         React.createElement('div',{style:{textAlign:"center"}},
-          React.createElement('button',{onClick:function(){setMin(minute+5);},style:{background:"#1A2A44",border:"none",color:"#00D4FF",fontSize:18,cursor:"pointer",width:60,height:36,borderRadius:8,marginBottom:4}},"▲"),
-          React.createElement('div',{style:{fontSize:48,fontWeight:900,color:"#00D4FF",fontFamily:"monospace",padding:"4px 0",minWidth:80}},p2(minute)),
-          React.createElement('button',{onClick:function(){setMin(minute-5);},style:{background:"#1A2A44",border:"none",color:"#00D4FF",fontSize:18,cursor:"pointer",width:60,height:36,borderRadius:8,marginTop:4}},"▼")
+          React.createElement('button',{onClick:function(){setMin(minute+5);},style:{background:C.border,border:"none",color:C.accent,fontSize:18,cursor:"pointer",width:60,height:36,borderRadius:8,marginBottom:4}},"▲"),
+          React.createElement('div',{style:{fontSize:48,fontWeight:900,color:C.accent,fontFamily:"monospace",padding:"4px 0",minWidth:80}},p2(minute)),
+          React.createElement('button',{onClick:function(){setMin(minute-5);},style:{background:C.border,border:"none",color:C.accent,fontSize:18,cursor:"pointer",width:60,height:36,borderRadius:8,marginTop:4}},"▼")
         )
       ),
       // Quick presets
       React.createElement('div',{style:{display:"flex",gap:6,flexWrap:"wrap",marginBottom:16,justifyContent:"center"}},
-        ["06:00","09:00","12:00","15:00","18:00","21:00"].map(function(t){return React.createElement('button',{key:t,onClick:function(){setPickedTime(t);},style:{background:pickedTime===t?"#1A3060":"#0A1828",border:"1px solid "+(pickedTime===t?"#00D4FF":"#2A3A54"),color:pickedTime===t?"#00D4FF":C.text2,fontSize:12,padding:"6px 10px",borderRadius:8,cursor:"pointer",minWidth:54}},t);})
+        ["06:00","09:00","12:00","15:00","18:00","21:00"].map(function(t){return React.createElement('button',{key:t,onClick:function(){setPickedTime(t);},style:{background:pickedTime===t?C.bg3:C.bg3,border:"1px solid "+(pickedTime===t?C.accent:"#2A3A54"),color:pickedTime===t?C.accent:C.text2,fontSize:12,padding:"6px 10px",borderRadius:8,cursor:"pointer",minWidth:54}},t);})
       ),
       // Action buttons
       React.createElement('div',{style:{display:"flex",gap:8}},
-        React.createElement('button',{onClick:function(){setPickedTime(nowStr);},style:{flex:1,background:"#1A2A44",border:"1px solid #2A3A54",color:C.text2,fontSize:14,fontWeight:600,padding:"10px",borderRadius:10,cursor:"pointer"}},isEn?"Now":"现在"),
+        React.createElement('button',{onClick:function(){setPickedTime(nowStr);},style:{flex:1,background:C.border,border:"1px solid #2A3A54",color:C.text2,fontSize:14,fontWeight:600,padding:"10px",borderRadius:10,cursor:"pointer"}},isEn?"Now":"现在"),
         React.createElement('button',{onClick:p.onClose,style:{flex:1,background:"transparent",border:"1px solid #2A3A54",color:C.text3,fontSize:14,fontWeight:600,padding:"10px",borderRadius:10,cursor:"pointer"}},isEn?"Cancel":"取消"),
         React.createElement('button',{onClick:confirm,style:{flex:1,background:"linear-gradient(135deg,#00D4FF,#0055FF)",border:"none",color:"#fff",fontSize:14,fontWeight:700,padding:"10px",borderRadius:10,cursor:"pointer"}},isEn?"Confirm":"确认")
       )
@@ -1257,10 +1292,10 @@ function InputModal(p){
         onKeyDown:function(e){if(e.key==="Enter")doSubmit();},
         autoFocus:true,
         placeholder:p.placeholder||"",
-        style:{width:"100%",background:"#0A1828",border:"1px solid "+C.border,borderRadius:10,padding:"12px 14px",color:C.text,fontSize:15,fontWeight:500,marginBottom:14,outline:"none",boxSizing:"border-box"}
+        style:{width:"100%",background:C.bg3,border:"1px solid "+C.border,borderRadius:10,padding:"12px 14px",color:C.text,fontSize:15,fontWeight:500,marginBottom:14,outline:"none",boxSizing:"border-box"}
       }),
       React.createElement('div',{style:{display:"flex",gap:10}},
-        React.createElement('button',{onClick:p.onCancel,style:{flex:1,background:"#1A2A44",border:"1px solid #2A3A54",color:C.text2,fontSize:14,fontWeight:600,padding:"10px",borderRadius:8,cursor:"pointer"}},isEn?"Cancel":"取消"),
+        React.createElement('button',{onClick:p.onCancel,style:{flex:1,background:C.border,border:"1px solid #2A3A54",color:C.text2,fontSize:14,fontWeight:600,padding:"10px",borderRadius:8,cursor:"pointer"}},isEn?"Cancel":"取消"),
         React.createElement('button',{onClick:doSubmit,style:{flex:1,background:"linear-gradient(135deg,#00D4FF,#0055FF)",border:"none",color:"#fff",fontSize:14,fontWeight:700,padding:"10px",borderRadius:8,cursor:"pointer"}},p.confirmLabel||(isEn?"OK":"确定"))
       )
     )
@@ -1276,12 +1311,12 @@ function ConfirmModal(p){
     style:{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1500,padding:16,animation:"fadeIn 0.15s ease-out"},
     onClick:function(e){if(e.target===e.currentTarget)p.onCancel();}
   },
-    React.createElement('div',{style:{background:C.bg2,borderRadius:14,padding:20,width:"100%",maxWidth:340,border:"1px solid "+(isDanger?"#5A2A2A":"#1F3A5A"),boxShadow:"0 8px 32px rgba(0,0,0,0.5)"}},
+    React.createElement('div',{style:{background:C.bg2,borderRadius:14,padding:20,width:"100%",maxWidth:340,border:"1px solid "+(isDanger?"#5A2A2A":C.border),boxShadow:"0 8px 32px rgba(0,0,0,0.5)"}},
       React.createElement('div',{style:{textAlign:"center",fontSize:32,marginBottom:6}},isDanger?"🗑":"❓"),
       p.title?React.createElement('div',{style:{textAlign:"center",fontSize:16,fontWeight:700,color:C.text,marginBottom:8}},p.title):null,
       React.createElement('div',{style:{fontSize:13,color:C.text2,marginBottom:16,lineHeight:1.5,textAlign:"center"}},p.message),
       React.createElement('div',{style:{display:"flex",gap:10}},
-        React.createElement('button',{onClick:p.onCancel,style:{flex:1,background:"#1A2A44",border:"1px solid #2A3A54",color:C.text2,fontSize:14,fontWeight:600,padding:"10px",borderRadius:8,cursor:"pointer"}},isEn?"Cancel":"取消"),
+        React.createElement('button',{onClick:p.onCancel,style:{flex:1,background:C.border,border:"1px solid #2A3A54",color:C.text2,fontSize:14,fontWeight:600,padding:"10px",borderRadius:8,cursor:"pointer"}},isEn?"Cancel":"取消"),
         React.createElement('button',{
           onClick:p.onConfirm,
           autoFocus:true,
@@ -1305,11 +1340,11 @@ function DangerConfirm(p){
   },
     React.createElement('div',{style:{background:C.bg2,borderRadius:16,padding:22,width:"100%",maxWidth:380,border:"2px solid #FF5252",boxShadow:"0 8px 40px rgba(255,80,80,0.3)"}},
       React.createElement('div',{style:{textAlign:"center",fontSize:42,marginBottom:8}},"⚠️"),
-      React.createElement('div',{style:{textAlign:"center",fontSize:18,fontWeight:800,color:"#FF5252",marginBottom:10}},p.title),
+      React.createElement('div',{style:{textAlign:"center",fontSize:18,fontWeight:800,color:C.danger,marginBottom:10}},p.title),
       React.createElement('div',{style:{fontSize:14,color:C.text2,marginBottom:14,lineHeight:1.5,textAlign:"center"}},p.message),
       React.createElement('div',{style:{fontSize:13,color:C.text3,marginBottom:8,textAlign:"center"}},
         isEn ? 'To confirm, type ' : '若确认操作，请输入 ',
-        React.createElement('span',{style:{color:"#FFD700",fontWeight:800,fontFamily:"monospace"}},magicWord),
+        React.createElement('span',{style:{color:C.gold,fontWeight:800,fontFamily:"monospace"}},magicWord),
         isEn ? ' below:' : ' :'
       ),
       React.createElement('input',{
@@ -1318,10 +1353,10 @@ function DangerConfirm(p){
         onChange:function(e){setTyped(e.target.value);},
         autoFocus:true,
         placeholder:magicWord,
-        style:{width:"100%",background:"#0A1828",border:"1px solid "+(matches?"#00E676":"#2A4A6A"),borderRadius:10,padding:"12px 14px",color:matches?"#00E676":C.text,fontSize:18,fontWeight:700,textAlign:"center",fontFamily:"monospace",marginBottom:14,outline:"none"}
+        style:{width:"100%",background:C.bg3,border:"1px solid "+(matches?C.success:C.border2),borderRadius:10,padding:"12px 14px",color:matches?C.success:C.text,fontSize:18,fontWeight:700,textAlign:"center",fontFamily:"monospace",marginBottom:14,outline:"none"}
       }),
       React.createElement('div',{style:{display:"flex",gap:10}},
-        React.createElement('button',{onClick:p.onCancel,style:{flex:1,background:"#1A2A44",border:"1px solid #2A3A54",color:C.text2,fontSize:14,fontWeight:600,padding:"12px",borderRadius:10,cursor:"pointer"}},isEn?"Cancel":"取消"),
+        React.createElement('button',{onClick:p.onCancel,style:{flex:1,background:C.border,border:"1px solid #2A3A54",color:C.text2,fontSize:14,fontWeight:600,padding:"12px",borderRadius:10,cursor:"pointer"}},isEn?"Cancel":"取消"),
         React.createElement('button',{
           onClick:function(){if(matches)p.onConfirm();},
           disabled:!matches,
@@ -1352,9 +1387,9 @@ function MonthPicker(p){
     React.createElement('div',{style:{background:C.bg2,borderRadius:16,padding:20,width:"100%",maxWidth:340,border:"1px solid "+C.border,boxShadow:"0 8px 40px rgba(0,0,0,0.6)"}},
       // Year nav
       React.createElement('div',{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:18}},
-        React.createElement('button',{onClick:function(){setYear(year-1);},style:{background:"#1A2A44",border:"none",color:"#00D4FF",fontSize:20,cursor:"pointer",width:44,height:40,borderRadius:10}},"<"),
+        React.createElement('button',{onClick:function(){setYear(year-1);},style:{background:C.border,border:"none",color:C.accent,fontSize:20,cursor:"pointer",width:44,height:40,borderRadius:10}},"<"),
         React.createElement('div',{style:{fontSize:22,fontWeight:800,color:C.text}},isEn?String(year):year+"年"),
-        React.createElement('button',{onClick:function(){setYear(year+1);},style:{background:"#1A2A44",border:"none",color:"#00D4FF",fontSize:20,cursor:"pointer",width:44,height:40,borderRadius:10}},">")
+        React.createElement('button',{onClick:function(){setYear(year+1);},style:{background:C.border,border:"none",color:C.accent,fontSize:20,cursor:"pointer",width:44,height:40,borderRadius:10}},">")
       ),
       // 4×3 month grid
       React.createElement('div',{style:{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8}},
@@ -1362,8 +1397,8 @@ function MonthPicker(p){
           var m = i+1;
           var isCur = year===curYear && m===curMonth;
           var isSel = year===selYear && m===selMonth;
-          var bg = isSel?"#0055FF":isCur?"#1A3060":"transparent";
-          var color = isSel?"#fff":isCur?"#00D4FF":C.text;
+          var bg = isSel?"#0055FF":isCur?C.bg3:"transparent";
+          var color = isSel?"#fff":isCur?C.accent:C.text;
           var border = isCur&&!isSel?"1px solid #00D4FF":"1px solid #2A3A54";
           return React.createElement('button',{key:i,onClick:function(){pick(m);},style:{padding:"14px 8px",background:bg,border:border,borderRadius:10,color:color,fontSize:15,fontWeight:isSel||isCur?700:500,cursor:"pointer"}},mn);
         })
@@ -1402,8 +1437,8 @@ function YearPicker(p){
             onClick:function(){pick(y);},
             style:{padding:"14px 10px",borderRadius:10,fontSize:16,fontWeight:700,cursor:"pointer",
               background: isSel ? "#0A4020" : (isCur ? "#1A2A4A" : C.bg3),
-              color: isSel ? "#5ADA7A" : (isCur ? "#5AACFF" : C.text),
-              border: "1px solid "+(isSel ? "#2A8050" : (isCur ? "#2A4A6A" : C.border))
+              color: isSel ? "#5ADA7A" : (isCur ? C.accent2 : C.text),
+              border: "1px solid "+(isSel ? "#2A8050" : (isCur ? C.border2 : C.border))
             }
           }, y, isEn?"":" 年");
         })
@@ -1413,7 +1448,7 @@ function YearPicker(p){
   );
 }
 
-function Badge(p){return React.createElement('div', { style: {display:"inline-flex",alignItems:"center",gap:6,background:p.bg||"#1A2A10",border:"1px solid "+(p.color||"#00E676"),borderRadius:20,padding:"6px 12px",fontSize:13,fontWeight:700,color:p.color||"#00E676"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 53}}, React.createElement('span', { style: {fontSize:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 53}}, p.icon), p.text);}
+function Badge(p){return React.createElement('div', { style: {display:"inline-flex",alignItems:"center",gap:7,background:p.bg||"#1A2A10",border:"1px solid "+(p.color||C.success),borderRadius:24,padding:"7px 14px",fontSize:FS.md+1,fontWeight:700,color:p.color||C.success,boxShadow:"0 2px 8px rgba(0,0,0,0.3), 0 0 12px "+(p.color||C.success)+"30",letterSpacing:0.2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 53}}, React.createElement('span', { style: {fontSize:17,filter:"drop-shadow(0 1px 2px rgba(0,0,0,0.4))"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 53}}, p.icon), p.text);}
 
 // PIN-based lock screen. Shown when:
 //   - User is idle for the configured timeout (default 5 min)
@@ -1497,17 +1532,17 @@ function LockScreen(p){
   return React.createElement('div',{style:{position:"fixed",inset:0,background:"#080C18",zIndex:9999,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:24}},
     // Lock icon
     React.createElement('div',{style:{fontSize:48,marginBottom:12}},isSetup?"🔐":"🔒"),
-    React.createElement('div',{style:{fontSize:20,fontWeight:800,color:"#E8EAF0",marginBottom:6,textAlign:"center"}},title),
-    React.createElement('div',{style:{fontSize:13,color:"#90B8D0",marginBottom:30,textAlign:"center"}},subtitle),
+    React.createElement('div',{style:{fontSize:20,fontWeight:800,color:C.text,marginBottom:6,textAlign:"center"}},title),
+    React.createElement('div',{style:{fontSize:13,color:C.text2,marginBottom:30,textAlign:"center"}},subtitle),
     // 4-dot indicator
     React.createElement('div',{style:{display:"flex",gap:14,marginBottom:24}},
       [0,1,2,3].map(function(i){
         var filled = i < current.length;
-        return React.createElement('div',{key:i,style:{width:18,height:18,borderRadius:9,background:filled?"#00D4FF":"transparent",border:"2px solid "+(filled?"#00D4FF":"#2A4A6A"),transition:"all 0.15s"}});
+        return React.createElement('div',{key:i,style:{width:18,height:18,borderRadius:9,background:filled?C.accent:"transparent",border:"2px solid "+(filled?C.accent:C.border2),transition:"all 0.15s"}});
       })
     ),
     // Error message
-    error ? React.createElement('div',{style:{fontSize:13,color:"#FF5252",marginBottom:16,minHeight:18}},error) : React.createElement('div',{style:{minHeight:18,marginBottom:16}}),
+    error ? React.createElement('div',{style:{fontSize:13,color:C.danger,marginBottom:16,minHeight:18}},error) : React.createElement('div',{style:{minHeight:18,marginBottom:16}}),
     // Number pad — uses onPointerDown for instant response (no 300ms tap delay).
     // Also adds visual press feedback + haptic vibration.
     React.createElement('div',{style:{display:"grid",gridTemplateColumns:"repeat(3,64px)",gap:12,marginBottom:20}},
@@ -1521,7 +1556,7 @@ function LockScreen(p){
           },
           // Fallback for non-pointer-event browsers (rare)
           onClick:function(ev){ev.preventDefault();},
-          style:{width:64,height:64,borderRadius:32,background:"#0F1C30",border:"1px solid #1E3050",color:"#E8EAF0",fontSize:24,fontWeight:600,cursor:"pointer",userSelect:"none",WebkitUserSelect:"none",WebkitTapHighlightColor:"transparent",touchAction:"manipulation",transition:"transform 0.08s, background 0.08s"},
+          style:{width:64,height:64,borderRadius:32,background:"#0F1C30",border:"1px solid #1E3050",color:C.text,fontSize:24,fontWeight:600,cursor:"pointer",userSelect:"none",WebkitUserSelect:"none",WebkitTapHighlightColor:"transparent",touchAction:"manipulation",transition:"transform 0.08s, background 0.08s"},
           onPointerUp:function(ev){ev.currentTarget.style.transform="";ev.currentTarget.style.background="#0F1C30";},
           onPointerLeave:function(ev){ev.currentTarget.style.transform="";ev.currentTarget.style.background="#0F1C30";},
           onPointerCancel:function(ev){ev.currentTarget.style.transform="";ev.currentTarget.style.background="#0F1C30";},
@@ -1539,7 +1574,7 @@ function LockScreen(p){
           addDigit("0");
         },
         onClick:function(ev){ev.preventDefault();},
-        style:{width:64,height:64,borderRadius:32,background:"#0F1C30",border:"1px solid #1E3050",color:"#E8EAF0",fontSize:24,fontWeight:600,cursor:"pointer",userSelect:"none",WebkitUserSelect:"none",WebkitTapHighlightColor:"transparent",touchAction:"manipulation",transition:"transform 0.08s, background 0.08s"},
+        style:{width:64,height:64,borderRadius:32,background:"#0F1C30",border:"1px solid #1E3050",color:C.text,fontSize:24,fontWeight:600,cursor:"pointer",userSelect:"none",WebkitUserSelect:"none",WebkitTapHighlightColor:"transparent",touchAction:"manipulation",transition:"transform 0.08s, background 0.08s"},
         onPointerUp:function(ev){ev.currentTarget.style.transform="";ev.currentTarget.style.background="#0F1C30";},
         onPointerLeave:function(ev){ev.currentTarget.style.transform="";ev.currentTarget.style.background="#0F1C30";},
         onPointerCancel:function(ev){ev.currentTarget.style.transform="";ev.currentTarget.style.background="#0F1C30";},
@@ -1554,7 +1589,7 @@ function LockScreen(p){
           delDigit();
         },
         onClick:function(ev){ev.preventDefault();},
-        style:{width:64,height:64,borderRadius:32,background:"transparent",border:"1px solid #1E3050",color:"#90B8D0",fontSize:18,cursor:"pointer",userSelect:"none",WebkitUserSelect:"none",WebkitTapHighlightColor:"transparent",touchAction:"manipulation",transition:"transform 0.08s, background 0.08s"},
+        style:{width:64,height:64,borderRadius:32,background:"transparent",border:"1px solid #1E3050",color:C.text2,fontSize:18,cursor:"pointer",userSelect:"none",WebkitUserSelect:"none",WebkitTapHighlightColor:"transparent",touchAction:"manipulation",transition:"transform 0.08s, background 0.08s"},
         onPointerUp:function(ev){ev.currentTarget.style.transform="";ev.currentTarget.style.background="transparent";},
         onPointerLeave:function(ev){ev.currentTarget.style.transform="";ev.currentTarget.style.background="transparent";},
         onPointerCancel:function(ev){ev.currentTarget.style.transform="";ev.currentTarget.style.background="transparent";},
@@ -1562,9 +1597,9 @@ function LockScreen(p){
       },"⌫")
     ),
     // Forgot PIN (unlock mode only)
-    !isSetup ? React.createElement('button',{onClick:function(){if(confirm(isEn?"Forgot PIN? This will sign you out and require Google login again. Continue?":"忘记 PIN？这会让你退出登录，需要重新用 Google 登录。继续吗？"))p.onForgot();},style:{background:"none",border:"none",color:"#7A9AB8",fontSize:13,cursor:"pointer",marginTop:10}},isEn?"Forgot PIN?":"忘记 PIN？") : null,
+    !isSetup ? React.createElement('button',{onClick:function(){if(confirm(isEn?"Forgot PIN? This will sign you out and require Google login again. Continue?":"忘记 PIN？这会让你退出登录，需要重新用 Google 登录。继续吗？"))p.onForgot();},style:{background:"none",border:"none",color:C.text3,fontSize:13,cursor:"pointer",marginTop:10}},isEn?"Forgot PIN?":"忘记 PIN？") : null,
     // Cancel setup
-    isSetup ? React.createElement('button',{onClick:p.onCancel,style:{background:"none",border:"none",color:"#7A9AB8",fontSize:13,cursor:"pointer",marginTop:10}},isEn?"Skip / Setup later":"跳过 / 以后再设") : null
+    isSetup ? React.createElement('button',{onClick:p.onCancel,style:{background:"none",border:"none",color:C.text3,fontSize:13,cursor:"pointer",marginTop:10}},isEn?"Skip / Setup later":"跳过 / 以后再设") : null
   );
 }
 function App() {
@@ -1927,7 +1962,7 @@ function App() {
     , pyToll = pyStmts.reduce(function(s,x){return s+(+x.tollReimbursed||0);},0)+pyDailies.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.tollReimbursed||0):0);},0)
     , pyPlatformFee = pyStmts.reduce(function(s,x){return s+(+x.platformFee||0);},0)+pyDailies.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.platformFee||0):0);},0)
     , pyNet = pyInc-pyExp-pyPlatformFee
-    ; var achievements=[];if(tInc>=5000)achievements.push({icon:"🏆",text:lang==="en"?"Income > $5000":"本月收入破$5000",color:"#FFD700",bg:"#1A1400"});else if(tInc>=3000)achievements.push({icon:"⭐",text:lang==="en"?"Income > $3000":"本月收入破$3000",color:"#FFD700",bg:"#1A1400"});if(net>0&&tInc>0&&net>=tInc*0.5)achievements.push({icon:"💰",text:lang==="en"?"Profit > 50%":"净利润超50%",color:"#00E676",bg:"#0A1A0A"});if(tTrips>=200)achievements.push({icon:"🚗",text:lang==="en"?"200 trips this month":"本月200趟达成",color:"#00D4FF",bg:"#0A1428"});else if(tTrips>=100)achievements.push({icon:"🎯",text:lang==="en"?"100 trips this month":"本月100趟达成",color:"#00D4FF",bg:"#0A1428"});if(expiring.length===0&&expired.length===0&&ll.length>0)achievements.push({icon:"✅",text:lang==="en"?"All licenses valid":"证件全部有效",color:"#00E676",bg:"#0A1A0A"});if(yInc>=50000)achievements.push({icon:"👑",text:lang==="en"?"Annual income > $50000":"年收入破$50000",color:"#FFD700",bg:"#1A1400"}); var r40=useState(function(){return lsLoad("nyc_custGroups",[]);}),custGroups=r40[0],setCustGroups=r40[1]; var r41=useState(""),newGrpName=r41[0],setNewGrpName=r41[1]; var r42=useState("📁"),newGrpIcon=r42[0],setNewGrpIcon=r42[1]; var r43=useState("#A8D0E8"),newGrpColor=r43[0],setNewGrpColor=r43[1]; var r44=useState(new Date().getFullYear()+""),taxYr=r44[0],setTaxYr=r44[1]; var r45=useState(function(){return lsLoad("nyc_seRate",15.3);}),seRate=r45[0],_setSeRate=r45[1];function setSeRate(v){_setSeRate(v);try{localStorage.setItem("nyc_seRate",JSON.stringify(v));}catch(e){}} var r45b=useState(function(){return lsLoad("nyc_fedRate",12);}),fedRate=r45b[0],_setFedRate=r45b[1];function setFedRate(v){_setFedRate(v);try{localStorage.setItem("nyc_fedRate",JSON.stringify(v));}catch(e){}} var r45c=useState(function(){return lsLoad("nyc_stateRate",8.5);}),stateRate=r45c[0],_setStateRate=r45c[1];function setStateRate(v){_setStateRate(v);try{localStorage.setItem("nyc_stateRate",JSON.stringify(v));}catch(e){}} var r45d=useState(function(){return lsLoad("nyc_stdDed",14600);}),stdDed=r45d[0],_setStdDed=r45d[1];function setStdDed(v){_setStdDed(v);try{localStorage.setItem("nyc_stdDed",JSON.stringify(v));}catch(e){}} var r45e=useState(function(){return lsLoad("nyc_mtaRate",0.34);}),mtaRate=r45e[0],_setMtaRate=r45e[1];function setMtaRate(v){_setMtaRate(v);try{localStorage.setItem("nyc_mtaRate",JSON.stringify(v));}catch(e){}} var r45f=useState(function(){return lsLoad("nyc_mileageRate",0.70);}),mileageRate=r45f[0],_setMileageRate=r45f[1];function setMileageRate(v){_setMileageRate(v);try{localStorage.setItem("nyc_mileageRate",JSON.stringify(v));}catch(e){}} var rSV=useState(function(){return lsLoad("nyc_savedVehicles",[]);}),savedVehicles=rSV[0],_setSavedVehicles=rSV[1];function setSavedVehicles(v){_setSavedVehicles(v);try{localStorage.setItem("nyc_savedVehicles",JSON.stringify(v));}catch(e){}} var r46=useState(false),taxLoading=r46[0],setTaxLoading=r46[1]; var r47=useState(""),taxRateNote=r47[0],setTaxRateNote=r47[1]; var r48=useState(function(){return lsLoad("nyc_notes",[]);}),notes=r48[0],setNotes=r48[1];
+    ; var achievements=[];if(tInc>=5000)achievements.push({icon:"🏆",text:lang==="en"?"Income > $5000":"本月收入破$5000",color:C.gold,bg:"#1A1400"});else if(tInc>=3000)achievements.push({icon:"⭐",text:lang==="en"?"Income > $3000":"本月收入破$3000",color:C.gold,bg:"#1A1400"});if(net>0&&tInc>0&&net>=tInc*0.5)achievements.push({icon:"💰",text:lang==="en"?"Profit > 50%":"净利润超50%",color:C.success,bg:"#0A1A0A"});if(tTrips>=200)achievements.push({icon:"🚗",text:lang==="en"?"200 trips this month":"本月200趟达成",color:C.accent,bg:"#0A1428"});else if(tTrips>=100)achievements.push({icon:"🎯",text:lang==="en"?"100 trips this month":"本月100趟达成",color:C.accent,bg:"#0A1428"});if(expiring.length===0&&expired.length===0&&ll.length>0)achievements.push({icon:"✅",text:lang==="en"?"All licenses valid":"证件全部有效",color:C.success,bg:"#0A1A0A"});if(yInc>=50000)achievements.push({icon:"👑",text:lang==="en"?"Annual income > $50000":"年收入破$50000",color:C.gold,bg:"#1A1400"}); var r40=useState(function(){return lsLoad("nyc_custGroups",[]);}),custGroups=r40[0],setCustGroups=r40[1]; var r41=useState(""),newGrpName=r41[0],setNewGrpName=r41[1]; var r42=useState("📁"),newGrpIcon=r42[0],setNewGrpIcon=r42[1]; var r43=useState("#A8D0E8"),newGrpColor=r43[0],setNewGrpColor=r43[1]; var r44=useState(new Date().getFullYear()+""),taxYr=r44[0],setTaxYr=r44[1]; var r45=useState(function(){return lsLoad("nyc_seRate",15.3);}),seRate=r45[0],_setSeRate=r45[1];function setSeRate(v){_setSeRate(v);try{localStorage.setItem("nyc_seRate",JSON.stringify(v));}catch(e){}} var r45b=useState(function(){return lsLoad("nyc_fedRate",12);}),fedRate=r45b[0],_setFedRate=r45b[1];function setFedRate(v){_setFedRate(v);try{localStorage.setItem("nyc_fedRate",JSON.stringify(v));}catch(e){}} var r45c=useState(function(){return lsLoad("nyc_stateRate",8.5);}),stateRate=r45c[0],_setStateRate=r45c[1];function setStateRate(v){_setStateRate(v);try{localStorage.setItem("nyc_stateRate",JSON.stringify(v));}catch(e){}} var r45d=useState(function(){return lsLoad("nyc_stdDed",14600);}),stdDed=r45d[0],_setStdDed=r45d[1];function setStdDed(v){_setStdDed(v);try{localStorage.setItem("nyc_stdDed",JSON.stringify(v));}catch(e){}} var r45e=useState(function(){return lsLoad("nyc_mtaRate",0.34);}),mtaRate=r45e[0],_setMtaRate=r45e[1];function setMtaRate(v){_setMtaRate(v);try{localStorage.setItem("nyc_mtaRate",JSON.stringify(v));}catch(e){}} var r45f=useState(function(){return lsLoad("nyc_mileageRate",0.70);}),mileageRate=r45f[0],_setMileageRate=r45f[1];function setMileageRate(v){_setMileageRate(v);try{localStorage.setItem("nyc_mileageRate",JSON.stringify(v));}catch(e){}} var rSV=useState(function(){return lsLoad("nyc_savedVehicles",[]);}),savedVehicles=rSV[0],_setSavedVehicles=rSV[1];function setSavedVehicles(v){_setSavedVehicles(v);try{localStorage.setItem("nyc_savedVehicles",JSON.stringify(v));}catch(e){}} var r46=useState(false),taxLoading=r46[0],setTaxLoading=r46[1]; var r47=useState(""),taxRateNote=r47[0],setTaxRateNote=r47[1]; var r48=useState(function(){return lsLoad("nyc_notes",[]);}),notes=r48[0],setNotes=r48[1];
   // Driver info (separate from vehicle so it survives vehicle switches)
   // Migration: if nyc_driver doesn't exist but veh.driver has data, copy it over.
   var rDrv = useState(function(){
@@ -2934,7 +2969,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
             , React.createElement('svg', { width: "20", height: "20", viewBox: "0 0 48 48"   , __self: this, __source: {fileName: _jsxFileName, lineNumber: 234}}, React.createElement('path', { fill: "#EA4335", d: "M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"                       , __self: this, __source: {fileName: _jsxFileName, lineNumber: 234}}), React.createElement('path', { fill: "#4285F4", d: "M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"       , __self: this, __source: {fileName: _jsxFileName, lineNumber: 234}}), React.createElement('path', { fill: "#FBBC05", d: "M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"          , __self: this, __source: {fileName: _jsxFileName, lineNumber: 234}}), React.createElement('path', { fill: "#34A853", d: "M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"              , __self: this, __source: {fileName: _jsxFileName, lineNumber: 234}}))
             , lang==="en"?"Sign in with Google":"用 Google 账号登录"
           )
-          , React.createElement('button', { onClick: function(){setLang(lang==="zh"?"en":"zh");}, style: {marginTop:20,background:"none",border:"1px solid #2A4A6A",borderRadius:8,padding:"6px 16px",color:C.text3,fontSize:13,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 237}}, lang==="zh"?"English":"中文")
+          , React.createElement('button', { onClick: function(){setLang(lang==="zh"?"en":"zh");}, style: {marginTop:20,background:"none",border:"1px solid "+C.border2,borderRadius:8,padding:"6px 16px",color:C.text3,fontSize:13,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 237}}, lang==="zh"?"English":"中文")
         )
   );
   return (
@@ -2956,15 +2991,17 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
             {emoji:"📊", title:"两个大数字", body:"📱 平台到账 = Uber 实际打到银行的钱\n💰 净收入 = 扣完所有支出真正赚的\n\n点任一卡看完整明细。", btn:"开始用！"}
           ];
           var s = steps[onbStep] || steps[0];
-          return React.createElement('div', {style:{position:"fixed",inset:0,background:"rgba(5,12,25,0.92)",zIndex:20000,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}
-            , React.createElement('div', {style:{background:"linear-gradient(180deg,#0F1F35 0%,#0A1828 100%)",border:"1px solid #2A5080",borderRadius:16,maxWidth:380,width:"100%",padding:"32px 24px",textAlign:"center",boxShadow:"0 8px 30px rgba(0,0,0,0.7)"}}
-              , React.createElement('div', {style:{fontSize:60,marginBottom:14}}, s.emoji)
-              , React.createElement('div', {style:{fontSize:22,fontWeight:800,color:"#00D4FF",marginBottom:14}}, s.title)
-              , React.createElement('div', {style:{fontSize:14,color:C.text2,lineHeight:1.6,marginBottom:24,whiteSpace:"pre-line"}}, s.body)
+          return React.createElement('div', {style:{position:"fixed",inset:0,background:"rgba(0,4,12,0.96)",backdropFilter:"blur(8px)",WebkitBackdropFilter:"blur(8px)",zIndex:20000,display:"flex",alignItems:"center",justifyContent:"center",padding:20,animation:"fadeIn 0.2s"}}
+            , React.createElement('div', {style:{background:"linear-gradient(180deg, "+C.bg2+" 0%, "+C.bg+" 100%)",border:"1px solid "+C.border2,borderRadius:RADIUS.xl,maxWidth:400,width:"100%",padding:"36px 28px",textAlign:"center",boxShadow:"0 20px 60px rgba(0,0,0,0.8), 0 0 80px rgba(0,212,255,0.1)",position:"relative",overflow:"hidden",animation:"slideUp 0.3s"}}
+              // Top glow
+              , React.createElement('div', {style:{position:"absolute",top:-50,left:"50%",transform:"translateX(-50%)",width:200,height:100,background:"radial-gradient(ellipse, rgba(0,212,255,0.2) 0%, transparent 70%)",pointerEvents:"none"}})
+              , React.createElement('div', {style:{fontSize:64,marginBottom:18,filter:"drop-shadow(0 4px 12px rgba(0,212,255,0.4))",position:"relative"}}, s.emoji)
+              , React.createElement('div', {style:{fontSize:FS.xxl+2,fontWeight:900,color:C.accent,marginBottom:16,letterSpacing:-0.4,position:"relative"}}, s.title)
+              , React.createElement('div', {style:{fontSize:FS.md+2,color:C.text2,lineHeight:1.7,marginBottom:28,whiteSpace:"pre-line",position:"relative"}}, s.body)
               // Progress dots
-              , React.createElement('div', {style:{display:"flex",justifyContent:"center",gap:8,marginBottom:20}}
+              , React.createElement('div', {style:{display:"flex",justifyContent:"center",gap:10,marginBottom:24,position:"relative"}}
                 , steps.map(function(_,i){
-                    return React.createElement('div', {key:i, style:{width:8,height:8,borderRadius:"50%",background:i===onbStep?"#00D4FF":"#2A4A6A"}});
+                    return React.createElement('div', {key:i, style:{width:i===onbStep?28:8,height:8,borderRadius:4,background:i===onbStep?C.accent:C.border2,transition:"all 0.3s",boxShadow:i===onbStep?"0 0 12px rgba(0,212,255,0.5)":"none"}});
                   })
               )
               , React.createElement('button', {onClick:function(){
@@ -2974,8 +3011,8 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                     setShowOnboarding(false);
                     setOnbStep(0);
                   }
-                }, style:{width:"100%",background:"linear-gradient(135deg,#00CFFF,#0044EE)",border:"none",color:"#fff",fontSize:15,fontWeight:700,padding:"14px",borderRadius:10,cursor:"pointer",boxShadow:"0 2px 10px rgba(0,207,255,0.3)"}}, s.btn)
-              , onbStep < steps.length-1 ? React.createElement('button', {onClick:function(){setShowOnboarding(false);setOnbStep(0);}, style:{background:"none",border:"none",color:C.text3,fontSize:12,marginTop:14,cursor:"pointer",padding:"6px"}}, lang==="en"?"Skip":"跳过") : null
+                }, style:{width:"100%",background:"linear-gradient(135deg,#00CFFF,#0044EE)",border:"none",color:"#fff",fontSize:FS.lg+1,fontWeight:800,padding:"16px",borderRadius:RADIUS.md,cursor:"pointer",boxShadow:"0 4px 20px rgba(0,207,255,0.4), 0 0 30px rgba(0,207,255,0.2)",letterSpacing:0.3,position:"relative",transition:"transform 0.1s"}}, s.btn)
+              , onbStep < steps.length-1 ? React.createElement('button', {onClick:function(){setShowOnboarding(false);setOnbStep(0);}, style:{background:"none",border:"none",color:C.text3,fontSize:FS.md,marginTop:16,cursor:"pointer",padding:"8px",fontWeight:500,position:"relative"}}, lang==="en"?"Skip":"跳过") : null
             )
           );
         }()) : null
@@ -2986,21 +3023,21 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
         },
         toasts.slice(-4).map(function(t){
           var colors={
-            success: {bg:"linear-gradient(135deg,#00C853,#1B5E20)",border:"#5ADA7A",text:"#FFFFFF"},
-            error:   {bg:"linear-gradient(135deg,#D32F2F,#7F1818)",border:"#FF7060",text:"#FFFFFF"},
-            warn:    {bg:"linear-gradient(135deg,#FF9100,#7A4500)",border:"#FFB300",text:"#FFFFFF"},
-            info:    {bg:"linear-gradient(135deg,#2196F3,#0D47A1)",border:"#5AACFF",text:"#FFFFFF"}
+            success: {bg:"linear-gradient(135deg,#00C853,#0A4020)",border:"rgba(90,218,122,0.5)",text:"#FFFFFF"},
+            error:   {bg:"linear-gradient(135deg,#E53935,#5A0A0A)",border:"rgba(255,112,96,0.5)",text:"#FFFFFF"},
+            warn:    {bg:"linear-gradient(135deg,#FF9100,#5A2C00)",border:"rgba(255,179,71,0.5)",text:"#FFFFFF"},
+            info:    {bg:"linear-gradient(135deg,#0288D1,#0A2845)",border:"rgba(90,172,255,0.5)",text:"#FFFFFF"}
           };
           var c=colors[t.type]||colors.success;
           return React.createElement('div', {
             key: t.id,
-            style: {background:c.bg,border:"1px solid "+c.border,color:c.text,padding:"8px 14px",borderRadius:10,fontSize:12,fontWeight:700,boxShadow:"0 4px 14px rgba(0,0,0,0.5)",minWidth:120,maxWidth:300,textAlign:"center",animation:"toastIn 0.25s ease-out"}
+            style: {background:c.bg,border:"1px solid "+c.border,color:c.text,padding:"10px 16px",borderRadius:RADIUS.md,fontSize:FS.md,fontWeight:700,boxShadow:"0 6px 20px rgba(0,0,0,0.6), 0 0 30px rgba(0,0,0,0.3)",minWidth:140,maxWidth:320,textAlign:"center",animation:"toastIn 0.25s ease-out",backdropFilter:"blur(4px)",letterSpacing:0.2}
           }, t.msg);
         })
       ) : null
       // === Undo Banner (5-30s grace period for bulk operations) ===
       , undoBanner ? React.createElement('div', {
-          style: {position:"fixed",top:0,left:0,right:0,zIndex:9999,background:"linear-gradient(135deg,#1A6030,#0A4020)",color:"#fff",padding:"12px 16px 14px",display:"flex",alignItems:"center",gap:12,boxShadow:"0 2px 16px rgba(0,0,0,0.4)",borderBottom:"1px solid #2A8050"}
+          style: {position:"fixed",top:0,left:0,right:0,zIndex:9999,background:"linear-gradient(135deg,#1A6030,#0A2818)",color:"#fff",padding:"12px 16px 14px",display:"flex",alignItems:"center",gap:12,boxShadow:"0 4px 24px rgba(0,0,0,0.5)",borderBottom:"1px solid rgba(90,218,122,0.4)",backdropFilter:"blur(8px)",animation:"slideUp 0.2s"}
         }
         
         , React.createElement('div', {style:{flex:1,fontSize:13,fontWeight:700}}
@@ -3053,25 +3090,25 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
             })
         )
       ) : null
-      , React.createElement('div', { style: {background:C.bg,padding:"6px 12px 5px",borderBottom:"1px solid "+C.border,position:"sticky",top:0,zIndex:50}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 242}}
+      , React.createElement('div', { style: {background:"rgba(10,14,26,0.92)",backdropFilter:"blur(12px)",WebkitBackdropFilter:"blur(12px)",padding:"8px 14px 7px",borderBottom:"1px solid "+C.border,position:"sticky",top:0,zIndex:50}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 242}}
         , React.createElement('div', { style: {display:"flex",alignItems:"center",gap:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 243}}
-          , React.createElement('button', { onClick: function(){setShowDrawer(true);}, style: {background:"none",border:"none",color:C.text2,fontSize:18,cursor:"pointer",padding:"2px 4px",lineHeight:1,flexShrink:0}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 244}}, "☰")
+          , React.createElement('button', { onClick: function(){setShowDrawer(true);}, style: {background:C.bg3,border:"1px solid "+C.border,color:C.text2,fontSize:18,cursor:"pointer",padding:"6px 10px",lineHeight:1,flexShrink:0,borderRadius:RADIUS.sm,transition:"all 0.15s"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 244}}, "☰")
           , React.createElement('div', { style: {flex:1,textAlign:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 245}}
-            , veh.brand||veh.plate ? React.createElement('div', { style: {fontSize:12,fontWeight:800,color:C.text}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 246}}, veh.year?veh.year+" ":"", veh.brand?veh.brand+" ":"", veh.model?veh.model+" ":"", veh.plate?"["+veh.plate+"]":"") : React.createElement('div', { style: {fontSize:13,fontWeight:700,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 246}}, "NYC RIDESHARE TRACKER"  )
-            , React.createElement('div', { style: {fontSize:10,color:C.text3,letterSpacing:0.4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 247}}, "NYC DRIVER TRACKER"  )
+            , veh.brand||veh.plate ? React.createElement('div', { style: {fontSize:FS.md,fontWeight:800,color:C.text,letterSpacing:-0.1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 246}}, veh.year?veh.year+" ":"", veh.brand?veh.brand+" ":"", veh.model?veh.model+" ":"", veh.plate?React.createElement('span',{style:{color:C.accent,fontWeight:700,marginLeft:2}},"["+veh.plate+"]"):"") : React.createElement('div', { style: {fontSize:FS.md,fontWeight:700,color:C.text3,letterSpacing:0.5}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 246}}, "NYC RIDESHARE TRACKER"  )
+            , React.createElement('div', { style: {fontSize:FS.xs,color:C.text3,letterSpacing:0.8,marginTop:1,textTransform:"uppercase",fontWeight:600,opacity:0.55}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 247}}, "Driver Tracker"  )
           )
-          , React.createElement('button', { onClick: function(){setLang(lang==="zh"?"en":"zh");}, style: {background:"#1A2A44",border:"none",borderRadius:5,color:"#A8D0E8",fontSize:11,cursor:"pointer",padding:"2px 6px",fontWeight:700,flexShrink:0}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 249}}, lang==="zh"?"EN":"中")
-          , React.createElement('button', { onClick: function(){setSearchOpen(true);}, style: {background:"none",border:"none",color:"#7AC0E8",fontSize:15,cursor:"pointer",padding:"2px 4px",flexShrink:0}, title:lang==="en"?"Search":"搜索"}, "🔍")
-          , React.createElement('button', { onClick: function(){setShowRemMgr(true);}, style: {background:"none",border:"none",color:"#CC88FF",fontSize:15,cursor:"pointer",padding:"2px 4px",flexShrink:0}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 250}}, "🔔")
+          , React.createElement('button', { onClick: function(){setLang(lang==="zh"?"en":"zh");}, style: {background:C.bg3,border:"1px solid "+C.border,borderRadius:6,color:C.accent2,fontSize:FS.sm,cursor:"pointer",padding:"4px 8px",fontWeight:700,flexShrink:0,transition:"all 0.15s",letterSpacing:0.3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 249}}, lang==="zh"?"EN":"中")
+          , React.createElement('button', { onClick: function(){setSearchOpen(true);}, style: {background:"none",border:"none",color:C.accent2,fontSize:16,cursor:"pointer",padding:"4px 6px",flexShrink:0}, title:lang==="en"?"Search":"搜索"}, "🔍")
+          , React.createElement('button', { onClick: function(){setShowRemMgr(true);}, style: {background:"none",border:"none",color:"#CC88FF",fontSize:16,cursor:"pointer",padding:"4px 6px",flexShrink:0}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 250}}, "🔔")
         )
       )
       , expired.length > 0 ? React.createElement(ABox, { color: "#FF1744", bg: "#2A0505", icon: "!", text: expired.length+(lang==="en"?" licenses expired":" 项执照已过期"), __self: this, __source: {fileName: _jsxFileName, lineNumber: 253}} ) : null
       , expiring.length > 0 ? React.createElement(ABox, { color: "#FF6D00", bg: "#2A1500", icon: "!", text: expiring.length+(lang==="en"?" licenses expiring soon":" 项执照60天内到期"), __self: this, __source: {fileName: _jsxFileName, lineNumber: 254}} ) : null
-      , insW && insW.diff < 0 ? React.createElement(ABox, { color: "#FF5252", bg: "#200808", icon: "!", text: (lang==="en"?"Inspection overdue ":"车辆检验已逾期 ")+Math.abs(insW.diff)+(lang==="en"?" days":" 天"), __self: this, __source: {fileName: _jsxFileName, lineNumber: 255}} ) : null
+      , insW && insW.diff < 0 ? React.createElement(ABox, { color: C.danger, bg: "#200808", icon: "!", text: (lang==="en"?"Inspection overdue ":"车辆检验已逾期 ")+Math.abs(insW.diff)+(lang==="en"?" days":" 天"), __self: this, __source: {fileName: _jsxFileName, lineNumber: 255}} ) : null
       , insW && insW.diff >= 0 && insW.diff <= 30 ? React.createElement(ABox, { color: "#FFB300", bg: "#1A1400", icon: "!", text: (lang==="en"?"Inspection in ":"车辆检验还剩 ")+insW.diff+(lang==="en"?" days":" 天"), __self: this, __source: {fileName: _jsxFileName, lineNumber: 256}} ) : null
       , (function(){if(!nextExpiry)return null;var d=daysFromToday(nextExpiry.expiryDate);if(d===null||d<=0||d>(+(nextExpiry.reminderDays||60)))return null;return React.createElement(ABox, { color: "#FF9A00", bg: "#1A1000", icon: "📋", text: nextExpiry.type+" "+(lang==="en"?"expires in ":"还剩 ")+d+(lang==="en"?" days":" 天到期"), __self: this, __source: {fileName: _jsxFileName, lineNumber: 257}});})()
       , reminders.filter(function(r){if(!r.date)return false;var d=daysFromToday(r.date);return d!==null&&d>=0&&d<=(+(r.reminderDays||7));}).map(function(r,i){var d=daysFromToday(r.date);return React.createElement(ABox, { key: i, color: "#CC88FF", bg: "#150A20", icon: "🔔", text: r.title+(d===0?(lang==="en"?" · Today":" · 今天"):d===1?(lang==="en"?" · Tomorrow":" · 明天"):(lang==="en"?" · "+d+" days left":" · 还剩"+d+"天")), __self: this, __source: {fileName: _jsxFileName, lineNumber: 258}} );}) 
-      , (function(){var lo=el.filter(function(e){return e.odometer&&+e.odometer>0;}).sort(function(a,b){var c=b.date.localeCompare(a.date);return c!==0?c:(+b.odometer)-(+a.odometer);})[0];var co=lo?+lo.odometer:0;if(co<=0)return null;return reminders.filter(function(r){if(r.type!=="mile")return false;if(!r.triggerMile)return false;var rem=(+r.triggerMile)-co;return rem<=(+(r.reminderMile||200));}).map(function(r,i){var rem=(+r.triggerMile)-co;var txt=r.title+(rem<=0?(lang==="en"?" · Overdue by "+Math.abs(rem).toLocaleString()+" mi":" · 已超 "+Math.abs(rem).toLocaleString()+" mi"):(lang==="en"?" · "+rem.toLocaleString()+" mi left":" · 还剩 "+rem.toLocaleString()+" mi"));var col=rem<=0?"#FF5252":"#FFB300",bg=rem<=0?"#200808":"#1A1400";return React.createElement(ABox, { key: "m"+i, color: col, bg: bg, icon: "🛣", text: txt });});})()
+      , (function(){var lo=el.filter(function(e){return e.odometer&&+e.odometer>0;}).sort(function(a,b){var c=b.date.localeCompare(a.date);return c!==0?c:(+b.odometer)-(+a.odometer);})[0];var co=lo?+lo.odometer:0;if(co<=0)return null;return reminders.filter(function(r){if(r.type!=="mile")return false;if(!r.triggerMile)return false;var rem=(+r.triggerMile)-co;return rem<=(+(r.reminderMile||200));}).map(function(r,i){var rem=(+r.triggerMile)-co;var txt=r.title+(rem<=0?(lang==="en"?" · Overdue by "+Math.abs(rem).toLocaleString()+" mi":" · 已超 "+Math.abs(rem).toLocaleString()+" mi"):(lang==="en"?" · "+rem.toLocaleString()+" mi left":" · 还剩 "+rem.toLocaleString()+" mi"));var col=rem<=0?C.danger:"#FFB300",bg=rem<=0?"#200808":"#1A1400";return React.createElement(ABox, { key: "m"+i, color: col, bg: bg, icon: "🛣", text: txt });});})()
       // Smart preset-based maintenance alerts (independent of manual reminders)
       , (function(){
           var lo=el.filter(function(e){return e.odometer&&+e.odometer>0;}).sort(function(a,b){var c=b.date.localeCompare(a.date);return c!==0?c:(+b.odometer)-(+a.odometer);})[0];
@@ -3098,7 +3135,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
             var thresh = Math.min(200, Math.round(p.interval * 0.05));
             if(rem > thresh) return;  // too far away
             var txt = p.icon + " " + lbl + (lang==="en" ? " · "+rem.toLocaleString()+" mi to "+nextDue.toLocaleString() : " · 还剩 "+rem.toLocaleString()+" mi (" + nextDue.toLocaleString() + ")");
-            alerts.push(React.createElement(ABox, { key: "preset_"+p.key, color: "#5AACFF", bg: "#0A1828", icon: "🔧", text: txt }));
+            alerts.push(React.createElement(ABox, { key: "preset_"+p.key, color: C.accent2, bg: C.bg3, icon: "🔧", text: txt }));
           });
           return alerts.length ? alerts : null;
         }())
@@ -3117,27 +3154,38 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                 // Last amount for each category (shown as hint)
                 var lastOf=function(cat){var matches=el.filter(function(e){return e.category===cat&&e.amount;}).sort(function(a,b){return (b.date||"").localeCompare(a.date||"");});return matches[0];};
                 var lastFuel=lastOf(fuelCat);
-                var lastPark=lastOf("parking");
-                var lastFood=lastOf("meals");
-                var btnStyle={flex:1,background:C.bg2,border:"1px solid "+C.border,borderRadius:12,padding:"12px 6px",cursor:"pointer",textAlign:"center"};
-                var iconStyle={fontSize:24,marginBottom:4};
-                var labelStyle={fontSize:12,fontWeight:700,color:C.text};
-                var hintStyle={fontSize:10,color:C.text3,marginTop:2};
-                return React.createElement('div', {style:{display:"flex",gap:8,marginBottom:12}}
+                var lastCoffee=lastOf("coffee");
+                // Last cash tip: find most recent dl entry with tips > 0
+                var lastTip=dl.filter(function(d){return +d.tips>0;}).sort(function(a,b){return (b.date||"").localeCompare(a.date||"");})[0];
+                var btnStyle={
+                  flex:1,
+                  background:"linear-gradient(180deg, "+C.bg3+" 0%, "+C.bg2+" 100%)",
+                  border:"1px solid "+C.border,
+                  borderRadius:RADIUS.md,
+                  padding:"14px 6px",
+                  cursor:"pointer",
+                  textAlign:"center",
+                  boxShadow:SHADOW.sm,
+                  transition:"transform 0.1s, box-shadow 0.15s, border-color 0.15s"
+                };
+                var iconStyle={fontSize:26,marginBottom:6,filter:"drop-shadow(0 1px 2px rgba(0,0,0,0.3))"};
+                var labelStyle={fontSize:FS.md,fontWeight:700,color:C.text,letterSpacing:0.2};
+                var hintStyle={fontSize:FS.xs,color:C.text3,marginTop:3,fontWeight:500};
+                return React.createElement('div', {style:{display:"flex",gap:10,marginBottom:14}}
                   , React.createElement('button', {onClick:function(){setSf("quick_fuel");}, style:btnStyle}
                     , React.createElement('div', {style:iconStyle}, fuelIcon)
                     , React.createElement('div', {style:labelStyle}, fuelLabel)
                     , lastFuel ? React.createElement('div', {style:hintStyle}, lang==="en"?"last ":"上次 ", fmt(+lastFuel.amount)) : null
                   )
-                  , React.createElement('button', {onClick:function(){setSf("quick_park");}, style:btnStyle}
-                    , React.createElement('div', {style:iconStyle}, "🅿️")
-                    , React.createElement('div', {style:labelStyle}, lang==="en"?"Park":"停车")
-                    , lastPark ? React.createElement('div', {style:hintStyle}, lang==="en"?"last ":"上次 ", fmt(+lastPark.amount)) : null
+                  , React.createElement('button', {onClick:function(){setSf("quick_coffee");}, style:btnStyle}
+                    , React.createElement('div', {style:iconStyle}, "☕")
+                    , React.createElement('div', {style:labelStyle}, lang==="en"?"Coffee":"咖啡")
+                    , lastCoffee ? React.createElement('div', {style:hintStyle}, lang==="en"?"last ":"上次 ", fmt(+lastCoffee.amount)) : null
                   )
-                  , React.createElement('button', {onClick:function(){setSf("quick_food");}, style:btnStyle}
-                    , React.createElement('div', {style:iconStyle}, "🍔")
-                    , React.createElement('div', {style:labelStyle}, lang==="en"?"Meal":"吃饭")
-                    , lastFood ? React.createElement('div', {style:hintStyle}, lang==="en"?"last ":"上次 ", fmt(+lastFood.amount)) : null
+                  , React.createElement('button', {onClick:function(){setSf("quick_tip");}, style:btnStyle}
+                    , React.createElement('div', {style:iconStyle}, "💵")
+                    , React.createElement('div', {style:labelStyle}, lang==="en"?"Cash Tip":"现金小费")
+                    , lastTip ? React.createElement('div', {style:hintStyle}, lang==="en"?"last ":"上次 ", fmt(+lastTip.tips)) : null
                   )
                 );
               }())
@@ -3164,15 +3212,15 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                     hasInsights=true;
                     var dInc=lmInc>0?Math.round((tInc-lmInc)/lmInc*100):0;
                     var dirSym=dInc>0?"↑":(dInc<0?"↓":"→");
-                    var dirCol=dInc>0?"#00E676":(dInc<0?"#FF7060":"#7A9AB8");
+                    var dirCol=dInc>0?C.success:(dInc<0?C.danger:C.text3);
                     // Format last-month label same way as last-year-month label
                     var lmLabel = lastMo.slice(0,4) + (lang==="en"?" "+["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][+lastMo.slice(5,7)-1]:" 年 "+lastMo.slice(5,7)+" 月");
                     summarySection=React.createElement('div',null,
-                      React.createElement('div',{style:{fontSize:12,color:C.text3,marginBottom:4,letterSpacing:0.3}},lang==="en"?"VS LAST MONTH · "+lmLabel:"对比上月 · "+lmLabel),
-                      React.createElement('div',{style:{fontSize:13,color:C.text,lineHeight:1.6}},
+                      React.createElement('div',{style:{fontSize:FS.xs+1,color:C.text3,marginBottom:6,letterSpacing:1.2,textTransform:"uppercase",fontWeight:600}},lang==="en"?"VS LAST MONTH · "+lmLabel:"对比上月 · "+lmLabel),
+                      React.createElement('div',{style:{fontSize:FS.md+1,color:C.text,lineHeight:1.6}},
                         lang==="en"
-                          ? React.createElement('span',null,"Net ",React.createElement('b',{style:{color:net>=0?"#00E676":"#FF7060"}},fmt(net))," ",lmInc>0?React.createElement('span',{style:{color:dirCol,fontWeight:600}},dirSym," ",Math.abs(dInc),"%"):null,hourlyRate>0?React.createElement('span',{style:{color:C.text3}},"  ·  ",fmt(hourlyRate),"/hr"):null)
-                          : React.createElement('span',null,"净利润 ",React.createElement('b',{style:{color:net>=0?"#00E676":"#FF7060"}},fmt(net))," ",lmInc>0?React.createElement('span',{style:{color:dirCol,fontWeight:600}},dirSym," ",Math.abs(dInc),"%"):null,hourlyRate>0?React.createElement('span',{style:{color:C.text3}},"  ·  时薪 ",fmt(hourlyRate)):null)
+                          ? React.createElement('span',null,"Net ",React.createElement('b',{style:{color:net>=0?C.success:C.danger}},fmt(net))," ",lmInc>0?React.createElement('span',{style:{color:dirCol,fontWeight:600}},dirSym," ",Math.abs(dInc),"%"):null,hourlyRate>0?React.createElement('span',{style:{color:C.text3}},"  ·  ",fmt(hourlyRate),"/hr"):null)
+                          : React.createElement('span',null,"净利润 ",React.createElement('b',{style:{color:net>=0?C.success:C.danger}},fmt(net))," ",lmInc>0?React.createElement('span',{style:{color:dirCol,fontWeight:600}},dirSym," ",Math.abs(dInc),"%"):null,hourlyRate>0?React.createElement('span',{style:{color:C.text3}},"  ·  时薪 ",fmt(hourlyRate)):null)
                       )
                     );
                   }
@@ -3182,11 +3230,11 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                     var dyInc=lyMoInc>0?Math.round((tInc-lyMoInc)/lyMoInc*100):0;
                     var dyNet=lyMoNet!==0?Math.round((net-lyMoNet)/Math.abs(lyMoNet)*100):0;
                     var dySym=dyNet>0?"↑":(dyNet<0?"↓":"→");
-                    var dyCol=dyNet>0?"#00E676":(dyNet<0?"#FF7060":"#7A9AB8");
+                    var dyCol=dyNet>0?C.success:(dyNet<0?C.danger:C.text3);
                     var lyMoLabel = lyMo.slice(0,4) + (lang==="en"?" "+["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][+lyMo.slice(5,7)-1]:" 年 "+lyMo.slice(5,7)+" 月");
                     yoyMonthSection=React.createElement('div',{style:{paddingTop:summarySection?8:0,marginTop:summarySection?8:0,borderTop:summarySection?"1px solid "+C.border:"none"}},
-                      React.createElement('div',{style:{fontSize:12,color:C.text3,marginBottom:4,letterSpacing:0.3}},lang==="en"?"VS SAME MONTH LAST YEAR · "+lyMoLabel:"对比去年同月 · "+lyMoLabel),
-                      React.createElement('div',{style:{fontSize:13,color:C.text,lineHeight:1.6}},
+                      React.createElement('div',{style:{fontSize:FS.xs+1,color:C.text3,marginBottom:6,letterSpacing:1.2,textTransform:"uppercase",fontWeight:600}},lang==="en"?"VS SAME MONTH LAST YEAR · "+lyMoLabel:"对比去年同月 · "+lyMoLabel),
+                      React.createElement('div',{style:{fontSize:FS.md+1,color:C.text,lineHeight:1.6}},
                         lang==="en"
                           ? React.createElement('span',null,"Inc ",fmt(tInc)," vs ",fmt(lyMoInc),"  ",lyMoInc>0?React.createElement('span',{style:{color:dyCol,fontWeight:600}},dySym," ",Math.abs(dyNet),"%"):null)
                           : React.createElement('span',null,"收入 ",fmt(tInc)," vs ",fmt(lyMoInc),"  ",lyMoInc>0?React.createElement('span',{style:{color:dyCol,fontWeight:600}},dySym," ",Math.abs(dyNet),"%"):null)
@@ -3200,13 +3248,13 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                     var dpInc=pyInc>0?Math.round((yInc-pyInc)/pyInc*100):0;
                     var dpNet=pyNet!==0?Math.round((yNet-pyNet)/Math.abs(pyNet)*100):0;
                     var dpSym=dpNet>0?"↑":(dpNet<0?"↓":"→");
-                    var dpCol=dpNet>0?"#00E676":(dpNet<0?"#FF7060":"#7A9AB8");
+                    var dpCol=dpNet>0?C.success:(dpNet<0?C.danger:C.text3);
                     yoyYearSection=React.createElement('div',null,
-                      React.createElement('div',{style:{fontSize:12,color:C.text3,marginBottom:4,letterSpacing:0.3}},lang==="en"?"VS LAST YEAR · "+prevYr:"对比上一年 · "+prevYr+" 年"),
-                      React.createElement('div',{style:{fontSize:13,color:C.text,lineHeight:1.6}},
+                      React.createElement('div',{style:{fontSize:FS.xs+1,color:C.text3,marginBottom:6,letterSpacing:1.2,textTransform:"uppercase",fontWeight:600}},lang==="en"?"VS LAST YEAR · "+prevYr:"对比上一年 · "+prevYr+" 年"),
+                      React.createElement('div',{style:{fontSize:FS.md+1,color:C.text,lineHeight:1.6}},
                         lang==="en"
-                          ? React.createElement('span',null,"Net ",React.createElement('b',{style:{color:yNet>=0?"#00E676":"#FF7060"}},fmt(yNet))," ",pyNet!==0?React.createElement('span',{style:{color:dpCol,fontWeight:600}},dpSym," ",Math.abs(dpNet),"%"):null,React.createElement('span',{style:{color:C.text3}},"  ·  ",lang==="en"?"prev: ":"上年: ",fmt(pyNet)))
-                          : React.createElement('span',null,"净利润 ",React.createElement('b',{style:{color:yNet>=0?"#00E676":"#FF7060"}},fmt(yNet))," ",pyNet!==0?React.createElement('span',{style:{color:dpCol,fontWeight:600}},dpSym," ",Math.abs(dpNet),"%"):null,React.createElement('span',{style:{color:C.text3}},"  ·  上年: ",fmt(pyNet)))
+                          ? React.createElement('span',null,"Net ",React.createElement('b',{style:{color:yNet>=0?C.success:C.danger}},fmt(yNet))," ",pyNet!==0?React.createElement('span',{style:{color:dpCol,fontWeight:600}},dpSym," ",Math.abs(dpNet),"%"):null,React.createElement('span',{style:{color:C.text3}},"  ·  ",lang==="en"?"prev: ":"上年: ",fmt(pyNet)))
+                          : React.createElement('span',null,"净利润 ",React.createElement('b',{style:{color:yNet>=0?C.success:C.danger}},fmt(yNet))," ",pyNet!==0?React.createElement('span',{style:{color:dpCol,fontWeight:600}},dpSym," ",Math.abs(dpNet),"%"):null,React.createElement('span',{style:{color:C.text3}},"  ·  上年: ",fmt(pyNet)))
                       )
                     );
                   }
@@ -3215,10 +3263,10 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                     hasInsights=true;
                     var deduction=Math.round(yMiles*(+mileageRate)*100)/100;
                     mileageDeduction=React.createElement('div',{style:{paddingTop:yoyYearSection?10:0,marginTop:yoyYearSection?10:0,borderTop:yoyYearSection?"1px solid "+C.border:"none"}},
-                      React.createElement('div',{style:{fontSize:12,color:C.text3,marginBottom:4,letterSpacing:0.3}},lang==="en"?"IRS MILEAGE DEDUCTION · "+yr:"里程抵税 · "+yr+"年"),
+                      React.createElement('div',{style:{fontSize:FS.xs+1,color:C.text3,marginBottom:6,letterSpacing:1.2,textTransform:"uppercase",fontWeight:600}},lang==="en"?"IRS MILEAGE DEDUCTION · "+yr:"里程抵税 · "+yr+"年"),
                       React.createElement('div',{style:{display:"flex",justifyContent:"space-between",alignItems:"baseline"}},
                         React.createElement('div',{style:{fontSize:13,color:C.text2}},
-                          React.createElement('b',{style:{color:"#FFD700",fontSize:18}},"$"+deduction.toLocaleString()),
+                          React.createElement('b',{style:{color:C.gold,fontSize:18}},"$"+deduction.toLocaleString()),
                           React.createElement('span',{style:{fontSize:12,color:C.text3,marginLeft:6}},yMiles.toLocaleString()+(lang==="en"?" mi × $":" mi × $")+(+mileageRate).toFixed(2))
                         ),
                         React.createElement('div',{style:{fontSize:11,color:C.text3,fontStyle:"italic"}},lang==="en"?"Est. — confirm w/ accountant":"参考 · 请询会计师")
@@ -3292,7 +3340,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                             a.icon, " ", a.label, ": ",
                             React.createElement('b',{style:{color:"#FF8855"}}, fmt(a.cur)),
                             React.createElement('span',{style:{color:C.text3,marginLeft:6,fontSize:11}}, lang==="en"?"avg "+fmt(a.prev)+" · ":"均"+fmt(a.prev)+" · "),
-                            React.createElement('span',{style:{color:"#FF7060",fontWeight:700,fontSize:11}}, "↑", a.pct, "%")
+                            React.createElement('span',{style:{color:C.danger,fontWeight:700,fontSize:11}}, "↑", a.pct, "%")
                           );
                         })
                       );
@@ -3315,10 +3363,10 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                         var projNet = Math.round(net / dayOfMo * daysInMo);
                         prediction = React.createElement('div',{style:{marginTop:10,paddingTop:10,borderTop:"1px solid "+C.border}},
                           React.createElement('div',{style:{fontSize:11,color:"#90C8DC",marginBottom:6,letterSpacing:0.3}}, "🔮 ", lang==="en"?"MONTH-END PROJECTION":"月底预测"),
-                          React.createElement('div',{style:{fontSize:13,color:C.text,lineHeight:1.6}},
+                          React.createElement('div',{style:{fontSize:FS.md+1,color:C.text,lineHeight:1.6}},
                             lang==="en"
-                              ? React.createElement('span',null,"Based on "+dayOfMo+" days, projected: ",React.createElement('b',{style:{color:"#5AACFF"}},fmt(projInc))," income · ",React.createElement('b',{style:{color:projNet>=0?"#00E676":"#FF7060"}},fmt(projNet))," net")
-                              : React.createElement('span',null,"按目前 "+dayOfMo+" 天进度，月底预计: ",React.createElement('b',{style:{color:"#5AACFF"}},fmt(projInc))," 收入 · ",React.createElement('b',{style:{color:projNet>=0?"#00E676":"#FF7060"}},fmt(projNet))," 净利润")
+                              ? React.createElement('span',null,"Based on "+dayOfMo+" days, projected: ",React.createElement('b',{style:{color:C.accent2}},fmt(projInc))," income · ",React.createElement('b',{style:{color:projNet>=0?C.success:C.danger}},fmt(projNet))," net")
+                              : React.createElement('span',null,"按目前 "+dayOfMo+" 天进度，月底预计: ",React.createElement('b',{style:{color:C.accent2}},fmt(projInc))," 收入 · ",React.createElement('b',{style:{color:projNet>=0?C.success:C.danger}},fmt(projNet))," 净利润")
                           )
                         );
                       }
@@ -3326,8 +3374,8 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                   }catch(e){}
                 }
                 if(anomalyAlerts || prediction) hasInsights = true;
-                return React.createElement(Card,{style:{marginBottom:10,padding:"12px 14px",background:"linear-gradient(180deg,#0F1F35 0%,#0A1828 100%)",border:"1px solid #1F3A5A"}},
-                  React.createElement('div',{style:{fontSize:13,fontWeight:700,color:"#00D4FF",marginBottom:8,letterSpacing:0.3}},"💡 ",lang==="en"?"Smart Insights":"智能洞察"),
+                return React.createElement(Card,{style:{marginBottom:12,padding:"14px 16px",background:"linear-gradient(180deg, rgba(15,30,55,0.7) 0%, rgba(10,24,40,0.95) 100%)",border:"1px solid "+C.border,boxShadow:SHADOW.md}},
+                  React.createElement('div',{style:{fontSize:FS.md,fontWeight:700,color:C.accent,marginBottom:10,letterSpacing:0.5,textTransform:"uppercase"}},"💡 ",lang==="en"?"Smart Insights":"智能洞察"),
                   // Revenue breakdown (month view, only if platform fee recorded)
                   // Revenue breakdown moved to dashboard's big number cards (with expand)
                   summarySection,
@@ -3357,37 +3405,70 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                     var realEarnings = platformPay - tToll;  // = tInc - tPlatformFee
                     var bigNumKey = "dash_bignum_"+mo;
                     var bigExp = collOpen.bigNum === true;
-                    return React.createElement('div', {style:{marginBottom:10}},
-                      // Two big number cards side-by-side
-                      React.createElement('div', {style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:bigExp?8:0}},
+                    return React.createElement('div', {style:{marginBottom:14}},
+                      // Two big number cards side-by-side — Tesla-inspired hero cards
+                      React.createElement('div', {style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:bigExp?10:0}},
                         // Platform Pay card
-                        React.createElement(Card, {style:{padding:"12px 12px",cursor:"pointer"},onClick:function(){toggleColl("bigNum");}},
-                          React.createElement('div', {style:{display:"flex",alignItems:"center",justifyContent:"space-between"}},
-                            React.createElement('div', {style:{fontSize:11,color:"#8ACCA8",letterSpacing:0.3}}, "📱 ", lang==="en"?"Platform Pay":"平台到账"),
-                            React.createElement('span', {style:{fontSize:10,color:C.text3}}, bigExp?"▲":"▼")
+                        React.createElement('div', {
+                          onClick:function(){toggleColl("bigNum");},
+                          style:{
+                            position:"relative",
+                            background:"linear-gradient(135deg, rgba(0,212,255,0.08) 0%, rgba(10,30,55,0.95) 60%, rgba(15,20,32,1) 100%)",
+                            borderRadius:RADIUS.lg,
+                            padding:"16px 14px",
+                            cursor:"pointer",
+                            border:"1px solid rgba(0,212,255,0.2)",
+                            boxShadow: "0 4px 16px rgba(0,212,255,0.08), inset 0 1px 0 rgba(255,255,255,0.04)",
+                            overflow:"hidden",
+                            transition:"transform 0.15s, box-shadow 0.15s"
+                          }
+                        },
+                          // Subtle glow effect in top-right
+                          React.createElement('div', {style:{position:"absolute",top:-30,right:-30,width:80,height:80,borderRadius:"50%",background:"radial-gradient(circle, rgba(0,212,255,0.15) 0%, transparent 70%)",pointerEvents:"none"}}),
+                          React.createElement('div', {style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8,position:"relative"}},
+                            React.createElement('div', {style:{fontSize:FS.sm,color:C.accent2,letterSpacing:0.5,fontWeight:600,textTransform:"uppercase"}}, "📱 ", lang==="en"?"Platform Pay":"平台到账"),
+                            React.createElement('span', {style:{fontSize:FS.xs,color:C.text3}}, bigExp?"▲":"▼")
                           ),
-                          React.createElement('div', {style:{fontSize:22,fontWeight:800,color:"#5AACFF",letterSpacing:-0.5,marginTop:4}}, fmt(platformPay)),
-                          tToll>0 ? React.createElement('div', {style:{fontSize:10,color:C.text3,marginTop:3}}, "−", lang==="en"?"toll ":"过桥 ", fmt(tToll)) : null,
-                          tToll>0 ? React.createElement('div', {style:{fontSize:11,color:"#8ACCA8",fontWeight:600}}, lang==="en"?"actual ":"实收 ", fmt(realEarnings)) : null
+                          React.createElement('div', {style:{fontSize:FS.xxxl,fontWeight:900,color:C.accent2,letterSpacing:-1.2,lineHeight:1,fontVariantNumeric:"tabular-nums",position:"relative"}}, fmt(platformPay)),
+                          tToll>0 ? React.createElement('div', {style:{fontSize:FS.xs,color:C.text3,marginTop:6,position:"relative"}}, "−", lang==="en"?"toll ":"过桥 ", fmt(tToll)) : null,
+                          tToll>0 ? React.createElement('div', {style:{fontSize:FS.sm,color:C.success,fontWeight:700,marginTop:2,position:"relative"}}, lang==="en"?"net ":"实收 ", fmt(realEarnings)) : null
                         ),
                         // Net Profit card
-                        React.createElement(Card, {style:{padding:"12px 12px",cursor:"pointer"},onClick:function(){toggleColl("bigNum");}},
-                          React.createElement('div', {style:{display:"flex",alignItems:"center",justifyContent:"space-between"}},
-                            React.createElement('div', {style:{fontSize:11,color:"#8ACCA8",letterSpacing:0.3}}, "💰 ", lang==="en"?"Net Profit":"净收入"),
-                            React.createElement('span', {style:{fontSize:10,color:C.text3}}, bigExp?"▲":"▼")
+                        React.createElement('div', {
+                          onClick:function(){toggleColl("bigNum");},
+                          style:{
+                            position:"relative",
+                            background: net>=0 ?
+                              "linear-gradient(135deg, rgba(0,230,118,0.08) 0%, rgba(10,40,25,0.95) 60%, rgba(15,20,32,1) 100%)" :
+                              "linear-gradient(135deg, rgba(255,82,82,0.08) 0%, rgba(40,15,15,0.95) 60%, rgba(15,20,32,1) 100%)",
+                            borderRadius:RADIUS.lg,
+                            padding:"16px 14px",
+                            cursor:"pointer",
+                            border: net>=0 ? "1px solid rgba(0,230,118,0.2)" : "1px solid rgba(255,82,82,0.25)",
+                            boxShadow: net>=0 ?
+                              "0 4px 16px rgba(0,230,118,0.08), inset 0 1px 0 rgba(255,255,255,0.04)" :
+                              "0 4px 16px rgba(255,82,82,0.1), inset 0 1px 0 rgba(255,255,255,0.04)",
+                            overflow:"hidden",
+                            transition:"transform 0.15s, box-shadow 0.15s"
+                          }
+                        },
+                          React.createElement('div', {style:{position:"absolute",top:-30,right:-30,width:80,height:80,borderRadius:"50%",background:net>=0?"radial-gradient(circle, rgba(0,230,118,0.15) 0%, transparent 70%)":"radial-gradient(circle, rgba(255,82,82,0.15) 0%, transparent 70%)",pointerEvents:"none"}}),
+                          React.createElement('div', {style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8,position:"relative"}},
+                            React.createElement('div', {style:{fontSize:FS.sm,color:net>=0?C.success:C.danger,letterSpacing:0.5,fontWeight:600,textTransform:"uppercase",opacity:0.85}}, "💰 ", lang==="en"?"Net Profit":"净收入"),
+                            React.createElement('span', {style:{fontSize:FS.xs,color:C.text3}}, bigExp?"▲":"▼")
                           ),
-                          (function(){var nc=net>=0?"#5AB078":"#C04848";return React.createElement('div', {style:{fontSize:22,fontWeight:800,color:nc,letterSpacing:-0.5,marginTop:4}}, fmt(net));}()),
-                          React.createElement('div', {style:{fontSize:10,color:C.text3,marginTop:3}}, lang==="en"?"after all expenses":"扣除所有开销")
+                          (function(){var nc=net>=0?C.success:C.danger;return React.createElement('div', {style:{fontSize:FS.xxxl,fontWeight:900,color:nc,letterSpacing:-1.2,lineHeight:1,fontVariantNumeric:"tabular-nums",position:"relative"}}, fmt(net));}()),
+                          React.createElement('div', {style:{fontSize:FS.xs,color:C.text3,marginTop:8,position:"relative"}}, lang==="en"?"after all expenses":"扣除所有开销")
                         )
                       ),
                       // Expanded full breakdown (single card under both)
-                      bigExp ? React.createElement(Card, {style:{padding:"12px 14px",background:"#0A1828",border:"1px solid "+C.border}},
+                      bigExp ? React.createElement(Card, {style:{padding:"12px 14px",background:C.bg3,border:"1px solid "+C.border}},
                         React.createElement('div', {style:{fontSize:11,color:C.text3,marginBottom:8,letterSpacing:0.3}}, "📊 ", lang==="en"?"FULL BREAKDOWN":"完整明细"),
                         React.createElement('div', {style:{display:"flex",flexDirection:"column",gap:5,fontSize:13,lineHeight:1.5}},
                           // Layer 1: 营业额 = car fare + tips + bonus
                           React.createElement('div', {style:{display:"flex",justifyContent:"space-between"}},
                             React.createElement('span', {style:{color:C.text2}}, lang==="en"?"Revenue":"营业额"),
-                            React.createElement('b', {style:{color:"#5AACFF"}}, fmt(tInc))
+                            React.createElement('b', {style:{color:C.accent2}}, fmt(tInc))
                           ),
                           // Sub-items
                           tGross>0 ? React.createElement('div', {style:{display:"flex",justifyContent:"space-between",fontSize:12,color:C.text3,paddingLeft:18}},
@@ -3409,46 +3490,46 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                           ) : null,
                           tToll>0 ? React.createElement('div', {style:{display:"flex",justifyContent:"space-between",paddingTop:5,borderTop:"1px dashed #1F3A5A"}},
                             React.createElement('span', {style:{color:C.text2,fontWeight:600}}, lang==="en"?"Gross Revenue":"总营业额"),
-                            React.createElement('b', {style:{color:"#5AACFF"}}, fmt(grossWithToll))
+                            React.createElement('b', {style:{color:C.accent2}}, fmt(grossWithToll))
                           ) : null,
                           // Layer 3: − platform fee
                           tPlatformFee>0 ? React.createElement('div', {style:{display:"flex",justifyContent:"space-between"}},
                             React.createElement('span', {style:{color:C.text3}}, "− ", lang==="en"?"Platform fee":"平台抽成"),
-                            React.createElement('span', {style:{color:"#FF7060"}}, "−", fmt(tPlatformFee))
+                            React.createElement('span', {style:{color:C.danger}}, "−", fmt(tPlatformFee))
                           ) : null,
                           // = Platform Pay (实银行入账)
                           React.createElement('div', {style:{display:"flex",justifyContent:"space-between",paddingTop:5,borderTop:"1px dashed #1F3A5A"}},
                             React.createElement('span', {style:{color:C.text2,fontWeight:600}}, "📱 ", lang==="en"?"Platform Pay":"平台到账"),
-                            React.createElement('b', {style:{color:"#5AACFF"}}, fmt(platformPay))
+                            React.createElement('b', {style:{color:C.accent2}}, fmt(platformPay))
                           ),
                           // − Toll paid (booth)
                           tToll>0 ? React.createElement('div', {style:{display:"flex",justifyContent:"space-between"}},
                             React.createElement('span', {style:{color:C.text3}}, "− ", lang==="en"?"Toll paid (booth)":"过桥支出"),
-                            React.createElement('span', {style:{color:"#FF7060"}}, "−", fmt(tToll))
+                            React.createElement('span', {style:{color:C.danger}}, "−", fmt(tToll))
                           ) : null,
                           // = Real earnings
                           tToll>0 ? React.createElement('div', {style:{display:"flex",justifyContent:"space-between",paddingTop:5,borderTop:"1px dashed #1F3A5A"}},
                             React.createElement('span', {style:{color:C.text2,fontWeight:600}}, lang==="en"?"Real Earnings":"实收"),
-                            React.createElement('b', {style:{color:"#FFD700"}}, fmt(realEarnings))
+                            React.createElement('b', {style:{color:C.gold}}, fmt(realEarnings))
                           ) : null,
                           // − Other expenses
                           tExp>0 ? React.createElement('div', {style:{display:"flex",justifyContent:"space-between"}},
                             React.createElement('span', {style:{color:C.text3}}, "− ", lang==="en"?"Other expenses":"其他支出"),
-                            React.createElement('span', {style:{color:"#FF7060"}}, "−", fmt(tExp))
+                            React.createElement('span', {style:{color:C.danger}}, "−", fmt(tExp))
                           ) : null,
                           // = Net profit
                           React.createElement('div', {style:{display:"flex",justifyContent:"space-between",paddingTop:5,borderTop:"1px solid "+C.border,marginTop:3}},
                             React.createElement('span', {style:{color:C.text,fontWeight:700}}, "💰 ", lang==="en"?"Net Profit":"净收入"),
-                            React.createElement('b', {style:{color:net>=0?"#00E676":"#FF7060",fontSize:14}}, fmt(net))
+                            React.createElement('b', {style:{color:net>=0?C.success:C.danger,fontSize:14}}, fmt(net))
                           )
                         )
                       ) : null
                     );
                   }())
-                , incGoal&&+incGoal>0 ? React.createElement(Card, { style: {marginBottom:10,padding:"12px 14px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 267}}, React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 267}}, React.createElement('div', { style: {fontSize:13,fontWeight:700,color:"#FFD700"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 267}}, "🎯 " , lang==="en"?"Monthly Goal":"本月目标"), React.createElement('div', { style: {display:"flex",alignItems:"center",gap:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 267}}, React.createElement('span', { style: {fontSize:13,color:C.text2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 267}}, fmt(tInc), " / "  , fmt(+incGoal)), React.createElement('button', { onClick: function(){setShowGoal(true);}, style: {background:"none",border:"none",color:C.text3,fontSize:12,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 267}}, "✏️"))), React.createElement('div', { style: {height:8,borderRadius:4,background:"#1A2A40",overflow:"hidden",marginBottom:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 267}}, React.createElement('div', { style: {height:8,borderRadius:4,width:Math.min(100,Math.round(tInc/+incGoal*100))+"%",background:tInc>=+incGoal?"linear-gradient(90deg,#00E676,#FFD700)":"linear-gradient(90deg,#00D4FF,#0055FF)"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 267}} )), React.createElement('div', { style: {fontSize:12,color:tInc>=+incGoal?"#00E676":"#7A9AB8"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 267}}, tInc>=+incGoal?(lang==="en"?"🎉 Goal reached!":"🎉 目标达成！"):(lang==="en"?"Still need: ":"还差: ")+fmt(+incGoal-tInc)+" ("+Math.round(tInc/+incGoal*100)+"%)")) : React.createElement('button', { onClick: function(){setShowGoal(true);}, style: {width:"100%",background:C.bg3,border:"1px dashed #2A4A6A",borderRadius:10,padding:"8px 14px",color:C.text3,fontSize:12,cursor:"pointer",marginBottom:10,textAlign:"left"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 267}}, "🎯 " , lang==="en"?"Set monthly goal...":"设定本月收入目标...")
+                , incGoal&&+incGoal>0 ? React.createElement(Card, { style: {marginBottom:10,padding:"12px 14px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 267}}, React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 267}}, React.createElement('div', { style: {fontSize:13,fontWeight:700,color:C.gold}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 267}}, "🎯 " , lang==="en"?"Monthly Goal":"本月目标"), React.createElement('div', { style: {display:"flex",alignItems:"center",gap:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 267}}, React.createElement('span', { style: {fontSize:13,color:C.text2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 267}}, fmt(tInc), " / "  , fmt(+incGoal)), React.createElement('button', { onClick: function(){setShowGoal(true);}, style: {background:"none",border:"none",color:C.text3,fontSize:12,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 267}}, "✏️"))), React.createElement('div', { style: {height:8,borderRadius:4,background:"#1A2A40",overflow:"hidden",marginBottom:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 267}}, React.createElement('div', { style: {height:8,borderRadius:4,width:Math.min(100,Math.round(tInc/+incGoal*100))+"%",background:tInc>=+incGoal?"linear-gradient(90deg,#00E676,#FFD700)":"linear-gradient(90deg,#00D4FF,#0055FF)"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 267}} )), React.createElement('div', { style: {fontSize:12,color:tInc>=+incGoal?C.success:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 267}}, tInc>=+incGoal?(lang==="en"?"🎉 Goal reached!":"🎉 目标达成！"):(lang==="en"?"Still need: ":"还差: ")+fmt(+incGoal-tInc)+" ("+Math.round(tInc/+incGoal*100)+"%)")) : React.createElement('button', { onClick: function(){setShowGoal(true);}, style: {width:"100%",background:C.bg3,border:"1px dashed #2A4A6A",borderRadius:10,padding:"8px 14px",color:C.text3,fontSize:12,cursor:"pointer",marginBottom:10,textAlign:"left"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 267}}, "🎯 " , lang==="en"?"Set monthly goal...":"设定本月收入目标...")
                 , (function(){
                     if(dashV !== "year") return null;
-                    var hm=mData.filter(function(m){return m.inc>0;});if(hm.length<2)return null;var mx=Math.max.apply(null,hm.map(function(m){return m.inc;}));return React.createElement(Card, { style: {marginBottom:8,padding:"12px 14px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 268}}, React.createElement('div', { style: {fontSize:13,fontWeight:700,color:C.text2,marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 268}}, "📊 " , lang==="en"?("Income Trend · "+yr):("收入趋势 · "+yr+"年")), React.createElement('div', { style: {display:"flex",alignItems:"center",gap:3,height:60}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 268}}, mData.map(function(m,i){if(!m.inc)return React.createElement('div', { key: i, style: {flex:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 268}} );var h=Math.round(8+m.inc/mx*48);var isCur=m.m===mo;return React.createElement('div', { key: i, onClick: function(){setMo(m.m);setDashV("month");}, style: {flex:1,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 268}}, React.createElement('div', { style: {width:"100%",height:h,borderRadius:"3px 3px 0 0",background:isCur?"#00D4FF":m.net>=0?"#00E676":"#FF5252",opacity:isCur?1:0.7}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 268}} ));}), " " ), React.createElement('div', { style: {display:"flex",fontSize:11,color:C.text3,marginTop:3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 268}}, mData.map(function(m,i){return React.createElement('div', { key: i, style: {flex:1,textAlign:"center",color:m.m===mo?"#00D4FF":"#7A9AB8"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 268}}, m.label.slice(0,3));})));
+                    var hm=mData.filter(function(m){return m.inc>0;});if(hm.length<2)return null;var mx=Math.max.apply(null,hm.map(function(m){return m.inc;}));return React.createElement(Card, { style: {marginBottom:8,padding:"12px 14px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 268}}, React.createElement('div', { style: {fontSize:13,fontWeight:700,color:C.text2,marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 268}}, "📊 " , lang==="en"?("Income Trend · "+yr):("收入趋势 · "+yr+"年")), React.createElement('div', { style: {display:"flex",alignItems:"center",gap:3,height:60}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 268}}, mData.map(function(m,i){if(!m.inc)return React.createElement('div', { key: i, style: {flex:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 268}} );var h=Math.round(8+m.inc/mx*48);var isCur=m.m===mo;return React.createElement('div', { key: i, onClick: function(){setMo(m.m);setDashV("month");}, style: {flex:1,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 268}}, React.createElement('div', { style: {width:"100%",height:h,borderRadius:"4px 4px 1px 1px",background:isCur?"linear-gradient(180deg, #00D4FF, #0066AA)":m.net>=0?"linear-gradient(180deg, #00E676, #0A8050)":"linear-gradient(180deg, #FF7060, #C03030)",opacity:isCur?1:0.75,boxShadow:isCur?"0 0 12px rgba(0,212,255,0.4)":"none",transition:"opacity 0.2s"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 268}} ));}), " " ), React.createElement('div', { style: {display:"flex",fontSize:11,color:C.text3,marginTop:3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 268}}, mData.map(function(m,i){return React.createElement('div', { key: i, style: {flex:1,textAlign:"center",color:m.m===mo?C.accent:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 268}}, m.label.slice(0,3));})));
                   }())
                 // === Month view: This-month-by-week bar chart ===
                 , (function(){
@@ -3510,7 +3591,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                     if(platKeys.length < 2) return null; // Only show if 2+ platforms
                     var maxPlat = Math.max.apply(null, platKeys.map(function(p){return byPlat[p];}));
                     var totalPlat = platKeys.reduce(function(s,p){return s+byPlat[p];},0);
-                    var platColors = {"Uber":"#FFFFFF","Lyft":"#FF00BF","Curb":"#00C853","Via":"#5AACFF"};
+                    var platColors = {"Uber":"#FFFFFF","Lyft":"#FF00BF","Curb":"#00C853","Via":C.accent2};
                     return React.createElement(Card, {style:{marginBottom:8,padding:"12px 14px"}}
                       , React.createElement('div', {style:{fontSize:13,fontWeight:700,color:C.text2,marginBottom:10}}, "📱 ", lang==="en"?"This Month by Platform":"本月分平台")
                       , platKeys.map(function(p){
@@ -3526,7 +3607,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                                 , React.createElement('span', {style:{fontSize:11,color:C.text3}}, pct, "%")
                               )
                             )
-                            , React.createElement('div', {style:{height:6,borderRadius:3,background:"#1A2A44"}}
+                            , React.createElement('div', {style:{height:6,borderRadius:3,background:C.border}}
                               , React.createElement('div', {style:{height:6,borderRadius:3,width:bw,background:color,opacity:0.85}})
                             )
                           );
@@ -3565,34 +3646,34 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                     return React.createElement(Card, {style:{marginBottom:8,padding:"12px 14px"}}
                       , React.createElement('div', {style:{fontSize:13,fontWeight:700,color:C.text2,marginBottom:8}}, "📈 " , lang==="en"?("Trends · "+yr):("月度趋势 · "+yr+"年"))
                       , React.createElement('div', {style:{display:"flex",gap:12,fontSize:11,marginBottom:6,color:C.text3}}
-                        , React.createElement('span', null, React.createElement('span',{style:{display:"inline-block",width:8,height:2,background:"#00D4FF",verticalAlign:"middle",marginRight:4}}), lang==="en"?"Income":"收入")
-                        , React.createElement('span', null, React.createElement('span',{style:{display:"inline-block",width:8,height:2,background:"#FF6B35",verticalAlign:"middle",marginRight:4}}), lang==="en"?"Expense":"支出")
-                        , React.createElement('span', null, React.createElement('span',{style:{display:"inline-block",width:8,height:2,background:"#00E676",verticalAlign:"middle",marginRight:4}}), lang==="en"?"Net":"净利润")
+                        , React.createElement('span', null, React.createElement('span',{style:{display:"inline-block",width:8,height:2,background:C.accent,verticalAlign:"middle",marginRight:4}}), lang==="en"?"Income":"收入")
+                        , React.createElement('span', null, React.createElement('span',{style:{display:"inline-block",width:8,height:2,background:C.danger,verticalAlign:"middle",marginRight:4}}), lang==="en"?"Expense":"支出")
+                        , React.createElement('span', null, React.createElement('span',{style:{display:"inline-block",width:8,height:2,background:C.success,verticalAlign:"middle",marginRight:4}}), lang==="en"?"Net":"净利润")
                       )
                       , React.createElement('svg', {viewBox:"0 0 "+W+" "+H,width:"100%",height:H,preserveAspectRatio:"none"}
-                        , React.createElement('path', {d:incPath,stroke:"#00D4FF",strokeWidth:2,fill:"none",strokeLinejoin:"round"})
-                        , React.createElement('path', {d:expPath,stroke:"#FF6B35",strokeWidth:2,fill:"none",strokeLinejoin:"round"})
-                        , React.createElement('path', {d:netPath,stroke:"#00E676",strokeWidth:2,fill:"none",strokeLinejoin:"round",strokeDasharray:"4,2"})
+                        , React.createElement('path', {d:incPath,stroke:C.accent,strokeWidth:2,fill:"none",strokeLinejoin:"round"})
+                        , React.createElement('path', {d:expPath,stroke:C.danger,strokeWidth:2,fill:"none",strokeLinejoin:"round"})
+                        , React.createElement('path', {d:netPath,stroke:C.success,strokeWidth:2,fill:"none",strokeLinejoin:"round",strokeDasharray:"4,2"})
                         // Highlight current month
-                        , (function(){var i=mData.findIndex(function(m){return m.m===mo;}); if(i<0||!incPoints[i]) return null; return React.createElement('circle', {cx:incPoints[i].x,cy:incPoints[i].y,r:3,fill:"#00D4FF",stroke:C.bg2,strokeWidth:1});}())
+                        , (function(){var i=mData.findIndex(function(m){return m.m===mo;}); if(i<0||!incPoints[i]) return null; return React.createElement('circle', {cx:incPoints[i].x,cy:incPoints[i].y,r:3,fill:C.accent,stroke:C.bg2,strokeWidth:1});}())
                       )
                       , React.createElement('div', {style:{display:"flex",fontSize:10,color:C.text3,marginTop:4}}
-                        , mData.map(function(m,i){return React.createElement('div', {key:i,style:{flex:1,textAlign:"center",color:m.m===mo?"#00D4FF":C.text3}}, m.label.slice(0,3));})
+                        , mData.map(function(m,i){return React.createElement('div', {key:i,style:{flex:1,textAlign:"center",color:m.m===mo?C.accent:C.text3}}, m.label.slice(0,3));})
                       )
                     );
                   }())
 
-                , tInc>0&&tExp>0 ? (function(){var grps={"车辆":0,"牌照":0,"平台":0,"其他":0};feAll.forEach(function(e){var cat=allC[e.category];var g=cat?(cat.g||"其他"):"其他";if(grps[g]!==undefined)grps[g]+=(+e.amount||0);else grps["其他"]+=(+e.amount||0);});var gcols={"车辆":"#00D4FF","牌照":"#FFD700","平台":"#CC88FF","其他":"#A8D0E8"};var glbls=lang==="en"?{"车辆":"Vehicle","牌照":"License","平台":"Platform","其他":"Other"}:{"车辆":"车辆","牌照":"牌照","平台":"平台","其他":"其他"};if(!Object.values(grps).some(function(v){return v>0;}))return null;return React.createElement(Card, { style: {marginTop:8,padding:"12px 14px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, React.createElement('div', { style: {fontSize:13,fontWeight:700,marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, lang==="en"?"Expense Breakdown":"支出分布"), React.createElement('div', { style: {display:"flex",height:10,borderRadius:5,overflow:"hidden",marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, Object.entries(grps).map(function(kv){if(!kv[1])return null;return React.createElement('div', { key: kv[0], style: {width:Math.round(kv[1]/tExp*100)+"%",background:gcols[kv[0]],minWidth:2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}} );})), React.createElement('div', { style: {display:"grid",gridTemplateColumns:"1fr 1fr",gap:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, Object.entries(grps).map(function(kv){if(!kv[1])return null;return React.createElement('div', { key: kv[0], style: {display:"flex",alignItems:"center",gap:5}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, React.createElement('div', { style: {width:10,height:10,borderRadius:2,background:gcols[kv[0]],flexShrink:0}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}} ), React.createElement('span', { style: {fontSize:12,color:C.text2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, glbls[kv[0]]), React.createElement('span', { style: {fontSize:12,fontWeight:700,color:gcols[kv[0]],marginLeft:"auto"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, Math.round(kv[1]/tExp*100), "%"));}), " " ), React.createElement('div', { style: {borderTop:"1px solid #1E3050",marginTop:8,paddingTop:6,display:"flex",justifyContent:"space-between"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, React.createElement('span', { style: {fontSize:12,color:C.text2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, lang==="en"?"Net Rate":"净利润率"), React.createElement('span', { style: {fontSize:13,fontWeight:800,color:net>=0?"#00E676":"#FF5252"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, tInc>0?Math.round(net/tInc*100):0, "%")));}()) : null
+                , tInc>0&&tExp>0 ? (function(){var grps={"车辆":0,"牌照":0,"平台":0,"其他":0};feAll.forEach(function(e){var cat=allC[e.category];var g=cat?(cat.g||"其他"):"其他";if(grps[g]!==undefined)grps[g]+=(+e.amount||0);else grps["其他"]+=(+e.amount||0);});var gcols={"车辆":C.accent,"牌照":C.gold,"平台":"#CC88FF","其他":"#7A9AB8"};var glbls=lang==="en"?{"车辆":"Vehicle","牌照":"License","平台":"Platform","其他":"Other"}:{"车辆":"车辆","牌照":"牌照","平台":"平台","其他":"其他"};if(!Object.values(grps).some(function(v){return v>0;}))return null;return React.createElement(Card, { style: {marginTop:10,padding:"14px 16px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, React.createElement('div', { style: {fontSize:FS.xs+1,fontWeight:600,marginBottom:10,color:C.text3,letterSpacing:1.2,textTransform:"uppercase"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, "📊 ", lang==="en"?"Expense Breakdown":"支出分布"), React.createElement('div', { style: {display:"flex",height:14,borderRadius:7,overflow:"hidden",marginBottom:12,background:C.bg4,boxShadow:"inset 0 1px 2px rgba(0,0,0,0.4)"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, Object.entries(grps).map(function(kv){if(!kv[1])return null;return React.createElement('div', { key: kv[0], style: {width:Math.round(kv[1]/tExp*100)+"%",background:gcols[kv[0]],minWidth:2,boxShadow:"0 0 8px "+gcols[kv[0]]+"40"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}} );})), React.createElement('div', { style: {display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, Object.entries(grps).map(function(kv){if(!kv[1])return null;return React.createElement('div', { key: kv[0], style: {display:"flex",alignItems:"center",gap:7}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, React.createElement('div', { style: {width:11,height:11,borderRadius:3,background:gcols[kv[0]],flexShrink:0,boxShadow:"0 0 8px "+gcols[kv[0]]+"60"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}} ), React.createElement('span', { style: {fontSize:FS.md,color:C.text2,fontWeight:500}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, glbls[kv[0]]), React.createElement('span', { style: {fontSize:FS.md,fontWeight:800,color:gcols[kv[0]],marginLeft:"auto",fontVariantNumeric:"tabular-nums"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, Math.round(kv[1]/tExp*100), "%"));}), " " ), React.createElement('div', { style: {borderTop:"1px solid "+C.border,marginTop:10,paddingTop:8,display:"flex",justifyContent:"space-between",alignItems:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, React.createElement('span', { style: {fontSize:FS.md,color:C.text2,fontWeight:500}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, lang==="en"?"Net Rate":"净利润率"), React.createElement('span', { style: {fontSize:FS.lg+1,fontWeight:800,color:net>=0?C.success:C.danger,letterSpacing:0.2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, tInc>0?Math.round(net/tInc*100):0, "%")));}()) : null
                 , achievements.length>0 ? React.createElement('div', { style: {display:"flex",flexWrap:"wrap",gap:8,marginBottom:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 275}}, achievements.map(function(a,i){return React.createElement(Badge, { key: i, icon: a.icon, text: a.text, color: a.color, bg: a.bg, __self: this, __source: {fileName: _jsxFileName, lineNumber: 275}} );})) : null
                 , tInc > 0 ? React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 276}}
-                  , React.createElement('div', {style:{fontSize:11,color:C.text3,marginBottom:4,letterSpacing:0.3}}, "💵 ", lang==="en"?"INCOME SOURCES":"收入来源")
-                  , React.createElement('div', { style: {display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:6,marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 277}}, React.createElement(Stat, { sm: true, label: lang==="en"?"Gross":"总车费", value: fmt(tGross), color: "#00D4FF", __self: this, __source: {fileName: _jsxFileName, lineNumber: 277}} ), React.createElement(Stat, { sm: true, label: T.tips, value: fmt(tTips), color: "#00E676", __self: this, __source: {fileName: _jsxFileName, lineNumber: 277}} ), React.createElement(Stat, { sm: true, label: T.bonus, value: fmt(tBonus), color: "#FFD700", __self: this, __source: {fileName: _jsxFileName, lineNumber: 277}} ), React.createElement(Stat, { sm: true, label: T.toll, value: fmt(tToll), color: "#45B7D1", __self: this, __source: {fileName: _jsxFileName, lineNumber: 277}} ))
-                  , React.createElement('div', {style:{fontSize:11,color:C.text3,marginTop:-2,marginBottom:8,letterSpacing:0.3}}, "🚗 ", lang==="en"?"OPERATIONS":"运营数据")
+                  , React.createElement('div', {style:{fontSize:FS.xs+1,color:C.text3,marginBottom:6,letterSpacing:1.2,fontWeight:600,textTransform:"uppercase"}}, "💵 ", lang==="en"?"Income Sources":"收入来源")
+                  , React.createElement('div', { style: {display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:6,marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 277}}, React.createElement(Stat, { sm: true, label: lang==="en"?"Gross":"总车费", value: fmt(tGross), color: C.accent, __self: this, __source: {fileName: _jsxFileName, lineNumber: 277}} ), React.createElement(Stat, { sm: true, label: T.tips, value: fmt(tTips), color: C.success, __self: this, __source: {fileName: _jsxFileName, lineNumber: 277}} ), React.createElement(Stat, { sm: true, label: T.bonus, value: fmt(tBonus), color: C.gold, __self: this, __source: {fileName: _jsxFileName, lineNumber: 277}} ), React.createElement(Stat, { sm: true, label: T.toll, value: fmt(tToll), color: C.accent2, __self: this, __source: {fileName: _jsxFileName, lineNumber: 277}} ))
+                  , React.createElement('div', {style:{fontSize:FS.xs+1,color:C.text3,marginTop:0,marginBottom:6,letterSpacing:1.2,fontWeight:600,textTransform:"uppercase"}}, "🚗 ", lang==="en"?"Operations":"运营数据")
                 , React.createElement('div', { style: {display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:6,marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 282}}
                   , (function(){var vt=tTrips?String(tTrips):"—",vh=tHours?String(tHours):"—",vo=tOnl?String(tOnl):"—",vm=tMiles?String(tMiles):"—";return React.createElement('div', { style: {display:"contents"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 283}}, React.createElement(Stat, { sm: true, label: T.trips, value: vt, __self: this, __source: {fileName: _jsxFileName, lineNumber: 283}} ), React.createElement(Stat, { sm: true, label: lang==="en"?"Drive h":"行驶h", value: vh, __self: this, __source: {fileName: _jsxFileName, lineNumber: 283}} ), React.createElement(Stat, { sm: true, label: lang==="en"?"Online h":"在线h", value: vo, __self: this, __source: {fileName: _jsxFileName, lineNumber: 283}} ), React.createElement(Stat, { sm: true, label: T.miles, value: vm, __self: this, __source: {fileName: _jsxFileName, lineNumber: 283}} ));}())
                 )
-                  , hourlyRate>0 ? React.createElement(Card, { style: {marginBottom:8,padding:"10px 14px",background:C.bg3,border:"1px solid "+C.border}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 278}}, React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 278}}, React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 278}}, React.createElement('div', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 278}}, T.hourlyRate), React.createElement('div', { style: {fontSize:22,fontWeight:900,color:"#FFD700"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 278}}, fmt(hourlyRate), React.createElement('span', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 278}}, T.perHour))), lmHourly>0?React.createElement('div', { style: {textAlign:"right"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 278}}, React.createElement('div', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 278}}, T.lastMonth+" "+fmt(lmHourly)+T.perHour), React.createElement('div', { style: Object.assign({fontSize:12,fontWeight:700},{color:hourlyRate>=lmHourly?"#00E676":"#FF5252"}), __self: this, __source: {fileName: _jsxFileName, lineNumber: 278}}, hourlyRate>=lmHourly?"▲":"▼", " " , fmt(Math.abs(hourlyRate-lmHourly)))):null)) : null
-                  , lmInc>0 ? React.createElement(Card, { style: {marginBottom:8,padding:"10px 14px",background:C.bg3,border:"1px solid #151F30"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 279}}, React.createElement('div', { style: {fontSize:12,color:C.text3,marginBottom:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 279}}, T.vsLastMonth), React.createElement('div', { style: {display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 279}}, React.createElement('div', { style: {textAlign:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 279}}, React.createElement('div', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 279}}, T.income), React.createElement('div', { style: Object.assign({fontSize:13,fontWeight:700},{color:tInc>=lmInc?"#00E676":"#FF5252"}), __self: this, __source: {fileName: _jsxFileName, lineNumber: 279}}, tInc>=lmInc?"▲":"▼", Math.round(Math.abs(tInc-lmInc)/lmInc*100), "%")), React.createElement('div', { style: {textAlign:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 279}}, React.createElement('div', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 279}}, T.expense), React.createElement('div', { style: Object.assign({fontSize:13,fontWeight:700},{color:tExp<=lmExp?"#00E676":"#FF5252"}), __self: this, __source: {fileName: _jsxFileName, lineNumber: 279}}, tExp<=lmExp?"▼":"▲", lmExp>0?Math.round(Math.abs(tExp-lmExp)/lmExp*100):0, "%")), React.createElement('div', { style: {textAlign:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 279}}, React.createElement('div', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 279}}, T.netProfit), React.createElement('div', { style: Object.assign({fontSize:13,fontWeight:700},{color:net>=lmNet?"#00E676":"#FF5252"}), __self: this, __source: {fileName: _jsxFileName, lineNumber: 279}}, net>=lmNet?"▲":"▼", lmNet!==0?Math.round(Math.abs(net-lmNet)/Math.abs(lmNet)*100):0, "%")))) : null
+                  , hourlyRate>0 ? React.createElement('div', { style: {marginBottom:10,padding:"14px 16px",background:"linear-gradient(135deg, rgba(255,215,0,0.06), "+C.bg2+")",border:"1px solid "+C.border,borderRadius:RADIUS.md,boxShadow:SHADOW.sm}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 278}}, React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 278}}, React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 278}}, React.createElement('div', { style: {fontSize:FS.xs,color:C.text3,letterSpacing:0.8,textTransform:"uppercase",fontWeight:600,marginBottom:3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 278}}, T.hourlyRate), React.createElement('div', { style: {fontSize:FS.xxxl-2,fontWeight:900,color:C.gold,letterSpacing:-0.6,fontVariantNumeric:"tabular-nums"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 278}}, fmt(hourlyRate), React.createElement('span', { style: {fontSize:FS.sm,color:C.text3,marginLeft:4,fontWeight:500}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 278}}, T.perHour))), lmHourly>0?React.createElement('div', { style: {textAlign:"right"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 278}}, React.createElement('div', { style: {fontSize:FS.xs,color:C.text3,marginBottom:2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 278}}, T.lastMonth+" "+fmt(lmHourly)), React.createElement('div', { style: {fontSize:FS.md,fontWeight:700,color:hourlyRate>=lmHourly?C.success:C.danger,letterSpacing:0.2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 278}}, hourlyRate>=lmHourly?"▲":"▼", " " , fmt(Math.abs(hourlyRate-lmHourly)))):null)) : null
+                  , lmInc>0 ? React.createElement('div', { style: {marginBottom:10,padding:"12px 16px",background:"linear-gradient(135deg, rgba(255,255,255,0.02), "+C.bg2+")",border:"1px solid "+C.border,borderRadius:RADIUS.md,boxShadow:SHADOW.sm}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 279}}, React.createElement('div', { style: {fontSize:FS.xs+1,color:C.text3,marginBottom:8,letterSpacing:1.2,textTransform:"uppercase",fontWeight:600}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 279}}, T.vsLastMonth), React.createElement('div', { style: {display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 279}}, React.createElement('div', { style: {textAlign:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 279}}, React.createElement('div', { style: {fontSize:FS.sm,color:C.text3,marginBottom:3,fontWeight:500}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 279}}, T.income), React.createElement('div', { style: {fontSize:FS.lg,fontWeight:800,color:tInc>=lmInc?C.success:C.danger,letterSpacing:0.2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 279}}, tInc>=lmInc?"▲":"▼", Math.round(Math.abs(tInc-lmInc)/lmInc*100), "%")), React.createElement('div', { style: {textAlign:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 279}}, React.createElement('div', { style: {fontSize:FS.sm,color:C.text3,marginBottom:3,fontWeight:500}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 279}}, T.expense), React.createElement('div', { style: {fontSize:FS.lg,fontWeight:800,color:tExp<=lmExp?C.success:C.danger,letterSpacing:0.2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 279}}, tExp<=lmExp?"▼":"▲", lmExp>0?Math.round(Math.abs(tExp-lmExp)/lmExp*100):0, "%")), React.createElement('div', { style: {textAlign:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 279}}, React.createElement('div', { style: {fontSize:FS.sm,color:C.text3,marginBottom:3,fontWeight:500}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 279}}, T.netProfit), React.createElement('div', { style: {fontSize:FS.lg,fontWeight:800,color:net>=lmNet?C.success:C.danger,letterSpacing:0.2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 279}}, net>=lmNet?"▲":"▼", lmNet!==0?Math.round(Math.abs(net-lmNet)/Math.abs(lmNet)*100):0, "%")))) : null
                 ) : null
                 , (function(){
                   // Collapsible — show header only when collapsed
@@ -3648,14 +3729,14 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                   };
                   return React.createElement(Card, { style: {marginBottom:8,padding:"12px 14px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 282}}
                     , React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8,cursor:"pointer"}, onClick:function(){toggleColl("energy");}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 282}}
-                      , React.createElement('div', { style: {fontSize:13,fontWeight:700,color:"#00E676"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 282}}, titleStr)
+                      , React.createElement('div', { style: {fontSize:13,fontWeight:700,color:C.success}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 282}}, titleStr)
                       , React.createElement('span', {style:{fontSize:12,color:C.text3}}, "▲")
                     )
                     , mStats?React.createElement('div', { style: {marginBottom:yStats?10:0}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 282}}
                       , React.createElement('div', { style: {fontSize:12,color:C.text3,marginBottom:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 282}}, lang==="en"?"This Month":"本月")
                       , React.createElement('div', { style: {display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 282}}
-                        , React.createElement('div', { style: {textAlign:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 282}}, React.createElement('div', { style: {fontSize:16,fontWeight:800,color:"#00D4FF"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 282}}, mStats.mi.toLocaleString(), " mi"), React.createElement('div', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 282}}, lang==="en"?"Distance":"行驶里程"))
-                        , React.createElement('div', { style: {textAlign:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 282}}, React.createElement('div', { style: {fontSize:16,fontWeight:800,color:"#FFD700"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 282}}, fmt2(mStats.eff), " ", effLabel), React.createElement('div', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 282}}, lang==="en"?"Efficiency":"能效"))
+                        , React.createElement('div', { style: {textAlign:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 282}}, React.createElement('div', { style: {fontSize:16,fontWeight:800,color:C.accent}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 282}}, mStats.mi.toLocaleString(), " mi"), React.createElement('div', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 282}}, lang==="en"?"Distance":"行驶里程"))
+                        , React.createElement('div', { style: {textAlign:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 282}}, React.createElement('div', { style: {fontSize:16,fontWeight:800,color:C.gold}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 282}}, fmt2(mStats.eff), " ", effLabel), React.createElement('div', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 282}}, lang==="en"?"Efficiency":"能效"))
                         , React.createElement('div', { style: {textAlign:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 282}}, React.createElement('div', { style: {fontSize:16,fontWeight:800,color:"#FF9A65"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 282}}, "$", fmt2(mStats.cpm), "/mi"), React.createElement('div', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 282}}, lang==="en"?"Cost/Mile":"每英里成本"))
                       )
                       , per10(mStats.eff)?React.createElement('div',{style:{fontSize:12,color:"#90C8DC",marginTop:6,textAlign:"center",fontStyle:"italic"}},
@@ -3667,8 +3748,8 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                     , yStats?React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 282}}
                       , React.createElement('div', { style: {fontSize:12,color:C.text3,marginBottom:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 282}}, lang==="en"?"Year to Date":"年累计")
                       , React.createElement('div', { style: {display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 282}}
-                        , React.createElement('div', { style: {textAlign:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 282}}, React.createElement('div', { style: {fontSize:14,fontWeight:700,color:"#00D4FF"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 282}}, yStats.mi.toLocaleString(), " mi"))
-                        , React.createElement('div', { style: {textAlign:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 282}}, React.createElement('div', { style: {fontSize:14,fontWeight:700,color:"#FFD700"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 282}}, fmt2(yStats.eff), " ", effLabel))
+                        , React.createElement('div', { style: {textAlign:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 282}}, React.createElement('div', { style: {fontSize:14,fontWeight:700,color:C.accent}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 282}}, yStats.mi.toLocaleString(), " mi"))
+                        , React.createElement('div', { style: {textAlign:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 282}}, React.createElement('div', { style: {fontSize:14,fontWeight:700,color:C.gold}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 282}}, fmt2(yStats.eff), " ", effLabel))
                         , React.createElement('div', { style: {textAlign:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 282}}, React.createElement('div', { style: {fontSize:14,fontWeight:700,color:"#FF9A65"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 282}}, "$", fmt2(yStats.cpm), "/mi"))
                       )
                       , per10(yStats.eff)?React.createElement('div',{style:{fontSize:12,color:"#90C8DC",marginTop:6,textAlign:"center",fontStyle:"italic"}},
@@ -3686,7 +3767,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                     if(!hasFuelData) return null;
                     return React.createElement(Card, {style:{marginBottom:8,padding:"10px 14px",cursor:"pointer"}, onClick:function(){toggleColl("fuelchart");}}
                       , React.createElement('div', {style:{display:"flex",justifyContent:"space-between",alignItems:"center"}}
-                        , React.createElement('div', {style:{fontSize:13,fontWeight:700,color:"#FFD700"}}, "⛽ ", lang==="en"?"Fuel/Charge price chart":"加油/充电价格趋势")
+                        , React.createElement('div', {style:{fontSize:13,fontWeight:700,color:C.gold}}, "⛽ ", lang==="en"?"Fuel/Charge price chart":"加油/充电价格趋势")
                         , React.createElement('span', {style:{fontSize:12,color:C.text3}}, "▼")
                       )
                     );
@@ -3714,27 +3795,27 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                   // Date label X positions: first, max, min, last (deduplicated)
                   return React.createElement(Card, { style: {marginBottom:8,padding:"12px 14px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}
                     , React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10,cursor:"pointer"}, onClick: function(){toggleColl("fuelchart");}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}
-                      , React.createElement('div', { style: {fontSize:13,fontWeight:700,color:"#FFD700"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}, "⛽ " , lang==="en"?(isEv?"Charging · "+fi.length+" fills · avg $"+fmt2(avgP)+unit:"Gas · "+fi.length+" fills · avg $"+fmt2(avgP)+unit):(isEv?"充电 · "+fi.length+" 次 · 均价 $"+fmt2(avgP)+unit:"加油 · "+fi.length+" 次 · 均价 $"+fmt2(avgP)+unit))
+                      , React.createElement('div', { style: {fontSize:13,fontWeight:700,color:C.gold}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}, "⛽ " , lang==="en"?(isEv?"Charging · "+fi.length+" fills · avg $"+fmt2(avgP)+unit:"Gas · "+fi.length+" fills · avg $"+fmt2(avgP)+unit):(isEv?"充电 · "+fi.length+" 次 · 均价 $"+fmt2(avgP)+unit:"加油 · "+fi.length+" 次 · 均价 $"+fmt2(avgP)+unit))
                       , React.createElement('span', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}, "▲")
                     )
                     // 3 key numbers
                     , React.createElement('div', { style: {display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}
-                      , React.createElement('div', { style: {textAlign:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}, React.createElement('div', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}, lang==="en"?"Highest":"最贵"), React.createElement('div', { style: {fontSize:15,fontWeight:800,color:"#FF6B35"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}, "$"+fmt2(maxP)), React.createElement('div', { style: {fontSize:10,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}, fmtDate(pts[maxIdx].date)))
-                      , React.createElement('div', { style: {textAlign:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}, React.createElement('div', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}, lang==="en"?"Lowest":"最便宜"), React.createElement('div', { style: {fontSize:15,fontWeight:800,color:"#00E676"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}, "$"+fmt2(minP)), React.createElement('div', { style: {fontSize:10,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}, fmtDate(pts[minIdx].date)))
-                      , React.createElement('div', { style: {textAlign:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}, React.createElement('div', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}, lang==="en"?"Latest":"最近"), React.createElement('div', { style: {fontSize:15,fontWeight:800,color:"#FFD700"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}, "$"+fmt2(latest.price)), React.createElement('div', { style: {fontSize:10,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}, fmtDate(latest.date)))
+                      , React.createElement('div', { style: {textAlign:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}, React.createElement('div', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}, lang==="en"?"Highest":"最贵"), React.createElement('div', { style: {fontSize:15,fontWeight:800,color:C.danger}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}, "$"+fmt2(maxP)), React.createElement('div', { style: {fontSize:10,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}, fmtDate(pts[maxIdx].date)))
+                      , React.createElement('div', { style: {textAlign:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}, React.createElement('div', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}, lang==="en"?"Lowest":"最便宜"), React.createElement('div', { style: {fontSize:15,fontWeight:800,color:C.success}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}, "$"+fmt2(minP)), React.createElement('div', { style: {fontSize:10,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}, fmtDate(pts[minIdx].date)))
+                      , React.createElement('div', { style: {textAlign:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}, React.createElement('div', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}, lang==="en"?"Latest":"最近"), React.createElement('div', { style: {fontSize:15,fontWeight:800,color:C.gold}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}, "$"+fmt2(latest.price)), React.createElement('div', { style: {fontSize:10,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}, fmtDate(latest.date)))
                     )
                     // SVG line chart
                     , React.createElement('div', { style: {marginBottom:6,height:H+18,position:"relative"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}
                       , React.createElement('svg', { width:"100%", height:H, viewBox:"0 0 "+W+" "+H, preserveAspectRatio:"none", style:{display:"block"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}
-                        , React.createElement('path', { d: pathD, fill: "none", stroke: "#FFD700", strokeWidth: 1.5, vectorEffect:"non-scaling-stroke", __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}})
-                        , pts.map(function(p,i){var isMax=i===maxIdx,isMin=i===minIdx,isLast=i===pts.length-1;var col=isMax?"#FF6B35":isMin?"#00E676":isLast?"#FFD700":"#5A6A80";var rad=isMax||isMin||isLast?2.5:1.5;return React.createElement('circle', { key: i, cx: sx(i), cy: sy(p.price), r: rad, fill: col, vectorEffect:"non-scaling-stroke", __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}});})
+                        , React.createElement('path', { d: pathD, fill: "none", stroke: C.gold, strokeWidth: 1.5, vectorEffect:"non-scaling-stroke", __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}})
+                        , pts.map(function(p,i){var isMax=i===maxIdx,isMin=i===minIdx,isLast=i===pts.length-1;var col=isMax?C.danger:isMin?C.success:isLast?C.gold:"#5A6A80";var rad=isMax||isMin||isLast?2.5:1.5;return React.createElement('circle', { key: i, cx: sx(i), cy: sy(p.price), r: rad, fill: col, vectorEffect:"non-scaling-stroke", __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}});})
                       )
                       , React.createElement('div', { style: {display:"flex",justifyContent:"space-between",fontSize:10,color:C.text3,marginTop:2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}, React.createElement('span', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}, fmtDate(pts[0].date)), React.createElement('span', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}, fmtDate(pts[pts.length-1].date)))
                     )
                     // Expanded detail list
                     , trendOpen ? React.createElement('div', { style: {marginTop:12,paddingTop:10,borderTop:"1px solid "+C.border}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}
                       , React.createElement('div', { style: {fontSize:12,color:C.text3,marginBottom:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}, lang==="en"?"All "+fi.length+" fills this month":"本月 "+fi.length+" 次充电详情")
-                      , pts.slice().reverse().map(function(p,i){var isMax=p.price===maxP,isMin=p.price===minP;var col=isMax?"#FF6B35":isMin?"#00E676":C.text;return React.createElement('div', { key: i, style: {display:"flex",justifyContent:"space-between",padding:"6px 0",borderBottom:i<pts.length-1?"1px solid "+C.border:"none",fontSize:13}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}
+                      , pts.slice().reverse().map(function(p,i){var isMax=p.price===maxP,isMin=p.price===minP;var col=isMax?C.danger:isMin?C.success:C.text;return React.createElement('div', { key: i, style: {display:"flex",justifyContent:"space-between",padding:"6px 0",borderBottom:i<pts.length-1?"1px solid "+C.border:"none",fontSize:13}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}
                         , React.createElement('span', { style: {color:C.text2,fontSize:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}, fmtDate(p.date))
                         , React.createElement('span', { style: {color:C.text2,fontSize:12,flex:1,marginLeft:8,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}, p.notes)
                         , React.createElement('span', { style: {color:C.text3,fontSize:12,marginRight:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}, fmt2(p.qty), unitName)
@@ -3765,7 +3846,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                     });
                     var total=Object.values(groupTotals).reduce(function(a,b){return a+b;},0);
                     if(total<=0) return null;
-                    var colors={"车辆":"#00D4FF","牌照":"#FFD700","平台":"#CC88FF","其他":"#A8D0E8"};
+                    var colors={"车辆":C.accent,"牌照":C.gold,"平台":"#CC88FF","其他":"#A8D0E8"};
                     var labels=lang==="en"?{"车辆":"Vehicle","牌照":"License","平台":"Platform","其他":"Other"}:{"车辆":"车辆","牌照":"牌照","平台":"平台","其他":"其他"};
                     var cx=60, cy=60, r=50;
                     var startAngle=-Math.PI/2;
@@ -3797,7 +3878,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                           , slices.map(function(s,i){return React.createElement('path', {key:i,d:s.path,fill:s.color,stroke:C.bg2,strokeWidth:1.5});})
                           , React.createElement('circle', {cx:60,cy:60,r:24,fill:C.bg})
                           , React.createElement('text', {x:60,y:58,textAnchor:"middle",fill:C.text2,fontSize:10}, lang==="en"?"Total":"总计")
-                          , React.createElement('text', {x:60,y:70,textAnchor:"middle",fill:"#FF6B35",fontSize:12,fontWeight:700}, fmt(total))
+                          , React.createElement('text', {x:60,y:70,textAnchor:"middle",fill:C.danger,fontSize:12,fontWeight:700}, fmt(total))
                         )
                         , React.createElement('div', {style:{flex:1,display:"flex",flexDirection:"column",gap:5}}
                           , slices.map(function(s,i){return React.createElement('div', {key:i,style:{display:"flex",alignItems:"center",gap:6,fontSize:12}}
@@ -3826,11 +3907,11 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                       , React.createElement('span', {style:{fontSize:12,color:C.text3}}, "▲")
                     )
                     , React.createElement('div', { style: {display:"flex",justifyContent:"flex-end",marginBottom:8}}
-                      , React.createElement('button', { onClick: function(e){e.stopPropagation();setMExpDet(!mExpDet);}, style: {background:"none",border:"1px solid #2A4A6A",borderRadius:8,padding:"4px 10px",color:"#90B8D0",fontSize:12,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 289}}, mExpDet?(lang==="en"?"By Group":"按大类"):(lang==="en"?"By Item":"按小类"))
+                      , React.createElement('button', { onClick: function(e){e.stopPropagation();setMExpDet(!mExpDet);}, style: {background:"none",border:"1px solid "+C.border2,borderRadius:8,padding:"4px 10px",color:C.text2,fontSize:12,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 289}}, mExpDet?(lang==="en"?"By Group":"按大类"):(lang==="en"?"By Item":"按小类"))
                     )
                     , mExpDet ? React.createElement(Card, {__self: this, __source: {fileName: _jsxFileName, lineNumber: 291}}, React.createElement(CatDetail, { items: feAll, total: tExp, allC: allC, lang: lang, __self: this, __source: {fileName: _jsxFileName, lineNumber: 291}} )) : React.createElement(CatBreakdown, { items: feAll, total: tExp, allC: allC, lang: lang, scope: "dash_m", forceRerender: forceRerender, __self: this, __source: {fileName: _jsxFileName, lineNumber: 291}} )
                   
-                    , tInc>0&&tExp>0 ? React.createElement('div', { style: {marginTop:8,background:C.bg3,borderRadius:10,padding:"10px 14px",border:"1px solid #151F30"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 293}}, React.createElement('div', { style: {display:"flex",justifyContent:"space-between",marginBottom:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 293}}, React.createElement('span', { style: {fontSize:12,color:"#7AB8A8"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 293}}, lang==="en"?"Expense Ratio":"支出占比"), React.createElement('span', { style: Object.assign({fontSize:13,fontWeight:700},{color:tExp/tInc>0.8?"#FF5252":tExp/tInc>0.5?"#FFB300":"#00E676"}), __self: this, __source: {fileName: _jsxFileName, lineNumber: 293}}, Math.round(tExp/tInc*100), "%")), React.createElement('div', { style: {height:8,borderRadius:4,background:"#1A2A40",overflow:"hidden"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 293}}, React.createElement('div', { style: {height:8,borderRadius:4,width:Math.min(100,Math.round(tExp/tInc*100))+"%",background:tExp/tInc>0.8?"linear-gradient(90deg,#FF5252,#FF8855)":tExp/tInc>0.5?"linear-gradient(90deg,#FFB300,#FFD700)":"linear-gradient(90deg,#00E676,#00D4FF)"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 293}}))) : null
+                    , tInc>0&&tExp>0 ? React.createElement('div', { style: {marginTop:8,background:C.bg3,borderRadius:10,padding:"10px 14px",border:"1px solid #151F30"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 293}}, React.createElement('div', { style: {display:"flex",justifyContent:"space-between",marginBottom:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 293}}, React.createElement('span', { style: {fontSize:12,color:"#7AB8A8"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 293}}, lang==="en"?"Expense Ratio":"支出占比"), React.createElement('span', { style: Object.assign({fontSize:13,fontWeight:700},{color:tExp/tInc>0.8?C.danger:tExp/tInc>0.5?"#FFB300":C.success}), __self: this, __source: {fileName: _jsxFileName, lineNumber: 293}}, Math.round(tExp/tInc*100), "%")), React.createElement('div', { style: {height:8,borderRadius:4,background:"#1A2A40",overflow:"hidden"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 293}}, React.createElement('div', { style: {height:8,borderRadius:4,width:Math.min(100,Math.round(tExp/tInc*100))+"%",background:tExp/tInc>0.8?"linear-gradient(90deg,#FF5252,#FF8855)":tExp/tInc>0.5?"linear-gradient(90deg,#FFB300,#FFD700)":"linear-gradient(90deg,#00E676,#00D4FF)"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 293}}))) : null
                   )
                   )
                 ) : null
@@ -3839,13 +3920,13 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
             , dashV==="year" ? (
               React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 299}}
                 , React.createElement(YrNav, { val: yr, set: setYr, lang: lang, onPick: function(){setYpState({value:yr,onChange:function(v){setYr(v);}});}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 300}} )
-                , (function(){var hm=mData.filter(function(m){return m.inc>0;});if(hm.length<2)return null;var mx=Math.max.apply(null,hm.map(function(m){return m.inc;}));return React.createElement(Card, { style: {marginBottom:8,padding:"12px 14px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 301}}, React.createElement('div', { style: {fontSize:13,fontWeight:700,color:C.text2,marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 301}}, "📊 " , lang==="en"?("Income Trend · "+yr):("收入趋势 · "+yr+"年")), React.createElement('div', { style: {display:"flex",alignItems:"center",gap:3,height:60}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 301}}, mData.map(function(m,i){if(!m.inc)return React.createElement('div', { key: i, style: {flex:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 301}} );var h=Math.round(8+m.inc/mx*48);var isCur=m.m===mo;return React.createElement('div', { key: i, onClick: function(){setMo(m.m);setDashV("month");}, style: {flex:1,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 301}}, React.createElement('div', { style: {width:"100%",height:h,borderRadius:"3px 3px 0 0",background:isCur?"#00D4FF":m.net>=0?"#00E676":"#FF5252",opacity:isCur?1:0.7}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 301}} ));}), " " ), React.createElement('div', { style: {display:"flex",fontSize:11,color:C.text3,marginTop:3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 301}}, mData.map(function(m,i){return React.createElement('div', { key: i, style: {flex:1,textAlign:"center",color:m.m===mo?"#00D4FF":"#7A9AB8"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 301}}, m.label.slice(0,3));})));}())
+                , (function(){var hm=mData.filter(function(m){return m.inc>0;});if(hm.length<2)return null;var mx=Math.max.apply(null,hm.map(function(m){return m.inc;}));return React.createElement(Card, { style: {marginBottom:8,padding:"12px 14px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 301}}, React.createElement('div', { style: {fontSize:13,fontWeight:700,color:C.text2,marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 301}}, "📊 " , lang==="en"?("Income Trend · "+yr):("收入趋势 · "+yr+"年")), React.createElement('div', { style: {display:"flex",alignItems:"center",gap:3,height:60}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 301}}, mData.map(function(m,i){if(!m.inc)return React.createElement('div', { key: i, style: {flex:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 301}} );var h=Math.round(8+m.inc/mx*48);var isCur=m.m===mo;return React.createElement('div', { key: i, onClick: function(){setMo(m.m);setDashV("month");}, style: {flex:1,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 301}}, React.createElement('div', { style: {width:"100%",height:h,borderRadius:"4px 4px 1px 1px",background:isCur?"linear-gradient(180deg, #00D4FF, #0066AA)":m.net>=0?"linear-gradient(180deg, #00E676, #0A8050)":"linear-gradient(180deg, #FF7060, #C03030)",opacity:isCur?1:0.75,boxShadow:isCur?"0 0 12px rgba(0,212,255,0.4)":"none",transition:"opacity 0.2s"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 301}} ));}), " " ), React.createElement('div', { style: {display:"flex",fontSize:11,color:C.text3,marginTop:3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 301}}, mData.map(function(m,i){return React.createElement('div', { key: i, style: {flex:1,textAlign:"center",color:m.m===mo?C.accent:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 301}}, m.label.slice(0,3));})));}())
                 , React.createElement(Card, { style: {marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 302}}
                   , React.createElement('div', { style: {fontSize:13,color:"#8ACCA8",marginBottom:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 303}}, yr+" "+(lang==="en"?"Annual":"全年"))
-                  , (function(){var nc=yNet>=0?"#00E676":"#FF5252";return React.createElement('div', { style: {fontSize:22,fontWeight:900,color:nc,letterSpacing:-1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 304}}, fmt(yNet));}())
+                  , (function(){var nc=yNet>=0?C.success:C.danger;return React.createElement('div', { style: {fontSize:22,fontWeight:900,color:nc,letterSpacing:-1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 304}}, fmt(yNet));}())
                   , React.createElement('div', { style: {fontSize:12,color:"#8ACCA8",marginTop:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 305}}, lang==="en"?"Income":"收", " " , fmt(yInc), " · "  , lang==="en"?"Expense":"支", " " , fmt(yExp))
                 )
-                , (yStmtTrips>0||yStmtHours>0||yStmtMiles>0) ? React.createElement('div', { style: {display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,marginBottom:14}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 307}}, (function(){var vt=yStmtTrips?String(yStmtTrips):"—",vh=yStmtHours?yStmtHours+"h":"—",vm=yStmtMiles?yStmtMiles+"mi":"—";return React.createElement('div', { style: {display:"contents"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 307}}, React.createElement(Stat, { label: T.trips, value: vt, color: "#00D4FF", __self: this, __source: {fileName: _jsxFileName, lineNumber: 307}} ), React.createElement(Stat, { label: lang==="en"?"Online h":"在线h", value: vh, color: "#00D4FF", __self: this, __source: {fileName: _jsxFileName, lineNumber: 307}} ), React.createElement(Stat, { label: T.miles, value: vm, color: "#00D4FF", __self: this, __source: {fileName: _jsxFileName, lineNumber: 307}} ));}())) : null
+                , (yStmtTrips>0||yStmtHours>0||yStmtMiles>0) ? React.createElement('div', { style: {display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,marginBottom:14}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 307}}, (function(){var vt=yStmtTrips?String(yStmtTrips):"—",vh=yStmtHours?yStmtHours+"h":"—",vm=yStmtMiles?yStmtMiles+"mi":"—";return React.createElement('div', { style: {display:"contents"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 307}}, React.createElement(Stat, { label: T.trips, value: vt, color: C.accent, __self: this, __source: {fileName: _jsxFileName, lineNumber: 307}} ), React.createElement(Stat, { label: lang==="en"?"Online h":"在线h", value: vh, color: C.accent, __self: this, __source: {fileName: _jsxFileName, lineNumber: 307}} ), React.createElement(Stat, { label: T.miles, value: vm, color: C.accent, __self: this, __source: {fileName: _jsxFileName, lineNumber: 307}} ));}())) : null
                 // === Year Energy Stats Card (collapsible, default collapsed) ===
                 , (function(){
                     // Detect EV vs gas car from data
@@ -3884,21 +3965,21 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                     // Expanded view
                     return React.createElement(Card, {style:{marginBottom:12,padding:"12px 14px"}}
                       , React.createElement('div', {style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10,cursor:"pointer"}, onClick:function(){var nv=Object.assign({},collOpen);nv.energyYr=false;setCollOpen(nv);}}
-                        , React.createElement('div', {style:{fontSize:13,fontWeight:700,color:"#00E676"}}, titleStrYr)
+                        , React.createElement('div', {style:{fontSize:13,fontWeight:700,color:C.success}}, titleStrYr)
                         , React.createElement('span', {style:{fontSize:12,color:C.text3}}, "▲")
                       )
                       // Top 4 numbers
                       , React.createElement('div', {style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:8}}
                         , React.createElement('div', {style:{textAlign:"center",padding:"8px 6px",background:C.bg3,borderRadius:8}}
-                          , React.createElement('div', {style:{fontSize:18,fontWeight:800,color:"#00D4FF"}}, yrCount)
+                          , React.createElement('div', {style:{fontSize:18,fontWeight:800,color:C.accent}}, yrCount)
                           , React.createElement('div', {style:{fontSize:11,color:C.text3,marginTop:2}}, lang==="en"?(isEv?"Charges":"Fills"):(isEv?"充电次数":"加油次数"))
                         )
                         , React.createElement('div', {style:{textAlign:"center",padding:"8px 6px",background:C.bg3,borderRadius:8}}
-                          , React.createElement('div', {style:{fontSize:18,fontWeight:800,color:"#FFD700"}}, fmt2(yrQty), " ", unitName)
+                          , React.createElement('div', {style:{fontSize:18,fontWeight:800,color:C.gold}}, fmt2(yrQty), " ", unitName)
                           , React.createElement('div', {style:{fontSize:11,color:C.text3,marginTop:2}}, lang==="en"?(isEv?"Total kWh":"Total Gallons"):(isEv?"总度数":"总加仑"))
                         )
                         , React.createElement('div', {style:{textAlign:"center",padding:"8px 6px",background:C.bg3,borderRadius:8}}
-                          , React.createElement('div', {style:{fontSize:18,fontWeight:800,color:"#FF7060"}}, fmt(yrCost))
+                          , React.createElement('div', {style:{fontSize:18,fontWeight:800,color:C.danger}}, fmt(yrCost))
                           , React.createElement('div', {style:{fontSize:11,color:C.text3,marginTop:2}}, lang==="en"?"Total Spent":"总花费")
                         )
                         , React.createElement('div', {style:{textAlign:"center",padding:"8px 6px",background:C.bg3,borderRadius:8}}
@@ -3907,15 +3988,15 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                         )
                       )
                       // Efficiency row (if enough odometer data)
-                      , avgEff>0 ? React.createElement('div', {style:{textAlign:"center",padding:"10px",background:"#0A1828",borderRadius:8,marginTop:8}}
-                        , React.createElement('div', {style:{fontSize:20,fontWeight:800,color:"#FFD700"}}, fmt2(avgEff), " ", effLabel)
+                      , avgEff>0 ? React.createElement('div', {style:{textAlign:"center",padding:"10px",background:C.bg3,borderRadius:8,marginTop:8}}
+                        , React.createElement('div', {style:{fontSize:20,fontWeight:800,color:C.gold}}, fmt2(avgEff), " ", effLabel)
                         , React.createElement('div', {style:{fontSize:11,color:C.text3,marginTop:2}}, lang==="en"?"Avg efficiency · "+totalMi.toLocaleString()+" mi tracked":"平均能效 · "+totalMi.toLocaleString()+" mi 计入")
                       ) : null
                     );
                   }())
                 , React.createElement(Card, { style: {marginBottom:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 308}}
                   , React.createElement('div', { style: {fontSize:14,fontWeight:700,color:C.text,marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 309}}, lang==="en"?"Monthly Breakdown":"逐月明细")
-                  , mData.map(function(m){if(m.inc===0&&m.exp===0)return null;var ncl=m.net>=0?"#00E676":"#FF5252",mcl=m.m===mo?"#00D4FF":C.text;return React.createElement('div', { key: m.m, onClick: function(){setMo(m.m);setDashV("month");}, style: {display:"grid",gridTemplateColumns:"2fr 2fr 2fr 2fr",padding:"7px 0",borderBottom:"1px solid #182030",cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 310}}, React.createElement('span', { style: Object.assign({fontSize:12,fontWeight:700},{color:mcl}), __self: this, __source: {fileName: _jsxFileName, lineNumber: 310}}, m.label), React.createElement('span', { style: {fontSize:12,color:"#00D4FF"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 310}}, m.inc>0?fmt(m.inc):"—"), React.createElement('span', { style: {fontSize:12,color:"#FF6B35"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 310}}, m.exp>0?fmt(m.exp):"—"), React.createElement('span', { style: Object.assign({fontSize:12,fontWeight:700},{color:ncl}), __self: this, __source: {fileName: _jsxFileName, lineNumber: 310}}, fmt(m.net)));})
+                  , mData.map(function(m){if(m.inc===0&&m.exp===0)return null;var ncl=m.net>=0?C.success:C.danger,mcl=m.m===mo?C.accent:C.text;return React.createElement('div', { key: m.m, onClick: function(){setMo(m.m);setDashV("month");}, style: {display:"grid",gridTemplateColumns:"2fr 2fr 2fr 2fr",padding:"7px 0",borderBottom:"1px solid #182030",cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 310}}, React.createElement('span', { style: Object.assign({fontSize:12,fontWeight:700},{color:mcl}), __self: this, __source: {fileName: _jsxFileName, lineNumber: 310}}, m.label), React.createElement('span', { style: {fontSize:12,color:C.accent}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 310}}, m.inc>0?fmt(m.inc):"—"), React.createElement('span', { style: {fontSize:12,color:C.danger}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 310}}, m.exp>0?fmt(m.exp):"—"), React.createElement('span', { style: Object.assign({fontSize:12,fontWeight:700},{color:ncl}), __self: this, __source: {fileName: _jsxFileName, lineNumber: 310}}, fmt(m.net)));})
                 )
                 // === Pie Chart for YEAR mode (NEW v3.7.3) ===
                 , (function(){
@@ -3930,7 +4011,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                     });
                     var total=Object.values(groupTotals).reduce(function(a,b){return a+b;},0);
                     if(total<=0) return null;
-                    var colors={"车辆":"#00D4FF","牌照":"#FFD700","平台":"#CC88FF","其他":"#A8D0E8"};
+                    var colors={"车辆":C.accent,"牌照":C.gold,"平台":"#CC88FF","其他":"#A8D0E8"};
                     var labels=lang==="en"?{"车辆":"Vehicle","牌照":"License","平台":"Platform","其他":"Other"}:{"车辆":"车辆","牌照":"牌照","平台":"平台","其他":"其他"};
                     var cx=60, cy=60, r=50;
                     var startAngle=-Math.PI/2;
@@ -3958,7 +4039,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                           , slices.map(function(s,i){return React.createElement('path', {key:i,d:s.path,fill:s.color,stroke:C.bg2,strokeWidth:1.5});})
                           , React.createElement('circle', {cx:60,cy:60,r:24,fill:C.bg})
                           , React.createElement('text', {x:60,y:58,textAnchor:"middle",fill:C.text2,fontSize:10}, lang==="en"?"Total":"总计")
-                          , React.createElement('text', {x:60,y:70,textAnchor:"middle",fill:"#FF6B35",fontSize:12,fontWeight:700}, fmt(total))
+                          , React.createElement('text', {x:60,y:70,textAnchor:"middle",fill:C.danger,fontSize:12,fontWeight:700}, fmt(total))
                         )
                         , React.createElement('div', {style:{flex:1,display:"flex",flexDirection:"column",gap:5}}
                           , slices.map(function(s,i){return React.createElement('div', {key:i,style:{display:"flex",alignItems:"center",gap:6,fontSize:12}}
@@ -3982,37 +4063,37 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
           // ---- TAXI MODE: daily income UI ----
           React.createElement('div', {}
             , React.createElement(MoNav, { val: mo, set: setMo, lang: lang, onPick: function(){setMpState({value:mo,onChange:function(v){setMo(v);}});} } )
-            , React.createElement('button', { onClick: function(){setDlf({date:today(),cash:"",card:"",tips:"",trips:"",hours:"",miles:"",lease:"",notes:""});setSf("daily");}, style: {width:"100%",background:"linear-gradient(135deg,#3A2800,#1A1000)",border:"1px solid #5A3A00",borderRadius:14,padding:"18px",cursor:"pointer",textAlign:"center",color:"#FFB300",marginBottom:14} }
-              , React.createElement('div', { style: {fontSize:28,marginBottom:6} }, "🚖")
-              , React.createElement('div', { style: {fontSize:15,fontWeight:800} }, lang==="en"?"+ Add Today\'s Income":"+ 添加今日收入")
-              , React.createElement('div', { style: {fontSize:12,color:"#9A7A40",marginTop:3} }, lang==="en"?"Cash · Card · Tips · Lease":"现金 · 信用卡 · 小费 · 租金")
+            , React.createElement('button', { onClick: function(){setDlf({date:today(),cash:"",card:"",tips:"",trips:"",hours:"",miles:"",lease:"",notes:""});setSf("daily");}, style: {width:"100%",background:"linear-gradient(135deg, rgba(255,179,71,0.12), rgba(60,40,0,0.6))",border:"1px solid rgba(255,179,71,0.3)",borderRadius:RADIUS.lg,padding:"22px",cursor:"pointer",textAlign:"center",color:"#FFB300",marginBottom:14,boxShadow:"0 4px 16px rgba(255,179,71,0.08), inset 0 1px 0 rgba(255,255,255,0.05)",transition:"transform 0.15s"} }
+              , React.createElement('div', { style: {fontSize:32,marginBottom:8,filter:"drop-shadow(0 2px 4px rgba(0,0,0,0.3))"} }, "🚖")
+              , React.createElement('div', { style: {fontSize:FS.lg+1,fontWeight:800,letterSpacing:0.2} }, lang==="en"?"+ Add Today's Income":"+ 添加今日收入")
+              , React.createElement('div', { style: {fontSize:FS.sm+1,color:"#9A7A40",marginTop:4} }, lang==="en"?"Cash · Card · Tips · Lease":"现金 · 信用卡 · 小费 · 租金")
             )
-            , (mDailies.length>0 || mDailyInc>0) ? React.createElement(Card, { style: {marginBottom:12} }
-              , React.createElement('div', { style: {fontSize:13,color:C.text3,marginBottom:4} }, lang==="en"?"This Month — Gross":"本月毛收入")
-              , React.createElement('div', { style: {fontSize:22,fontWeight:800,color:"#00E676",marginBottom:6} }, fmt(mDailyInc))
-              , mDailyLease>0 ? React.createElement('div', { style: {fontSize:13,color:"#FF9A65",marginBottom:4} }, "− " , lang==="en"?"Lease ":"租金 " , fmt(mDailyLease)) : null
-              , mDailyLease>0 ? React.createElement('div', { style: {fontSize:14,color:"#FFB300",fontWeight:700,paddingTop:6,borderTop:"1px solid "+C.border} }, lang==="en"?"Net":"净收入" , ": " , fmt(mDailyInc-mDailyLease)) : null
+            , (mDailies.length>0 || mDailyInc>0) ? React.createElement('div', { style: {marginBottom:14,padding:"16px 18px",background:"linear-gradient(135deg, rgba(0,230,118,0.06), "+C.bg2+" 60%)",border:"1px solid "+C.border,borderRadius:RADIUS.lg,boxShadow:SHADOW.md,position:"relative",overflow:"hidden"} }
+              , React.createElement('div', {style:{position:"absolute",top:-30,right:-30,width:90,height:90,borderRadius:"50%",background:"radial-gradient(circle, rgba(0,230,118,0.15) 0%, transparent 70%)",pointerEvents:"none"}})
+              , React.createElement('div', { style: {fontSize:FS.xs+1,color:C.text3,marginBottom:4,letterSpacing:0.8,textTransform:"uppercase",fontWeight:600,position:"relative"} }, lang==="en"?"This Month — Gross":"本月毛收入")
+              , React.createElement('div', { style: {fontSize:FS.xxxl,fontWeight:900,color:C.success,marginBottom:8,letterSpacing:-0.8,fontVariantNumeric:"tabular-nums",position:"relative"} }, fmt(mDailyInc))
+              , mDailyLease>0 ? React.createElement('div', { style: {fontSize:FS.md+1,color:"#FF9A65",marginBottom:4,position:"relative"} }, "− " , lang==="en"?"Lease ":"租金 " , fmt(mDailyLease)) : null
+              , mDailyLease>0 ? React.createElement('div', { style: {fontSize:FS.lg,color:"#FFB300",fontWeight:700,paddingTop:8,borderTop:"1px solid "+C.border,position:"relative"} }, lang==="en"?"Net":"净收入" , ": " , fmt(mDailyInc-mDailyLease)) : null
             ) : null
             , mDailies.length>0 ? React.createElement('div', {}
-              , React.createElement('div', { style: {fontSize:12,color:C.text3,letterSpacing:1,marginBottom:8} }, "📅 " , lang==="en"?"Daily Entries":"每日记录")
+              , React.createElement('div', { style: {fontSize:FS.xs+1,color:C.text3,letterSpacing:1.2,marginBottom:10,textTransform:"uppercase",fontWeight:600} }, "📅 " , lang==="en"?"Daily Entries":"每日记录")
               , mDailies.slice().sort(function(a,b){return (b.date||"").localeCompare(a.date||"");}).map(function(d){
                   var gross=(+d.cash||0)+(+d.card||0)+(+d.tips||0);
                   var net=gross-(+d.lease||0);
-                  return React.createElement(Card, { key: d.id, style: {marginBottom:8,padding:"12px 14px"} }
+                  return React.createElement('div', { key: d.id, style: {background:C.bg2,borderRadius:RADIUS.md,padding:"12px 14px",marginBottom:8,border:"1px solid "+C.border,boxShadow:SHADOW.sm,cursor:"pointer",transition:"all 0.15s"}, onClick: function(){setDlf(Object.assign({},d));setSf("daily");} }
                     , React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"flex-start"} }
-                      , React.createElement('div', { style: {flex:1} }
-                        , React.createElement('div', { style: {fontSize:14,fontWeight:700,color:C.text,marginBottom:4} }, fmtDate(d.date))
-                        , React.createElement('div', { style: {fontSize:13,color:"#00E676",fontWeight:700,marginBottom:3} }, fmt(gross), d.lease ? React.createElement('span', {style:{color:"#FF9A65",fontWeight:600,marginLeft:8,fontSize:12}}, "− " , fmt(+d.lease||0)) : null)
-                        , React.createElement('div', { style: {display:"flex",gap:6,flexWrap:"wrap",marginTop:4} }
-                          , d.cash ? React.createElement('span', { style: {fontSize:12,background:"#0A2010",borderRadius:6,padding:"2px 7px",color:"#5ADA7A"} }, "💵 ", fmt(+d.cash||0)) : null
-                          , d.card ? React.createElement('span', { style: {fontSize:12,background:"#0A1828",borderRadius:6,padding:"2px 7px",color:"#5AACFF"} }, "💳 ", fmt(+d.card||0)) : null
-                          , d.tips ? React.createElement('span', { style: {fontSize:12,background:"#1A1400",borderRadius:6,padding:"2px 7px",color:"#FFD700"} }, "💰 ", fmt(+d.tips||0)) : null
-                          , d.trips ? React.createElement('span', { style: {fontSize:12,background:"#1A2A44",borderRadius:6,padding:"2px 7px",color:C.text2} }, d.trips, " ", T.trips) : null
-                          , d.hours ? React.createElement('span', { style: {fontSize:12,background:"#1A2A44",borderRadius:6,padding:"2px 7px",color:C.text2} }, d.hours, "h") : null
-                          , d.miles ? React.createElement('span', { style: {fontSize:12,background:"#1A2A44",borderRadius:6,padding:"2px 7px",color:C.text2} }, d.miles, "mi") : null
+                      , React.createElement('div', { style: {flex:1,minWidth:0} }
+                        , React.createElement('div', { style: {fontSize:FS.lg,fontWeight:700,color:C.text,marginBottom:4} }, fmtDate(d.date))
+                        , React.createElement('div', { style: {fontSize:FS.xl,color:C.success,fontWeight:800,marginBottom:6,letterSpacing:-0.3,fontVariantNumeric:"tabular-nums"} }, fmt(gross), d.lease ? React.createElement('span', {style:{color:"#FF9A65",fontWeight:600,marginLeft:10,fontSize:FS.md}}, "− " , fmt(+d.lease||0)) : null)
+                        , React.createElement('div', { style: {display:"flex",gap:6,flexWrap:"wrap"} }
+                          , d.cash ? React.createElement('span', { style: {fontSize:FS.sm+1,background:"rgba(0,230,118,0.1)",border:"1px solid rgba(0,230,118,0.25)",borderRadius:6,padding:"3px 9px",color:"#5ADA7A",fontWeight:600} }, "💵 ", fmt(+d.cash||0)) : null
+                          , d.card ? React.createElement('span', { style: {fontSize:FS.sm+1,background:"rgba(90,172,255,0.1)",border:"1px solid rgba(90,172,255,0.25)",borderRadius:6,padding:"3px 9px",color:C.accent2,fontWeight:600} }, "💳 ", fmt(+d.card||0)) : null
+                          , d.tips ? React.createElement('span', { style: {fontSize:FS.sm+1,background:"rgba(255,215,0,0.1)",border:"1px solid rgba(255,215,0,0.25)",borderRadius:6,padding:"3px 9px",color:C.gold,fontWeight:600} }, "💰 ", fmt(+d.tips||0)) : null
+                          , d.trips ? React.createElement('span', { style: {fontSize:FS.sm+1,background:C.bg4,border:"1px solid "+C.border,borderRadius:6,padding:"3px 9px",color:C.text2,fontWeight:600} }, d.trips, " ", T.trips) : null
+                          , d.hours ? React.createElement('span', { style: {fontSize:FS.sm+1,background:C.bg4,border:"1px solid "+C.border,borderRadius:6,padding:"3px 9px",color:C.text2,fontWeight:600} }, d.hours, "h") : null
+                          , d.miles ? React.createElement('span', { style: {fontSize:FS.sm+1,background:C.bg4,border:"1px solid "+C.border,borderRadius:6,padding:"3px 9px",color:C.text2,fontWeight:600} }, d.miles, "mi") : null
                         )
                       )
-                      , React.createElement('button', { onClick: function(){setDlf(Object.assign({},d));setSf("daily");}, style: {background:"none",border:"1px solid #2A4A6A",borderRadius:6,padding:"3px 8px",color:"#6AACEE",cursor:"pointer",fontSize:12} }, T.edit)
                     )
                   );
                 })
@@ -4034,7 +4115,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                   if(lmInc>0){
                     var d1=Math.round((tInc-lmInc)/lmInc*100);
                     var s1=d1>0?"↑":(d1<0?"↓":"→");
-                    var c1=d1>0?"#00E676":(d1<0?"#FF7060":"#7A9AB8");
+                    var c1=d1>0?C.success:(d1<0?C.danger:C.text3);
                     rows.push({
                       label: lang==="en"?"vs Last Month":"对比上月",
                       sub: lastMo,
@@ -4049,7 +4130,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                   if(lyMoInc>0){
                     var d2=Math.round((tInc-lyMoInc)/lyMoInc*100);
                     var s2=d2>0?"↑":(d2<0?"↓":"→");
-                    var c2=d2>0?"#00E676":(d2<0?"#FF7060":"#7A9AB8");
+                    var c2=d2>0?C.success:(d2<0?C.danger:C.text3);
                     rows.push({
                       label: lang==="en"?"vs Same Month Last Year":"对比去年同月",
                       sub: lyMo,
@@ -4065,7 +4146,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                   if(pyInc>0){
                     var d3=Math.round((yInc-pyInc)/pyInc*100);
                     var s3=d3>0?"↑":(d3<0?"↓":"→");
-                    var c3=d3>0?"#00E676":(d3<0?"#FF7060":"#7A9AB8");
+                    var c3=d3>0?C.success:(d3<0?C.danger:C.text3);
                     rows.push({
                       label: lang==="en"?"vs Last Year":"对比上一年",
                       sub: prevYr,
@@ -4079,7 +4160,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                 }
                 if(rows.length===0)return null;
                 return React.createElement(Card, { style: {marginBottom:14,padding:"12px 14px",background:"linear-gradient(180deg,#0F1F35 0%,#0A1828 100%)",border:"1px solid #1F3A5A"} },
-                  React.createElement('div',{style:{fontSize:12,fontWeight:700,color:"#00D4FF",marginBottom:8,letterSpacing:0.3}},"💵 ",lang==="en"?"Income Comparison":"收入对比"),
+                  React.createElement('div',{style:{fontSize:12,fontWeight:700,color:C.accent,marginBottom:8,letterSpacing:0.3}},"💵 ",lang==="en"?"Income Comparison":"收入对比"),
                   rows.map(function(r,i){
                     return React.createElement('div',{
                       key:i,
@@ -4087,7 +4168,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                     },
                       React.createElement('div',{style:{fontSize:12,color:C.text3,marginBottom:3,letterSpacing:0.3}},r.label," · ",r.sub),
                       React.createElement('div',{style:{display:"flex",alignItems:"baseline",gap:8,fontSize:13,color:C.text}},
-                        React.createElement('b',{style:{fontSize:15,color:"#00E676"}},fmt(r.cur)),
+                        React.createElement('b',{style:{fontSize:15,color:C.success}},fmt(r.cur)),
                         React.createElement('span',{style:{color:C.text3,fontSize:12}},lang==="en"?"vs ":"对比 ",fmt(r.base)),
                         React.createElement('span',{style:{color:r.col,fontWeight:700,marginLeft:"auto"}},r.sym," ",Math.abs(r.pct),"%")
                       )
@@ -4111,12 +4192,12 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                     , React.createElement('span', null, "📅 ", lang==="en"?"Daily Entries · "+dayCount+" days":"每日记录 · "+dayCount+" 天")
                     , React.createElement('button', {
                         onClick: function(){var t=today();setWcWeek(wkMon(t));setWcSel(t);setSf("week_cal");},
-                        style: {background:"none",border:"1px solid #2A4A6A",borderRadius:6,padding:"2px 10px",color:"#5AACFF",fontSize:11,cursor:"pointer"}
+                        style: {background:"none",border:"1px solid "+C.border2,borderRadius:6,padding:"2px 10px",color:C.accent2,fontSize:11,cursor:"pointer"}
                       }, lang==="en"?"+ Add":"+ 添加")
                   )
                   , React.createElement(Card, { style: {background:C.bg3,border:"1px solid "+C.border,marginBottom:8,padding:"10px 14px"} }
                     , React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:4} }
-                      , React.createElement('div', { style: {fontSize:18,fontWeight:800,color:"#00E676"} }, fmt(totalInc))
+                      , React.createElement('div', { style: {fontSize:18,fontWeight:800,color:C.success} }, fmt(totalInc))
                       , React.createElement('div', { style: {fontSize:11,color:C.text3} },
                           totalTrips>0 ? totalTrips+(lang==="en"?" trips":" 趟") : "",
                           totalHours>0 ? (totalTrips>0?" · ":"")+totalHours+"h" : "",
@@ -4144,14 +4225,14 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                           // Top row: date + day total
                           , React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:entries.length>0?4:0} }
                             , React.createElement('div', { style: {fontSize:13,fontWeight:700,color:C.text} }, d)
-                            , React.createElement('div', { style: {fontSize:14,fontWeight:700,color:"#00E676"} }, fmt(dayInc))
+                            , React.createElement('div', { style: {fontSize:14,fontWeight:700,color:C.success} }, fmt(dayInc))
                           )
                           // Per-platform breakdown rows
                           , entries.map(function(e,ei){
                               var entryInc = (+e.grossFare||0)+(+e.tips||0)+(+e.bonus||0)+(+e.tollReimbursed||0);
                               return React.createElement('div', {key:ei, style:{display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:12,paddingLeft:8,paddingTop:2,paddingBottom:2}}
                                 , React.createElement('div', {style:{display:"flex",alignItems:"center",gap:6,flex:1,minWidth:0}}
-                                  , React.createElement('span', {style:{fontSize:11,color:"#5AACFF",fontWeight:600}}, e.platform||"Uber")
+                                  , React.createElement('span', {style:{fontSize:11,color:C.accent2,fontWeight:600}}, e.platform||"Uber")
                                   , React.createElement('span', {style:{fontSize:10,color:C.text3}},
                                       e.trips?e.trips+(lang==="en"?" trips":" 趟"):"",
                                       e.hours?(e.trips?" · ":"")+e.hours+"h":"",
@@ -4171,7 +4252,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                 incGoal&&+incGoal>0
                   ? React.createElement(Card, { style: {marginBottom:14,padding:"10px 14px"} },
                       React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6} },
-                        React.createElement('div', { style: {fontSize:13,fontWeight:700,color:"#FFD700"} }, "🎯 " , lang==="en"?"Monthly Goal":"本月目标"),
+                        React.createElement('div', { style: {fontSize:13,fontWeight:700,color:C.gold} }, "🎯 " , lang==="en"?"Monthly Goal":"本月目标"),
                         React.createElement('div', { style: {display:"flex",alignItems:"center",gap:8} },
                           React.createElement('span', { style: {fontSize:13,color:C.text2} }, fmt(tInc), " / "  , fmt(+incGoal)),
                           React.createElement('button', { onClick: function(){setShowGoal(true);}, style: {background:"none",border:"none",color:C.text3,fontSize:12,cursor:"pointer",padding:"2px 4px"} }, "✏️")
@@ -4180,7 +4261,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                       React.createElement('div', { style: {height:8,borderRadius:4,background:"#1A2A40",overflow:"hidden",marginBottom:4} },
                         React.createElement('div', { style: {height:8,borderRadius:4,width:Math.min(100,Math.round(tInc/+incGoal*100))+"%",background:tInc>=+incGoal?"linear-gradient(90deg,#00E676,#FFD700)":"linear-gradient(90deg,#00D4FF,#0055FF)"} } )
                       ),
-                      React.createElement('div', { style: {fontSize:12,color:tInc>=+incGoal?"#00E676":"#7A9AB8"} },
+                      React.createElement('div', { style: {fontSize:12,color:tInc>=+incGoal?C.success:C.text3} },
                         tInc>=+incGoal
                           ? (lang==="en"?"🎉 Goal reached!":"🎉 目标达成！")
                           : (lang==="en"?"Still need: ":"还差: ")+fmt(+incGoal-tInc)+" ("+Math.round(tInc/+incGoal*100)+"%)"
@@ -4188,35 +4269,35 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                     )
                   : React.createElement('button', { onClick: function(){setShowGoal(true);}, style: {width:"100%",background:C.bg3,border:"1px dashed #2A4A6A",borderRadius:10,padding:"8px 14px",color:C.text3,fontSize:12,cursor:"pointer",marginBottom:14,textAlign:"left"} }, "🎯 " , lang==="en"?"Set monthly goal...":"设定本月收入目标...")
               ) : null
-            , React.createElement('div', { style: {display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:12} }
-              , React.createElement('button', { onClick: function(){setStf({month:mo,platform:"Uber",grossFare:"",tips:"",bonus:"",tollReimbursed:"",otherIncome:"",platformFee:"",trips:"",onlineHours:"",miles:"",notes:""});setSf("stmt");}, style: {background:C.bg3,border:"1px solid "+C.border,borderRadius:8,padding:"8px 10px",cursor:"pointer",display:"flex",alignItems:"center",gap:8,textAlign:"left"} }
-                , React.createElement('div', { style: {fontSize:20,flexShrink:0} }, "💵")
+            , React.createElement('div', { style: {display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14} }
+              , React.createElement('button', { onClick: function(){setStf({month:mo,platform:"Uber",grossFare:"",tips:"",bonus:"",tollReimbursed:"",otherIncome:"",platformFee:"",trips:"",onlineHours:"",miles:"",notes:""});setSf("stmt");}, style: {background:"linear-gradient(135deg, "+C.bg3+", "+C.bg2+")",border:"1px solid "+C.border,borderRadius:RADIUS.md,padding:"12px 12px",cursor:"pointer",display:"flex",alignItems:"center",gap:10,textAlign:"left",boxShadow:SHADOW.sm,transition:"all 0.15s"} }
+                , React.createElement('div', { style: {fontSize:24,flexShrink:0} }, "💵")
                 , React.createElement('div', { style: {flex:1,minWidth:0} }
-                  , React.createElement('div', { style: {fontSize:13,fontWeight:700,color:C.text2,lineHeight:1.2} }, T.monthly)
-                  , React.createElement('div', { style: {fontSize:11,color:C.text3,marginTop:1} }, "Uber/Lyft")
+                  , React.createElement('div', { style: {fontSize:FS.md+1,fontWeight:700,color:C.text,lineHeight:1.2} }, T.monthly)
+                  , React.createElement('div', { style: {fontSize:FS.xs+1,color:C.text3,marginTop:2,letterSpacing:0.3} }, "Uber/Lyft")
                 )
               )
-              , React.createElement('button', { onClick: function(){setSf("week_cal");}, style: {background:C.bg3,border:"1px solid "+C.border,borderRadius:8,padding:"8px 10px",cursor:"pointer",display:"flex",alignItems:"center",gap:8,textAlign:"left"} }
-                , React.createElement('div', { style: {fontSize:20,flexShrink:0} }, "📅")
+              , React.createElement('button', { onClick: function(){setSf("week_cal");}, style: {background:"linear-gradient(135deg, "+C.bg3+", "+C.bg2+")",border:"1px solid "+C.border,borderRadius:RADIUS.md,padding:"12px 12px",cursor:"pointer",display:"flex",alignItems:"center",gap:10,textAlign:"left",boxShadow:SHADOW.sm,transition:"all 0.15s"} }
+                , React.createElement('div', { style: {fontSize:24,flexShrink:0} }, "📅")
                 , React.createElement('div', { style: {flex:1,minWidth:0} }
-                  , React.createElement('div', { style: {fontSize:13,fontWeight:700,color:"#00E676",lineHeight:1.2} }, T.weekly)
-                  , React.createElement('div', { style: {fontSize:11,color:C.text3,marginTop:1} }, T.trips, " · ", T.miles)
+                  , React.createElement('div', { style: {fontSize:FS.md+1,fontWeight:700,color:C.success,lineHeight:1.2} }, T.weekly)
+                  , React.createElement('div', { style: {fontSize:FS.xs+1,color:C.text3,marginTop:2,letterSpacing:0.3} }, T.trips, " · ", T.miles)
                 )
               )
             )
             , React.createElement('div', { style: {display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:8} }
-              , React.createElement('button', { onClick: function(){setPasteUberTaxText("");setPasteUberTaxResult(null);setShowPasteUberTax(true);}, style: {background:"#1A1000",border:"1px solid #3A2800",borderRadius:10,padding:"8px 10px",color:"#FFB300",fontSize:12,fontWeight:600,cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"} }
+              , React.createElement('button', { onClick: function(){setPasteUberTaxText("");setPasteUberTaxResult(null);setShowPasteUberTax(true);}, style: {background:"linear-gradient(135deg, rgba(255,179,0,0.08), rgba(40,28,0,0.6))",border:"1px solid rgba(255,179,0,0.3)",borderRadius:RADIUS.md,padding:"10px 12px",color:"#FFB300",fontSize:FS.md,fontWeight:600,cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center",transition:"all 0.15s"} }
                 , React.createElement('span', null, "📊 " , lang==="en"?"Paste month/yr":"粘贴月/年报")
-                , React.createElement('span', {style:{color:"#9A7A40",fontSize:13}}, "→")
+                , React.createElement('span', {style:{color:"#9A7A40",fontSize:14}}, "→")
               )
-              , React.createElement('button', { onClick: function(){setPasteUberText("");setPasteUberResult(null);setShowPasteUber(true);}, style: {background:"#0A2040",border:"1px solid #2A5080",borderRadius:10,padding:"8px 10px",color:"#5AACFF",fontSize:12,fontWeight:600,cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"} }
+              , React.createElement('button', { onClick: function(){setPasteUberText("");setPasteUberResult(null);setShowPasteUber(true);}, style: {background:"linear-gradient(135deg, rgba(90,172,255,0.08), rgba(10,30,60,0.6))",border:"1px solid rgba(90,172,255,0.3)",borderRadius:RADIUS.md,padding:"10px 12px",color:C.accent2,fontSize:FS.md,fontWeight:600,cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center",transition:"all 0.15s"} }
                 , React.createElement('span', null, "📄 " , lang==="en"?"Paste weekly":"粘贴周报")
-                , React.createElement('span', {style:{color:"#3A6080",fontSize:13}}, "→")
+                , React.createElement('span', {style:{color:"#3A6080",fontSize:14}}, "→")
               )
             )
             // PDF file picker — auto-extracts text and routes to the right parser
             , React.createElement('div', {style:{marginBottom:8}}
-              , React.createElement('label', {style:{display:"block",background:"linear-gradient(135deg,#0A1A2E,#0A2040)",border:"1px dashed #3A6080",borderRadius:10,padding:"10px 12px",cursor:"pointer",fontSize:12,fontWeight:600,color:"#7AC0E8",textAlign:"center"}}
+              , React.createElement('label', {style:{display:"block",background:"linear-gradient(135deg, rgba(0,212,255,0.06), rgba(10,30,55,0.7))",border:"1px dashed rgba(0,212,255,0.4)",borderRadius:RADIUS.md,padding:"12px 14px",cursor:"pointer",fontSize:FS.md,fontWeight:700,color:C.accent2,textAlign:"center",transition:"all 0.15s"}}
                 , React.createElement('input', {
                     type:"file",
                     accept:"application/pdf,.pdf",
@@ -4264,9 +4345,102 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                 , "📥 ", lang==="en"?"Pick Uber PDF (auto-detect)":"选 Uber PDF（自动识别）"
               )
             )
+            , (function(){
+              var isMonth=incV==="month";
+              var vInc=isMonth?tInc:yInc;
+              var vGross=isMonth?tGross:yStmts.reduce(function(s,x){return s+(+x.grossFare||0);},0)+yDailies.reduce(function(s,d){return s+(+d.cash||0)+(+d.card||0);},0);
+              var vTips=isMonth?tTips:yStmts.reduce(function(s,x){return s+(+x.tips||0);},0)+yDailies.reduce(function(s,d){return s+(+d.tips||0);},0);
+              var vBonus=isMonth?tBonus:yStmts.reduce(function(s,x){return s+(+x.bonus||0);},0);
+              var vToll=isMonth?tToll:yStmts.reduce(function(s,x){return s+(+x.tollReimbursed||0);},0)+yDailies.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.tollReimbursed||0):0);},0);
+              var vGrossTotal = vInc + vToll;  // "总营业额" includes toll
+              // Mode breakdown — rideshare comes from sl + dl(rideshare), taxi comes from dl(taxi only)
+              var rsStmtInc = isMonth?mStmts.reduce(function(s,x){return s+(+x.grossFare||0)+(+x.tips||0)+(+x.bonus||0)+(+x.tollReimbursed||0)+(+x.otherIncome||0);},0):yStmts.reduce(function(s,x){return s+(+x.grossFare||0)+(+x.tips||0)+(+x.bonus||0)+(+x.tollReimbursed||0)+(+x.otherIncome||0);},0);
+              var dlSrc = isMonth ? mDailies : yDailies;
+              var rsDlInc = dlSrc.reduce(function(s,d){return d.mode==="rideshare" ? s+(+d.grossFare||0)+(+d.tips||0)+(+d.bonus||0)+(+d.tollReimbursed||0) : s;},0);
+              var rsInc = rsStmtInc + rsDlInc;
+              // Taxi: only entries WITHOUT mode==="rideshare" (legacy taxi-mode entries)
+              var txInc = dlSrc.reduce(function(s,d){return d.mode!=="rideshare" ? s+(+d.cash||0)+(+d.card||0)+(+d.tips||0) : s;},0);
+              var txLease = dlSrc.reduce(function(s,d){return d.mode!=="rideshare" ? s+(+d.lease||0) : s;},0);
+              // Data source counts
+              var slCnt=isMonth?mStmts.length:yStmts.length;
+              var wlCnt=isMonth?mWeeks.length:yWeeks.length;
+              var dlCnt=isMonth?mDailies.length:yDailies.length;
+              if(vInc<=0)return null;
+              return React.createElement('div', { style: {marginBottom:14,padding:"16px 18px",background:"linear-gradient(135deg, rgba(0,212,255,0.06), "+C.bg2+" 60%)",border:"1px solid "+C.border,borderRadius:RADIUS.lg,boxShadow:SHADOW.md,position:"relative",overflow:"hidden"} }
+                , React.createElement('div', {style:{position:"absolute",top:-30,right:-30,width:90,height:90,borderRadius:"50%",background:"radial-gradient(circle, rgba(0,212,255,0.15) 0%, transparent 70%)",pointerEvents:"none"}})
+                , React.createElement('div', { style: {fontSize:FS.xs+1,color:C.text3,marginBottom:4,letterSpacing:0.8,textTransform:"uppercase",fontWeight:600,position:"relative"} }, T.totalIncome)
+                , React.createElement('div', { style: {fontSize:FS.xxxl,fontWeight:900,color:C.text,marginBottom:10,letterSpacing:-0.8,fontVariantNumeric:"tabular-nums",position:"relative"} }, fmt(vGrossTotal))
+                // Mode breakdown row — only show when BOTH modes have data
+                , (rsInc>0 && txInc>0) ? React.createElement('div', { style: {display:"flex",gap:10,fontSize:FS.md,marginBottom:10,padding:"8px 12px",background:C.bg4,borderRadius:RADIUS.sm,border:"1px solid "+C.border,position:"relative"} }
+                    , React.createElement('span', null, "📱 " , lang==="en"?"Rideshare":"网约车" , " ", React.createElement('b',{style:{color:C.accent2}}, fmt(rsInc)))
+                    , React.createElement('span', null, "🚖 " , lang==="en"?"Taxi":"出租车" , " ", React.createElement('b',{style:{color:"#FFB300"}}, fmt(txInc-txLease)))
+                  ) : null
+                // Per-platform breakdown — only show when 2+ platforms have stmts
+                , (function(){
+                    var stmtsToUse = isMonth ? mStmts : yStmts;
+                    var platTotals = {};
+                    stmtsToUse.forEach(function(x){
+                      var p = x.platform || "Unknown";
+                      var amt = (+x.grossFare||0)+(+x.tips||0)+(+x.bonus||0)+(+x.tollReimbursed||0)+(+x.otherIncome||0);
+                      platTotals[p] = (platTotals[p]||0) + amt;
+                    });
+                    var platEntries = Object.entries(platTotals).filter(function(e){return e[1]>0;}).sort(function(a,b){return b[1]-a[1];});
+                    if(platEntries.length < 2) return null;  // only show if 2+ platforms
+                    var totalP = platEntries.reduce(function(s,e){return s+e[1];},0);
+                    var colors = [C.accent2,"#FF9A65","#5ADA7A","#CC88FF",C.gold,"#FF6090"];
+                    return React.createElement('div', {style:{marginBottom:10,padding:"8px 12px",background:C.bg4,borderRadius:RADIUS.sm,border:"1px solid "+C.border,position:"relative"}}
+                      , React.createElement('div', {style:{fontSize:FS.xs,color:C.text3,marginBottom:6,letterSpacing:0.8,textTransform:"uppercase",fontWeight:600}}, "🏢 " , lang==="en"?"By Platform":"按平台")
+                      , platEntries.map(function(en,i){
+                          var pct = totalP>0 ? Math.round(en[1]/totalP*100) : 0;
+                          var col = colors[i%colors.length];
+                          return React.createElement('div', {key:en[0],style:{display:"flex",alignItems:"center",gap:8,fontSize:FS.md,marginBottom:i<platEntries.length-1?4:0}}
+                            , React.createElement('div', {style:{width:10,height:10,borderRadius:3,background:col,flexShrink:0,boxShadow:"0 0 8px "+col+"60"}})
+                            , React.createElement('span', {style:{flex:1,color:C.text2,fontWeight:500}}, en[0])
+                            , React.createElement('span', {style:{color:C.text3,minWidth:36,textAlign:"right",fontSize:FS.sm+1}}, pct+"%")
+                            , React.createElement('span', {style:{color:col,fontWeight:700,minWidth:68,textAlign:"right",fontVariantNumeric:"tabular-nums"}}, fmt(en[1]))
+                          );
+                        })
+                    );
+                  }())
+                // Gross/Tips/Bonus/Toll row
+                , React.createElement('div', { style: {display:"flex",gap:14,fontSize:FS.md,marginBottom:8,flexWrap:"wrap",position:"relative"} }
+                    , React.createElement('span', { style: {color:C.text2} }, (lang==="en"?"Gross ":"总车费 ") , React.createElement('b',{style:{color:C.text}},fmt(vGross)))
+                    , React.createElement('span', { style: {color:C.text2} }, T.tips, " " , React.createElement('b',{style:{color:C.success}},fmt(vTips)))
+                    , vBonus>0 ? React.createElement('span', { style: {color:C.text2} }, T.bonus, " " , React.createElement('b',{style:{color:C.gold}},fmt(vBonus))) : null
+                    , vToll>0 ? React.createElement('span', { style: {color:C.text2} }, T.toll, " " , React.createElement('b',{style:{color:C.accent2}},fmt(vToll))) : null
+                  )
+                // Data source counts (small dim text)
+                , React.createElement('div', { style: {fontSize:11,color:C.text3,letterSpacing:0.3} }
+                    , (lang==="en"?"From: ":"数据：")
+                    , slCnt>0 ? "sl " + slCnt + " " + (lang==="en"?"stmts":"月报") : null
+                    , (slCnt>0 && wlCnt>0) ? " · " : null
+                    , wlCnt>0 ? "wl " + wlCnt + " " + (lang==="en"?"weeks":"周记") : null
+                    , ((slCnt>0||wlCnt>0) && dlCnt>0) ? " · " : null
+                    , dlCnt>0 ? "dl " + dlCnt + " " + (lang==="en"?"days":"日记") : null
+                  )
+              );
+            }())
+            , (function(){var vS=incV==="month"?mStmts:yStmts; return vS.length > 0 ? React.createElement('div', { style: {marginBottom:16} }, React.createElement('div', { style: {fontSize:FS.xs+1,color:C.text3,letterSpacing:1.2,marginBottom:10,textTransform:"uppercase",fontWeight:600} }, "💵 " , T.monthly), vS.slice().sort(function(a,b){return (b.month||"").localeCompare(a.month||"");}).map(function(s){var total=(+s.grossFare||0)+(+s.tips||0)+(+s.bonus||0)+(+s.tollReimbursed||0)+(+s.otherIncome||0);return React.createElement('div', { key: s.id, style:{background:C.bg2,borderRadius:RADIUS.md,padding:"12px 14px",marginBottom:8,border:"1px solid "+C.border,boxShadow:SHADOW.sm,transition:"all 0.15s",cursor:"pointer"}, onClick: function(){setStf(Object.assign({trips:"",onlineHours:"",miles:"",notes:""},s));setSf("stmt");}}, React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"center"}}, React.createElement('div', {style:{flex:1,minWidth:0}}, React.createElement('div', { style: {fontSize:FS.lg,fontWeight:700,marginBottom:4,color:C.text}}, s.platform, " · "  , s.month), React.createElement('div', { style: {fontSize:FS.xl,color:C.success,fontWeight:800,letterSpacing:-0.3,fontVariantNumeric:"tabular-nums",marginBottom:6}}, fmt(total)), React.createElement('div', { style: {display:"flex",gap:6,flexWrap:"wrap"}}, s.trips?React.createElement('span', { style: {fontSize:FS.sm+1,background:C.bg4,border:"1px solid "+C.border,borderRadius:6,padding:"3px 9px",color:C.text2,fontWeight:600}}, s.trips, " " , T.trips):null, s.onlineHours?React.createElement('span', { style: {fontSize:FS.sm+1,background:C.bg4,border:"1px solid "+C.border,borderRadius:6,padding:"3px 9px",color:C.text2,fontWeight:600}}, s.onlineHours, "h"):null, s.miles?React.createElement('span', { style: {fontSize:FS.sm+1,background:C.bg4,border:"1px solid "+C.border,borderRadius:6,padding:"3px 9px",color:C.text2,fontWeight:600}}, s.miles, "mi"):null))));}), " " ) : null;}())
+            , (function(){var vW=incV==="month"?mWeeks:yWeeks; return vW.length > 0 ? React.createElement('div', {}, (function(){var tw=vW.reduce(function(s,w){return {trips:s.trips+(+w.trips||0),hours:s.hours+(+w.hours||0),miles:s.miles+(+w.miles||0)};},{trips:0,hours:0,miles:0});if(!tw.trips&&!tw.hours)return null;return React.createElement('div', { style: {background:"linear-gradient(135deg, "+C.bg3+", "+C.bg2+")",border:"1px solid "+C.border,borderRadius:RADIUS.md,marginBottom:10,padding:"14px 16px",boxShadow:SHADOW.sm}}, React.createElement('div', { style: {display:"flex",justifyContent:"space-around",alignItems:"center"}}, tw.trips?React.createElement('div', { style: {textAlign:"center"}}, React.createElement('div', { style: {fontSize:FS.xs+1,color:C.text3,marginBottom:3,letterSpacing:0.5,fontWeight:600,textTransform:"uppercase"}}, T.trips), React.createElement('div', { style: {fontSize:FS.xl,fontWeight:800,color:C.success,letterSpacing:-0.2}}, tw.trips)):null, tw.hours?React.createElement('div', { style: {textAlign:"center"}}, React.createElement('div', { style: {fontSize:FS.xs+1,color:C.text3,marginBottom:3,letterSpacing:0.5,fontWeight:600,textTransform:"uppercase"}}, lang==="en"?"Hours":"时长"), React.createElement('div', { style: {fontSize:FS.xl,fontWeight:800,color:C.accent,letterSpacing:-0.2}}, tw.hours, "h")):null, tw.miles?React.createElement('div', { style: {textAlign:"center"}}, React.createElement('div', { style: {fontSize:FS.xs+1,color:C.text3,marginBottom:3,letterSpacing:0.5,fontWeight:600,textTransform:"uppercase"}}, T.miles), React.createElement('div', { style: {fontSize:FS.xl,fontWeight:800,color:C.gold,letterSpacing:-0.2}}, tw.miles)):null, tw.hours>0&&tInc>0?React.createElement('div', { style: {textAlign:"center"}}, React.createElement('div', { style: {fontSize:FS.xs+1,color:C.text3,marginBottom:3,letterSpacing:0.5,fontWeight:600,textTransform:"uppercase"}}, T.hourlyRate), React.createElement('div', { style: {fontSize:FS.xl,fontWeight:800,color:"#FF9A65",letterSpacing:-0.2}}, fmt(Math.round(tInc/tw.hours*100)/100))):null));}()), " " , React.createElement('div', { style: {fontSize:FS.xs+1,color:C.text3,letterSpacing:1.2,marginBottom:10,textTransform:"uppercase",fontWeight:600}}, "📅 " , T.weekly), vW.slice().sort(function(a,b){return b.weekStart.localeCompare(a.weekStart);}).map(function(w){return React.createElement('div', { key: w.id, style:{background:C.bg2,borderRadius:RADIUS.md,padding:"12px 14px",marginBottom:8,border:"1px solid "+C.border,boxShadow:SHADOW.sm,cursor:"pointer",transition:"all 0.15s"}, onClick: function(){setWf(Object.assign({},w));setSf("week");}}, React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}, React.createElement('div', { style: {flex:1,minWidth:0}}, React.createElement('div', { style: {fontSize:FS.lg,fontWeight:700,color:C.success,marginBottom:4}}, wkLabel(w.weekStart)), React.createElement('div', { style: {fontSize:FS.md+1,color:C.text2,marginBottom:6,fontWeight:500}}, w.platform), (function(){var winc=(+w.grossFare||0)+(+w.tips||0)+(+w.bonus||0)+(+w.tollReimbursed||0);if(winc>0)return React.createElement('div', { style: {fontSize:FS.xl,fontWeight:800,color:C.accent,marginBottom:6,letterSpacing:-0.3,fontVariantNumeric:"tabular-nums"}}, "💵 " , fmt(winc));return null;}()), React.createElement('div', { style: {display:"flex",gap:6,flexWrap:"wrap"}}, w.trips?React.createElement('span', { style: {fontSize:FS.sm+1,background:C.bg4,border:"1px solid "+C.border,borderRadius:6,padding:"3px 9px",color:C.text2,fontWeight:600}}, w.trips, " " , T.trips):null, w.hours?React.createElement('span', { style: {fontSize:FS.sm+1,background:C.bg4,border:"1px solid "+C.border,borderRadius:6,padding:"3px 9px",color:C.text2,fontWeight:600}}, w.hours, "h"):null, w.miles?React.createElement('span', { style: {fontSize:FS.sm+1,background:C.bg4,border:"1px solid "+C.border,borderRadius:6,padding:"3px 9px",color:C.text2,fontWeight:600}}, w.miles, "mi"):null))));}), " " ) : null;}())
+            , (function(){
+                var hasStmts = incV==="month" ? mStmts.length>0 : yStmts.length>0;
+                var hasWeeks = incV==="month" ? mWeeks.length>0 : yWeeks.length>0;
+                var dailySrc = incV==="month" ? mDailies : yDailies;
+                var hasRide = dailySrc.some(function(d){return d.mode==="rideshare";});
+                return (!hasStmts && !hasWeeks && !hasRide) ? React.createElement(Empty, { text: T.noData } ) : null;
+              }())
+            , null
+          )
+          )
+        ) : null
+
+        , tab===2 ? (
+          React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 342}}
+            , React.createElement(SegBtn, { val: expV, set: setExpV, opts: [["month",T.thisMonth],["year",T.thisYear]], __self: this, __source: {fileName: _jsxFileName, lineNumber: 343}} )
+
             // Fuelio PDF file picker — for charging/fuel/parking historical import
-            , React.createElement('div', {style:{marginBottom:16}}
-              , React.createElement('label', {style:{display:"block",background:"linear-gradient(135deg,#1A2E0A,#0A2010)",border:"1px dashed #5A8030",borderRadius:10,padding:"10px 12px",cursor:"pointer",fontSize:12,fontWeight:600,color:"#90D080",textAlign:"center"}}
+            , React.createElement('div', {style:{marginBottom:8,marginTop:10}}
+              , React.createElement('label', {style:{display:"block",background:"linear-gradient(135deg, rgba(0,230,118,0.06), rgba(10,30,15,0.7))",border:"1px dashed rgba(0,230,118,0.4)",borderRadius:RADIUS.md,padding:"12px 14px",cursor:"pointer",fontSize:FS.md,fontWeight:700,color:"#90D080",textAlign:"center",transition:"all 0.15s"}}
                 , React.createElement('input', {
                     type:"file",
                     accept:"application/pdf,.pdf",
@@ -4286,7 +4460,6 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                           showToast(lang==="en"?"No entries found — may not be a Fuelio report":"没找到记录，可能不是 Fuelio 月报", "error");
                           return;
                         }
-                        // Pre-select all entries for import
                         var sel = {};
                         r.entries.forEach(function(_,i){sel[i]=true;});
                         setFuelioSelected(sel);
@@ -4302,8 +4475,8 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
               )
             )
             // Fuelio CSV file picker — multi-file, full data import (charging + all expenses)
-            , React.createElement('div', {style:{marginBottom:16}}
-              , React.createElement('label', {style:{display:"block",background:"linear-gradient(135deg,#0A2A1E,#001A12)",border:"1px dashed #30A070",borderRadius:10,padding:"10px 12px",cursor:"pointer",fontSize:12,fontWeight:600,color:"#5ADAB0",textAlign:"center"}}
+            , React.createElement('div', {style:{marginBottom:12}}
+              , React.createElement('label', {style:{display:"block",background:"linear-gradient(135deg, rgba(48,160,112,0.1), rgba(0,30,20,0.8))",border:"1px dashed rgba(48,160,112,0.5)",borderRadius:RADIUS.md,padding:"12px 14px",cursor:"pointer",fontSize:FS.md,fontWeight:700,color:"#5ADAB0",textAlign:"center",transition:"all 0.15s"}}
                 , React.createElement('input', {
                     type:"file",
                     accept:".csv,text/csv",
@@ -4318,7 +4491,6 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                         return;
                       }
                       showToast(lang==="en"?"📄 Reading "+files.length+" file(s)...":"📄 读取 "+files.length+" 份文件中...", "info");
-                      // Read all files in parallel
                       var allEntries = [];
                       var fileResults = [];
                       var promises = [];
@@ -4351,7 +4523,6 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                           showToast(lang==="en"?"No entries found":"没找到记录","error");
                           return;
                         }
-                        // Cross-file dedup: same date + category + amount + odometer = duplicate
                         var seen = {};
                         var deduped = [];
                         var dupCount = 0;
@@ -4362,14 +4533,12 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                           deduped.push(e);
                         });
                         deduped.sort(function(a,b){return (b.date||"").localeCompare(a.date||"");});
-                        // Build aggregate result
                         var totalCost = deduped.reduce(function(s,e){return s+e.amount;},0);
                         var byCategory = {};
                         deduped.forEach(function(e){byCategory[e.category]=(byCategory[e.category]||0)+e.amount;});
                         var period = deduped.length ? (deduped[deduped.length-1].date.slice(0,7)+" → "+deduped[0].date.slice(0,7)) : "";
                         var hasEv = fileResults.some(function(r){return r.isEv;});
                         var fileSummary = fileResults.map(function(r){return r.name+": "+(r.error?"❌ "+r.error:r.entries+" 条");}).join(" · ");
-                        // Pre-select all
                         var sel = {};
                         deduped.forEach(function(_,i){sel[i]=true;});
                         setFuelioSelected(sel);
@@ -4394,97 +4563,6 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                 , React.createElement('div', {style:{fontSize:10,marginTop:4,color:"#3AAA80"}}, lang==="en"?"All expenses, charging, all years — auto-dedup":"全部支出、充电、多年 — 自动去重")
               )
             )
-            , (function(){
-              var isMonth=incV==="month";
-              var vInc=isMonth?tInc:yInc;
-              var vGross=isMonth?tGross:yStmts.reduce(function(s,x){return s+(+x.grossFare||0);},0)+yDailies.reduce(function(s,d){return s+(+d.cash||0)+(+d.card||0);},0);
-              var vTips=isMonth?tTips:yStmts.reduce(function(s,x){return s+(+x.tips||0);},0)+yDailies.reduce(function(s,d){return s+(+d.tips||0);},0);
-              var vBonus=isMonth?tBonus:yStmts.reduce(function(s,x){return s+(+x.bonus||0);},0);
-              var vToll=isMonth?tToll:yStmts.reduce(function(s,x){return s+(+x.tollReimbursed||0);},0)+yDailies.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.tollReimbursed||0):0);},0);
-              var vGrossTotal = vInc + vToll;  // "总营业额" includes toll
-              // Mode breakdown — rideshare comes from sl + dl(rideshare), taxi comes from dl(taxi only)
-              var rsStmtInc = isMonth?mStmts.reduce(function(s,x){return s+(+x.grossFare||0)+(+x.tips||0)+(+x.bonus||0)+(+x.tollReimbursed||0)+(+x.otherIncome||0);},0):yStmts.reduce(function(s,x){return s+(+x.grossFare||0)+(+x.tips||0)+(+x.bonus||0)+(+x.tollReimbursed||0)+(+x.otherIncome||0);},0);
-              var dlSrc = isMonth ? mDailies : yDailies;
-              var rsDlInc = dlSrc.reduce(function(s,d){return d.mode==="rideshare" ? s+(+d.grossFare||0)+(+d.tips||0)+(+d.bonus||0)+(+d.tollReimbursed||0) : s;},0);
-              var rsInc = rsStmtInc + rsDlInc;
-              // Taxi: only entries WITHOUT mode==="rideshare" (legacy taxi-mode entries)
-              var txInc = dlSrc.reduce(function(s,d){return d.mode!=="rideshare" ? s+(+d.cash||0)+(+d.card||0)+(+d.tips||0) : s;},0);
-              var txLease = dlSrc.reduce(function(s,d){return d.mode!=="rideshare" ? s+(+d.lease||0) : s;},0);
-              // Data source counts
-              var slCnt=isMonth?mStmts.length:yStmts.length;
-              var wlCnt=isMonth?mWeeks.length:yWeeks.length;
-              var dlCnt=isMonth?mDailies.length:yDailies.length;
-              if(vInc<=0)return null;
-              return React.createElement(Card, { style: {marginBottom:12} }
-                , React.createElement('div', { style: {fontSize:13,color:C.text3,marginBottom:4} }, T.totalIncome)
-                , React.createElement('div', { style: {fontSize:20,fontWeight:700,color:C.text,marginBottom:8} }, fmt(vGrossTotal))
-                // Mode breakdown row — only show when BOTH modes have data
-                , (rsInc>0 && txInc>0) ? React.createElement('div', { style: {display:"flex",gap:10,fontSize:12,marginBottom:8,padding:"6px 10px",background:C.bg3,borderRadius:8} }
-                    , React.createElement('span', null, "📱 " , lang==="en"?"Rideshare":"网约车" , " ", React.createElement('b',{style:{color:"#5AACFF"}}, fmt(rsInc)))
-                    , React.createElement('span', null, "🚖 " , lang==="en"?"Taxi":"出租车" , " ", React.createElement('b',{style:{color:"#FFB300"}}, fmt(txInc-txLease)))
-                  ) : null
-                // Per-platform breakdown — only show when 2+ platforms have stmts
-                , (function(){
-                    var stmtsToUse = isMonth ? mStmts : yStmts;
-                    var platTotals = {};
-                    stmtsToUse.forEach(function(x){
-                      var p = x.platform || "Unknown";
-                      var amt = (+x.grossFare||0)+(+x.tips||0)+(+x.bonus||0)+(+x.tollReimbursed||0)+(+x.otherIncome||0);
-                      platTotals[p] = (platTotals[p]||0) + amt;
-                    });
-                    var platEntries = Object.entries(platTotals).filter(function(e){return e[1]>0;}).sort(function(a,b){return b[1]-a[1];});
-                    if(platEntries.length < 2) return null;  // only show if 2+ platforms
-                    var totalP = platEntries.reduce(function(s,e){return s+e[1];},0);
-                    var colors = ["#5AACFF","#FF9A65","#5ADA7A","#CC88FF","#FFD700","#FF6090"];
-                    return React.createElement('div', {style:{marginBottom:8,padding:"6px 10px",background:C.bg3,borderRadius:8}}
-                      , React.createElement('div', {style:{fontSize:11,color:C.text3,marginBottom:5,letterSpacing:0.3}}, "🏢 " , lang==="en"?"BY PLATFORM":"按平台")
-                      , platEntries.map(function(en,i){
-                          var pct = totalP>0 ? Math.round(en[1]/totalP*100) : 0;
-                          var col = colors[i%colors.length];
-                          return React.createElement('div', {key:en[0],style:{display:"flex",alignItems:"center",gap:6,fontSize:12,marginBottom:i<platEntries.length-1?3:0}}
-                            , React.createElement('div', {style:{width:8,height:8,borderRadius:2,background:col,flexShrink:0}})
-                            , React.createElement('span', {style:{flex:1,color:C.text2}}, en[0])
-                            , React.createElement('span', {style:{color:C.text3,minWidth:32,textAlign:"right"}}, pct+"%")
-                            , React.createElement('span', {style:{color:col,fontWeight:700,minWidth:64,textAlign:"right"}}, fmt(en[1]))
-                          );
-                        })
-                    );
-                  }())
-                // Gross/Tips/Bonus/Toll row
-                , React.createElement('div', { style: {display:"flex",gap:12,fontSize:13,marginBottom:6,flexWrap:"wrap"} }
-                    , React.createElement('span', { style: {color:C.text2} }, (lang==="en"?"Gross ":"总车费 ") , fmt(vGross))
-                    , React.createElement('span', { style: {color:"#00E676"} }, T.tips, " " , fmt(vTips))
-                    , vBonus>0 ? React.createElement('span', { style: {color:"#FFD700"} }, T.bonus, " " , fmt(vBonus)) : null
-                    , vToll>0 ? React.createElement('span', { style: {color:"#45B7D1"} }, T.toll, " " , fmt(vToll)) : null
-                  )
-                // Data source counts (small dim text)
-                , React.createElement('div', { style: {fontSize:11,color:C.text3,letterSpacing:0.3} }
-                    , (lang==="en"?"From: ":"数据：")
-                    , slCnt>0 ? "sl " + slCnt + " " + (lang==="en"?"stmts":"月报") : null
-                    , (slCnt>0 && wlCnt>0) ? " · " : null
-                    , wlCnt>0 ? "wl " + wlCnt + " " + (lang==="en"?"weeks":"周记") : null
-                    , ((slCnt>0||wlCnt>0) && dlCnt>0) ? " · " : null
-                    , dlCnt>0 ? "dl " + dlCnt + " " + (lang==="en"?"days":"日记") : null
-                  )
-              );
-            }())
-            , (function(){var vS=incV==="month"?mStmts:yStmts; return vS.length > 0 ? React.createElement('div', { style: {marginBottom:16} }, React.createElement('div', { style: {fontSize:12,color:C.text3,letterSpacing:1,marginBottom:8} }, "💵 " , T.monthly), vS.slice().sort(function(a,b){return (b.month||"").localeCompare(a.month||"");}).map(function(s){var total=(+s.grossFare||0)+(+s.tips||0)+(+s.bonus||0)+(+s.tollReimbursed||0)+(+s.otherIncome||0);return React.createElement(Card, { key: s.id, __self: this, __source: {fileName: _jsxFileName, lineNumber: 334}}, React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 334}}, React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 334}}, React.createElement('div', { style: {fontSize:14,fontWeight:700,marginBottom:3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 334}}, s.platform, " · "  , s.month), React.createElement('div', { style: {fontSize:13,color:"#00E676",fontWeight:700}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 334}}, fmt(total)), React.createElement('div', { style: {display:"flex",gap:8,flexWrap:"wrap",marginTop:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 334}}, s.trips?React.createElement('span', { style: {fontSize:12,background:"#1A2A44",borderRadius:6,padding:"2px 7px",color:C.text2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 334}}, s.trips, " " , T.trips):null, s.onlineHours?React.createElement('span', { style: {fontSize:12,background:"#1A2A44",borderRadius:6,padding:"2px 7px",color:C.text2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 334}}, s.onlineHours, "h"):null, s.miles?React.createElement('span', { style: {fontSize:12,background:"#1A2A44",borderRadius:6,padding:"2px 7px",color:C.text2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 334}}, s.miles, "mi"):null)), React.createElement('div', { style: {display:"flex",gap:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 334}}, React.createElement('button', { onClick: function(){setStf(Object.assign({trips:"",onlineHours:"",miles:"",notes:""},s));setSf("stmt");}, style: {background:"none",border:"1px solid #2A4A6A",borderRadius:6,padding:"3px 8px",color:"#6AACEE",cursor:"pointer",fontSize:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 334}}, T.edit))));}), " " ) : null;}())
-            , (function(){var vW=incV==="month"?mWeeks:yWeeks; return vW.length > 0 ? React.createElement('div', {}, (function(){var tw=vW.reduce(function(s,w){return {trips:s.trips+(+w.trips||0),hours:s.hours+(+w.hours||0),miles:s.miles+(+w.miles||0)};},{trips:0,hours:0,miles:0});if(!tw.trips&&!tw.hours)return null;return React.createElement(Card, { style: {background:C.bg3,border:"1px solid "+C.border,marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 335}}, React.createElement('div', { style: {display:"flex",justifyContent:"space-around"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 335}}, tw.trips?React.createElement('div', { style: {textAlign:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 335}}, React.createElement('div', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 335}}, T.trips), React.createElement('div', { style: {fontSize:18,fontWeight:800,color:"#00E676"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 335}}, tw.trips)):null, tw.hours?React.createElement('div', { style: {textAlign:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 335}}, React.createElement('div', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 335}}, lang==="en"?"Hours":"时长"), React.createElement('div', { style: {fontSize:18,fontWeight:800,color:"#00D4FF"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 335}}, tw.hours, "h")):null, tw.miles?React.createElement('div', { style: {textAlign:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 335}}, React.createElement('div', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 335}}, T.miles), React.createElement('div', { style: {fontSize:18,fontWeight:800,color:"#FFD700"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 335}}, tw.miles)):null, tw.hours>0&&tInc>0?React.createElement('div', { style: {textAlign:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 335}}, React.createElement('div', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 335}}, T.hourlyRate), React.createElement('div', { style: {fontSize:18,fontWeight:800,color:"#FF9A65"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 335}}, fmt(Math.round(tInc/tw.hours*100)/100))):null));}()), " " , React.createElement('div', { style: {fontSize:12,color:C.text3,letterSpacing:1,marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 335}}, "📅 " , T.weekly), vW.slice().sort(function(a,b){return b.weekStart.localeCompare(a.weekStart);}).map(function(w){return React.createElement(Card, { key: w.id, __self: this, __source: {fileName: _jsxFileName, lineNumber: 335}}, React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"flex-start"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 335}}, React.createElement('div', { style: {flex:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 335}}, React.createElement('div', { style: {fontSize:14,fontWeight:700,color:"#00E676",marginBottom:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 335}}, wkLabel(w.weekStart)), React.createElement('div', { style: {fontSize:13,color:C.text2,marginBottom:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 335}}, w.platform), (function(){var winc=(+w.grossFare||0)+(+w.tips||0)+(+w.bonus||0)+(+w.tollReimbursed||0);if(winc>0)return React.createElement('div', { style: {fontSize:15,fontWeight:800,color:"#00D4FF",marginBottom:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 335}}, "💵 " , fmt(winc));return null;}()), React.createElement('div', { style: {display:"flex",gap:6,flexWrap:"wrap"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 335}}, w.trips?React.createElement('span', { style: {fontSize:13,background:"#1A2A44",borderRadius:6,padding:"2px 8px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 335}}, w.trips, " " , T.trips):null, w.hours?React.createElement('span', { style: {fontSize:13,background:"#1A2A44",borderRadius:6,padding:"2px 8px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 335}}, w.hours, "h"):null, w.miles?React.createElement('span', { style: {fontSize:13,background:"#1A2A44",borderRadius:6,padding:"2px 8px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 335}}, w.miles, "mi"):null)), React.createElement('div', { style: {display:"flex",gap:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 335}}, React.createElement('button', { onClick: function(){setWf(Object.assign({},w));setSf("week");}, style: {background:"none",border:"1px solid #2A4A6A",borderRadius:6,padding:"3px 8px",color:"#6AACEE",cursor:"pointer",fontSize:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 335}}, T.edit))));}), " " ) : null;}())
-            , (function(){
-                var hasStmts = incV==="month" ? mStmts.length>0 : yStmts.length>0;
-                var hasWeeks = incV==="month" ? mWeeks.length>0 : yWeeks.length>0;
-                var dailySrc = incV==="month" ? mDailies : yDailies;
-                var hasRide = dailySrc.some(function(d){return d.mode==="rideshare";});
-                return (!hasStmts && !hasWeeks && !hasRide) ? React.createElement(Empty, { text: T.noData } ) : null;
-              }())
-            , null
-          )
-          )
-        ) : null
-
-        , tab===2 ? (
-          React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 342}}
-            , React.createElement(SegBtn, { val: expV, set: setExpV, opts: [["month",T.thisMonth],["year",T.thisYear]], __self: this, __source: {fileName: _jsxFileName, lineNumber: 343}} )
 
             // === SEARCH + CATEGORY FILTER ===
             , (function(){
@@ -4513,14 +4591,16 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                       onClick: function(){setExpFilterCat([]);},
                       style:{
                         flexShrink:0,
-                        background:"#2A1010",
-                        border:"1px solid #5A2020",
-                        color:"#FF7060",
-                        fontSize:12,
-                        padding:"4px 10px",
-                        borderRadius:14,
+                        background:"rgba(255,82,82,0.12)",
+                        border:"1px solid rgba(255,82,82,0.3)",
+                        color:C.danger,
+                        fontSize:FS.sm+1,
+                        padding:"6px 12px",
+                        borderRadius:18,
                         cursor:"pointer",
-                        whiteSpace:"nowrap"
+                        whiteSpace:"nowrap",
+                        fontWeight:600,
+                        transition:"all 0.15s"
                       }
                     }, lang==="en"?"× Clear":"× 清除") : null,
                     // Scrollable chips area
@@ -4536,8 +4616,8 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                           if(sel)setExpFilterCat(expFilterCat.filter(function(x){return x!==k;}));
                           else setExpFilterCat(expFilterCat.concat([k]));
                         },
-                        style:{flexShrink:0,background:sel?"#0A2040":C.bg3,border:"1px solid "+(sel?"#00D4FF":C.border),color:sel?"#00D4FF":C.text2,fontSize:12,padding:"4px 10px",borderRadius:14,cursor:"pointer",whiteSpace:"nowrap",fontWeight:sel?700:400}
-                      },icon," ",label," ",React.createElement('span',{style:{opacity:0.6,fontSize:11}},catCount[k]));
+                        style:{flexShrink:0,background:sel?"linear-gradient(135deg, rgba(0,212,255,0.15), rgba(0,85,255,0.08))":C.bg2,border:"1px solid "+(sel?"rgba(0,212,255,0.4)":C.border),color:sel?C.accent:C.text2,fontSize:FS.sm+1,padding:"6px 12px",borderRadius:18,cursor:"pointer",whiteSpace:"nowrap",fontWeight:sel?700:500,transition:"all 0.15s",boxShadow:sel?"0 0 12px rgba(0,212,255,0.15)":"none",letterSpacing:0.2}
+                      },icon," ",label," ",React.createElement('span',{style:{opacity:0.6,fontSize:FS.xs+1,marginLeft:2}},catCount[k]));
                     })
                     )
                   ):null
@@ -4567,17 +4647,17 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
               React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 345}}
                 , React.createElement(MoNav, { val: mo, set: setMo, lang: lang, onPick: function(){setMpState({value:mo,onChange:function(v){setMo(v);}});}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 346}} )
                 , fixMo.length > 0 ? React.createElement(Card, { style: {background:"#0D1E10",border:"1px solid #1A3A20",display:"flex",justifyContent:"space-between",alignItems:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 347}}, React.createElement('span', { style: {fontSize:14,color:"#5ADA7A",fontWeight:700}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 347}}, T.fixedFees+" "+fixMo.length), React.createElement('span', { style: {fontSize:14,fontWeight:700,color:"#FF9A65"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 347}}, "-", fmt(tFix))) : null
-                , React.createElement(Card, { style: {display:"flex",justifyContent:"space-between"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 348}}, React.createElement('span', { style: {fontSize:14,color:C.text2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 348}}, T.totalExpense), React.createElement('span', { style: {fontSize:18,fontWeight:800,color:"#FF6B35"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 348}}, fmt(tExp)))
+                , React.createElement(Card, { style: {display:"flex",justifyContent:"space-between"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 348}}, React.createElement('span', { style: {fontSize:14,color:C.text2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 348}}, T.totalExpense), React.createElement('span', { style: {fontSize:18,fontWeight:800,color:C.danger}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 348}}, fmt(tExp)))
                 , React.createElement(BucketList, { items: window.__filterExp?window.__filterExp(feAll):feAll, allC: allC, lang: lang, el: el, setEl: setEl, allEl: el, forceRerender: forceRerender, showUndo: showUndo, emptyText: (expSearch||expFilterCat.length>0)?(lang==="en"?"No matching expenses":"无匹配的支出"):T.noData, onEditFixed: function(item){setEditFx({id:item.id,amount:item.amount,notes:item.notes||"",fixedLabel:item.fixedLabel});}, onEditExp: function(item){var _i=Object.assign({},item,{qty:item.qty||"",isRecurring:false});if((item.category==="fuel"||item.category==="charging")&&item.amount&&item.qty&&+item.qty>0){_i.unitPrice=(+item.amount/+item.qty).toFixed(3);_i._editOrder=["qty","amount"];}setEf(_i);setSf("exp_edit_"+item.id);}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 349}} )
               )
             ) : null
             , expV==="year" ? (
               React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 353}}
                 , React.createElement(YrNav, { val: yr, set: setYr, lang: lang, onPick: function(){setYpState({value:yr,onChange:function(v){setYr(v);}});}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 354}} )
-                , React.createElement(Card, { style: {display:"flex",justifyContent:"space-between",marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 355}}, React.createElement('span', { style: {fontSize:14,color:C.text2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 355}}, T.totalExpense), React.createElement('span', { style: {fontSize:18,fontWeight:800,color:"#FF6B35"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 355}}, fmt(yExp)))
+                , React.createElement(Card, { style: {display:"flex",justifyContent:"space-between",marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 355}}, React.createElement('span', { style: {fontSize:14,color:C.text2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 355}}, T.totalExpense), React.createElement('span', { style: {fontSize:18,fontWeight:800,color:C.danger}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 355}}, fmt(yExp)))
                 , (function(){var allYE_raw=yAllExps(); var allYE=window.__filterExp?window.__filterExp(allYE_raw):allYE_raw; if(!allYE.length)return React.createElement(Empty, { text: (expSearch||expFilterCat.length>0)?(lang==="en"?"No matching expenses":"无匹配的支出"):T.noData, __self: this, __source: {fileName: _jsxFileName, lineNumber: 356}} );return React.createElement(BucketList, { items: allYE, allC: allC, lang: lang, el: el, setEl: setEl, allEl: el, forceRerender: forceRerender, showUndo: showUndo, emptyText: "", groupByMonth: true, onEditFixed: function(item){setEditFx({id:item.id,amount:item.amount,notes:item.notes||"",fixedLabel:item.fixedLabel});}, onEditExp: function(item){var _i=Object.assign({},item,{qty:item.qty||"",isRecurring:false});if((item.category==="fuel"||item.category==="charging")&&item.amount&&item.qty&&+item.qty>0){_i.unitPrice=(+item.amount/+item.qty).toFixed(3);_i._editOrder=["qty","amount"];}setEf(_i);setSf("exp_edit_"+item.id);}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 356}} );}())
-                , Object.keys(cc).length > 0 ? React.createElement('div', { style: {marginTop:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 357}}, React.createElement('div', { style: {fontSize:14,fontWeight:700,color:C.text,marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 357}}, lang==="en"?"Custom Categories":"我的自定义类别"), Object.entries(cc).map(function(entry){var key=entry[0],cat=entry[1];return React.createElement(Card, { key: key, style: {display:"flex",alignItems:"center",gap:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 357}}, React.createElement('span', { style: {fontSize:22}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 357}}, cat.icon), React.createElement('div', { style: {flex:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 357}}, React.createElement('div', { style: {fontSize:14,fontWeight:600}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 357}}, cat.label), React.createElement('div', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 357}}, cat.group)), React.createElement('button', { onClick: function(){setCf({label:cat.label,icon:cat.icon,group:cat.group,_editKey:key});setSf("cc");}, style: {background:"none",border:"1px solid #2A4A6A",borderRadius:8,padding:"4px 10px",color:"#6AACEE",cursor:"pointer",fontSize:13}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 357}}, T.edit), React.createElement('button', { onClick: function(){confirmAction(lang==="en"?"Delete category?":"删除类别？", lang==="en"?"This category will be removed (with undo).":"此类别将被移除（可撤销）。", function(){var prev=Object.assign({},cc);var u=Object.assign({},cc);delete u[key];setCc(u);showUndo((lang==="en"?"✓ Category deleted":"✓ 类别已删除"), {prevCc:prev});});}, style: {background:"none",border:"1px solid #3A1A1A",borderRadius:8,padding:"4px 10px",color:"#FF5252",cursor:"pointer",fontSize:13}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 357}}, T.del));})) : null
-                , React.createElement('div', { style: {marginTop:14,textAlign:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 358}}, React.createElement('button', { onClick: function(){setCf({label:"",icon:"&#128296;",group:"车辆"});setSf("cc");}, style: {background:"#1A2A44",border:"1px dashed #2A3A54",borderRadius:10,padding:"10px 18px",color:C.text2,fontSize:14,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 358}}, "+ " , lang==="en"?"Custom Category":"新增自定义类别"))
+                , Object.keys(cc).length > 0 ? React.createElement('div', { style: {marginTop:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 357}}, React.createElement('div', { style: {fontSize:14,fontWeight:700,color:C.text,marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 357}}, lang==="en"?"Custom Categories":"我的自定义类别"), Object.entries(cc).map(function(entry){var key=entry[0],cat=entry[1];return React.createElement(Card, { key: key, style: {display:"flex",alignItems:"center",gap:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 357}}, React.createElement('span', { style: {fontSize:22}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 357}}, cat.icon), React.createElement('div', { style: {flex:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 357}}, React.createElement('div', { style: {fontSize:14,fontWeight:600}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 357}}, cat.label), React.createElement('div', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 357}}, cat.group)), React.createElement('button', { onClick: function(){setCf({label:cat.label,icon:cat.icon,group:cat.group,_editKey:key});setSf("cc");}, style: {background:"none",border:"1px solid "+C.border2,borderRadius:8,padding:"4px 10px",color:C.accent2,cursor:"pointer",fontSize:13}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 357}}, T.edit), React.createElement('button', { onClick: function(){confirmAction(lang==="en"?"Delete category?":"删除类别？", lang==="en"?"This category will be removed (with undo).":"此类别将被移除（可撤销）。", function(){var prev=Object.assign({},cc);var u=Object.assign({},cc);delete u[key];setCc(u);showUndo((lang==="en"?"✓ Category deleted":"✓ 类别已删除"), {prevCc:prev});});}, style: {background:"none",border:"1px solid #3A1A1A",borderRadius:8,padding:"4px 10px",color:C.danger,cursor:"pointer",fontSize:13}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 357}}, T.del));})) : null
+                , React.createElement('div', { style: {marginTop:14,textAlign:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 358}}, React.createElement('button', { onClick: function(){setCf({label:"",icon:"&#128296;",group:"车辆"});setSf("cc");}, style: {background:C.border,border:"1px dashed #2A3A54",borderRadius:10,padding:"10px 18px",color:C.text2,fontSize:14,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 358}}, "+ " , lang==="en"?"Custom Category":"新增自定义类别"))
               )
             ) : null
           )
@@ -4587,21 +4667,21 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
           React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 365}}
             , React.createElement(SegBtn, { val: repP, set: setRepP, opts: [["month",T.thisMonth],["year",T.thisYear]], __self: this, __source: {fileName: _jsxFileName, lineNumber: 366}} )
             , repP==="month" ? React.createElement(MoNav, { val: mo, set: setMo, lang: lang, onPick: function(){setMpState({value:mo,onChange:function(v){setMo(v);}});}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 367}} ) : React.createElement(YrNav, { val: yr, set: setYr, lang: lang, onPick: function(){setYpState({value:yr,onChange:function(v){setYr(v);}});}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 367}} )
-            , React.createElement('div', { style: {display:"flex",gap:8,marginBottom:14}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 368}}
-              , React.createElement('button', { onClick: function(){var period=repP,label=period==="month"?mo:yr,srcExps=period==="month"?feAll:yAllExps(),r=bldRep(period),catMap={};srcExps.forEach(function(item){var cat=allC[item.category],key=item.isFixed?"fx_"+item.fixedLabel:item.category,lbl=item.isFixed?item.fixedLabel:(cat?cat.label:"Other"),grp=cat?(cat.g||cat.group||"Other"):"Other";if(!catMap[key]){catMap[key]={label:lbl,group:grp,total:0,count:0};}catMap[key].total+=(+item.amount||0);catMap[key].count+=1;});var byGroup={"车辆":[],"牌照":[],"平台":[],"其他":[]};Object.values(catMap).forEach(function(c){var g=byGroup[c.group]?c.group:"其他";byGroup[g].push(c);});["车辆","牌照","平台","其他"].forEach(function(g){byGroup[g].sort(function(a,b){return b.total-a.total;});});var isYear=period==="year";setReportData({type:"summary",r:r,label:label,byGroup:byGroup,stmts:isYear?yStmts:mStmts,isYear:isYear,mData:isYear?mData:null});}, style: {flex:1,background:"linear-gradient(135deg,#0A2040,#1A3060)",border:"1px solid #2A5080",borderRadius:10,padding:11,color:"#5AACFF",fontSize:13,fontWeight:700,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 369}}, "📊 " , T.report)
-              , React.createElement('button', { onClick: function(){var period=repP,label=period==="month"?mo:yr,srcExps=period==="month"?feAll:yAllExps();var catMap={};srcExps.forEach(function(item){var cat=allC[item.category],key=item.isFixed?"fx_"+item.fixedLabel:item.category,lbl=item.isFixed?item.fixedLabel:(cat?cat.label:"Other"),grp=cat?(cat.g||cat.group||"Other"):"Other",ico=item.isFixed?item.fixedIcon:getIcon(item.category,allC);if(!catMap[key]){catMap[key]={label:lbl,group:grp,icon:ico,total:0,items:[]};}catMap[key].total+=(+item.amount||0);catMap[key].items.push(item);});var byGroup={"车辆":[],"牌照":[],"平台":[],"其他":[]};Object.values(catMap).forEach(function(c){var g=byGroup[c.group]?c.group:"其他";byGroup[g].push(c);});["车辆","牌照","平台","其他"].forEach(function(g){byGroup[g].sort(function(a,b){return b.total-a.total;});});var total=srcExps.reduce(function(s,e){return s+(+e.amount||0);},0);setReportData({type:"exp",label:label,byGroup:byGroup,total:total});}, style: {flex:1,background:"linear-gradient(135deg,#1A0820,#2A1040)",border:"1px solid #3A1560",borderRadius:10,padding:11,color:"#CC88FF",fontSize:13,fontWeight:700,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 370}}, "💸 " , T.expense)
+            , React.createElement('div', { style: {display:"flex",gap:10,marginBottom:14}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 368}}
+              , React.createElement('button', { onClick: function(){var period=repP,label=period==="month"?mo:yr,srcExps=period==="month"?feAll:yAllExps(),r=bldRep(period),catMap={};srcExps.forEach(function(item){var cat=allC[item.category],key=item.isFixed?"fx_"+item.fixedLabel:item.category,lbl=item.isFixed?item.fixedLabel:(cat?cat.label:"Other"),grp=cat?(cat.g||cat.group||"Other"):"Other";if(!catMap[key]){catMap[key]={label:lbl,group:grp,total:0,count:0};}catMap[key].total+=(+item.amount||0);catMap[key].count+=1;});var byGroup={"车辆":[],"牌照":[],"平台":[],"其他":[]};Object.values(catMap).forEach(function(c){var g=byGroup[c.group]?c.group:"其他";byGroup[g].push(c);});["车辆","牌照","平台","其他"].forEach(function(g){byGroup[g].sort(function(a,b){return b.total-a.total;});});var isYear=period==="year";setReportData({type:"summary",r:r,label:label,byGroup:byGroup,stmts:isYear?yStmts:mStmts,isYear:isYear,mData:isYear?mData:null});}, style: {flex:1,background:"linear-gradient(135deg, rgba(0,212,255,0.1), rgba(0,85,255,0.05))",border:"1px solid rgba(0,212,255,0.3)",borderRadius:RADIUS.md,padding:14,color:C.accent2,fontSize:FS.md+1,fontWeight:700,cursor:"pointer",boxShadow:SHADOW.sm,transition:"all 0.15s",letterSpacing:0.2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 369}}, "📊 " , T.report)
+              , React.createElement('button', { onClick: function(){var period=repP,label=period==="month"?mo:yr,srcExps=period==="month"?feAll:yAllExps();var catMap={};srcExps.forEach(function(item){var cat=allC[item.category],key=item.isFixed?"fx_"+item.fixedLabel:item.category,lbl=item.isFixed?item.fixedLabel:(cat?cat.label:"Other"),grp=cat?(cat.g||cat.group||"Other"):"Other",ico=item.isFixed?item.fixedIcon:getIcon(item.category,allC);if(!catMap[key]){catMap[key]={label:lbl,group:grp,icon:ico,total:0,items:[]};}catMap[key].total+=(+item.amount||0);catMap[key].items.push(item);});var byGroup={"车辆":[],"牌照":[],"平台":[],"其他":[]};Object.values(catMap).forEach(function(c){var g=byGroup[c.group]?c.group:"其他";byGroup[g].push(c);});["车辆","牌照","平台","其他"].forEach(function(g){byGroup[g].sort(function(a,b){return b.total-a.total;});});var total=srcExps.reduce(function(s,e){return s+(+e.amount||0);},0);setReportData({type:"exp",label:label,byGroup:byGroup,total:total});}, style: {flex:1,background:"linear-gradient(135deg, rgba(204,136,255,0.1), rgba(60,16,80,0.4))",border:"1px solid rgba(204,136,255,0.3)",borderRadius:RADIUS.md,padding:14,color:"#CC88FF",fontSize:FS.md+1,fontWeight:700,cursor:"pointer",boxShadow:SHADOW.sm,transition:"all 0.15s",letterSpacing:0.2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 370}}, "💸 " , T.expense)
             )
-            , React.createElement('button', { onClick: function(){setSf("tax_center");}, style: {width:"100%",background:"#1A0F00",border:"1px solid #3A2800",borderRadius:10,padding:"10px 14px",color:"#FFB300",fontSize:13,fontWeight:700,cursor:"pointer",marginBottom:14,display:"flex",justifyContent:"space-between",alignItems:"center"} }
+            , React.createElement('button', { onClick: function(){setSf("tax_center");}, style: {width:"100%",background:"linear-gradient(135deg, rgba(255,179,0,0.08), rgba(40,28,0,0.6))",border:"1px solid rgba(255,179,0,0.3)",borderRadius:RADIUS.md,padding:"12px 16px",color:"#FFB300",fontSize:FS.md+1,fontWeight:700,cursor:"pointer",marginBottom:14,display:"flex",justifyContent:"space-between",alignItems:"center",boxShadow:SHADOW.sm,transition:"all 0.15s",letterSpacing:0.2} }
               , React.createElement('span', null, "🧾 " , lang==="en"?"Open Tax Center":"进入税务中心")
-              , React.createElement('span', {style:{color:"#9A7A40",fontSize:14}}, "→")
+              , React.createElement('span', {style:{color:"#9A7A40",fontSize:16}}, "→")
             )
-            , (function(){var r=bldRep(repP),rn=r.rn;var rnCl=rn>=0?"#00E676":"#FF5252";return (
+            , (function(){var r=bldRep(repP),rn=r.rn;var rnCl=rn>=0?C.success:C.danger;return (
               React.createElement(Card, {__self: this, __source: {fileName: _jsxFileName, lineNumber: 373}}
                 , React.createElement('div', { style: {fontSize:14,fontWeight:700,color:C.text,marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 374}}, T.totalIncome)
-                , React.createElement(Row, { label: T.grossFare, value: fmt(r.rg), __self: this, __source: {fileName: _jsxFileName, lineNumber: 375}} ), React.createElement(Row, { label: T.tips, value: fmt(r.rt), color: "#00E676", __self: this, __source: {fileName: _jsxFileName, lineNumber: 375}} ), React.createElement(Row, { label: T.bonus, value: fmt(r.rb), color: "#FFD700", __self: this, __source: {fileName: _jsxFileName, lineNumber: 375}} )
-                , React.createElement(Row, { label: T.totalIncome, value: fmt(r.ri), color: "#00D4FF", bold: true, __self: this, __source: {fileName: _jsxFileName, lineNumber: 376}} )
+                , React.createElement(Row, { label: T.grossFare, value: fmt(r.rg), __self: this, __source: {fileName: _jsxFileName, lineNumber: 375}} ), React.createElement(Row, { label: T.tips, value: fmt(r.rt), color: C.success, __self: this, __source: {fileName: _jsxFileName, lineNumber: 375}} ), React.createElement(Row, { label: T.bonus, value: fmt(r.rb), color: C.gold, __self: this, __source: {fileName: _jsxFileName, lineNumber: 375}} )
+                , React.createElement(Row, { label: T.totalIncome, value: fmt(r.ri), color: C.accent, bold: true, __self: this, __source: {fileName: _jsxFileName, lineNumber: 376}} )
                 , React.createElement('div', { style: {borderTop:"1px solid #0F1C30",margin:"8px 0"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 377}} )
-                , React.createElement(Row, { label: T.totalExpense, value: fmt(r.rTot), color: "#FF6B35", bold: true, __self: this, __source: {fileName: _jsxFileName, lineNumber: 378}} )
+                , React.createElement(Row, { label: T.totalExpense, value: fmt(r.rTot), color: C.danger, bold: true, __self: this, __source: {fileName: _jsxFileName, lineNumber: 378}} )
                 , React.createElement('div', { style: {borderTop:"1px solid #0F1C30",margin:"8px 0"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 379}} )
                 , React.createElement(Row, { label: T.netProfit, value: fmt(rn), color: rnCl, bold: true, __self: this, __source: {fileName: _jsxFileName, lineNumber: 380}} )
               )
@@ -4657,7 +4737,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                     return React.createElement('div', { style: {background:hasVehData?"#1A1400":C.bg3,border:hasVehData?"2px solid #5A3A00":"1px dashed "+C.border,borderRadius:12,padding:"16px 14px",marginBottom:16,textAlign:"center"} }
                       , React.createElement('div', { style: {fontSize:14,fontWeight:700,color:hasVehData?"#FFB300":"#90EAF8",marginBottom:6} }, hasVehData?"⚠️ ":"🚗 " , headerTxt)
                       , React.createElement('div', { style: {fontSize:12,color:hasVehData?"#FFD380":C.text3,marginBottom:12,lineHeight:1.6} }, bodyTxt)
-                      , React.createElement('button', { onClick: doSave, style: {background:hasVehData?"linear-gradient(135deg,#5A3A00,#3A2800)":"linear-gradient(135deg,#0A4020,#1A6030)",border:"1px solid "+(hasVehData?"#7A5500":"#2A8050"),borderRadius:10,padding:"10px 20px",color:hasVehData?"#FFD700":"#5ADA7A",fontSize:13,fontWeight:700,cursor:"pointer"} }, "💾 " , btnTxt)
+                      , React.createElement('button', { onClick: doSave, style: {background:hasVehData?"linear-gradient(135deg,#5A3A00,#3A2800)":"linear-gradient(135deg,#0A4020,#1A6030)",border:"1px solid "+(hasVehData?"#7A5500":"#2A8050"),borderRadius:10,padding:"10px 20px",color:hasVehData?C.gold:"#5ADA7A",fontSize:13,fontWeight:700,cursor:"pointer"} }, "💾 " , btnTxt)
                     );
                   }
                   
@@ -4681,7 +4761,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                                 , isCurrent ? React.createElement('span',{style:{fontSize:11,padding:"1px 6px",borderRadius:4,background:"#2A6040",color:"#5ADA7A",fontWeight:600}},lang==="en"?"CURRENT":"当前") : null
                               )
                               , React.createElement('div', { style: {fontSize:12,color:C.text3,marginTop:2} }, [p.year,p.brand,p.model].filter(Boolean).join(" "), p.plate?" · ["+p.plate+"]":"", p.tlcPlate?" · TLC ["+p.tlcPlate+"]":"")
-                              , displayOdo > 0 ? React.createElement('div', { style: {fontSize:12,color:"#FFD700",marginTop:3,fontWeight:600} }, "🛣 " , displayOdo.toLocaleString(), " mi", React.createElement('span',{style:{color:C.text3,fontWeight:400,marginLeft:4,fontSize:11}}, "(", odoLabel, ")")) : null
+                              , displayOdo > 0 ? React.createElement('div', { style: {fontSize:12,color:C.gold,marginTop:3,fontWeight:600} }, "🛣 " , displayOdo.toLocaleString(), " mi", React.createElement('span',{style:{color:C.text3,fontWeight:400,marginLeft:4,fontSize:11}}, "(", odoLabel, ")")) : null
                             )
                             , React.createElement('button', { onClick: function(){
                                 // Open vehicle history sheet (works for both current and saved profiles)
@@ -4704,11 +4784,11 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                                   setSavedVehicles(savedVehicles.map(function(sp,si){return si===i ? Object.assign({},sp,{vehicleId:loaded.vehicleId}) : sp;}));
                                 }
                                 setVeh(loaded);
-                              }, style: {background:"#0A2040",border:"1px solid #2A5080",borderRadius:6,padding:"5px 12px",color:"#5AACFF",fontSize:12,fontWeight:700,cursor:"pointer"} }, lang==="en"?"Switch":"切换") : null
+                              }, style: {background:"#0A2040",border:"1px solid #2A5080",borderRadius:6,padding:"5px 12px",color:C.accent2,fontSize:12,fontWeight:700,cursor:"pointer"} }, lang==="en"?"Switch":"切换") : null
                             , React.createElement('button', { onClick: function(){
                                 if(!confirm(lang==="en"?"Delete this profile? (Won\'t affect current vehicle data.)":"删除这个 profile？（不影响当前正在用的车辆资料）"))return;
                                 var prev=savedVehicles.slice();setSavedVehicles(savedVehicles.filter(function(_,j){return j!==i;}));showUndo((lang==="en"?"✓ Profile deleted":"✓ Profile 已删除"), {prevSavedVehicles:prev});
-                              }, style: {background:"none",border:"none",color:"#FF5252",fontSize:14,cursor:"pointer",padding:"4px 6px"} }, "✕")
+                              }, style: {background:"none",border:"none",color:C.danger,fontSize:14,cursor:"pointer",padding:"4px 6px"} }, "✕")
                           );
                         })
                     )
@@ -4717,7 +4797,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                         ? React.createElement('div', { style: {fontSize:12,color:C.text3,fontStyle:"italic",padding:"4px 0"} },
                             lang==="en"?"✓ Current vehicle is already saved":"✓ 当前车辆已保存"
                           )
-                        : React.createElement('button', { onClick: doSave, style: {background:"transparent",border:"1px dashed #2A4A6A",borderRadius:8,padding:"6px 14px",color:"#5AACFF",fontSize:12,fontWeight:600,cursor:"pointer"} }, "💾 " , lang==="en"?"Save current as new profile":"将当前车辆保存为新 profile")
+                        : React.createElement('button', { onClick: doSave, style: {background:"transparent",border:"1px dashed #2A4A6A",borderRadius:8,padding:"6px 14px",color:C.accent2,fontSize:12,fontWeight:600,cursor:"pointer"} }, "💾 " , lang==="en"?"Save current as new profile":"将当前车辆保存为新 profile")
                     )
                   );
                 }())
@@ -4729,7 +4809,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                 React.createElement('div',{style:{display:"flex",alignItems:"center",gap:10}},
                   React.createElement('span',{style:{fontSize:18}},"🧑"),
                   React.createElement('div',{style:{textAlign:"left"}},
-                    React.createElement('div',{style:{fontSize:13,fontWeight:600,color:"#FFD700"}},lang==="en"?"Driver Info":"司机信息"),
+                    React.createElement('div',{style:{fontSize:13,fontWeight:600,color:C.gold}},lang==="en"?"Driver Info":"司机信息"),
                     React.createElement('div',{style:{fontSize:12,color:C.text3,marginTop:2}},
                       driver.name
                         ? driver.name + (driver.tlcHack?" · TLC "+driver.tlcHack:"")
@@ -4757,9 +4837,9 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                 // Current mileage: latest odometer reading from any expense record
                 var lastOdo=el.filter(function(e){return e.odometer&&+e.odometer>0;}).sort(function(a,b){var c=b.date.localeCompare(a.date);return c!==0?c:(+b.odometer)-(+a.odometer);})[0];
                 if(!lastOdo)return null;
-                return React.createElement('div', { style: {background:"#0A1828",border:"1px solid #2A4A6A",borderRadius:10,padding:"12px 14px",marginTop:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 405}}
+                return React.createElement('div', { style: {background:C.bg3,border:"1px solid "+C.border2,borderRadius:10,padding:"12px 14px",marginTop:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 405}}
                   , React.createElement('div', { style: {fontSize:12,color:C.text3,marginBottom:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 405}}, "🛣 " , lang==="en"?"Current Mileage":"当前总里程")
-                  , React.createElement('div', { style: {fontSize:24,fontWeight:900,color:"#FFD700"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 405}}, (+lastOdo.odometer).toLocaleString(), " mi")
+                  , React.createElement('div', { style: {fontSize:24,fontWeight:900,color:C.gold}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 405}}, (+lastOdo.odometer).toLocaleString(), " mi")
                   , React.createElement('div', { style: {fontSize:12,color:C.text3,marginTop:2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 405}}, lang==="en"?"As of ":"截至 ", fmtDate(lastOdo.date))
                 );
               }())
@@ -4769,7 +4849,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                 , React.createElement(Field, { label: T.insExpiry, type: "date", value: veh.insExpiry||"", onChange: function(v){setVeh(Object.assign({},veh,{insExpiry:v}));}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 409}} )
               )
               , React.createElement(Field, { label: "Policy Number" , value: veh.insPolicy||"", onChange: function(v){setVeh(Object.assign({},veh,{insPolicy:v}));}, placeholder: "PA-12345678", __self: this, __source: {fileName: _jsxFileName, lineNumber: 411}} )
-              , insExpDiff !== null ? React.createElement('div', { style: {background:"#1A1400",border:"1px solid #00E676",borderRadius:8,padding:"8px 12px",fontSize:14,color:"#00E676",marginTop:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 412}}, insExpDiff < 0 ? (lang==="en"?"Insurance expired":"保险已过期") : (lang==="en"?"Insurance: "+Math.round(insExpDiff)+" days left":"保险还剩 "+Math.round(insExpDiff)+" 天")) : null
+              , insExpDiff !== null ? React.createElement('div', { style: {background:"#1A1400",border:"1px solid #00E676",borderRadius:8,padding:"8px 12px",fontSize:14,color:C.success,marginTop:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 412}}, insExpDiff < 0 ? (lang==="en"?"Insurance expired":"保险已过期") : (lang==="en"?"Insurance: "+Math.round(insExpDiff)+" days left":"保险还剩 "+Math.round(insExpDiff)+" 天")) : null
               , React.createElement('div', { style: {fontSize:13,fontWeight:700,color:"#90EAF8",marginBottom:10,marginTop:14}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 413}}, lang==="en"?"Financing":"车辆融资")
               , React.createElement('div', { style: {display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 414}}
                 , React.createElement(Field, { label: T.loanType, value: veh.loanType||"loan", onChange: function(v){if(v==="__new__"){inputAction({title:lang==="en"?"New ownership type":"新持有方式",onSubmit:function(n){if(n&&n.trim()){var nm=n.trim();setCustLoanTypes(custLoanTypes.concat([nm]));setVeh(Object.assign({},veh,{loanType:nm}));}}});return;}setVeh(Object.assign({},veh,{loanType:v}));}, options: [["loan",T.loan],["lease",T.lease],["own",T.own],["rental",T.rental]].concat(custLoanTypes.map(function(l){return [l,l];})).concat([["__new__",lang==="en"?"+ Add new...":"+ 添加新选项..."]]), __self: this, __source: {fileName: _jsxFileName, lineNumber: 415}} )
@@ -4797,7 +4877,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
               
               // ========== SECTION 1: 日常记账 ==========
               , React.createElement('div', {style:{marginBottom:18}}
-                , React.createElement('div', {style:{fontSize:15,fontWeight:800,color:"#FFD700",marginBottom:8}}, "1️⃣ " , lang==="en"?"Daily Bookkeeping":"日常记账")
+                , React.createElement('div', {style:{fontSize:15,fontWeight:800,color:C.gold,marginBottom:8}}, "1️⃣ " , lang==="en"?"Daily Bookkeeping":"日常记账")
                 , React.createElement('div', {style:{background:C.bg3,border:"1px solid "+C.border,borderRadius:10,padding:"12px 14px",fontSize:13,color:C.text2}}
                   , React.createElement('div', {style:{marginBottom:8}}, "💸 ", React.createElement('b',null,lang==="en"?"Add expense:":"录支出："), lang==="en"?" Bottom blue [+] → Expense → pick category → enter amount":" 底部蓝色 [+] → 支出 → 选类别 → 输金额")
                   , React.createElement('div', {style:{marginBottom:8}}, "💡 ", React.createElement('b',null,lang==="en"?"Auto-prefill price:":"自动填上次价格："), lang==="en"?" After picking category, last 2 prices show as blue chips. Most recent auto-fills the amount — just save":" 选好类别后，顶部蓝色框显示最近 2 次价格，最新一个自动填进金额栏，直接保存")
@@ -4809,7 +4889,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
               , React.createElement('div', {style:{marginBottom:18}}
                 , React.createElement('div', {style:{fontSize:15,fontWeight:800,color:"#5ADA7A",marginBottom:8}}, "2️⃣ " , lang==="en"?"Recording Income":"收入录入")
                 , React.createElement('div', {style:{background:C.bg3,border:"1px solid "+C.border,borderRadius:10,padding:"12px 14px",fontSize:13,color:C.text2}}
-                  , React.createElement('div', {style:{fontWeight:700,marginBottom:6,color:"#5AACFF"}}, lang==="en"?"📅 Per Week (manual)":"📅 按周（手动）")
+                  , React.createElement('div', {style:{fontWeight:700,marginBottom:6,color:C.accent2}}, lang==="en"?"📅 Per Week (manual)":"📅 按周（手动）")
                   , React.createElement('div', {style:{marginBottom:8,paddingLeft:8}}, lang==="en"?"Income tab → 📅 Weekly card → fill 4 main fields (Pay/Tip/Toll/Service Fee)":"收入页 → 📅 每周运营 → 填 4 个主字段（金额/小费/过桥/平台费）")
                   , React.createElement('div', {style:{fontWeight:700,marginBottom:6,color:"#FFB300",marginTop:10}}, lang==="en"?"📥 Auto-import Uber":"📥 Uber 自动导入")
                   , React.createElement('div', {style:{paddingLeft:8}}, lang==="en"?"Drawer → Platform → Uber Data Import. Paste Weekly Statement OR Monthly/Annual Tax Summary PDF text. Auto-extracts all amounts + Service Fee":"抽屉 → 平台管理 → Uber 数据导入。粘贴周报或月度/年度税务总结 PDF 文字。自动提取所有金额 + 抽成")
@@ -4840,7 +4920,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
               
               // ========== SECTION 5: 仪表盘 ==========
               , React.createElement('div', {style:{marginBottom:18}}
-                , React.createElement('div', {style:{fontSize:15,fontWeight:800,color:"#00D4FF",marginBottom:8}}, "5️⃣ " , lang==="en"?"Dashboard":"仪表盘")
+                , React.createElement('div', {style:{fontSize:15,fontWeight:800,color:C.accent,marginBottom:8}}, "5️⃣ " , lang==="en"?"Dashboard":"仪表盘")
                 , React.createElement('div', {style:{background:C.bg3,border:"1px solid "+C.border,borderRadius:10,padding:"12px 14px",fontSize:13,color:C.text2}}
                   , React.createElement('div', {style:{marginBottom:6}}, "📊 ", lang==="en"?"Pie chart, trend lines, expense breakdown":"饼图、趋势线、支出分类")
                   , React.createElement('div', {style:{marginBottom:6}}, "🎯 ", lang==="en"?"Monthly goal — set per month":"月度目标 — 每月单独设定")
@@ -4851,7 +4931,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
               
               // ========== TIPS ==========
               , React.createElement('div', {style:{background:"#1A1400",border:"1px solid #5A3A00",borderRadius:10,padding:"12px 14px",fontSize:12,color:"#FFD380",lineHeight:1.7,marginBottom:16}}
-                , React.createElement('div', {style:{fontWeight:700,color:"#FFD700",marginBottom:8,fontSize:13}}, "💡 " , lang==="en"?"Pro Tips":"小技巧")
+                , React.createElement('div', {style:{fontWeight:700,color:C.gold,marginBottom:8,fontSize:13}}, "💡 " , lang==="en"?"Pro Tips":"小技巧")
                 , React.createElement('div', null, "• ", lang==="en"?"App auto-learns your prices — no need to manually \"save as quick\"":"App 自动记住你的常用价格 — 不需要手动收藏")
                 , React.createElement('div', null, "• ", lang==="en"?"Same expense → blue suggestion chip → auto-fills latest price":"同类支出第二次录 → 蓝色提示 → 自动填上次价格")
                 , React.createElement('div', null, "• ", lang==="en"?"Different platforms tracked separately — Uber/Lyft/Via don\'t mix":"多平台数据独立 — Uber/Lyft/Via 各自记录")
@@ -4988,13 +5068,13 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                                 , React.createElement('button', {onClick:function(){
                                     if(!confirm(lang==="en"?"Delete this expense entry?":"删除这条支出记录？"))return;
                                     setEl(el.filter(function(x){return x.id!==f.item.id;}));
-                                  },style:{background:"none",border:"1px solid #5A1A1A",borderRadius:6,padding:"4px 10px",color:"#FF5252",fontSize:12,cursor:"pointer"}}, "🗑 " , lang==="en"?"Delete":"删除")
+                                  },style:{background:"none",border:"1px solid #5A1A1A",borderRadius:6,padding:"4px 10px",color:C.danger,fontSize:12,cursor:"pointer"}}, "🗑 " , lang==="en"?"Delete":"删除")
                               ) : null
                             , (f.item && f.kind==="reminders") ? React.createElement('div', {style:{marginTop:6,display:"flex",gap:6}}
                                 , React.createElement('button', {onClick:function(){
                                     if(!confirm(lang==="en"?"Delete this reminder?":"删除这条提醒？"))return;
                                     setReminders(reminders.filter(function(x){return x.id!==f.item.id;}));
-                                  },style:{background:"none",border:"1px solid #5A1A1A",borderRadius:6,padding:"4px 10px",color:"#FF5252",fontSize:12,cursor:"pointer"}}, "🗑 " , lang==="en"?"Delete":"删除")
+                                  },style:{background:"none",border:"1px solid #5A1A1A",borderRadius:6,padding:"4px 10px",color:C.danger,fontSize:12,cursor:"pointer"}}, "🗑 " , lang==="en"?"Delete":"删除")
                               ) : null
                           );
                         })
@@ -5011,7 +5091,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                           )
                         : React.createElement('div', {style:{textAlign:"center",padding:"4px"}}
                             , React.createElement('div', {style:{fontSize:24,marginBottom:4}}, crit.length>0?"⚠️":"📋")
-                            , React.createElement('div', {style:{fontSize:14,fontWeight:700,color:crit.length>0?"#FF6B35":"#FFB300"}}, lang==="en"?("Found "+findings.length+" issue"+(findings.length>1?"s":"")):"发现 "+findings.length+" 个问题")
+                            , React.createElement('div', {style:{fontSize:14,fontWeight:700,color:crit.length>0?C.danger:"#FFB300"}}, lang==="en"?("Found "+findings.length+" issue"+(findings.length>1?"s":"")):"发现 "+findings.length+" 个问题")
                           )
                     )
                     // Data inventory
@@ -5028,9 +5108,9 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                       )
                     )
                     // Findings
-                    , renderGroup(lang==="en"?"🔴 Critical":"🔴 严重问题",crit,"#FF5252")
+                    , renderGroup(lang==="en"?"🔴 Critical":"🔴 严重问题",crit,C.danger)
                     , renderGroup(lang==="en"?"🟡 Warnings":"🟡 需要注意",warn,"#FFB300")
-                    , renderGroup(lang==="en"?"🔵 Info":"🔵 提示信息",info,"#5AACFF")
+                    , renderGroup(lang==="en"?"🔵 Info":"🔵 提示信息",info,C.accent2)
                   );
                 }())
             )
@@ -5052,7 +5132,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                     ? "💡 Driver info is independent of your vehicle — you only need to fill it once, and it stays even when you switch vehicles."
                     : "💡 司机信息独立于车辆 — 只需填写一次，切换车辆时不会丢失。"
                 )
-              , React.createElement('div', { style: {fontSize:13,fontWeight:700,color:"#FFD700",marginBottom:10} }, lang==="en"?"Personal":"基本信息")
+              , React.createElement('div', { style: {fontSize:13,fontWeight:700,color:C.gold,marginBottom:10} }, lang==="en"?"Personal":"基本信息")
               , React.createElement('div', { style: {display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:8} }
                 , React.createElement(Field, { label: lang==="en"?"Full Name":"姓名", value: driver.name||"", onChange: function(v){setDriver(Object.assign({},driver,{name:v}));}, placeholder: lang==="en"?"John Doe":"姓名" })
                 , React.createElement(Field, { label: lang==="en"?"Phone":"电话", type: "tel", value: driver.phone||"", onChange: function(v){setDriver(Object.assign({},driver,{phone:v}));}, placeholder: "(347) 555-0100" })
@@ -5061,7 +5141,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
               )
               , React.createElement(Field, { label: "Email", type: "email", value: driver.email||"", onChange: function(v){setDriver(Object.assign({},driver,{email:v}));}, placeholder: "you@example.com" })
               , React.createElement('div', { style: {height:1,background:C.border,margin:"20px 0"} })
-              , React.createElement('div', { style: {fontSize:13,fontWeight:700,color:"#FF7060",marginBottom:10} }, "🆘 " , lang==="en"?"Emergency Contact":"紧急联系人")
+              , React.createElement('div', { style: {fontSize:13,fontWeight:700,color:C.danger,marginBottom:10} }, "🆘 " , lang==="en"?"Emergency Contact":"紧急联系人")
               , React.createElement('div', { style: {display:"grid",gridTemplateColumns:"1fr 1fr",gap:10} }
                 , React.createElement(Field, { label: lang==="en"?"Name":"姓名", value: driver.emergName||"", onChange: function(v){setDriver(Object.assign({},driver,{emergName:v}));}, placeholder: lang==="en"?"Spouse / Family":"配偶 / 亲属" })
                 , React.createElement(Field, { label: lang==="en"?"Phone":"电话", type: "tel", value: driver.emergPhone||"", onChange: function(v){setDriver(Object.assign({},driver,{emergPhone:v}));}, placeholder: "(347) 555-0200" })
@@ -5148,24 +5228,24 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                 )
                 // Stats summary
                 , React.createElement(Card, { style: {marginBottom:12,padding:"14px",background:"linear-gradient(180deg,#0F1F35 0%,#0A1828 100%)",border:"1px solid #1F3A5A"} }
-                  , React.createElement('div', { style: {fontSize:12,fontWeight:700,color:"#00D4FF",marginBottom:10,letterSpacing:0.3} }, "💰 ", lang==="en"?"Lifetime Stats":"累计数据")
+                  , React.createElement('div', { style: {fontSize:12,fontWeight:700,color:C.accent,marginBottom:10,letterSpacing:0.3} }, "💰 ", lang==="en"?"Lifetime Stats":"累计数据")
                   , vExps.length === 0
                     ? React.createElement('div', { style: {fontSize:13,color:C.text3,textAlign:"center",padding:"10px 0"} }, lang==="en"?"No expenses recorded yet for this vehicle":"还没有这辆车的支出记录")
                     : React.createElement('div', null
                       , React.createElement('div', { style: {display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:10} }
                         , React.createElement('div', null
                           , React.createElement('div', {style:{fontSize:12,color:C.text3,marginBottom:2}}, lang==="en"?"Total Spend":"累计支出")
-                          , React.createElement('div', {style:{fontSize:18,fontWeight:800,color:"#FF6B35"}}, fmt(totalSpend+totalLease))
+                          , React.createElement('div', {style:{fontSize:18,fontWeight:800,color:C.danger}}, fmt(totalSpend+totalLease))
                         )
                         , React.createElement('div', null
                           , React.createElement('div', {style:{fontSize:12,color:C.text3,marginBottom:2}}, lang==="en"?"Records":"记录数")
-                          , React.createElement('div', {style:{fontSize:18,fontWeight:800,color:"#00D4FF"}}, vExps.length+vDailies.length)
+                          , React.createElement('div', {style:{fontSize:18,fontWeight:800,color:C.accent}}, vExps.length+vDailies.length)
                         )
                       )
                       , milesDriven > 0 ? React.createElement('div', { style: {display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,paddingTop:8,borderTop:"1px solid "+C.border} }
                         , React.createElement('div', null
                           , React.createElement('div', {style:{fontSize:12,color:C.text3,marginBottom:2}}, lang==="en"?"Miles Driven":"行驶里程")
-                          , React.createElement('div', {style:{fontSize:16,fontWeight:700,color:"#FFD700"}}, milesDriven.toLocaleString()+" mi")
+                          , React.createElement('div', {style:{fontSize:16,fontWeight:700,color:C.gold}}, milesDriven.toLocaleString()+" mi")
                         )
                         , totalSpend>0 && milesDriven>0 ? React.createElement('div', null
                           , React.createElement('div', {style:{fontSize:12,color:C.text3,marginBottom:2}}, lang==="en"?"Cost / Mile":"每英里成本")
@@ -5198,7 +5278,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                 ) : null
                 // Recent fuel/charging
                 , fuelCharge.length > 0 ? React.createElement(Card, { style: {marginBottom:12,padding:"14px"} }
-                  , React.createElement('div', { style: {fontSize:12,fontWeight:700,color:"#FFD700",marginBottom:10,letterSpacing:0.3} }, vp.type==="electric"?"⚡":"⛽", " ", lang==="en"?"Recent Fills":"最近加注")
+                  , React.createElement('div', { style: {fontSize:12,fontWeight:700,color:C.gold,marginBottom:10,letterSpacing:0.3} }, vp.type==="electric"?"⚡":"⛽", " ", lang==="en"?"Recent Fills":"最近加注")
                   , fuelCharge.map(function(e,idx){
                       var unit = e.amount/e.qty;
                       var unitLabel = e.category==="charging"?"/kWh":"/Gal";
@@ -5207,7 +5287,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                           , React.createElement('div', {style:{color:C.text}}, fmt(e.amount), "  ", React.createElement('span',{style:{fontSize:12,color:C.text3}}, e.qty, e.category==="charging"?" kWh":" Gal"))
                           , React.createElement('div', {style:{fontSize:11,color:C.text3,marginTop:1}}, e.date, e.notes?" · "+e.notes:"")
                         )
-                        , React.createElement('div', {style:{fontSize:13,fontWeight:700,color:"#5AACFF"}}, "$"+unit.toFixed(3), unitLabel)
+                        , React.createElement('div', {style:{fontSize:13,fontWeight:700,color:C.accent2}}, "$"+unit.toFixed(3), unitLabel)
                       );
                     })
                 ) : null
@@ -5254,10 +5334,10 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                 var sc,st;
                 if(diff===null){sc="#B0D4E8";st="";}
                 else if(diff<0){sc="#FF1744";st=(lang==="en"?"Expired ":"已过期 ")+Math.abs(Math.round(diff))+(lang==="en"?" days ago":" 天");}
-                else if(diff<30){sc="#FF5252";st=Math.round(diff)+(lang==="en"?" days left":" 天");}
+                else if(diff<30){sc=C.danger;st=Math.round(diff)+(lang==="en"?" days left":" 天");}
                 else if(diff<60){sc="#FFB300";st=Math.round(diff)+(lang==="en"?" days left":" 天");}
-                else{sc="#00E676";st=Math.round(diff)+(lang==="en"?" days left":" 天");}
-                return React.createElement(Card, { key: lic.id, __self: this, __source: {fileName: _jsxFileName, lineNumber: 446}}, React.createElement('div', { style: {display:"flex",justifyContent:"space-between"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 446}}, React.createElement('div', { style: {flex:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 446}}, React.createElement('div', { style: {fontSize:14,fontWeight:700,marginBottom:5}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 446}}, lic.type), lic.number?React.createElement('div', { style: {fontSize:13,color:C.text}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 446}}, lang==="en"?"No: ":"编号: ", lic.number):null, React.createElement('div', { style: {display:"flex",gap:14,marginTop:6,flexWrap:"wrap"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 446}}, lic.issueDate?React.createElement('span', { style: {fontSize:13,color:C.text}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 446}}, lang==="en"?"Issued: ":"发出: ", fmtDate(lic.issueDate)):null, lic.expiryDate?React.createElement('span', { style: Object.assign({fontSize:13,fontWeight:600},{color:sc}), __self: this, __source: {fileName: _jsxFileName, lineNumber: 446}}, lang==="en"?"Exp: ":"到期: ", fmtDate(lic.expiryDate), " " , st):null), lic.renewalFee?React.createElement('div', { style: {fontSize:13,color:"#FFB300",marginTop:5}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 446}}, lang==="en"?"Fee: ":"更新费: ", "$", lic.renewalFee):null), React.createElement('div', { style: {display:"flex",flexDirection:"column",gap:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 446}}, React.createElement('button', { onClick: function(){setLf(Object.assign({},lic));setSf("lic_edit_"+lic.id);}, style: {background:"none",border:"1px solid #2A4A6A",borderRadius:6,padding:"3px 8px",color:"#6AACEE",cursor:"pointer",fontSize:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 446}}, T.edit), React.createElement('button', { onClick: function(){confirmAction(lang==="en"?"Delete license?":"删除证件？", lang==="en"?"This license will be removed (with undo).":"此证件将被移除（可撤销）。", function(){var prev=ll.slice();setLl(ll.filter(function(x){return x.id!==lic.id;}));showUndo((lang==="en"?"✓ License deleted":"✓ 证件已删除"), {prevLl:prev});});}, style: {background:"none",border:"1px solid #3A1A1A",borderRadius:6,padding:"3px 8px",color:"#FF5252",cursor:"pointer",fontSize:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 446}}, T.del))));
+                else{sc=C.success;st=Math.round(diff)+(lang==="en"?" days left":" 天");}
+                return React.createElement(Card, { key: lic.id, __self: this, __source: {fileName: _jsxFileName, lineNumber: 446}}, React.createElement('div', { style: {display:"flex",justifyContent:"space-between"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 446}}, React.createElement('div', { style: {flex:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 446}}, React.createElement('div', { style: {fontSize:14,fontWeight:700,marginBottom:5}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 446}}, lic.type), lic.number?React.createElement('div', { style: {fontSize:13,color:C.text}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 446}}, lang==="en"?"No: ":"编号: ", lic.number):null, React.createElement('div', { style: {display:"flex",gap:14,marginTop:6,flexWrap:"wrap"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 446}}, lic.issueDate?React.createElement('span', { style: {fontSize:13,color:C.text}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 446}}, lang==="en"?"Issued: ":"发出: ", fmtDate(lic.issueDate)):null, lic.expiryDate?React.createElement('span', { style: Object.assign({fontSize:13,fontWeight:600},{color:sc}), __self: this, __source: {fileName: _jsxFileName, lineNumber: 446}}, lang==="en"?"Exp: ":"到期: ", fmtDate(lic.expiryDate), " " , st):null), lic.renewalFee?React.createElement('div', { style: {fontSize:13,color:"#FFB300",marginTop:5}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 446}}, lang==="en"?"Fee: ":"更新费: ", "$", lic.renewalFee):null), React.createElement('div', { style: {display:"flex",flexDirection:"column",gap:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 446}}, React.createElement('button', { onClick: function(){setLf(Object.assign({},lic));setSf("lic_edit_"+lic.id);}, style: {background:"none",border:"1px solid "+C.border2,borderRadius:6,padding:"3px 8px",color:C.accent2,cursor:"pointer",fontSize:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 446}}, T.edit), React.createElement('button', { onClick: function(){confirmAction(lang==="en"?"Delete license?":"删除证件？", lang==="en"?"This license will be removed (with undo).":"此证件将被移除（可撤销）。", function(){var prev=ll.slice();setLl(ll.filter(function(x){return x.id!==lic.id;}));showUndo((lang==="en"?"✓ License deleted":"✓ 证件已删除"), {prevLl:prev});});}, style: {background:"none",border:"1px solid #3A1A1A",borderRadius:6,padding:"3px 8px",color:C.danger,cursor:"pointer",fontSize:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 446}}, T.del))));
               })
               , React.createElement('div', { style: {marginTop:20}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 448}}
                 , React.createElement('div', { style: {fontSize:13,fontWeight:700,color:"#90EAF8",marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 449}}, lang==="en"?"Useful Links":"常用网站")
@@ -5287,7 +5367,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
             , React.createElement('div', { style: {padding:"16px 14px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 473}}
               , fl.length > 0 ? React.createElement(Card, { style: {display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 474}}, React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 474}}, React.createElement('div', { style: {fontSize:13,color:C.text,marginBottom:2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 474}}, lang==="en"?"Monthly Fixed Total":"每月固定总支出"), React.createElement('div', { style: {fontSize:12,color:C.text2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 474}}, fl.filter(function(f){return f.active;}).length, " " , lang==="en"?"active":"项启用")), React.createElement('div', { style: {fontSize:22,fontWeight:900,color:"#FF9A65"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 474}}, fmt(totalFix))) : null
               , fl.length===0 ? React.createElement('div', { style: {marginBottom:14}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 475}}, React.createElement('div', { style: {fontSize:14,fontWeight:700,color:C.text2,marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 475}}, T.quickAdd), (lang==="en"?FIXSUGG_EN:FIXSUGG_ZH).map(function(sg,i){return React.createElement('button', { key: i, onClick: function(){setFf({label:sg.label,icon:sg.icon,cat:sg.cat,cycle:"monthly",amount:"",day:""+sg.day,notes:"",active:true,startDate:"",endDate:"",maxCount:""});setSf("fixed");}, style: {display:"flex",alignItems:"center",gap:12,width:"100%",background:C.bg2,border:"1px dashed #2A3A54",borderRadius:10,padding:"10px 14px",cursor:"pointer",textAlign:"left",marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 475}}, React.createElement('span', { style: {fontSize:20}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 475}}, sg.icon), React.createElement('span', { style: {fontSize:14,color:C.text}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 475}}, sg.label), React.createElement('span', { style: {marginLeft:"auto",color:"#2A5A8A",fontSize:18}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 475}}, "+"));}), " " ) : null
-              , fl.map(function(f){var monthly=f.cycle==="annual"?Math.round(+f.amount/12*100)/100:+f.amount,activeVal=f.active,cardBorder=activeVal?"#1A3A20":"#2A2A2A";return React.createElement(Card, { key: f.id, style: {border:"1px solid "+cardBorder,opacity:activeVal?1:0.5}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 476}}, React.createElement('div', { style: {display:"flex",alignItems:"center",gap:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 476}}, React.createElement('span', { style: {fontSize:22,flexShrink:0}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 476}}, f.icon), React.createElement('div', { style: {flex:1,minWidth:0}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 476}}, React.createElement('div', { style: {fontSize:14,fontWeight:700}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 476}}, f.label, activeVal?"":" ("+(lang==="en"?"paused":"暂停")+")"), React.createElement('div', { style: {fontSize:12,color:C.text2,marginTop:2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 476}}, lang==="en"?"Day ":"每月 ", f.day, lang==="en"?" ":"日", f.startDate?(lang==="en"?" · from ":" · 从")+f.startDate.slice(0,7):"", f.endDate?(lang==="en"?" · to ":" · 至")+f.endDate.slice(0,7):""), f.cycle==="annual"?React.createElement('div', { style: {fontSize:12,color:"#BAA850"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 476}}, lang==="en"?"Annual":"年费", " " , fmt(+f.amount), " ÷12" ):null), React.createElement('div', { style: {textAlign:"right"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 476}}, React.createElement('div', { style: {fontSize:16,fontWeight:800,color:"#FF9A65",marginBottom:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 476}}, fmt(monthly), lang==="en"?"/mo":"/月"), React.createElement('div', { style: {display:"flex",gap:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 476}}, React.createElement('button', { onClick: function(){setFf(Object.assign({},f));setSf("fixed_edit_"+f.id);}, style: {background:"none",border:"1px solid #2A4A6A",borderRadius:6,padding:"3px 8px",color:"#6AACEE",cursor:"pointer",fontSize:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 476}}, T.edit), React.createElement('button', { onClick: function(){setFl(fl.map(function(x){return x.id===f.id?Object.assign({},x,{active:!x.active}):x;}));showToast(activeVal?(lang==="en"?"⏸ Paused":"⏸ 已暂停"):(lang==="en"?"▶ Resumed":"▶ 已恢复"));}, style: {background:"none",border:"1px solid #2A4A6A",borderRadius:6,padding:"3px 8px",color:"#5ADA7A",cursor:"pointer",fontSize:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 476}}, activeVal?T.pause:T.resume), React.createElement('button', { onClick: function(){confirmAction(lang==="en"?"Delete fixed fee?":"删除固定费？", lang==="en"?"This fee will be removed (with undo).":"此固定费将被移除（可撤销）。", function(){var prev=fl.slice();setFl(fl.filter(function(x){return x.id!==f.id;}));showUndo((lang==="en"?"✓ Fixed fee deleted":"✓ 固定费已删除"), {prevFl:prev});});}, style: {background:"none",border:"1px solid #3A1A1A",borderRadius:6,padding:"3px 8px",color:"#FF3D00",cursor:"pointer",fontSize:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 476}}, T.del)))));})
+              , fl.map(function(f){var monthly=f.cycle==="annual"?Math.round(+f.amount/12*100)/100:+f.amount,activeVal=f.active,cardBorder=activeVal?"#1A3A20":"#2A2A2A";return React.createElement(Card, { key: f.id, style: {border:"1px solid "+cardBorder,opacity:activeVal?1:0.5}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 476}}, React.createElement('div', { style: {display:"flex",alignItems:"center",gap:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 476}}, React.createElement('span', { style: {fontSize:22,flexShrink:0}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 476}}, f.icon), React.createElement('div', { style: {flex:1,minWidth:0}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 476}}, React.createElement('div', { style: {fontSize:14,fontWeight:700}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 476}}, f.label, activeVal?"":" ("+(lang==="en"?"paused":"暂停")+")"), React.createElement('div', { style: {fontSize:12,color:C.text2,marginTop:2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 476}}, lang==="en"?"Day ":"每月 ", f.day, lang==="en"?" ":"日", f.startDate?(lang==="en"?" · from ":" · 从")+f.startDate.slice(0,7):"", f.endDate?(lang==="en"?" · to ":" · 至")+f.endDate.slice(0,7):""), f.cycle==="annual"?React.createElement('div', { style: {fontSize:12,color:"#BAA850"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 476}}, lang==="en"?"Annual":"年费", " " , fmt(+f.amount), " ÷12" ):null), React.createElement('div', { style: {textAlign:"right"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 476}}, React.createElement('div', { style: {fontSize:16,fontWeight:800,color:"#FF9A65",marginBottom:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 476}}, fmt(monthly), lang==="en"?"/mo":"/月"), React.createElement('div', { style: {display:"flex",gap:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 476}}, React.createElement('button', { onClick: function(){setFf(Object.assign({},f));setSf("fixed_edit_"+f.id);}, style: {background:"none",border:"1px solid "+C.border2,borderRadius:6,padding:"3px 8px",color:C.accent2,cursor:"pointer",fontSize:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 476}}, T.edit), React.createElement('button', { onClick: function(){setFl(fl.map(function(x){return x.id===f.id?Object.assign({},x,{active:!x.active}):x;}));showToast(activeVal?(lang==="en"?"⏸ Paused":"⏸ 已暂停"):(lang==="en"?"▶ Resumed":"▶ 已恢复"));}, style: {background:"none",border:"1px solid "+C.border2,borderRadius:6,padding:"3px 8px",color:"#5ADA7A",cursor:"pointer",fontSize:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 476}}, activeVal?T.pause:T.resume), React.createElement('button', { onClick: function(){confirmAction(lang==="en"?"Delete fixed fee?":"删除固定费？", lang==="en"?"This fee will be removed (with undo).":"此固定费将被移除（可撤销）。", function(){var prev=fl.slice();setFl(fl.filter(function(x){return x.id!==f.id;}));showUndo((lang==="en"?"✓ Fixed fee deleted":"✓ 固定费已删除"), {prevFl:prev});});}, style: {background:"none",border:"1px solid #3A1A1A",borderRadius:6,padding:"3px 8px",color:"#FF3D00",cursor:"pointer",fontSize:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 476}}, T.del)))));})
             )
           )
         )
@@ -5320,7 +5400,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
               if(!prev)return null;
               return React.createElement('button', { onClick: function(){
                   setDlf(Object.assign({},dlf,{cash:prev.cash||"",card:prev.card||"",tips:prev.tips||"",trips:prev.trips||"",hours:prev.hours||"",miles:prev.miles||"",lease:prev.lease||"",notes:prev.notes||""}));
-                }, style: {width:"100%",background:"#0A2030",border:"1px dashed #2A5070",borderRadius:8,padding:"8px 10px",color:"#5AACFF",fontSize:12,fontWeight:600,cursor:"pointer",marginTop:-4} }
+                }, style: {width:"100%",background:"#0A2030",border:"1px dashed #2A5070",borderRadius:8,padding:"8px 10px",color:C.accent2,fontSize:12,fontWeight:600,cursor:"pointer",marginTop:-4} }
                 , "📋 ", lang==="en"?"Copy from last entry ("+fmtDate(prev.date)+")":"复制上次记录 ("+fmtDate(prev.date)+")"
               );
             })()
@@ -5339,7 +5419,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
           , React.createElement('div', { style: {fontSize:13,color:C.text3,marginTop:6,marginBottom:-4} }, "🏷 " , lang==="en"?"Daily Cost":"当日成本")
           , React.createElement(Field, { label: (lang==="en"?"Lease / Rental":"班车租金")+" ($)", type: "number", value: dlf.lease, onChange: function(v){setDlf(Object.assign({},dlf,{lease:v}));}, money: true, placeholder: "0.00" })
           , React.createElement(Field, { label: T.notes, value: dlf.notes, onChange: function(v){setDlf(Object.assign({},dlf,{notes:v}));}, placeholder: T.optional })
-          , dlf.id ? React.createElement('button', { onClick: function(){confirmAction(lang==="en"?"Delete entry?":"删除记录？", lang==="en"?"This entry will be removed (with undo).":"此记录将被移除（可撤销）。", function(){var prev=dl.slice();setDl(dl.filter(function(x){return x.id!==dlf.id;}));setSf(null);showUndo((lang==="en"?"✓ Day deleted":"✓ 日记已删除"), {prevDl:prev});});}, style: {width:"100%",background:"#2A1010",border:"1px solid #5A2020",color:"#FF7060",fontSize:14,fontWeight:700,padding:"12px",borderRadius:10,cursor:"pointer",marginTop:8} }, "🗑 " , T.del) : null
+          , dlf.id ? React.createElement('button', { onClick: function(){confirmAction(lang==="en"?"Delete entry?":"删除记录？", lang==="en"?"This entry will be removed (with undo).":"此记录将被移除（可撤销）。", function(){var prev=dl.slice();setDl(dl.filter(function(x){return x.id!==dlf.id;}));setSf(null);showUndo((lang==="en"?"✓ Day deleted":"✓ 日记已删除"), {prevDl:prev});});}, style: {width:"100%",background:"#2A1010",border:"1px solid #5A2020",color:C.danger,fontSize:14,fontWeight:700,padding:"12px",borderRadius:10,cursor:"pointer",marginTop:8} }, "🗑 " , T.del) : null
         )
       ) : null
 
@@ -5405,7 +5485,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                     )
                   , React.createElement('button', {
                       onClick: function(){var t=today();setWcWeek(wkMon(t));setWcSel(t);},
-                      style: {background:wcSel===todayStr?"#0A4020":"#1A2A44",border:"1px solid "+(wcSel===todayStr?"#2A8050":"#2A4A6A"),borderRadius:8,padding:"8px 12px",color:wcSel===todayStr?"#5ADA7A":"#5AACFF",fontSize:12,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}
+                      style: {background:wcSel===todayStr?"#0A4020":C.border,border:"1px solid "+(wcSel===todayStr?"#2A8050":C.border2),borderRadius:8,padding:"8px 12px",color:wcSel===todayStr?"#5ADA7A":C.accent2,fontSize:12,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}
                     }, lang==="en"?"Today":"今天")
                   , React.createElement('button', { onClick: nextWeek, style: {background:C.bg3,border:"1px solid "+C.border,borderRadius:8,padding:"8px 14px",color:C.text,fontSize:14,cursor:"pointer"} }, "›")
                 )
@@ -5417,8 +5497,8 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                       var isToday = d===todayStr;
                       var dayNum = +d.slice(8);
                       // Color: green if has data, blue if selected, gray otherwise
-                      var bg = isSel ? "#1A3060" : (stats.hasData ? "#0A2018" : C.bg3);
-                      var bd = isSel ? "#00D4FF" : (stats.hasData ? "#2A6040" : C.border);
+                      var bg = isSel ? C.bg3 : (stats.hasData ? "#0A2018" : C.bg3);
+                      var bd = isSel ? C.accent : (stats.hasData ? "#2A6040" : C.border);
                       var fg = stats.hasData ? "#5ADA7A" : C.text2;
                       return React.createElement('button', {
                         key:d,
@@ -5426,7 +5506,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                         style: {background:bg,border:"1.5px solid "+bd,borderRadius:8,padding:"6px 2px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:2,minHeight:62}
                       },
                         React.createElement('div', {style:{fontSize:9,color:C.text3,letterSpacing:0.3}}, dayLabels[i]),
-                        React.createElement('div', {style:{fontSize:15,fontWeight:700,color:isSel?"#00D4FF":(stats.hasData?fg:C.text)}}, dayNum, isToday?React.createElement('span',{style:{color:"#FFD700",marginLeft:1,fontSize:10}},"•"):null),
+                        React.createElement('div', {style:{fontSize:15,fontWeight:700,color:isSel?C.accent:(stats.hasData?fg:C.text)}}, dayNum, isToday?React.createElement('span',{style:{color:C.gold,marginLeft:1,fontSize:10}},"•"):null),
                         stats.hasData ? React.createElement('div', {style:{fontSize:9,color:fg,fontWeight:600}}, "$"+Math.round(stats.inc)) : React.createElement('div', {style:{fontSize:9,color:C.text3}}, "—")
                       );
                     })
@@ -5448,7 +5528,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                   , React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10} }
                     , React.createElement('div', {style:{fontSize:14,fontWeight:700,color:C.text}},
                         "📝 ", wcSel,
-                        wcSel===todayStr ? React.createElement('span',{style:{fontSize:11,color:"#FFD700",marginLeft:6}}, lang==="en"?"(today)":"(今天)") : null
+                        wcSel===todayStr ? React.createElement('span',{style:{fontSize:11,color:C.gold,marginLeft:6}}, lang==="en"?"(today)":"(今天)") : null
                       )
                     , React.createElement('label', {style:{display:"flex",alignItems:"center",gap:6,fontSize:11,color:C.text3,cursor:"pointer"}}
                       , React.createElement('input',{type:"checkbox",checked:wcShowPlatform,onChange:function(e){setWcShowPlatform(e.target.checked);},style:{cursor:"pointer"}})
@@ -5473,10 +5553,10 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                             , React.createElement('button', {onClick:function(){
                                 setDlf(Object.assign({},{date:wcSel,mode:"rideshare",platform:"Uber",grossFare:"",tips:"",bonus:"",tollReimbursed:"",platformFee:"",trips:"",hours:"",miles:"",notes:""},e));
                                 setSf("dl_edit");
-                              }, style:{background:"none",border:"1px solid #2A4A6A",borderRadius:6,padding:"4px 10px",color:"#6AACEE",fontSize:12,cursor:"pointer"}}, T.edit)
+                              }, style:{background:"none",border:"1px solid "+C.border2,borderRadius:6,padding:"4px 10px",color:C.accent2,fontSize:12,cursor:"pointer"}}, T.edit)
                             , React.createElement('button', {onClick:function(){
                                 confirmAction(lang==="en"?"Delete entry?":"删除记录？", lang==="en"?"This entry will be removed.":"此条记录将被移除。", function(){deleteEntry(e.id);showToast(lang==="en"?"✓ Deleted":"✓ 已删除");});
-                              }, style:{background:"none",border:"1px solid #5A2020",borderRadius:6,padding:"4px 10px",color:"#FF5252",fontSize:12,cursor:"pointer"}}, T.del)
+                              }, style:{background:"none",border:"1px solid #5A2020",borderRadius:6,padding:"4px 10px",color:C.danger,fontSize:12,cursor:"pointer"}}, T.del)
                           )
                         );
                       })
@@ -5512,8 +5592,8 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                             , React.createElement('div', {style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6,paddingBottom:6,borderBottom:"1px solid "+C.border}}
                               , React.createElement('div', {style:{display:"flex",alignItems:"center",gap:8}}
                                 , React.createElement('span', {style:{fontSize:12,color:C.text3}}, dowLabel)
-                                , React.createElement('span', {style:{fontSize:14,fontWeight:700,color:isToday?"#FFD700":C.text}}, d.slice(5))
-                                , isToday?React.createElement('span',{style:{fontSize:10,color:"#FFD700"}},"•"):null
+                                , React.createElement('span', {style:{fontSize:14,fontWeight:700,color:isToday?C.gold:C.text}}, d.slice(5))
+                                , isToday?React.createElement('span',{style:{fontSize:10,color:C.gold}},"•"):null
                               )
                               , React.createElement('div', {style:{textAlign:"right"}}
                                 , React.createElement('div', {style:{fontSize:14,fontWeight:700,color:"#5ADA7A"}}, fmt(dayInc))
@@ -5529,7 +5609,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                                 var entryInc = (+e.grossFare||0)+(+e.tips||0)+(+e.bonus||0)+(+e.tollReimbursed||0);
                                 return React.createElement('div', {key:ei, style:{display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:12,padding:"3px 0"}}
                                   , React.createElement('div', {style:{display:"flex",alignItems:"center",gap:8,flex:1,minWidth:0}}
-                                    , React.createElement('span', {style:{fontSize:12,color:"#5AACFF",fontWeight:600}}, e.platform||"Uber")
+                                    , React.createElement('span', {style:{fontSize:12,color:C.accent2,fontWeight:600}}, e.platform||"Uber")
                                     , React.createElement('span', {style:{fontSize:10,color:C.text3}},
                                         e.trips?e.trips+(lang==="en"?" trips":" 趟"):"",
                                         e.hours?(e.trips?" · ":"")+e.hours+"h":"",
@@ -5544,7 +5624,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                                           setDlf(Object.assign({},{date:d,mode:"rideshare",platform:"Uber",grossFare:"",tips:"",bonus:"",tollReimbursed:"",platformFee:"",trips:"",hours:"",miles:"",notes:""},e));
                                           setSf("dl_edit");
                                         },
-                                        style: {background:"none",border:"none",color:"#6AACEE",fontSize:14,cursor:"pointer",padding:"0 4px"}
+                                        style: {background:"none",border:"none",color:C.accent2,fontSize:14,cursor:"pointer",padding:"0 4px"}
                                       }, "✎")
                                   )
                                 );
@@ -5613,7 +5693,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
             )
           )
           , React.createElement(Field, { label: T.notes, value: dlf.notes||"", onChange: function(v){setDlf(Object.assign({},dlf,{notes:v}));}, placeholder: T.optional })
-          , dlf.id ? React.createElement('button', { onClick: function(){confirmAction(lang==="en"?"Delete entry?":"删除记录？", lang==="en"?"This entry will be removed.":"此条记录将被移除。", function(){setDl(dl.filter(function(x){return x.id!==dlf.id;}));setSf("week_cal");showToast(lang==="en"?"✓ Deleted":"✓ 已删除");});}, style: {width:"100%",background:"#2A1010",border:"1px solid #5A2020",color:"#FF7060",fontSize:14,fontWeight:700,padding:"12px",borderRadius:10,cursor:"pointer",marginTop:8} }, "🗑 " + (lang==="en"?"Delete":"删除")) : null
+          , dlf.id ? React.createElement('button', { onClick: function(){confirmAction(lang==="en"?"Delete entry?":"删除记录？", lang==="en"?"This entry will be removed.":"此条记录将被移除。", function(){setDl(dl.filter(function(x){return x.id!==dlf.id;}));setSf("week_cal");showToast(lang==="en"?"✓ Deleted":"✓ 已删除");});}, style: {width:"100%",background:"#2A1010",border:"1px solid #5A2020",color:C.danger,fontSize:14,fontWeight:700,padding:"12px",borderRadius:10,cursor:"pointer",marginTop:8} }, "🗑 " + (lang==="en"?"Delete":"删除")) : null
         )
       ) : null
 
@@ -5671,7 +5751,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                   )
               )
             )
-          , (wf.id||wf.weekStart) ? React.createElement('button', { onClick: function(){confirmAction(lang==="en"?"Delete week record?":"删除周记录？", lang==="en"?"This entry will be removed (with undo).":"此记录将被移除（可撤销）。", function(){var prev=wl.slice();setWl(wl.filter(function(x){if(wf.id){return x.id!==wf.id;}return !(x.weekStart===wf.weekStart&&x.platform===wf.platform);}));setSf(null);showUndo((lang==="en"?"✓ Week deleted":"✓ 周记录已删除"), {prevWl:prev});});}, style: {width:"100%",background:"#2A1010",border:"1px solid #5A2020",color:"#FF7060",fontSize:14,fontWeight:700,padding:"12px",borderRadius:10,cursor:"pointer",marginTop:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 492}}, "🗑 " , lang==="en"?"Delete":"删除") : null
+          , (wf.id||wf.weekStart) ? React.createElement('button', { onClick: function(){confirmAction(lang==="en"?"Delete week record?":"删除周记录？", lang==="en"?"This entry will be removed (with undo).":"此记录将被移除（可撤销）。", function(){var prev=wl.slice();setWl(wl.filter(function(x){if(wf.id){return x.id!==wf.id;}return !(x.weekStart===wf.weekStart&&x.platform===wf.platform);}));setSf(null);showUndo((lang==="en"?"✓ Week deleted":"✓ 周记录已删除"), {prevWl:prev});});}, style: {width:"100%",background:"#2A1010",border:"1px solid #5A2020",color:C.danger,fontSize:14,fontWeight:700,padding:"12px",borderRadius:10,cursor:"pointer",marginTop:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 492}}, "🗑 " , lang==="en"?"Delete":"删除") : null
         )
       ) : null
 
@@ -5734,7 +5814,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
             )
           )
           , React.createElement(Field, { label: T.notes, value: stf.notes||"", onChange: function(v){setStf(Object.assign({},stf,{notes:v}));}, placeholder: T.optional, __self: this, __source: {fileName: _jsxFileName, lineNumber: 515}} )
-          , (stf.id||stf.month) ? React.createElement('button', { onClick: function(){confirmAction(lang==="en"?"Delete statement?":"删除月账单？", lang==="en"?"This statement will be removed (with undo).":"此月账单将被移除（可撤销）。", function(){var prev=sl.slice();setSl(sl.filter(function(x){if(stf.id){return x.id!==stf.id;}return !(x.month===stf.month&&x.platform===stf.platform);}));setSf(null);showUndo((lang==="en"?"✓ Statement deleted":"✓ 月度账单已删除"), {prevSl:prev});});}, style: {width:"100%",background:"#2A1010",border:"1px solid #5A2020",color:"#FF7060",fontSize:14,fontWeight:700,padding:"12px",borderRadius:10,cursor:"pointer",marginTop:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 516}}, "🗑 " , lang==="en"?"Delete":"删除") : null
+          , (stf.id||stf.month) ? React.createElement('button', { onClick: function(){confirmAction(lang==="en"?"Delete statement?":"删除月账单？", lang==="en"?"This statement will be removed (with undo).":"此月账单将被移除（可撤销）。", function(){var prev=sl.slice();setSl(sl.filter(function(x){if(stf.id){return x.id!==stf.id;}return !(x.month===stf.month&&x.platform===stf.platform);}));setSf(null);showUndo((lang==="en"?"✓ Statement deleted":"✓ 月度账单已删除"), {prevSl:prev});});}, style: {width:"100%",background:"#2A1010",border:"1px solid #5A2020",color:C.danger,fontSize:14,fontWeight:700,padding:"12px",borderRadius:10,cursor:"pointer",marginTop:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 516}}, "🗑 " , lang==="en"?"Delete":"删除") : null
         )
       ) : null
 
@@ -5765,32 +5845,53 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
           );
         }()) : null
 
-      , sf==="quick_park" ? (function(){
-          var lastEntry=el.filter(function(e){return e.category==="parking";}).sort(function(a,b){return (b.date||"").localeCompare(a.date||"");})[0];
-          return React.createElement(Modal, {title:lang==="en"?"🅿️ Quick Park":"🅿️ 快速停车", onClose:function(){setSf(null);setQuickF({});}, onSave:function(){
+      , sf==="quick_coffee" ? (function(){
+          var lastEntry=el.filter(function(e){return e.category==="coffee";}).sort(function(a,b){return (b.date||"").localeCompare(a.date||"");})[0];
+          return React.createElement(Modal, {title:lang==="en"?"☕ Quick Coffee":"☕ 快速咖啡", onClose:function(){setSf(null);setQuickF({});}, onSave:function(){
             if(!quickF.amount){showToast(lang==="en"?"Enter amount":"请输入金额");return;}
-            var newEntry={id:Date.now(),date:today(),time:nowTime(),category:"parking",amount:+quickF.amount,notes:quickF.notes||"",vehicleId:veh.vehicleId};
+            var newEntry={id:Date.now(),date:today(),time:nowTime(),category:"coffee",amount:+quickF.amount,notes:quickF.notes||"",vehicleId:veh.vehicleId};
             var nel=[newEntry].concat(el);
             setEl(nel);autoSave({el:nel});
             setSf(null);setQuickF({});
             showToast(lang==="en"?"✓ Saved":"✓ 已保存");
           }}
             , React.createElement(Field, {label:lang==="en"?"Amount ($)":"金额 ($)", type:"number", value:quickF.amount||"", onChange:function(v){setQuickF(Object.assign({},quickF,{amount:v}));}, money:true, placeholder:lastEntry?"last "+(+lastEntry.amount).toFixed(2):"0.00"})
-            , React.createElement(Field, {label:lang==="en"?"Location":"地点", value:quickF.notes||"", onChange:function(v){setQuickF(Object.assign({},quickF,{notes:v}));}, placeholder:T.optional})
+            , React.createElement(Field, {label:T.notes, value:quickF.notes||"", onChange:function(v){setQuickF(Object.assign({},quickF,{notes:v}));}, placeholder:T.optional})
           );
         }()) : null
 
-      , sf==="quick_food" ? (function(){
-          var lastEntry=el.filter(function(e){return e.category==="meals";}).sort(function(a,b){return (b.date||"").localeCompare(a.date||"");})[0];
-          return React.createElement(Modal, {title:lang==="en"?"🍔 Quick Meal":"🍔 快速吃饭", onClose:function(){setSf(null);setQuickF({});}, onSave:function(){
+      , sf==="quick_tip" ? (function(){
+          // Cash tip from passenger — adds to today's daily log (or creates new dl entry)
+          var todayStr=today();
+          var todayDl=dl.find(function(d){return d.date===todayStr;});
+          var lastTip=dl.filter(function(d){return +d.tips>0;}).sort(function(a,b){return (b.date||"").localeCompare(a.date||"");})[0];
+          return React.createElement(Modal, {title:lang==="en"?"💵 Cash Tip":"💵 现金小费", onClose:function(){setSf(null);setQuickF({});}, onSave:function(){
             if(!quickF.amount){showToast(lang==="en"?"Enter amount":"请输入金额");return;}
-            var newEntry={id:Date.now(),date:today(),time:nowTime(),category:"meals",amount:+quickF.amount,notes:quickF.notes||"",vehicleId:veh.vehicleId};
-            var nel=[newEntry].concat(el);
-            setEl(nel);autoSave({el:nel});
+            var amt=+quickF.amount;
+            if(todayDl){
+              // Add to existing today's daily log
+              var ndl=dl.map(function(d){
+                if(d.date===todayStr){
+                  return Object.assign({},d,{tips:((+d.tips||0)+amt).toFixed(2), notes:(d.notes||"")+(quickF.notes?" · "+quickF.notes:"")});
+                }
+                return d;
+              });
+              setDl(ndl);autoSave({dl:ndl});
+              showToast(lang==="en"?("✓ Added $"+amt.toFixed(2)+" to today's tips"):("✓ 加入今日小费 $"+amt.toFixed(2)));
+            } else {
+              // Create new daily log entry for today, rideshare mode, only tips field filled
+              var newDl={id:Date.now(),date:todayStr,mode:"rideshare",tips:amt.toFixed(2),grossFare:"",bonus:"",tollReimbursed:"",cash:"",card:"",lease:"",hours:"",miles:"",notes:quickF.notes||(lang==="en"?"Cash tips":"现金小费"),vehicleId:veh.vehicleId};
+              var ndl=[newDl].concat(dl);
+              setDl(ndl);autoSave({dl:ndl});
+              showToast(lang==="en"?("✓ $"+amt.toFixed(2)+" tip recorded for today"):("✓ 今日记入小费 $"+amt.toFixed(2)));
+            }
             setSf(null);setQuickF({});
-            showToast(lang==="en"?"✓ Saved":"✓ 已保存");
           }}
-            , React.createElement(Field, {label:lang==="en"?"Amount ($)":"金额 ($)", type:"number", value:quickF.amount||"", onChange:function(v){setQuickF(Object.assign({},quickF,{amount:v}));}, money:true, placeholder:lastEntry?"last "+(+lastEntry.amount).toFixed(2):"0.00"})
+            , React.createElement('div', {style:{fontSize:11,color:C.text3,marginBottom:8,padding:"8px 10px",background:C.bg3,borderRadius:8,lineHeight:1.5}}
+              , todayDl ? (lang==="en"?"➕ Adds to today's daily log":"➕ 加入今天日记的小费") : (lang==="en"?"📝 Creates today's daily log entry":"📝 新建今日日记账")
+              , React.createElement('div', {style:{fontSize:10,color:C.text3,marginTop:3}}, lang==="en"?"Cash tips count toward income (not the same as Uber app tips)":"现金小费算收入（与 Uber app 内小费分开）")
+            )
+            , React.createElement(Field, {label:lang==="en"?"Tip Amount ($)":"小费金额 ($)", type:"number", value:quickF.amount||"", onChange:function(v){setQuickF(Object.assign({},quickF,{amount:v}));}, money:true, placeholder:lastTip?"last "+(+lastTip.tips).toFixed(2):"0.00"})
             , React.createElement(Field, {label:T.notes, value:quickF.notes||"", onChange:function(v){setQuickF(Object.assign({},quickF,{notes:v}));}, placeholder:T.optional})
           );
         }()) : null
@@ -5846,17 +5947,21 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                 onChange:function(e){setSearchQ(e.target.value);},
                 autoFocus:true,
                 placeholder:lang==="en"?"Search amount, category, platform, notes...":"搜金额、类别、平台、备注...",
-                style:{width:"100%",padding:"12px 14px",fontSize:16,background:C.bg2,border:"1px solid "+C.border,borderRadius:10,color:C.text,marginBottom:12,boxSizing:"border-box"}
+                style:{width:"100%",padding:"14px 16px",fontSize:16,background:C.bg4,border:"1px solid "+C.border2,borderRadius:RADIUS.md,color:C.text,marginBottom:14,boxSizing:"border-box",boxShadow:SHADOW.sm,transition:"border-color 0.15s"}
               })
-            , q.length === 0 ? React.createElement('div', {style:{fontSize:13,color:C.text3,textAlign:"center",padding:"30px 10px",lineHeight:1.6}}
+            , q.length === 0 ? React.createElement('div', {style:{fontSize:FS.md+1,color:C.text3,textAlign:"center",padding:"40px 14px",lineHeight:1.7}}
+                , React.createElement('div',{style:{fontSize:48,marginBottom:14,opacity:0.4}}, "🔍")
                 , lang==="en"?"Type to search across all your records.":"输入关键词搜索所有记录。"
                 , React.createElement('br')
-                , React.createElement('span',{style:{fontSize:11,color:C.text3}}, lang==="en"?"Try: \"uber\", \"100\", \"parking\", \"2025-08\"":"试试: \"uber\"、\"100\"、\"停车\"、\"2025-08\"")
-              ) : hits.length === 0 ? React.createElement('div', {style:{fontSize:13,color:C.text3,textAlign:"center",padding:"30px 10px"}}, lang==="en"?"No matches.":"没找到。")
+                , React.createElement('span',{style:{fontSize:FS.sm+1,color:C.text3,opacity:0.7}}, lang==="en"?"Try: \"uber\", \"100\", \"parking\", \"2025-08\"":"试试: \"uber\"、\"100\"、\"停车\"、\"2025-08\"")
+              ) : hits.length === 0 ? React.createElement('div', {style:{fontSize:FS.md+1,color:C.text3,textAlign:"center",padding:"40px 14px"}}
+                , React.createElement('div',{style:{fontSize:48,marginBottom:14,opacity:0.4}}, "🤷")
+                , lang==="en"?"No matches.":"没找到。"
+              )
               : React.createElement('div', null
-                , React.createElement('div', {style:{fontSize:11,color:C.text3,marginBottom:8,letterSpacing:0.3}}, lang==="en"?(hits.length+" RESULT"+(hits.length>1?"S":"")):(hits.length+" 条结果"))
+                , React.createElement('div', {style:{fontSize:FS.xs+1,color:C.text3,marginBottom:10,letterSpacing:1.2,textTransform:"uppercase",fontWeight:600}}, lang==="en"?(hits.length+" Result"+(hits.length>1?"s":"")):(hits.length+" 条结果"))
                 , hits.map(function(h,i){
-                    return React.createElement('div', {key:i, style:{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",background:C.bg2,borderRadius:8,marginBottom:6,cursor:"pointer"}, onClick:function(){
+                    return React.createElement('div', {key:i, style:{display:"flex",alignItems:"center",gap:12,padding:"12px 14px",background:C.bg2,borderRadius:RADIUS.md,marginBottom:8,cursor:"pointer",border:"1px solid "+C.border,boxShadow:SHADOW.sm,transition:"all 0.15s"}, onClick:function(){
                       // Navigate to relevant tab and close search
                       setSearchOpen(false);setSearchQ("");
                       if(h.type==="exp"){ setEf(Object.assign({},h.raw)); setSf("exp_edit_"+h.raw.id); }
@@ -5864,12 +5969,12 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                       else if(h.type==="week"){ setWf(Object.assign({},h.raw)); setSf("week"); }
                       else if(h.type==="daily"){ setDlf(Object.assign({},h.raw)); setSf("daily"); }
                     }}
-                      , React.createElement('div', {style:{fontSize:20,width:32,textAlign:"center",flexShrink:0}}, h.icon)
+                      , React.createElement('div', {style:{fontSize:22,width:36,textAlign:"center",flexShrink:0}}, h.icon)
                       , React.createElement('div', {style:{flex:1,minWidth:0}}
                         , React.createElement('div', {style:{fontSize:13,fontWeight:700,color:C.text,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}, h.title)
                         , React.createElement('div', {style:{fontSize:11,color:C.text3,marginTop:2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}, h.date, h.sub?" · "+h.sub:"")
                       )
-                      , React.createElement('div', {style:{fontSize:13,fontWeight:700,color:h.type==="exp"?"#FF7060":"#00E676",flexShrink:0}}, fmt(h.amount))
+                      , React.createElement('div', {style:{fontSize:13,fontWeight:700,color:h.type==="exp"?C.danger:C.success,flexShrink:0}}, fmt(h.amount))
                     );
                   })
               )
@@ -5936,10 +6041,10 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                 }
               }
               var unitSuffix = catKey==="charging" ? "/kWh" : "/Gal";
-              return React.createElement('div', {style:{background:"#0A1828",border:"1px solid #2A4A6A",borderRadius:10,padding:"8px 10px",marginBottom:6}}
+              return React.createElement('div', {style:{background:C.bg3,border:"1px solid "+C.border2,borderRadius:10,padding:"8px 10px",marginBottom:6}}
                 , React.createElement('div', {style:{fontSize:11,color:C.text3,marginBottom:6,letterSpacing:0.3}}
                   , "💡 ", isUnitMode ? (lang==="en"?"Recent unit prices · tap to use ":"最近单价 · 点击使用 ") : (lang==="en"?"Recent prices · tap to use ":"最近价格 · 点击使用 ")
-                  , React.createElement('b',{style:{color:"#5AACFF"}}, (allC[catKey]||{}).label || catKey)
+                  , React.createElement('b',{style:{color:C.accent2}}, (allC[catKey]||{}).label || catKey)
                   , noteKey ? " · \"" + (ef.notes||"") + "\"" : ""
                 )
                 , React.createElement('div', {style:{display:"flex",gap:6,flexWrap:"wrap"}}
@@ -5966,7 +6071,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                             setEf(Object.assign({},ef,{amount:String(displayVal),_editOrder:((ef._editOrder||[]).filter(function(f){return f!=="amount";})).concat(["amount"])}));
                           }
                         },
-                        style: {flex:"1 1 0",minWidth:0,background:isCurrent?"#0A4020":"#0A2840",border:"1px solid "+(isCurrent?"#2A8050":"#2A5080"),borderRadius:8,padding:"6px 8px",color:isCurrent?"#5ADA7A":"#5AACFF",fontSize:13,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",textAlign:"center"}
+                        style: {flex:"1 1 0",minWidth:0,background:isCurrent?"#0A4020":"#0A2840",border:"1px solid "+(isCurrent?"#2A8050":"#2A5080"),borderRadius:8,padding:"6px 8px",color:isCurrent?"#5ADA7A":C.accent2,fontSize:13,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",textAlign:"center"}
                       }, isCurrent?"✓ ":"", "$" + valStr, isUnitMode?React.createElement('span',{style:{fontSize:10,color:C.text3,marginLeft:1}},unitSuffix):null, React.createElement('span', {style:{fontSize:9,color:C.text3,marginLeft:3}}, m.date?(m.date.slice(5)+"-"+m.date.slice(2,4)):""));
                     })
                 )
@@ -5977,8 +6082,8 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
           , React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 521}}
             
             , React.createElement('div', { style: {display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:5,marginBottom:5}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 523}}
-              , [["车辆","&#128663;","#00D4FF","Vehicle"],["牌照","&#128203;","#FFD700","License"],["平台","&#128241;","#AB47BC","Platform"],["其他","&#128188;","#B0D4E8","Other"]].map(function(gb){
-                var isA=selGrp===gb[0],bdCol=isA?gb[2]:"#243550",bgCol=isA?"#0A2040":"#0F1829",textCol=isA?gb[2]:C.text2,fw=isA?700:400;
+              , [["车辆","&#128663;",C.accent,"Vehicle"],["牌照","&#128203;",C.gold,"License"],["平台","&#128241;","#AB47BC","Platform"],["其他","&#128188;","#B0D4E8","Other"]].map(function(gb){
+                var isA=selGrp===gb[0],bdCol=isA?gb[2]:C.border,bgCol=isA?"#0A2040":"#0F1829",textCol=isA?gb[2]:C.text2,fw=isA?700:400;
                 var lbl=lang==="en"?gb[3]:gb[0];
                 return React.createElement('button', { key: gb[0], onClick: function(){setSelGrp(gb[0]);var first=Object.entries(allC).find(function(e){if(veh.type==="electric"&&e[0]==="fuel")return false;if(veh.type==="petrol"&&e[0]==="charging")return false;if(veh.type==="electric"&&e[0]==="oil")return false;return e[1].g===gb[0];});if(first)setEf(Object.assign({},ef,{category:first[0],amount:"",qty:"",unitPrice:"",chargedTo:"",_editOrder:[],_lastPrefillKey:"",_lastPrefillAmt:""}));}, style: {padding:"4px 2px",borderRadius:6,border:"1.5px solid "+bdCol,background:bgCol,color:textCol,fontSize:11,fontWeight:fw,cursor:"pointer",textAlign:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 527}}
                   , React.createElement('div', { style: {fontSize:14,marginBottom:0}, dangerouslySetInnerHTML: {__html:gb[1]}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 528}} ), React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 528}}, lbl)
@@ -5989,10 +6094,10 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
               , React.createElement('select', { value: ef.category, onChange: function(e){setEf(Object.assign({},ef,{category:e.target.value,amount:"",qty:"",unitPrice:"",chargedTo:"",_editOrder:[],_lastPrefillKey:"",_lastPrefillAmt:""}));}, style: Object.assign({},IS,{flex:1}), __self: this, __source: {fileName: _jsxFileName, lineNumber: 533}}
                 , Object.entries(allC).filter(function(e){if(veh.type==="electric"&&e[0]==="fuel")return false;if(veh.type==="petrol"&&e[0]==="charging")return false;if(veh.type==="electric"&&e[0]==="oil")return false;return e[1].g===selGrp;}).map(function(e){return React.createElement('option', { key: e[0], value: e[0], __self: this, __source: {fileName: _jsxFileName, lineNumber: 534}}, e[1].icon, " " , e[1].label);})
               )
-              , React.createElement('button', { onClick: function(){setCf({label:"",icon:"&#128296;",group:selGrp,_returnTo:"exp"});setSf("cc");}, style: {flexShrink:0,width:38,height:38,borderRadius:8,border:"2px dashed #2A4A6A",background:C.bg3,color:"#6AACEE",fontSize:18,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 536}}, "+")
+              , React.createElement('button', { onClick: function(){setCf({label:"",icon:"&#128296;",group:selGrp,_returnTo:"exp"});setSf("cc");}, style: {flexShrink:0,width:38,height:38,borderRadius:8,border:"2px dashed #2A4A6A",background:C.bg3,color:C.accent2,fontSize:18,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 536}}, "+")
             )
           )
-          , (function(){var c=allC[ef.category],isMo=c&&c.mo;var isPlatformCat=c&&c.g==="平台";if(isMo){return React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 539}}, React.createElement('div', { style: {background:"#0A1428",border:"1px solid #1A3060",borderRadius:10,padding:"10px 13px",fontSize:14,color:C.text2,marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 539}}, lang==="en"?"Monthly billing item":"月结项目"), React.createElement(Field, { label: lang==="en"?"Billing Month":"账单月份", type: "month", value: ef.statementMonth, onChange: function(v){setEf(Object.assign({},ef,{statementMonth:v}));}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 539}} ), isPlatformCat ? React.createElement(Field, { label: T.platform_lbl, value: ef.platform||"", onChange: function(v){if(v==="__new__"){inputAction({title:lang==="en"?"New platform name":"新平台名称",placeholder:lang==="en"?"e.g. Curb, Via":"如 Curb, Via",onSubmit:function(n){if(n&&n.trim()){var nm=n.trim();if(allPlat.indexOf(nm)<0)setCustPlat(custPlat.concat([nm]));setEf(Object.assign({},ef,{platform:nm}));}}});return;}setEf(Object.assign({},ef,{platform:v}));}, options: [["",T.pleaseSelect]].concat(allPlat.map(function(p){return [p, p==="其他"&&lang==="en"?"Other":p];})).concat([["__new__",lang==="en"?"+ Add new platform...":"+ 添加新平台..."]]) }) : null);}var todayStr=today();var ydayDate=new Date();ydayDate.setDate(ydayDate.getDate()-1);var ydayStr=ydayDate.getFullYear()+"-"+p2(ydayDate.getMonth()+1)+"-"+p2(ydayDate.getDate());var dbyDate=new Date();dbyDate.setDate(dbyDate.getDate()-2);var dbyStr=dbyDate.getFullYear()+"-"+p2(dbyDate.getMonth()+1)+"-"+p2(dbyDate.getDate());var quickBtn=function(label,onClick,active){return React.createElement('button',{onClick:onClick,style:{flex:1,background:active?"#1A3060":"#0A1828",border:"1px solid "+(active?"#00D4FF":"#2A3A54"),borderRadius:6,padding:"4px 6px",color:active?"#00D4FF":"#90B8D0",fontSize:12,fontWeight:active?700:500,cursor:"pointer"}},label);};return React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 539}}, React.createElement('div',{style:{display:"flex",gap:5,marginBottom:5}},quickBtn(lang==="en"?"Today":"今天",function(){setEf(Object.assign({},ef,{date:todayStr,time:nowTime()}));},ef.date===todayStr),quickBtn(lang==="en"?"Yesterday":"昨天",function(){setEf(Object.assign({},ef,{date:ydayStr}));},ef.date===ydayStr),quickBtn(lang==="en"?"2 days ago":"前天",function(){setEf(Object.assign({},ef,{date:dbyStr}));},ef.date===dbyStr),quickBtn(lang==="en"?"Now":"现在",function(){setEf(Object.assign({},ef,{time:nowTime()}));})), React.createElement('div', {style:{display:"grid",gridTemplateColumns:"3fr 2fr",gap:6}}, React.createElement('input', { type: "date", value: ef.date, onChange: function(e){setEf(Object.assign({},ef,{date:e.target.value}));}, onClick: function(e){try{if(e.currentTarget.showPicker)e.currentTarget.showPicker();}catch(err){}}, style: Object.assign({},IS,{colorScheme:"dark",fontSize:13,padding:"8px",cursor:"pointer"}) } ), React.createElement('input', { type: "time", value: ef.time, onChange: function(e){setEf(Object.assign({},ef,{time:e.target.value}));}, onClick: function(e){try{if(e.currentTarget.showPicker)e.currentTarget.showPicker();}catch(err){}}, style: Object.assign({},IS,{colorScheme:"dark",fontSize:13,padding:"8px",cursor:"pointer"}) } )), isPlatformCat ? React.createElement(Field, { label: T.platform_lbl, value: ef.platform||"", onChange: function(v){if(v==="__new__"){inputAction({title:lang==="en"?"New platform name":"新平台名称",placeholder:lang==="en"?"e.g. Curb, Via":"如 Curb, Via",onSubmit:function(n){if(n&&n.trim()){var nm=n.trim();if(allPlat.indexOf(nm)<0)setCustPlat(custPlat.concat([nm]));setEf(Object.assign({},ef,{platform:nm}));}}});return;}setEf(Object.assign({},ef,{platform:v}));}, options: [["",T.pleaseSelect]].concat(allPlat.map(function(p){return [p, p==="其他"&&lang==="en"?"Other":p];})).concat([["__new__",lang==="en"?"+ Add new platform...":"+ 添加新平台..."]]) }) : null);}())
+          , (function(){var c=allC[ef.category],isMo=c&&c.mo;var isPlatformCat=c&&c.g==="平台";if(isMo){return React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 539}}, React.createElement('div', { style: {background:"#0A1428",border:"1px solid #1A3060",borderRadius:10,padding:"10px 13px",fontSize:14,color:C.text2,marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 539}}, lang==="en"?"Monthly billing item":"月结项目"), React.createElement(Field, { label: lang==="en"?"Billing Month":"账单月份", type: "month", value: ef.statementMonth, onChange: function(v){setEf(Object.assign({},ef,{statementMonth:v}));}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 539}} ), isPlatformCat ? React.createElement(Field, { label: T.platform_lbl, value: ef.platform||"", onChange: function(v){if(v==="__new__"){inputAction({title:lang==="en"?"New platform name":"新平台名称",placeholder:lang==="en"?"e.g. Curb, Via":"如 Curb, Via",onSubmit:function(n){if(n&&n.trim()){var nm=n.trim();if(allPlat.indexOf(nm)<0)setCustPlat(custPlat.concat([nm]));setEf(Object.assign({},ef,{platform:nm}));}}});return;}setEf(Object.assign({},ef,{platform:v}));}, options: [["",T.pleaseSelect]].concat(allPlat.map(function(p){return [p, p==="其他"&&lang==="en"?"Other":p];})).concat([["__new__",lang==="en"?"+ Add new platform...":"+ 添加新平台..."]]) }) : null);}var todayStr=today();var ydayDate=new Date();ydayDate.setDate(ydayDate.getDate()-1);var ydayStr=ydayDate.getFullYear()+"-"+p2(ydayDate.getMonth()+1)+"-"+p2(ydayDate.getDate());var dbyDate=new Date();dbyDate.setDate(dbyDate.getDate()-2);var dbyStr=dbyDate.getFullYear()+"-"+p2(dbyDate.getMonth()+1)+"-"+p2(dbyDate.getDate());var quickBtn=function(label,onClick,active){return React.createElement('button',{onClick:onClick,style:{flex:1,background:active?C.bg3:C.bg3,border:"1px solid "+(active?C.accent:"#2A3A54"),borderRadius:6,padding:"4px 6px",color:active?C.accent:C.text2,fontSize:12,fontWeight:active?700:500,cursor:"pointer"}},label);};return React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 539}}, React.createElement('div',{style:{display:"flex",gap:5,marginBottom:5}},quickBtn(lang==="en"?"Today":"今天",function(){setEf(Object.assign({},ef,{date:todayStr,time:nowTime()}));},ef.date===todayStr),quickBtn(lang==="en"?"Yesterday":"昨天",function(){setEf(Object.assign({},ef,{date:ydayStr}));},ef.date===ydayStr),quickBtn(lang==="en"?"2 days ago":"前天",function(){setEf(Object.assign({},ef,{date:dbyStr}));},ef.date===dbyStr),quickBtn(lang==="en"?"Now":"现在",function(){setEf(Object.assign({},ef,{time:nowTime()}));})), React.createElement('div', {style:{display:"grid",gridTemplateColumns:"3fr 2fr",gap:6}}, React.createElement('input', { type: "date", value: ef.date, onChange: function(e){setEf(Object.assign({},ef,{date:e.target.value}));}, onClick: function(e){try{if(e.currentTarget.showPicker)e.currentTarget.showPicker();}catch(err){}}, style: Object.assign({},IS,{colorScheme:"dark",fontSize:13,padding:"8px",cursor:"pointer"}) } ), React.createElement('input', { type: "time", value: ef.time, onChange: function(e){setEf(Object.assign({},ef,{time:e.target.value}));}, onClick: function(e){try{if(e.currentTarget.showPicker)e.currentTarget.showPicker();}catch(err){}}, style: Object.assign({},IS,{colorScheme:"dark",fontSize:13,padding:"8px",cursor:"pointer"}) } )), isPlatformCat ? React.createElement(Field, { label: T.platform_lbl, value: ef.platform||"", onChange: function(v){if(v==="__new__"){inputAction({title:lang==="en"?"New platform name":"新平台名称",placeholder:lang==="en"?"e.g. Curb, Via":"如 Curb, Via",onSubmit:function(n){if(n&&n.trim()){var nm=n.trim();if(allPlat.indexOf(nm)<0)setCustPlat(custPlat.concat([nm]));setEf(Object.assign({},ef,{platform:nm}));}}});return;}setEf(Object.assign({},ef,{platform:v}));}, options: [["",T.pleaseSelect]].concat(allPlat.map(function(p){return [p, p==="其他"&&lang==="en"?"Other":p];})).concat([["__new__",lang==="en"?"+ Add new platform...":"+ 添加新平台..."]]) }) : null);}())
           // === SMART 3-WAY CALC for fuel/charging ===
           // Fill any 2 of {amount, qty, unitPrice} → 3rd auto-calculates.
           // Track manual edit order in ef._editOrder (last 2 = manual; the other = auto).
@@ -6046,8 +6151,8 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
               var smartField=function(opts){
                 var isAuto=(opts.field===autoField);
                 var inputStyle=Object.assign({},IS,isAuto?{borderColor:"#2A8050",background:"#0A2018",color:"#5ADA7A"}:{});
-                return React.createElement('label',{key:opts.field,style:{display:"flex",flexDirection:"column",gap:4,fontSize:12,color:"#C8E8F8",fontWeight:500}},
-                  React.createElement('span',null,opts.label,isAuto?React.createElement('span',{style:{background:"#2A8050",color:"#0A1828",fontSize:10,padding:"1px 6px",borderRadius:5,fontWeight:700,marginLeft:6,letterSpacing:0.05}},lang==="en"?"AUTO":"自动"):null),
+                return React.createElement('label',{key:opts.field,style:{display:"flex",flexDirection:"column",gap:4,fontSize:12,color:C.text2,fontWeight:500}},
+                  React.createElement('span',null,opts.label,isAuto?React.createElement('span',{style:{background:"#2A8050",color:C.bg3,fontSize:10,padding:"1px 6px",borderRadius:5,fontWeight:700,marginLeft:6,letterSpacing:0.05}},lang==="en"?"AUTO":"自动"):null),
                   React.createElement('input',{type:"number",inputMode:"decimal",step:opts.step||"0.01",value:opts.value||"",placeholder:opts.placeholder||"",onChange:function(e){setSmart(opts.field,e.target.value);},style:inputStyle})
                 );
               };
@@ -6105,12 +6210,12 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
               var alreadyFav=favs.some(function(f){return f.toLowerCase()===currentNotes.toLowerCase();});
               var addFav=function(){if(!currentNotes||alreadyFav)return;var newFavs=Object.assign({},favNotes);newFavs[catKey]=(newFavs[catKey]||[]).concat([currentNotes]);setFavNotes(newFavs);};
               var removeFav=function(item){var newFavs=Object.assign({},favNotes);newFavs[catKey]=(newFavs[catKey]||[]).filter(function(x){return x!==item;});setFavNotes(newFavs);};
-              return React.createElement('label',{style:{display:"flex",flexDirection:"column",gap:6,fontSize:12,color:"#C8E8F8",fontWeight:500,position:"relative"}},
+              return React.createElement('label',{style:{display:"flex",flexDirection:"column",gap:6,fontSize:12,color:C.text2,fontWeight:500,position:"relative"}},
                 T.notes,
                 React.createElement('div',{style:{position:"relative"}},
                   React.createElement('input',{type:"text",value:ef.notes||"",onChange:function(e){setEf(Object.assign({},ef,{notes:e.target.value}));},placeholder:T.optional,style:Object.assign({},IS,{paddingRight:favs.length>0?(currentNotes&&!alreadyFav?"82px":"40px"):(currentNotes&&!alreadyFav?"42px":undefined)})}),
                   // ⭐ Star button: only shows when there's text not already saved
-                  currentNotes&&!alreadyFav?React.createElement('button',{type:"button",onClick:addFav,title:lang==="en"?"Save as favorite":"添加为常用",style:{position:"absolute",right:favs.length>0?42:6,top:4,background:"#0A2010",border:"1px solid #2A6030",color:"#FFD700",borderRadius:6,width:32,height:32,cursor:"pointer",fontSize:14,padding:0}},"⭐"):null,
+                  currentNotes&&!alreadyFav?React.createElement('button',{type:"button",onClick:addFav,title:lang==="en"?"Save as favorite":"添加为常用",style:{position:"absolute",right:favs.length>0?42:6,top:4,background:"#0A2010",border:"1px solid #2A6030",color:C.gold,borderRadius:6,width:32,height:32,cursor:"pointer",fontSize:14,padding:0}},"⭐"):null,
                   // ⏷ Globally searchable dropdown across all categories
                   (function(){
                     // Collect ALL favorites with their category
@@ -6143,12 +6248,12 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                         }
                       }
                     },
-                      React.createElement('summary',{style:{listStyle:"none",cursor:"pointer",background:"#1A2A44",border:"1px solid #2A4A6A",borderRadius:6,width:32,height:32,display:"flex",alignItems:"center",justifyContent:"center",color:"#00D4FF",fontSize:14}},"⏷"),
+                      React.createElement('summary',{style:{listStyle:"none",cursor:"pointer",background:C.border,border:"1px solid "+C.border2,borderRadius:6,width:32,height:32,display:"flex",alignItems:"center",justifyContent:"center",color:C.accent,fontSize:14}},"⏷"),
                       // Open UPWARD (bottom-anchored) — avoids covering the "Add as fixed monthly" toggle below notes
                       React.createElement('div',{style:{position:"absolute",right:0,bottom:36,background:C.bg2,border:"1px solid "+C.border,borderRadius:10,width:300,maxHeight:380,overflowY:"auto",boxShadow:"0 -4px 20px rgba(0,0,0,0.5)",zIndex:100}},
                         // Header with search input
                         React.createElement('div',{style:{padding:"8px 10px",borderBottom:"1px solid "+C.border,background:"#1A1400",position:"sticky",top:0,zIndex:1}},
-                          React.createElement('div',{style:{fontSize:12,color:"#FFD700",marginBottom:6}},"⭐ ",lang==="en"?"Address Book":"地址簿"," (",allFavs.length,")"),
+                          React.createElement('div',{style:{fontSize:12,color:C.gold,marginBottom:6}},"⭐ ",lang==="en"?"Address Book":"地址簿"," (",allFavs.length,")"),
                           React.createElement('input',{
                             type:"search",
                             placeholder: lang==="en"?"Search across all categories...":"搜索所有类别...",
@@ -6187,7 +6292,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                                   var nf=Object.assign({},favNotes);
                                   nf[item.catKey]=(nf[item.catKey]||[]).filter(function(x){return x!==item.loc;});
                                   setFavNotes(nf);
-                                }, style:{background:"none",border:"none",color:"#FF7060",padding:"6px 10px",cursor:"pointer",fontSize:13}},"✕")
+                                }, style:{background:"none",border:"none",color:C.danger,padding:"6px 10px",cursor:"pointer",fontSize:13}},"✕")
                             );
                           })
                         )
@@ -6198,20 +6303,20 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
               );
             }())
           , !sf.startsWith("exp_edit_") ? React.createElement('div', { onClick: function(){setEf(Object.assign({},ef,{isRecurring:!ef.isRecurring}));}, style: {display:"flex",alignItems:"center",gap:12,background:C.bg2,border:"1px solid "+C.border,borderRadius:10,padding:"12px 14px",cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 544}}
-            , React.createElement('div', { style: {width:24,height:24,borderRadius:6,background:"#1A2A44",border:"2px solid #2A4A6A",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,flexShrink:0}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 545}}, ef.isRecurring?"✓":"")
+            , React.createElement('div', { style: {width:24,height:24,borderRadius:6,background:C.border,border:"2px solid #2A4A6A",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,flexShrink:0}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 545}}, ef.isRecurring?"✓":"")
             , React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 546}}, React.createElement('div', { style: {fontSize:14,fontWeight:600,color:C.text}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 546}}, T.fixedMonthly), React.createElement('div', { style: {fontSize:12,color:C.text3,marginTop:2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 546}}, T.fixedMonthlyDesc))
           ) : null
 
-          , sf.startsWith("exp_edit_") ? React.createElement('button', { onClick: function(){confirmAction(lang==="en"?"Delete expense?":"删除支出？", lang==="en"?"This expense will be removed (with undo).":"此支出将被移除（可撤销）。", function(){var eid=+sf.replace("exp_edit_","");var prev=el.slice();setEl(el.filter(function(x){return x.id!==eid;}));setSf(null);showUndo((lang==="en"?"✓ Expense deleted":"✓ 支出已删除"), {prevEl:prev});});}, style: {width:"100%",background:"#2A1010",border:"1px solid #5A2020",color:"#FF7060",fontSize:14,fontWeight:700,padding:"12px",borderRadius:10,cursor:"pointer",marginTop:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 547}}, "🗑 " , lang==="en"?"Delete":"删除") : null
+          , sf.startsWith("exp_edit_") ? React.createElement('button', { onClick: function(){confirmAction(lang==="en"?"Delete expense?":"删除支出？", lang==="en"?"This expense will be removed (with undo).":"此支出将被移除（可撤销）。", function(){var eid=+sf.replace("exp_edit_","");var prev=el.slice();setEl(el.filter(function(x){return x.id!==eid;}));setSf(null);showUndo((lang==="en"?"✓ Expense deleted":"✓ 支出已删除"), {prevEl:prev});});}, style: {width:"100%",background:"#2A1010",border:"1px solid #5A2020",color:C.danger,fontSize:14,fontWeight:700,padding:"12px",borderRadius:10,cursor:"pointer",marginTop:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 547}}, "🗑 " , lang==="en"?"Delete":"删除") : null
         )
       ) : null
 
       , sf && (sf==="fixed" || sf.startsWith("fixed_edit_")) ? (
         React.createElement(Modal, { title: sf.startsWith("fixed_edit_")?(T.edit+" "+(lang==="en"?"Fixed":"固定")):(lang==="en"?"Add Fixed":"添加固定支出"), onClose: function(){setSf(null);}, onSave: function(){if(!ff.label||!ff.amount)return;if(sf.startsWith("fixed_edit_")){var eid=+sf.replace("fixed_edit_","");setFl(fl.map(function(x){return x.id===eid?Object.assign({},ff,{id:eid}):x;}));}else{var nfl=fl.concat([Object.assign({},ff,{id:Date.now(),active:true})]);setFl(nfl);autoSave({fl:nfl});}setSf(null);showToast(lang==="en"?"✓ Fixed expense saved":"✓ 固定支出已保存");}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 552}}
           , React.createElement(Field, { label: lang==="en"?"Name":"项目名称", value: ff.label, onChange: function(v){setFf(Object.assign({},ff,{label:v}));}, placeholder: lang==="en"?"e.g. Car Loan":"例：车贷、手机费", __self: this, __source: {fileName: _jsxFileName, lineNumber: 553}} )
-          , React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 554}}, React.createElement('div', { style: {fontSize:14,color:C.text2,marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 554}}, lang==="en"?"Icon":"图标"), React.createElement('div', { style: {display:"flex",flexWrap:"wrap",gap:5}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 554}}, ICONS.map(function(ic){var bdCol=ff.icon===ic?"#00D4FF":"#1A2A44",bgCol=ff.icon===ic?"#0A2040":"#111D30";return React.createElement('button', { key: ic, onClick: function(){setFf(Object.assign({},ff,{icon:ic}));}, style: {width:38,height:38,borderRadius:8,border:"2px solid "+bdCol,background:bgCol,fontSize:16,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 554}}, ic);}), " " ))
-          , React.createElement('div', { style: {display:"flex",background:C.bg3,borderRadius:10,padding:3,gap:3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 555}}, [["monthly",T.cycleMonthly],["annual",T.cycleAnnual]].map(function(v){var isA=ff.cycle===v[0],bg=isA?"#1A3060":"transparent",cl=isA?"#00D4FF":C.text2,fw=isA?700:400;return React.createElement('button', { key: v[0], onClick: function(){setFf(Object.assign({},ff,{cycle:v[0]}));}, style: {flex:1,padding:8,borderRadius:8,border:"none",background:bg,color:cl,fontSize:13,cursor:"pointer",fontWeight:fw}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 555}}, v[1]);}), " " )
-          , React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 556}}, React.createElement(Field, { label: ff.cycle==="annual"?(lang==="en"?"Annual Total ($)":"全年总金额 ($)"):(lang==="en"?"Monthly ($)":"每月金额 ($)"), type: "number", value: ff.amount, onChange: function(v){setFf(Object.assign({},ff,{amount:v}));}, money: true, placeholder: "0.00", __self: this, __source: {fileName: _jsxFileName, lineNumber: 556}} ), ff.cycle==="annual"&&+ff.amount>0?React.createElement('div', { style: {marginTop:6,background:"#1A2A10",border:"1px solid #2A4A20",borderRadius:8,padding:"8px 12px",display:"flex",justifyContent:"space-between"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 556}}, React.createElement('span', { style: {fontSize:13,color:"#8AAA70"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 556}}, lang==="en"?"Per Month":"每月计入"), React.createElement('span', { style: {fontSize:15,fontWeight:800,color:"#FFD700"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 556}}, fmt(Math.round(+ff.amount/12*100)/100), lang==="en"?"/mo":"/月")):null)
+          , React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 554}}, React.createElement('div', { style: {fontSize:14,color:C.text2,marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 554}}, lang==="en"?"Icon":"图标"), React.createElement('div', { style: {display:"flex",flexWrap:"wrap",gap:5}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 554}}, ICONS.map(function(ic){var bdCol=ff.icon===ic?C.accent:C.border,bgCol=ff.icon===ic?"#0A2040":"#111D30";return React.createElement('button', { key: ic, onClick: function(){setFf(Object.assign({},ff,{icon:ic}));}, style: {width:38,height:38,borderRadius:8,border:"2px solid "+bdCol,background:bgCol,fontSize:16,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 554}}, ic);}), " " ))
+          , React.createElement('div', { style: {display:"flex",background:C.bg3,borderRadius:10,padding:3,gap:3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 555}}, [["monthly",T.cycleMonthly],["annual",T.cycleAnnual]].map(function(v){var isA=ff.cycle===v[0],bg=isA?C.bg3:"transparent",cl=isA?C.accent:C.text2,fw=isA?700:400;return React.createElement('button', { key: v[0], onClick: function(){setFf(Object.assign({},ff,{cycle:v[0]}));}, style: {flex:1,padding:8,borderRadius:8,border:"none",background:bg,color:cl,fontSize:13,cursor:"pointer",fontWeight:fw}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 555}}, v[1]);}), " " )
+          , React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 556}}, React.createElement(Field, { label: ff.cycle==="annual"?(lang==="en"?"Annual Total ($)":"全年总金额 ($)"):(lang==="en"?"Monthly ($)":"每月金额 ($)"), type: "number", value: ff.amount, onChange: function(v){setFf(Object.assign({},ff,{amount:v}));}, money: true, placeholder: "0.00", __self: this, __source: {fileName: _jsxFileName, lineNumber: 556}} ), ff.cycle==="annual"&&+ff.amount>0?React.createElement('div', { style: {marginTop:6,background:"#1A2A10",border:"1px solid #2A4A20",borderRadius:8,padding:"8px 12px",display:"flex",justifyContent:"space-between"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 556}}, React.createElement('span', { style: {fontSize:13,color:"#8AAA70"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 556}}, lang==="en"?"Per Month":"每月计入"), React.createElement('span', { style: {fontSize:15,fontWeight:800,color:C.gold}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 556}}, fmt(Math.round(+ff.amount/12*100)/100), lang==="en"?"/mo":"/月")):null)
           , React.createElement(Field, { label: T.dayOfMonth, value: ff.day, onChange: function(v){setFf(Object.assign({},ff,{day:v}));}, options: (function(){var o=[];for(var i=1;i<=28;i++){o.push([""+i,(lang==="en"?"Day ":"每月 ")+i+(lang==="en"?"":"日")]);}return o;})(), __self: this, __source: {fileName: _jsxFileName, lineNumber: 557}} )
           , React.createElement('div', { style: {display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 558}}
             , React.createElement(Field, { label: T.startMonth, type: "month", value: ff.startDate||"", onChange: function(v){setFf(Object.assign({},ff,{startDate:v}));}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 559}} )
@@ -6237,7 +6342,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
       , sf==="cc" ? (
         React.createElement(Modal, { title: cf._editKey?(lang==="en"?"Edit Category":"编辑类别"):(lang==="en"?"Add Category":"添加类别"), onClose: function(){setSf(cf._returnTo||null);}, onSave: function(){if(!cf.label.trim())return;var key=cf._editKey||"cc_"+Date.now(),newCat={label:cf.label.trim(),icon:cf.icon,group:cf.group,g:cf.group},newCc=Object.assign({},cc);newCc[key]=newCat;setCc(newCc);if(cf._returnTo==="exp"){setEf(Object.assign({},ef,{category:key}));setSelGrp(cf.group);setSf("exp");}else{setSf(null);}}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 580}}
           , React.createElement(Field, { label: lang==="en"?"Name":"类别名称", value: cf.label, onChange: function(v){setCf(Object.assign({},cf,{label:v}));}, placeholder: lang==="en"?"e.g. Wheel Repair":"例：轮毂修复", __self: this, __source: {fileName: _jsxFileName, lineNumber: 581}} )
-          , React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 582}}, React.createElement('div', { style: {fontSize:14,color:C.text2,marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 582}}, lang==="en"?"Icon":"图标"), React.createElement('div', { style: {display:"flex",flexWrap:"wrap",gap:5}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 582}}, ICONS.map(function(ic){var bdCol=cf.icon===ic?"#00D4FF":"#1A2A44",bgCol=cf.icon===ic?"#0A2040":"#111D30";return React.createElement('button', { key: ic, onClick: function(){setCf(Object.assign({},cf,{icon:ic}));}, style: {width:38,height:38,borderRadius:8,border:"2px solid "+bdCol,background:bgCol,fontSize:16,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 582}}, ic);}), " " ))
+          , React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 582}}, React.createElement('div', { style: {fontSize:14,color:C.text2,marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 582}}, lang==="en"?"Icon":"图标"), React.createElement('div', { style: {display:"flex",flexWrap:"wrap",gap:5}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 582}}, ICONS.map(function(ic){var bdCol=cf.icon===ic?C.accent:C.border,bgCol=cf.icon===ic?"#0A2040":"#111D30";return React.createElement('button', { key: ic, onClick: function(){setCf(Object.assign({},cf,{icon:ic}));}, style: {width:38,height:38,borderRadius:8,border:"2px solid "+bdCol,background:bgCol,fontSize:16,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 582}}, ic);}), " " ))
           , React.createElement(Field, { label: lang==="en"?"Group":"归属大类", value: cf.group, onChange: function(v){if(v==="__new__"){inputAction({title:lang==="en"?"New group name":"新大类名称",onSubmit:function(name){if(name&&name.trim()){var trimmed=name.trim();setCustGroups(custGroups.concat([{name:trimmed,icon:"📁",color:"#A8D0E8"}]));setCf(Object.assign({},cf,{group:trimmed}));}}});return;}setCf(Object.assign({},cf,{group:v}));}, options: (function(){var GROUP_LABELS=lang==="en"?{"车辆":"Vehicle","牌照":"License","平台":"Platform","其他":"Other","自定义":"Custom"}:{"车辆":"车辆","牌照":"牌照","平台":"平台","其他":"其他","自定义":"自定义"};var opts=GROUPS.map(function(g){return [g,GROUP_LABELS[g]||g];});custGroups.forEach(function(cg){opts.push([cg.name,cg.icon+" "+cg.name]);});opts.push(["__new__",lang==="en"?"+ Add new group...":"+ 添加新大类..."]);return opts;})(), __self: this, __source: {fileName: _jsxFileName, lineNumber: 583}} )
         )
       ) : null
@@ -6251,10 +6356,11 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
       ) : null
 
       , showDrawer ? (
-        React.createElement('div', { style: {position:"fixed",inset:0,zIndex:400,display:"flex"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 596}}
-          , React.createElement('div', { style: {width:"60%",maxWidth:220,background:C.bg2,height:"100%",overflowY:"auto",borderRight:"1px solid "+C.border,display:"flex",flexDirection:"column",paddingBottom:"70px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 597}}
-            , React.createElement('div', { style: {padding:"20px 18px 16px",borderBottom:"1px solid "+C.border}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 598}}
-              , React.createElement('div', { style: {fontSize:15,fontWeight:800,color:C.text}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 599}}, T.menu)
+        React.createElement('div', { style: {position:"fixed",inset:0,zIndex:400,display:"flex",animation:"fadeIn 0.15s"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 596}}
+          , React.createElement('div', { style: {width:"68%",maxWidth:260,background:"linear-gradient(180deg, "+C.bg2+" 0%, "+C.bg+" 100%)",height:"100%",overflowY:"auto",borderRight:"1px solid "+C.border,display:"flex",flexDirection:"column",paddingBottom:"70px",boxShadow:SHADOW.lg}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 597}}
+            , React.createElement('div', { style: {padding:"24px 20px 18px",borderBottom:"1px solid "+C.border,background:"linear-gradient(135deg, rgba(0,212,255,0.05), transparent)"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 598}}
+              , React.createElement('div', { style: {fontSize:FS.lg+1,fontWeight:800,color:C.text,letterSpacing:-0.2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 599}}, T.menu)
+              , React.createElement('div', { style: {fontSize:FS.xs,color:C.text3,marginTop:4,letterSpacing:0.5,textTransform:"uppercase"}}, "Settings & Tools")
             )
             , React.createElement('div', { style: {padding:"10px 0",flex:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 602}}
               , (function(){
@@ -6277,12 +6383,12 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                   {icon:"🏥",label:lang==="en"?"Health Check":"数据健康检查",action:function(){setShowDrawer(false);setSf("health_check");}},
                   {icon:"🔒",label:lang==="en"?"PIN Lock":"PIN 锁屏",action:function(){setShowDrawer(false);setSf("pin_settings");}}
                 ];
-                var signOut = {icon:"🚪",label:lang==="en"?"Sign Out":"退出登录",action:function(){confirmAction(lang==="en"?"Sign out of Google?":"退出 Google 登录？", lang==="en"?"You will be signed out from Drive sync.":"将退出 Drive 同步。", function(){setGUser(null);try{localStorage.removeItem("nyc_user");localStorage.removeItem("nyc_tab");}catch(e){}setTab(0);setSf(null);setShowDrawer(false);setShowBackup(false);setShowPlatMgr(false);setShowRemMgr(false);showToast(lang==="en"?"✓ Signed out":"✓ 已退出");}, {danger:false, confirmLabel:lang==="en"?"Sign Out":"退出"});},color:"#FF5252"};
+                var signOut = {icon:"🚪",label:lang==="en"?"Sign Out":"退出登录",action:function(){confirmAction(lang==="en"?"Sign out of Google?":"退出 Google 登录？", lang==="en"?"You will be signed out from Drive sync.":"将退出 Drive 同步。", function(){setGUser(null);try{localStorage.removeItem("nyc_user");localStorage.removeItem("nyc_tab");}catch(e){}setTab(0);setSf(null);setShowDrawer(false);setShowBackup(false);setShowPlatMgr(false);setShowRemMgr(false);showToast(lang==="en"?"✓ Signed out":"✓ 已退出");}, {danger:false, confirmLabel:lang==="en"?"Sign Out":"退出"});},color:C.danger};
                 
                 var renderItem = function(item, i){
-                  return React.createElement('button', { key: i, onClick: item.action, style: {display:"flex",alignItems:"center",gap:14,width:"100%",background:"none",border:"none",padding:"14px 18px",cursor:"pointer",textAlign:"left",borderBottom:"1px solid "+C.border,color:item.color||C.text} }
-                    , React.createElement('span', { style: {fontSize:20}, dangerouslySetInnerHTML: {__html:item.icon} } )
-                    , React.createElement('span', { style: {fontSize:14,color:item.color||C.text,fontWeight:600} }, item.label)
+                  return React.createElement('button', { key: i, onClick: item.action, style: {display:"flex",alignItems:"center",gap:14,width:"100%",background:"none",border:"none",padding:"13px 20px",cursor:"pointer",textAlign:"left",color:item.color||C.text,transition:"background 0.15s"} }
+                    , React.createElement('span', { style: {fontSize:20,width:24,textAlign:"center"}, dangerouslySetInnerHTML: {__html:item.icon} } )
+                    , React.createElement('span', { style: {fontSize:FS.md+1,color:item.color||C.text,fontWeight:600,letterSpacing:0.1} }, item.label)
                     );
                 };
                 
@@ -6316,7 +6422,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
           , React.createElement('div', { style: {background:C.bg2,borderRadius:16,padding:24,width:"100%",maxWidth:320,border:"1px solid "+C.border}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 612}}
             , React.createElement('div', { style: {fontSize:16,fontWeight:800,marginBottom:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 613}}, "🎯 " , lang==="en"?("Goal for "+mo):(mo+" 收入目标"))
             , React.createElement('input', { type: "number", value: incGoal, onChange: function(e){setIncGoal(e.target.value);}, placeholder: lang==="en"?"e.g. 5000":"例：5000", style: Object.assign({},IS,{fontSize:20,fontWeight:700,marginBottom:16}), __self: this, __source: {fileName: _jsxFileName, lineNumber: 614}} )
-            , React.createElement('div', { style: {display:"flex",gap:8,flexWrap:"wrap",marginBottom:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 615}}, ["3000","4000","5000","6000","7000","8000"].map(function(v){return React.createElement('button', { key: v, onClick: function(){setIncGoal(v);}, style: {background:incGoal===v?"#1A3060":"#0A1828",border:"1px solid "+(incGoal===v?"#00D4FF":"#2A3A54"),borderRadius:8,padding:"6px 12px",color:incGoal===v?"#00D4FF":C.text2,fontSize:13,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 615}}, "$", v);}))
+            , React.createElement('div', { style: {display:"flex",gap:8,flexWrap:"wrap",marginBottom:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 615}}, ["3000","4000","5000","6000","7000","8000"].map(function(v){return React.createElement('button', { key: v, onClick: function(){setIncGoal(v);}, style: {background:incGoal===v?C.bg3:C.bg3,border:"1px solid "+(incGoal===v?C.accent:"#2A3A54"),borderRadius:8,padding:"6px 12px",color:incGoal===v?C.accent:C.text2,fontSize:13,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 615}}, "$", v);}))
             , React.createElement('div', { style: {display:"flex",gap:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 616}}, React.createElement('button', { onClick: function(){setIncGoal("");setShowGoal(false);}, style: {flex:1,background:"#1E3050",border:"none",borderRadius:10,padding:12,color:C.text2,fontSize:14,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 616}}, lang==="en"?"Clear":"清除"), React.createElement('button', { onClick: function(){setShowGoal(false);}, style: {flex:2,background:"linear-gradient(135deg,#00D4FF,#0055FF)",border:"none",borderRadius:10,padding:12,color:"#fff",fontSize:14,fontWeight:700,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 616}}, "✓ " , lang==="en"?"Save":"保存"))
           )
         )
@@ -6332,11 +6438,11 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
             , React.createElement('div', { style: {padding:"20px 18px",display:"flex",flexDirection:"column",gap:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 850}}
               // Status card
               , React.createElement(Card, { style: {padding:"16px 18px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 850}}
-                , React.createElement('div', { style: {fontSize:14,fontWeight:700,color:hasPIN?"#00E676":"#FF9A65",marginBottom:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 850}}, hasPIN?(lang==="en"?"✓ PIN is set":"✓ 已设置 PIN"):(lang==="en"?"⚠ No PIN set":"⚠ 未设置 PIN"))
+                , React.createElement('div', { style: {fontSize:14,fontWeight:700,color:hasPIN?C.success:"#FF9A65",marginBottom:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 850}}, hasPIN?(lang==="en"?"✓ PIN is set":"✓ 已设置 PIN"):(lang==="en"?"⚠ No PIN set":"⚠ 未设置 PIN"))
                 , React.createElement('div', { style: {fontSize:13,color:C.text3,marginBottom:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 850}}, hasPIN?(lang==="en"?"App will lock after "+pinTimeout+" min of inactivity":"App 将在空闲 "+pinTimeout+" 分钟后锁定"):(lang==="en"?"Set a 4-digit PIN to protect your data":"设置 4 位 PIN 来保护你的数据"))
                 , !hasPIN ? React.createElement('button', { onClick: function(){setShowPinSetup(true);}, style: {width:"100%",background:"linear-gradient(135deg,#00D4FF,#0055FF)",border:"none",color:"#fff",fontSize:14,fontWeight:700,padding:"12px",borderRadius:10,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 850}}, lang==="en"?"🔐 Set PIN":"🔐 设置 PIN") : React.createElement('div', { style: {display:"flex",gap:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 850}}
-                  , React.createElement('button', { onClick: function(){confirmAction(lang==="en"?"Reset PIN?":"重置 PIN？", lang==="en"?"You'll set a new PIN.":"将设置新的 PIN。", function(){try{localStorage.removeItem("nyc_pin");}catch(e){}setHasPIN(false);setShowPinSetup(true);}, {danger:false});}, style: {flex:1,background:"#1A2A44",border:"1px solid #2A4A6A",color:C.text2,fontSize:13,fontWeight:600,padding:"10px",borderRadius:10,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 850}}, lang==="en"?"🔄 Change PIN":"🔄 修改 PIN")
-                  , React.createElement('button', { onClick: function(){confirmAction(lang==="en"?"Disable PIN lock?":"关闭 PIN 锁屏？", lang==="en"?"Your data will no longer be PIN-protected.":"数据将不再受 PIN 保护。", function(){try{localStorage.removeItem("nyc_pin");}catch(e){}setHasPIN(false);});}, style: {flex:1,background:"#2A1010",border:"1px solid #5A2020",color:"#FF7060",fontSize:13,fontWeight:600,padding:"10px",borderRadius:10,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 850}}, lang==="en"?"❌ Disable":"❌ 关闭")
+                  , React.createElement('button', { onClick: function(){confirmAction(lang==="en"?"Reset PIN?":"重置 PIN？", lang==="en"?"You'll set a new PIN.":"将设置新的 PIN。", function(){try{localStorage.removeItem("nyc_pin");}catch(e){}setHasPIN(false);setShowPinSetup(true);}, {danger:false});}, style: {flex:1,background:C.border,border:"1px solid "+C.border2,color:C.text2,fontSize:13,fontWeight:600,padding:"10px",borderRadius:10,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 850}}, lang==="en"?"🔄 Change PIN":"🔄 修改 PIN")
+                  , React.createElement('button', { onClick: function(){confirmAction(lang==="en"?"Disable PIN lock?":"关闭 PIN 锁屏？", lang==="en"?"Your data will no longer be PIN-protected.":"数据将不再受 PIN 保护。", function(){try{localStorage.removeItem("nyc_pin");}catch(e){}setHasPIN(false);});}, style: {flex:1,background:"#2A1010",border:"1px solid #5A2020",color:C.danger,fontSize:13,fontWeight:600,padding:"10px",borderRadius:10,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 850}}, lang==="en"?"❌ Disable":"❌ 关闭")
                 )
               )
               // Timeout setting
@@ -6346,7 +6452,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                 , React.createElement('div', { style: {display:"flex",gap:6,flexWrap:"wrap"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 850}}
                   , [1,3,5,10,30].map(function(m){
                     var sel = pinTimeout===m;
-                    return React.createElement('button', { key: m, onClick: function(){setPinTimeout(m);}, style: {flex:"1 0 auto",minWidth:60,padding:"8px 12px",borderRadius:8,border:"1px solid "+(sel?"#00D4FF":"#2A3A54"),background:sel?"#1A3060":"#0A1828",color:sel?"#00D4FF":C.text2,fontSize:13,fontWeight:sel?700:600,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 850}}, m+(lang==="en"?" min":" 分钟"));
+                    return React.createElement('button', { key: m, onClick: function(){setPinTimeout(m);}, style: {flex:"1 0 auto",minWidth:60,padding:"8px 12px",borderRadius:8,border:"1px solid "+(sel?C.accent:"#2A3A54"),background:sel?C.bg3:C.bg3,color:sel?C.accent:C.text2,fontSize:13,fontWeight:sel?700:600,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 850}}, m+(lang==="en"?" min":" 分钟"));
                   })
                 )
               ) : null
@@ -6382,7 +6488,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                 , React.createElement('input', { value: noteF.title, onChange: function(e){setNoteF(Object.assign({},noteF,{title:e.target.value}));}, placeholder: lang==="en"?"Title (optional)":"标题（可选）", style: Object.assign({},IS,{marginBottom:10,fontSize:15,fontWeight:600}), __self: this, __source: {fileName: _jsxFileName, lineNumber: 638}} )
                 , React.createElement('textarea', { value: noteF.body, onChange: function(e){setNoteF(Object.assign({},noteF,{body:e.target.value}));}, placeholder: lang==="en"?"Write your note...":"写下你的记事...", rows: 10, style: Object.assign({},IS,{resize:"vertical",lineHeight:1.7,fontSize:14}), __self: this, __source: {fileName: _jsxFileName, lineNumber: 639}} )
               ) : React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 640}}
-                , notes.length===0 ? React.createElement('div', { style: {textAlign:"center",padding:40,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 641}}, React.createElement('div', { style: {fontSize:40,marginBottom:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 641}}, "📝"), React.createElement('div', { style: {fontSize:14}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 641}}, lang==="en"?"No notes yet":"还没有记事")) : notes.map(function(n){return React.createElement(Card, { key: n.id, style: {marginBottom:10,cursor:"pointer"}, onClick: function(){setNoteF({title:n.title,body:n.body,id:n.id});setNoteEdit(true);}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 641}}, React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"flex-start"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 641}}, React.createElement('div', { style: {flex:1,minWidth:0}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 641}}, n.title?React.createElement('div', { style: {fontSize:14,fontWeight:700,marginBottom:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 641}}, n.title):null, React.createElement('div', { style: {fontSize:13,color:C.text2,lineHeight:1.5}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 641}}, n.body.slice(0,120), n.body.length>120?"...":""), React.createElement('div', { style: {fontSize:12,color:C.text3,marginTop:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 641}}, n.updated||n.date)), React.createElement('button', { onClick: function(e){e.stopPropagation();confirmAction(lang==="en"?"Delete note?":"删除记事？", lang==="en"?"This note will be removed (with undo).":"此记事将被移除（可撤销）。", function(){var prev=notes.slice();setNotes(notes.filter(function(x){return x.id!==n.id;}));showUndo((lang==="en"?"✓ Note deleted":"✓ 记事已删除"), {prevNotes:prev});});}, style: {background:"none",border:"none",color:"#FF5252",fontSize:16,cursor:"pointer",padding:"0 0 0 10px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 641}}, "✕")));})
+                , notes.length===0 ? React.createElement('div', { style: {textAlign:"center",padding:40,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 641}}, React.createElement('div', { style: {fontSize:40,marginBottom:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 641}}, "📝"), React.createElement('div', { style: {fontSize:14}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 641}}, lang==="en"?"No notes yet":"还没有记事")) : notes.map(function(n){return React.createElement(Card, { key: n.id, style: {marginBottom:10,cursor:"pointer"}, onClick: function(){setNoteF({title:n.title,body:n.body,id:n.id});setNoteEdit(true);}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 641}}, React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"flex-start"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 641}}, React.createElement('div', { style: {flex:1,minWidth:0}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 641}}, n.title?React.createElement('div', { style: {fontSize:14,fontWeight:700,marginBottom:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 641}}, n.title):null, React.createElement('div', { style: {fontSize:13,color:C.text2,lineHeight:1.5}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 641}}, n.body.slice(0,120), n.body.length>120?"...":""), React.createElement('div', { style: {fontSize:12,color:C.text3,marginTop:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 641}}, n.updated||n.date)), React.createElement('button', { onClick: function(e){e.stopPropagation();confirmAction(lang==="en"?"Delete note?":"删除记事？", lang==="en"?"This note will be removed (with undo).":"此记事将被移除（可撤销）。", function(){var prev=notes.slice();setNotes(notes.filter(function(x){return x.id!==n.id;}));showUndo((lang==="en"?"✓ Note deleted":"✓ 记事已删除"), {prevNotes:prev});});}, style: {background:"none",border:"none",color:C.danger,fontSize:16,cursor:"pointer",padding:"0 0 0 10px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 641}}, "✕")));})
               )
             )
           )
@@ -6399,19 +6505,19 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
             )
             , React.createElement('div', { style: {padding:"16px 14px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 656}}
               , React.createElement('div', { style: {fontSize:13,fontWeight:700,color:"#90EAF8",marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 657}}, lang==="en"?"Default Groups":"默认大类")
-              , React.createElement('div', { style: {display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 658}}, [["🚗",lang==="en"?"Vehicle":"车辆","#00D4FF"],["📋",lang==="en"?"License":"牌照","#FFD700"],["📱",lang==="en"?"Platform":"平台","#CC88FF"],["💼",lang==="en"?"Other":"其他","#B0D4E8"]].map(function(g,i){return React.createElement('div', { key: i, style: {background:C.bg2,border:"1px solid #2A3A54",borderRadius:10,padding:"10px 12px",display:"flex",alignItems:"center",gap:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 658}}, React.createElement('span', { style: {fontSize:20}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 658}}, g[0]), React.createElement('span', { style: Object.assign({fontSize:13,fontWeight:700},{color:g[2]}), __self: this, __source: {fileName: _jsxFileName, lineNumber: 658}}, g[1]), React.createElement('span', { style: {marginLeft:"auto",fontSize:11,color:"#6A8AAA"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 658}}, lang==="en"?"built-in":"内置"));}))
+              , React.createElement('div', { style: {display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 658}}, [["🚗",lang==="en"?"Vehicle":"车辆",C.accent],["📋",lang==="en"?"License":"牌照",C.gold],["📱",lang==="en"?"Platform":"平台","#CC88FF"],["💼",lang==="en"?"Other":"其他","#B0D4E8"]].map(function(g,i){return React.createElement('div', { key: i, style: {background:C.bg2,border:"1px solid #2A3A54",borderRadius:10,padding:"10px 12px",display:"flex",alignItems:"center",gap:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 658}}, React.createElement('span', { style: {fontSize:20}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 658}}, g[0]), React.createElement('span', { style: Object.assign({fontSize:13,fontWeight:700},{color:g[2]}), __self: this, __source: {fileName: _jsxFileName, lineNumber: 658}}, g[1]), React.createElement('span', { style: {marginLeft:"auto",fontSize:11,color:"#6A8AAA"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 658}}, lang==="en"?"built-in":"内置"));}))
               , React.createElement('div', { style: {borderTop:"1px solid "+C.border,paddingTop:14,marginBottom:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 659}}
                 , React.createElement('div', { style: {fontSize:13,fontWeight:700,color:"#90EAF8",marginBottom:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 660}}, lang==="en"?"Custom Categories":"自定义小类")
-                , Object.keys(cc).length===0 ? React.createElement('div', { style: {fontSize:13,color:C.text3,textAlign:"center",padding:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 661}}, lang==="en"?"No custom categories":"还没有自定义小类") : Object.entries(cc).map(function(e){var key=e[0],cat=e[1];return React.createElement(Card, { key: key, style: {display:"flex",alignItems:"center",gap:12,marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 661}}, React.createElement('span', { style: {fontSize:22}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 661}}, cat.icon), React.createElement('div', { style: {flex:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 661}}, React.createElement('div', { style: {fontSize:14,fontWeight:600}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 661}}, cat.label), React.createElement('div', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 661}}, cat.group)), React.createElement('button', { onClick: function(){setCf({label:cat.label,icon:cat.icon,group:cat.group,_editKey:key,_returnTo:"manage_cats"});setSf("cc");}, style: {background:"none",border:"1px solid #2A4A6A",borderRadius:6,padding:"3px 8px",color:"#6AACEE",cursor:"pointer",fontSize:12,marginRight:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 661}}, T.edit), React.createElement('button', { onClick: function(){confirmAction(lang==="en"?"Delete category?":"删除类别？", lang==="en"?"This category will be removed (with undo).":"此类别将被移除（可撤销）。", function(){var prev=Object.assign({},cc);var u=Object.assign({},cc);delete u[key];setCc(u);showUndo((lang==="en"?"✓ Category deleted":"✓ 类别已删除"), {prevCc:prev});});}, style: {background:"none",border:"1px solid #3A1A1A",borderRadius:6,padding:"3px 8px",color:"#FF5252",cursor:"pointer",fontSize:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 661}}, T.del));})
-                , React.createElement('button', { onClick: function(){setCf({label:"",icon:"🔧",group:"车辆",_returnTo:"manage_cats"});setSf("cc");}, style: {width:"100%",background:"#1A2A44",border:"1px dashed #2A3A54",borderRadius:10,padding:"12px",color:C.text2,fontSize:14,cursor:"pointer",marginTop:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 662}}, "+ " , lang==="en"?"Add Custom Category":"添加自定义小类")
+                , Object.keys(cc).length===0 ? React.createElement('div', { style: {fontSize:13,color:C.text3,textAlign:"center",padding:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 661}}, lang==="en"?"No custom categories":"还没有自定义小类") : Object.entries(cc).map(function(e){var key=e[0],cat=e[1];return React.createElement(Card, { key: key, style: {display:"flex",alignItems:"center",gap:12,marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 661}}, React.createElement('span', { style: {fontSize:22}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 661}}, cat.icon), React.createElement('div', { style: {flex:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 661}}, React.createElement('div', { style: {fontSize:14,fontWeight:600}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 661}}, cat.label), React.createElement('div', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 661}}, cat.group)), React.createElement('button', { onClick: function(){setCf({label:cat.label,icon:cat.icon,group:cat.group,_editKey:key,_returnTo:"manage_cats"});setSf("cc");}, style: {background:"none",border:"1px solid "+C.border2,borderRadius:6,padding:"3px 8px",color:C.accent2,cursor:"pointer",fontSize:12,marginRight:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 661}}, T.edit), React.createElement('button', { onClick: function(){confirmAction(lang==="en"?"Delete category?":"删除类别？", lang==="en"?"This category will be removed (with undo).":"此类别将被移除（可撤销）。", function(){var prev=Object.assign({},cc);var u=Object.assign({},cc);delete u[key];setCc(u);showUndo((lang==="en"?"✓ Category deleted":"✓ 类别已删除"), {prevCc:prev});});}, style: {background:"none",border:"1px solid #3A1A1A",borderRadius:6,padding:"3px 8px",color:C.danger,cursor:"pointer",fontSize:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 661}}, T.del));})
+                , React.createElement('button', { onClick: function(){setCf({label:"",icon:"🔧",group:"车辆",_returnTo:"manage_cats"});setSf("cc");}, style: {width:"100%",background:C.border,border:"1px dashed #2A3A54",borderRadius:10,padding:"12px",color:C.text2,fontSize:14,cursor:"pointer",marginTop:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 662}}, "+ " , lang==="en"?"Add Custom Category":"添加自定义小类")
               )
               , React.createElement('div', { style: {borderTop:"1px solid "+C.border,paddingTop:14}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 664}}
                 , React.createElement('div', { style: {fontSize:13,fontWeight:700,color:"#90EAF8",marginBottom:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 665}}, lang==="en"?"Custom Groups":"自定义大类")
-                , custGroups.map(function(g,i){return React.createElement(Card, { key: i, style: {display:"flex",alignItems:"center",gap:12,marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 666}}, React.createElement('span', { style: {fontSize:22}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 666}}, g.icon), React.createElement('div', { style: {flex:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 666}}, React.createElement('div', { style: {fontSize:14,fontWeight:700}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 666}}, g.name)), React.createElement('button', { onClick: function(){confirmAction(lang==="en"?"Delete group?":"删除大类？", lang==="en"?"This group will be removed (with undo).":"此大类将被移除（可撤销）。", function(){var prev=custGroups.slice();setCustGroups(custGroups.filter(function(_,j){return j!==i;}));showUndo((lang==="en"?"✓ Group deleted":"✓ 分类已删除"), {prevCustGroups:prev});});}, style: {background:"none",border:"1px solid #3A1A1A",borderRadius:6,padding:"3px 10px",color:"#FF5252",cursor:"pointer",fontSize:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 666}}, T.del));})
+                , custGroups.map(function(g,i){return React.createElement(Card, { key: i, style: {display:"flex",alignItems:"center",gap:12,marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 666}}, React.createElement('span', { style: {fontSize:22}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 666}}, g.icon), React.createElement('div', { style: {flex:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 666}}, React.createElement('div', { style: {fontSize:14,fontWeight:700}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 666}}, g.name)), React.createElement('button', { onClick: function(){confirmAction(lang==="en"?"Delete group?":"删除大类？", lang==="en"?"This group will be removed (with undo).":"此大类将被移除（可撤销）。", function(){var prev=custGroups.slice();setCustGroups(custGroups.filter(function(_,j){return j!==i;}));showUndo((lang==="en"?"✓ Group deleted":"✓ 分类已删除"), {prevCustGroups:prev});});}, style: {background:"none",border:"1px solid #3A1A1A",borderRadius:6,padding:"3px 10px",color:C.danger,cursor:"pointer",fontSize:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 666}}, T.del));})
                 , custGroups.length===0 ? React.createElement('div', { style: {fontSize:13,color:C.text3,textAlign:"center",padding:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 667}}, lang==="en"?"No custom groups":"还没有自定义大类") : null
                 , React.createElement(Field, { label: lang==="en"?"Group Name":"大类名称", value: newGrpName||"", onChange: function(v){setNewGrpName(v);}, placeholder: lang==="en"?"e.g. Family":"例：家庭", __self: this, __source: {fileName: _jsxFileName, lineNumber: 668}} )
-                , React.createElement('div', { style: {marginTop:10,marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 669}}, React.createElement('div', { style: {fontSize:13,color:C.text2,marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 669}}, lang==="en"?"Icon":"图标"), React.createElement('div', { style: {display:"flex",flexWrap:"wrap",gap:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 669}}, ["🏠","👨‍👩‍👧","🐕","🎓","💊","🏋️","🎮","✈️","🛒","💡","📦","🎵","🍕","👔","💻"].map(function(ic){var sel=newGrpIcon===ic;return React.createElement('button', { key: ic, onClick: function(){setNewGrpIcon(ic);}, style: {width:38,height:38,borderRadius:8,border:"2px solid "+(sel?"#00D4FF":"#1E3050"),background:sel?"#0A2040":"#162338",fontSize:18,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 669}}, ic);})))
-                , React.createElement('div', { style: {marginBottom:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 670}}, React.createElement('div', { style: {fontSize:13,color:C.text2,marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 670}}, lang==="en"?"Color":"颜色"), React.createElement('div', { style: {display:"flex",gap:8,flexWrap:"wrap"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 670}}, ["#00D4FF","#00E676","#FFD700","#FF9A65","#CC88FF","#FF5252","#45B7D1","#A8D0E8"].map(function(cl){var sel=newGrpColor===cl;return React.createElement('button', { key: cl, onClick: function(){setNewGrpColor(cl);}, style: {width:32,height:32,borderRadius:16,background:cl,border:sel?"3px solid #fff":"3px solid transparent",cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 670}} );})))
+                , React.createElement('div', { style: {marginTop:10,marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 669}}, React.createElement('div', { style: {fontSize:13,color:C.text2,marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 669}}, lang==="en"?"Icon":"图标"), React.createElement('div', { style: {display:"flex",flexWrap:"wrap",gap:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 669}}, ["🏠","👨‍👩‍👧","🐕","🎓","💊","🏋️","🎮","✈️","🛒","💡","📦","🎵","🍕","👔","💻"].map(function(ic){var sel=newGrpIcon===ic;return React.createElement('button', { key: ic, onClick: function(){setNewGrpIcon(ic);}, style: {width:38,height:38,borderRadius:8,border:"2px solid "+(sel?C.accent:"#1E3050"),background:sel?"#0A2040":"#162338",fontSize:18,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 669}}, ic);})))
+                , React.createElement('div', { style: {marginBottom:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 670}}, React.createElement('div', { style: {fontSize:13,color:C.text2,marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 670}}, lang==="en"?"Color":"颜色"), React.createElement('div', { style: {display:"flex",gap:8,flexWrap:"wrap"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 670}}, [C.accent,C.success,C.gold,"#FF9A65","#CC88FF",C.danger,"#45B7D1","#A8D0E8"].map(function(cl){var sel=newGrpColor===cl;return React.createElement('button', { key: cl, onClick: function(){setNewGrpColor(cl);}, style: {width:32,height:32,borderRadius:16,background:cl,border:sel?"3px solid #fff":"3px solid transparent",cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 670}} );})))
               )
             )
           )
@@ -6424,12 +6530,12 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
             , React.createElement('div', { style: {background:C.bg2,padding:"16px 18px",borderBottom:"1px solid "+C.border,display:"flex",justifyContent:"space-between",alignItems:"center",position:"sticky",top:0,zIndex:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 680}}
               , React.createElement('button', { onClick: function(){setSf(null);}, style: {background:"#1E3050",border:"none",color:"#8ABCD0",fontSize:16,cursor:"pointer",width:34,height:34,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 681}}, "✕")
               , React.createElement('div', { style: {fontSize:16,fontWeight:800}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 682}}, "🧾 " , lang==="en"?"Tax Center":"税务中心")
-              , React.createElement('select', { value: taxYr, onChange: function(e){setTaxYr(e.target.value);}, style: {background:"#1E3050",border:"1px solid "+C.border,borderRadius:8,color:"#00D4FF",fontSize:13,fontWeight:700,padding:"4px 8px",cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 683}}
+              , React.createElement('select', { value: taxYr, onChange: function(e){setTaxYr(e.target.value);}, style: {background:"#1E3050",border:"1px solid "+C.border,borderRadius:8,color:C.accent,fontSize:13,fontWeight:700,padding:"4px 8px",cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 683}}
                 , (function(){var opts=[];for(var y=new Date().getFullYear();y>=2020;y--){opts.push(React.createElement('option', { key: y, value: ""+y, __self: this, __source: {fileName: _jsxFileName, lineNumber: 684}}, y));}return opts;})()
               )
             )
             , React.createElement('div', { style: {padding:"16px 14px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 687}}
-              , React.createElement('button', { onClick: function(){setSf(null);setTab(3);}, style: {width:"100%",background:"#0A1828",border:"1px solid #2A5080",borderRadius:10,padding:"10px 14px",color:"#5AACFF",fontSize:13,fontWeight:700,cursor:"pointer",marginBottom:12,display:"flex",justifyContent:"space-between",alignItems:"center"} }
+              , React.createElement('button', { onClick: function(){setSf(null);setTab(3);}, style: {width:"100%",background:C.bg3,border:"1px solid #2A5080",borderRadius:10,padding:"10px 14px",color:C.accent2,fontSize:13,fontWeight:700,cursor:"pointer",marginBottom:12,display:"flex",justifyContent:"space-between",alignItems:"center"} }
                 , React.createElement('span', null, "📊 " , lang==="en"?"Open Report":"进入报告")
                 , React.createElement('span', {style:{color:"#5A7A9A",fontSize:14}}, "→")
               )
@@ -6439,39 +6545,39 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                 , React.createElement('div', { style: {fontSize:12,color:C.text3,marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 689}}, taxRateNote||(lang==="en"?"Tap a year to load IRS defaults, or edit any rate manually":"点年份加载 IRS 标准税率，或手动修改任意一项"))
                 // Year preset buttons
                 , React.createElement('div', { style: {display:"flex",gap:6,flexWrap:"wrap",marginBottom:14}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 689}}
-                  , Object.keys(TAX_PRESETS).map(function(y){var isCur=y===taxYr;return React.createElement('button', { key: y, onClick: function(){setTaxYr(y);applyTaxPreset(y);}, style: {flex:"1 0 auto",minWidth:54,padding:"6px 10px",borderRadius:8,border:"1px solid "+(isCur?"#CC88FF":"#2A3A54"),background:isCur?"#1A0A30":"#0A1828",color:isCur?"#CC88FF":C.text2,fontSize:12,fontWeight:isCur?800:600,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 689}}, y);})
+                  , Object.keys(TAX_PRESETS).map(function(y){var isCur=y===taxYr;return React.createElement('button', { key: y, onClick: function(){setTaxYr(y);applyTaxPreset(y);}, style: {flex:"1 0 auto",minWidth:54,padding:"6px 10px",borderRadius:8,border:"1px solid "+(isCur?"#CC88FF":"#2A3A54"),background:isCur?"#1A0A30":C.bg3,color:isCur?"#CC88FF":C.text2,fontSize:12,fontWeight:isCur?800:600,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 689}}, y);})
                 )
                 // Rate inputs in a 2x2 grid
                 , React.createElement('div', { style: {display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 689}}
-                  , React.createElement('div', { style: {background:"#0A1828",border:"1px solid #2A3A54",borderRadius:8,padding:"8px 10px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 689}}
+                  , React.createElement('div', { style: {background:C.bg3,border:"1px solid #2A3A54",borderRadius:8,padding:"8px 10px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 689}}
                     , React.createElement('div', { style: {fontSize:12,color:C.text3,marginBottom:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 689}}, lang==="en"?"SE Tax (固定)":"自雇税 (固定)")
                     , React.createElement('div', { style: {display:"flex",alignItems:"baseline",gap:3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 689}}
                       , React.createElement('input', { type: "number", step: "0.1", value: seRate, onChange: function(e){var v=parseFloat(e.target.value);if(!isNaN(v)&&v>=0&&v<100){setSeRate(v);setTaxRateNote(lang==="en"?"Edited":"已修改");}}, style: {background:"transparent",border:"none",color:"#CC88FF",fontSize:18,fontWeight:900,width:"100%",padding:0,outline:"none"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 689}} )
                       , React.createElement('span', { style: {fontSize:14,color:"#CC88FF",fontWeight:700}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 689}}, "%")
                     )
                   )
-                  , React.createElement('div', { style: {background:"#0A1828",border:"1px solid #2A3A54",borderRadius:8,padding:"8px 10px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 689}}
+                  , React.createElement('div', { style: {background:C.bg3,border:"1px solid #2A3A54",borderRadius:8,padding:"8px 10px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 689}}
                     , React.createElement('div', { style: {fontSize:12,color:C.text3,marginBottom:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 689}}, lang==="en"?"Federal":"联邦所得税")
                     , React.createElement('div', { style: {display:"flex",alignItems:"baseline",gap:3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 689}}
                       , React.createElement('input', { type: "number", step: "0.5", value: fedRate, onChange: function(e){var v=parseFloat(e.target.value);if(!isNaN(v)&&v>=0&&v<100){setFedRate(v);setTaxRateNote(lang==="en"?"Edited":"已修改");}}, style: {background:"transparent",border:"none",color:"#FFB300",fontSize:18,fontWeight:900,width:"100%",padding:0,outline:"none"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 689}} )
                       , React.createElement('span', { style: {fontSize:14,color:"#FFB300",fontWeight:700}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 689}}, "%")
                     )
                   )
-                  , React.createElement('div', { style: {background:"#0A1828",border:"1px solid #2A3A54",borderRadius:8,padding:"8px 10px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 689}}
+                  , React.createElement('div', { style: {background:C.bg3,border:"1px solid #2A3A54",borderRadius:8,padding:"8px 10px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 689}}
                     , React.createElement('div', { style: {fontSize:12,color:C.text3,marginBottom:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 689}}, lang==="en"?"State + City":"州+市税")
                     , React.createElement('div', { style: {display:"flex",alignItems:"baseline",gap:3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 689}}
                       , React.createElement('input', { type: "number", step: "0.1", value: stateRate, onChange: function(e){var v=parseFloat(e.target.value);if(!isNaN(v)&&v>=0&&v<100){setStateRate(v);setTaxRateNote(lang==="en"?"Edited":"已修改");}}, style: {background:"transparent",border:"none",color:"#FFB300",fontSize:18,fontWeight:900,width:"100%",padding:0,outline:"none"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 689}} )
                       , React.createElement('span', { style: {fontSize:14,color:"#FFB300",fontWeight:700}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 689}}, "%")
                     )
                   )
-                  , React.createElement('div', { style: {background:"#0A1828",border:"1px solid #2A3A54",borderRadius:8,padding:"8px 10px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 689}}
+                  , React.createElement('div', { style: {background:C.bg3,border:"1px solid #2A3A54",borderRadius:8,padding:"8px 10px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 689}}
                     , React.createElement('div', { style: {fontSize:12,color:C.text3,marginBottom:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 689}}, lang==="en"?"Std Deduction":"标准扣除")
                     , React.createElement('div', { style: {display:"flex",alignItems:"baseline",gap:3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 689}}
-                      , React.createElement('span', { style: {fontSize:14,color:"#00E676",fontWeight:700}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 689}}, "$")
-                      , React.createElement('input', { type: "number", step: "100", value: stdDed, onChange: function(e){var v=parseInt(e.target.value,10);if(!isNaN(v)&&v>=0){setStdDed(v);setTaxRateNote(lang==="en"?"Edited":"已修改");}}, style: {background:"transparent",border:"none",color:"#00E676",fontSize:18,fontWeight:900,width:"100%",padding:0,outline:"none"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 689}} )
+                      , React.createElement('span', { style: {fontSize:14,color:C.success,fontWeight:700}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 689}}, "$")
+                      , React.createElement('input', { type: "number", step: "100", value: stdDed, onChange: function(e){var v=parseInt(e.target.value,10);if(!isNaN(v)&&v>=0){setStdDed(v);setTaxRateNote(lang==="en"?"Edited":"已修改");}}, style: {background:"transparent",border:"none",color:C.success,fontSize:18,fontWeight:900,width:"100%",padding:0,outline:"none"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 689}} )
                     )
                   )
-                  , React.createElement('div', { style: {background:"#0A1828",border:"1px solid #2A3A54",borderRadius:8,padding:"8px 10px"} }
+                  , React.createElement('div', { style: {background:C.bg3,border:"1px solid #2A3A54",borderRadius:8,padding:"8px 10px"} }
                     , React.createElement('div', { style: {fontSize:12,color:C.text3,marginBottom:4} }, lang==="en"?"MTA Surcharge":"MTA 附加税")
                     , React.createElement('div', { style: {display:"flex",alignItems:"baseline",gap:3} }
                       , React.createElement('input', { type: "number", step: "0.01", value: mtaRate, onChange: function(e){var v=parseFloat(e.target.value);if(!isNaN(v)&&v>=0&&v<10){setMtaRate(v);setTaxRateNote(lang==="en"?"Edited":"已修改");}}, style: {background:"transparent",border:"none",color:"#FFB300",fontSize:18,fontWeight:900,width:"100%",padding:0,outline:"none"} } )
@@ -6482,13 +6588,13 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
               )
               // Quick-link buttons to official tax tools
               , React.createElement(Card, { style: {marginBottom:12,padding:"12px 14px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 689}}
-                , React.createElement('div', { style: {fontSize:13,fontWeight:800,color:"#5AACFF",marginBottom:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 689}}, "🎯 " , lang==="en"?"Get Exact Numbers":"获取准确数字")
+                , React.createElement('div', { style: {fontSize:13,fontWeight:800,color:C.accent2,marginBottom:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 689}}, "🎯 " , lang==="en"?"Get Exact Numbers":"获取准确数字")
                 , React.createElement('div', { style: {fontSize:12,color:C.text3,marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 689}}, lang==="en"?"App estimates are rough. Use these official tools for filing.":"App 估算仅供参考，报税时请用以下官方工具")
                 , [
                   {label:lang==="en"?"📊 IRS Tax Estimator":"📊 IRS 税额计算器",desc:lang==="en"?"Official 2026 federal estimate":"官方 2026 联邦税估算",url:"https://www.irs.gov/individuals/tax-withholding-estimator",color:"#1A4060"},
-                  {label:lang==="en"?"🗽 NY State Tax Calculator":"🗽 纽约州税计算器",desc:lang==="en"?"NY State + NYC city tax":"州税 + NYC 市税",url:"https://www.tax.ny.gov/pit/file/wtax_pers_inc.htm",color:"#1A3060"},
+                  {label:lang==="en"?"🗽 NY State Tax Calculator":"🗽 纽约州税计算器",desc:lang==="en"?"NY State + NYC city tax":"州税 + NYC 市税",url:"https://www.tax.ny.gov/pit/file/wtax_pers_inc.htm",color:C.bg3},
                   {label:lang==="en"?"💼 TurboTax Self-Employed":"💼 TurboTax 自雇报税",desc:lang==="en"?"Full-service filing (~$130/yr)":"代你完整报税（约 $130/年）",url:"https://turbotax.intuit.com/personal-taxes/online/self-employed.jsp",color:"#1A4030"}
-                ].map(function(lk,i){return React.createElement('a', { key: i, href: lk.url, target: "_blank", rel: "noopener noreferrer", style: {display:"flex",alignItems:"center",gap:10,padding:"10px 12px",marginBottom:6,background:lk.color,border:"1px solid #2A4A6A",borderRadius:10,textDecoration:"none",cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 689}}, React.createElement('div', { style: {flex:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 689}}, React.createElement('div', { style: {fontSize:13,fontWeight:700,color:C.text}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 689}}, lk.label), React.createElement('div', { style: {fontSize:12,color:C.text3,marginTop:2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 689}}, lk.desc)), React.createElement('span', { style: {color:C.text3,fontSize:14}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 689}}, "↗"));})
+                ].map(function(lk,i){return React.createElement('a', { key: i, href: lk.url, target: "_blank", rel: "noopener noreferrer", style: {display:"flex",alignItems:"center",gap:10,padding:"10px 12px",marginBottom:6,background:lk.color,border:"1px solid "+C.border2,borderRadius:10,textDecoration:"none",cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 689}}, React.createElement('div', { style: {flex:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 689}}, React.createElement('div', { style: {fontSize:13,fontWeight:700,color:C.text}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 689}}, lk.label), React.createElement('div', { style: {fontSize:12,color:C.text3,marginTop:2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 689}}, lk.desc)), React.createElement('span', { style: {color:C.text3,fontSize:14}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 689}}, "↗"));})
               )
               , (function(){
                 var yn=taxYr;
@@ -6524,27 +6630,27 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                 var qNum=new Date().getMonth()<3?1:new Date().getMonth()<5?2:new Date().getMonth()<9?3:4;
                 var qDates=["Apr 15","Jun 15","Sep 15","Jan 15"];
                 return React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 714}}
-                  , React.createElement(Card, { style: {marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 715}}, React.createElement('div', { style: {fontSize:14,fontWeight:800,color:"#FFD700",marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 715}}, "📋 Schedule C"  )
-                    , React.createElement(Row, { label: lang==="en"?"Gross Revenue":"总营业额", value: fmt(grossInc), color: "#00D4FF", __self: this, __source: {fileName: _jsxFileName, lineNumber: 716}} )
-                    , React.createElement(Row, { label: lang==="en"?"Business Expenses":"可抵扣支出", value: fmt(totalExp), color: "#FF6B35", __self: this, __source: {fileName: _jsxFileName, lineNumber: 717}} )
-                    , yMi>0?React.createElement(Row, { label: (lang==="en"?"Mileage (":"里程 (")+yMi+"mi × $"+mileRate.toFixed(3)+")", value: "-"+fmt(mileDed), color: "#00E676", __self: this, __source: {fileName: _jsxFileName, lineNumber: 718}} ):null
-                    , React.createElement(Row, { label: lang==="en"?"Net Profit":"净利润", value: fmt(netP), color: netP>=0?"#00E676":"#FF5252", bold: true, __self: this, __source: {fileName: _jsxFileName, lineNumber: 719}} )
+                  , React.createElement(Card, { style: {marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 715}}, React.createElement('div', { style: {fontSize:14,fontWeight:800,color:C.gold,marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 715}}, "📋 Schedule C"  )
+                    , React.createElement(Row, { label: lang==="en"?"Gross Revenue":"总营业额", value: fmt(grossInc), color: C.accent, __self: this, __source: {fileName: _jsxFileName, lineNumber: 716}} )
+                    , React.createElement(Row, { label: lang==="en"?"Business Expenses":"可抵扣支出", value: fmt(totalExp), color: C.danger, __self: this, __source: {fileName: _jsxFileName, lineNumber: 717}} )
+                    , yMi>0?React.createElement(Row, { label: (lang==="en"?"Mileage (":"里程 (")+yMi+"mi × $"+mileRate.toFixed(3)+")", value: "-"+fmt(mileDed), color: C.success, __self: this, __source: {fileName: _jsxFileName, lineNumber: 718}} ):null
+                    , React.createElement(Row, { label: lang==="en"?"Net Profit":"净利润", value: fmt(netP), color: netP>=0?C.success:C.danger, bold: true, __self: this, __source: {fileName: _jsxFileName, lineNumber: 719}} )
                   )
                   , React.createElement(Card, { style: {marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 721}}, React.createElement('div', { style: {fontSize:14,fontWeight:800,color:"#CC88FF",marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 721}}, "📋 " , lang==="en"?"Tax Summary":"税额汇总"  )
                     , React.createElement(Row, { label: lang==="en"?"SE Tax Base":"自雇税基数", value: fmt(seBase), __self: this, __source: {fileName: _jsxFileName, lineNumber: 722}} )
                     , React.createElement(Row, { label: (lang==="en"?"SE Tax (":"自雇税 (")+seRate+"%)", value: fmt(seTax), color: "#CC88FF", __self: this, __source: {fileName: _jsxFileName, lineNumber: 723}} )
-                    , React.createElement(Row, { label: lang==="en"?"½ SE Deductible":"自雇税抵扣 (½)", value: "-"+fmt(seDed), color: "#00E676", __self: this, __source: {fileName: _jsxFileName, lineNumber: 724}} )
+                    , React.createElement(Row, { label: lang==="en"?"½ SE Deductible":"自雇税抵扣 (½)", value: "-"+fmt(seDed), color: C.success, __self: this, __source: {fileName: _jsxFileName, lineNumber: 724}} )
                     , React.createElement(Row, { label: (lang==="en"?"Federal Income (":"联邦所得税 (")+fedRate+"%)", value: fmt(fedIncTax), color: "#FFB300", __self: this, __source: {fileName: _jsxFileName, lineNumber: 724}} )
                     , React.createElement(Row, { label: (lang==="en"?"State+City (":"州+市税 (")+stateRate+"%)", value: fmt(stateIncTax), color: "#FFB300", __self: this, __source: {fileName: _jsxFileName, lineNumber: 724}} )
                     , mtaIncTax>0 ? React.createElement(Row, { label: (lang==="en"?"MTA Surcharge (":"MTA 附加税 (")+mtaRate+"%)", value: fmt(mtaIncTax), color: "#FFB300" } ) : null
-                    , React.createElement(Row, { label: lang==="en"?"Total Estimated Tax":"预计税额合计", value: fmt(totalAnnualTax), color: "#FF6B35", bold: true, __self: this, __source: {fileName: _jsxFileName, lineNumber: 724}} )
+                    , React.createElement(Row, { label: lang==="en"?"Total Estimated Tax":"预计税额合计", value: fmt(totalAnnualTax), color: C.danger, bold: true, __self: this, __source: {fileName: _jsxFileName, lineNumber: 724}} )
                   )
                   , React.createElement(Card, { style: {marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 726}}, React.createElement('div', { style: {fontSize:14,fontWeight:800,color:"#FFB300",marginBottom:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 726}}, "📅 " , lang==="en"?"Quarterly Estimated":"季度预缴")
                     , React.createElement('div', { style: {fontSize:12,color:C.text3,marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 726}}, lang==="en"?"Includes SE + federal + NY state estimate. Confirm with a CPA.":"包含自雇税 + 联邦 + 纽约州估算。请与会计师核对。")
-                    , ["Q1 (Jan-Mar)","Q2 (Apr-May)","Q3 (Jun-Aug)","Q4 (Sep-Dec)"].map(function(q,i){var isCur=i===qNum-1,isPast=i<qNum-1;return React.createElement('div', { key: i, style: {display:"flex",justifyContent:"space-between",padding:"7px 0",borderBottom:"1px solid #1E3050"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 727}}, React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 727}}, React.createElement('div', { style: {fontSize:13,fontWeight:700,color:isCur?"#FFD700":isPast?"#7A9AB8":C.text}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 727}}, q), React.createElement('div', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 727}}, lang==="en"?"Due: ":"截止: ", qDates[i])), React.createElement('div', { style: {textAlign:"right"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 727}}, React.createElement('div', { style: {fontSize:14,fontWeight:800,color:isCur?"#FFD700":C.text2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 727}}, fmt(qDue)), React.createElement('div', { style: {fontSize:12,color:isPast?"#00E676":isCur?"#FFB300":"#7A9AB8"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 727}}, isPast?"✓"+(lang==="en"?" Past":" 已过"):isCur?(lang==="en"?"← Now":"← 当前"):(lang==="en"?"Upcoming":"待缴"))));})
+                    , ["Q1 (Jan-Mar)","Q2 (Apr-May)","Q3 (Jun-Aug)","Q4 (Sep-Dec)"].map(function(q,i){var isCur=i===qNum-1,isPast=i<qNum-1;return React.createElement('div', { key: i, style: {display:"flex",justifyContent:"space-between",padding:"7px 0",borderBottom:"1px solid #1E3050"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 727}}, React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 727}}, React.createElement('div', { style: {fontSize:13,fontWeight:700,color:isCur?C.gold:isPast?C.text3:C.text}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 727}}, q), React.createElement('div', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 727}}, lang==="en"?"Due: ":"截止: ", qDates[i])), React.createElement('div', { style: {textAlign:"right"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 727}}, React.createElement('div', { style: {fontSize:14,fontWeight:800,color:isCur?C.gold:C.text2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 727}}, fmt(qDue)), React.createElement('div', { style: {fontSize:12,color:isPast?C.success:isCur?"#FFB300":C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 727}}, isPast?"✓"+(lang==="en"?" Past":" 已过"):isCur?(lang==="en"?"← Now":"← 当前"):(lang==="en"?"Upcoming":"待缴"))));})
                   )
-                  , React.createElement(Card, { style: {marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 729}}, React.createElement('div', { style: {fontSize:14,fontWeight:800,color:"#00E676",marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 729}}, "📊 " , lang==="en"?"Year-End Summary":"年终汇总")
-                    , (function(){var grps={"车辆":{},"牌照":{},"平台":{},"其他":{}};yExAll.concat(yFxAll).forEach(function(e){var cat=allC[e.category]||{label:e.category,g:"其他"};var g=cat.g||"其他";var lbl=e.isFixed?e.fixedLabel:cat.label;if(!grps[g])grps[g]={};if(!grps[g][lbl])grps[g][lbl]=0;grps[g][lbl]+=(+e.amount||0);});var gT=yExAll.concat(yFxAll).reduce(function(s,e){return s+(+e.amount||0);},0);var gcl={"车辆":"#00D4FF","牌照":"#FFD700","平台":"#CC88FF","其他":"#A8D0E8"};var glbl=lang==="en"?{"车辆":"Vehicle","牌照":"License","平台":"Platform","其他":"Other"}:{"车辆":"车辆","牌照":"牌照","平台":"平台","其他":"其他"};if(!gT)return React.createElement('div', { style: {textAlign:"center",color:C.text3,padding:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 730}}, lang==="en"?"No expenses for "+yn:yn+"年暂无支出");return React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 730}}, ["车辆","牌照","平台","其他"].map(function(g){var items=grps[g];if(!items||!Object.keys(items).length)return null;var st=Object.values(items).reduce(function(s,v){return s+v;},0);return React.createElement('div', { key: g, style: {marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 730}}, React.createElement('div', { style: {display:"flex",justifyContent:"space-between",borderBottom:"2px solid "+gcl[g],paddingBottom:3,marginBottom:3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 730}}, React.createElement('span', { style: {fontSize:12,fontWeight:800,color:gcl[g]}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 730}}, glbl[g]), React.createElement('span', { style: {fontSize:12,fontWeight:800,color:gcl[g]}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 730}}, fmt(st))), Object.entries(items).map(function(kv){return React.createElement('div', { key: kv[0], style: {display:"flex",justifyContent:"space-between",padding:"2px 8px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 730}}, React.createElement('span', { style: {fontSize:12,color:C.text2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 730}}, kv[0]), React.createElement('span', { style: {fontSize:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 730}}, fmt(kv[1])));}));}), " " , React.createElement('div', { style: {borderTop:"2px solid "+C.border,paddingTop:8,display:"flex",justifyContent:"space-between"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 730}}, React.createElement('span', { style: {fontSize:14,fontWeight:800}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 730}}, lang==="en"?"TOTAL":"可抵扣总额"), React.createElement('span', { style: {fontSize:16,fontWeight:900,color:"#00E676"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 730}}, fmt(gT))));}())
+                  , React.createElement(Card, { style: {marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 729}}, React.createElement('div', { style: {fontSize:14,fontWeight:800,color:C.success,marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 729}}, "📊 " , lang==="en"?"Year-End Summary":"年终汇总")
+                    , (function(){var grps={"车辆":{},"牌照":{},"平台":{},"其他":{}};yExAll.concat(yFxAll).forEach(function(e){var cat=allC[e.category]||{label:e.category,g:"其他"};var g=cat.g||"其他";var lbl=e.isFixed?e.fixedLabel:cat.label;if(!grps[g])grps[g]={};if(!grps[g][lbl])grps[g][lbl]=0;grps[g][lbl]+=(+e.amount||0);});var gT=yExAll.concat(yFxAll).reduce(function(s,e){return s+(+e.amount||0);},0);var gcl={"车辆":C.accent,"牌照":C.gold,"平台":"#CC88FF","其他":"#A8D0E8"};var glbl=lang==="en"?{"车辆":"Vehicle","牌照":"License","平台":"Platform","其他":"Other"}:{"车辆":"车辆","牌照":"牌照","平台":"平台","其他":"其他"};if(!gT)return React.createElement('div', { style: {textAlign:"center",color:C.text3,padding:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 730}}, lang==="en"?"No expenses for "+yn:yn+"年暂无支出");return React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 730}}, ["车辆","牌照","平台","其他"].map(function(g){var items=grps[g];if(!items||!Object.keys(items).length)return null;var st=Object.values(items).reduce(function(s,v){return s+v;},0);return React.createElement('div', { key: g, style: {marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 730}}, React.createElement('div', { style: {display:"flex",justifyContent:"space-between",borderBottom:"2px solid "+gcl[g],paddingBottom:3,marginBottom:3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 730}}, React.createElement('span', { style: {fontSize:12,fontWeight:800,color:gcl[g]}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 730}}, glbl[g]), React.createElement('span', { style: {fontSize:12,fontWeight:800,color:gcl[g]}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 730}}, fmt(st))), Object.entries(items).map(function(kv){return React.createElement('div', { key: kv[0], style: {display:"flex",justifyContent:"space-between",padding:"2px 8px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 730}}, React.createElement('span', { style: {fontSize:12,color:C.text2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 730}}, kv[0]), React.createElement('span', { style: {fontSize:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 730}}, fmt(kv[1])));}));}), " " , React.createElement('div', { style: {borderTop:"2px solid "+C.border,paddingTop:8,display:"flex",justifyContent:"space-between"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 730}}, React.createElement('span', { style: {fontSize:14,fontWeight:800}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 730}}, lang==="en"?"TOTAL":"可抵扣总额"), React.createElement('span', { style: {fontSize:16,fontWeight:900,color:C.success}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 730}}, fmt(gT))));}())
                   )
                   , React.createElement('button', { onClick: function(){if(!confirm(lang==="en"?"Download "+(taxYr||new Date().getFullYear())+" tax report PDF?":"下载 "+(taxYr||new Date().getFullYear())+" 年报税表 PDF？"))return;
                     var yr=taxYr||(new Date().getFullYear()+"");
@@ -6933,7 +7039,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                     , React.createElement('div', { style: {fontSize:12,color:C.text3,lineHeight:1.5} }, lang==="en"?(taxYr||new Date().getFullYear())+" · All-in-one PDF: income + expenses + monthly detail + tax estimates + driver info":(taxYr||new Date().getFullYear())+" 年 · 一份 PDF 包含：收入 + 支出 + 月度明细 + 税额估算 + 司机信息（给会计师用）")
                   )
                   , React.createElement(Card, {__self: this, __source: {fileName: _jsxFileName, lineNumber: 732}}, React.createElement('div', { style: {fontSize:14,fontWeight:800,color:C.text2,marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 732}}, "🔗 " , lang==="en"?"Tax Links":"税务网站")
-                    , [{label:"IRS Schedule C",url:"https://www.irs.gov/forms-pubs/about-schedule-c-form-1040"},{label:"IRS Schedule SE",url:"https://www.irs.gov/forms-pubs/about-schedule-se-form-1040"},{label:"IRS Form 1040-ES",url:"https://www.irs.gov/forms-pubs/about-form-1040-es"},{label:"NYC Free Tax Prep",url:"https://www1.nyc.gov/site/dca/consumers/file-your-taxes.page"}].map(function(lk,i){return React.createElement('a', { key: i, href: lk.url, target: "_blank", rel: "noopener noreferrer" , style: {display:"flex",justifyContent:"space-between",padding:"10px 0",borderBottom:"1px solid #1E3050",textDecoration:"none"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 733}}, React.createElement('span', { style: {fontSize:13,fontWeight:700,color:"#5AACFF"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 733}}, lk.label), React.createElement('span', { style: {color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 733}}, ">"));})
+                    , [{label:"IRS Schedule C",url:"https://www.irs.gov/forms-pubs/about-schedule-c-form-1040"},{label:"IRS Schedule SE",url:"https://www.irs.gov/forms-pubs/about-schedule-se-form-1040"},{label:"IRS Form 1040-ES",url:"https://www.irs.gov/forms-pubs/about-form-1040-es"},{label:"NYC Free Tax Prep",url:"https://www1.nyc.gov/site/dca/consumers/file-your-taxes.page"}].map(function(lk,i){return React.createElement('a', { key: i, href: lk.url, target: "_blank", rel: "noopener noreferrer" , style: {display:"flex",justifyContent:"space-between",padding:"10px 0",borderBottom:"1px solid #1E3050",textDecoration:"none"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 733}}, React.createElement('span', { style: {fontSize:13,fontWeight:700,color:C.accent2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 733}}, lk.label), React.createElement('span', { style: {color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 733}}, ">"));})
                   )
                 );
               })()
@@ -6992,12 +7098,12 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
             )
             , React.createElement('div', { style: {padding:"14px 18px",overflowY:"auto",flex:1} }
               // Summary header
-              , React.createElement('div', {style:{background:"#0A1828",border:"1px solid "+C.border,borderRadius:10,padding:"12px 14px",marginBottom:12}}
-                , React.createElement('div', {style:{fontSize:14,fontWeight:700,color:"#00D4FF",marginBottom:6}}
+              , React.createElement('div', {style:{background:C.bg3,border:"1px solid "+C.border,borderRadius:10,padding:"12px 14px",marginBottom:12}}
+                , React.createElement('div', {style:{fontSize:14,fontWeight:700,color:C.accent,marginBottom:6}}
                   , fuelioImportResult.isEv?"⚡ ":"⛽ ", lang==="en"?"Period: ":"月份: ", fuelioImportResult.period || "?"
                 )
                 , React.createElement('div', {style:{fontSize:12,color:C.text2,lineHeight:1.6}}
-                  , lang==="en"?"Found ":"找到 ", React.createElement('b',{style:{color:"#FFD700"}}, fuelioImportResult.entries.length), lang==="en"?" entries · Total ":" 条记录 · 总额 ", React.createElement('b',{style:{color:"#FF7060"}}, fmt(fuelioImportResult.stats.totalCost))
+                  , lang==="en"?"Found ":"找到 ", React.createElement('b',{style:{color:C.gold}}, fuelioImportResult.entries.length), lang==="en"?" entries · Total ":" 条记录 · 总额 ", React.createElement('b',{style:{color:C.danger}}, fmt(fuelioImportResult.stats.totalCost))
                 )
                 , fuelioImportResult.fileCount && fuelioImportResult.fileCount > 1 ? React.createElement('div', {style:{fontSize:11,color:"#5ADA7A",marginTop:6}}
                     , "📁 ", fuelioImportResult.fileCount, lang==="en"?" files · ":" 份文件 · ", lang==="en"?"Removed ":"自动去重 ", fuelioImportResult.dupRemoved||0, lang==="en"?" duplicates":""
@@ -7036,7 +7142,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                       , React.createElement('div', {style:{fontSize:12,fontWeight:600,color:C.text,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}, en.date, " · ", c?c.label:en.category, en.odometer>0?" · "+en.odometer.toLocaleString()+"mi":"")
                       , en.notes ? React.createElement('div', {style:{fontSize:10,color:C.text3,marginTop:1,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}, en.notes) : null
                     )
-                    , React.createElement('div', {style:{fontSize:13,fontWeight:700,color:"#FFD700",flexShrink:0}}, fmt(en.amount))
+                    , React.createElement('div', {style:{fontSize:13,fontWeight:700,color:C.gold,flexShrink:0}}, fmt(en.amount))
                   );
                 })
             )
@@ -7075,10 +7181,10 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                   , React.createElement('div', { style: {padding:"14px 16px",background:"#1A1000",border:"1px solid #5A3A00",borderRadius:10,marginBottom:12} }
                     , React.createElement('div', { style: {fontSize:14,fontWeight:800,color:"#FFB300",marginBottom:10} }, "✓ " , pasteUberTaxResult.isMonthly ? (lang==="en"?"Monthly Statement · ":"月度账单 · ")+pasteUberTaxResult.year+"-"+(pasteUberTaxResult.monthNum<10?"0":"")+pasteUberTaxResult.monthNum : (lang==="en"?"Tax Year ":"税务年度 ")+pasteUberTaxResult.year)
                     , React.createElement('div', { style: {display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,fontSize:12,marginBottom:8} }
-                      , React.createElement('div', {}, "💵 1099-K: ", pasteUberTaxResult.kTotal>0 ? React.createElement('b',{style:{color:"#00D4FF"}}, "$"+pasteUberTaxResult.kTotal.toFixed(2)) : React.createElement('span',{style:{color:C.text3,fontStyle:"italic"}}, lang==="en"?"none":"无"))
-                      , React.createElement('div', {}, "⭐ 1099-NEC: ", pasteUberTaxResult.necTotal>0 ? React.createElement('b',{style:{color:"#00E676"}}, "$"+pasteUberTaxResult.necTotal.toFixed(2)) : React.createElement('span',{style:{color:C.text3,fontStyle:"italic"}}, lang==="en"?"none":"无"))
-                      , React.createElement('div', {}, "🌉 " , lang==="en"?"Tolls":"过桥退款" , ": ", pasteUberTaxResult.tollTotal>0 ? React.createElement('b',{style:{color:"#FFD700"}}, "$"+pasteUberTaxResult.tollTotal.toFixed(2)) : React.createElement('span',{style:{color:C.text3,fontStyle:"italic"}}, lang==="en"?"none":"无"))
-                      , React.createElement('div', {}, "💸 " , lang==="en"?"Uber Fees":"Uber 抽成" , ": ", pasteUberTaxResult.feesTotal>0 ? React.createElement('b',{style:{color:"#FF6B35"}}, "$"+pasteUberTaxResult.feesTotal.toFixed(2)) : React.createElement('span',{style:{color:C.text3,fontStyle:"italic"}}, lang==="en"?"none":"无"))
+                      , React.createElement('div', {}, "💵 1099-K: ", pasteUberTaxResult.kTotal>0 ? React.createElement('b',{style:{color:C.accent}}, "$"+pasteUberTaxResult.kTotal.toFixed(2)) : React.createElement('span',{style:{color:C.text3,fontStyle:"italic"}}, lang==="en"?"none":"无"))
+                      , React.createElement('div', {}, "⭐ 1099-NEC: ", pasteUberTaxResult.necTotal>0 ? React.createElement('b',{style:{color:C.success}}, "$"+pasteUberTaxResult.necTotal.toFixed(2)) : React.createElement('span',{style:{color:C.text3,fontStyle:"italic"}}, lang==="en"?"none":"无"))
+                      , React.createElement('div', {}, "🌉 " , lang==="en"?"Tolls":"过桥退款" , ": ", pasteUberTaxResult.tollTotal>0 ? React.createElement('b',{style:{color:C.gold}}, "$"+pasteUberTaxResult.tollTotal.toFixed(2)) : React.createElement('span',{style:{color:C.text3,fontStyle:"italic"}}, lang==="en"?"none":"无"))
+                      , React.createElement('div', {}, "💸 " , lang==="en"?"Uber Fees":"Uber 抽成" , ": ", pasteUberTaxResult.feesTotal>0 ? React.createElement('b',{style:{color:C.danger}}, "$"+pasteUberTaxResult.feesTotal.toFixed(2)) : React.createElement('span',{style:{color:C.text3,fontStyle:"italic"}}, lang==="en"?"none":"无"))
                       , React.createElement('div', {}, "🚗 " , T.trips , ": ", pasteUberTaxResult.totalTrips>0 ? React.createElement('b', null, pasteUberTaxResult.totalTrips.toLocaleString()) : React.createElement('span',{style:{color:C.text3,fontStyle:"italic"}}, lang==="en"?"none":"无"))
                       , React.createElement('div', {}, "🛣 " , T.miles , ": ", pasteUberTaxResult.totalMiles>0 ? React.createElement('b', null, pasteUberTaxResult.totalMiles.toLocaleString()) : React.createElement('span',{style:{color:C.text3,fontStyle:"italic"}}, lang==="en"?"none":"无"))
                     )
@@ -7097,7 +7203,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                                 , React.createElement('span', {style:{color:C.text3,minWidth:90}}, pasteUberTaxResult.year+"-"+(i+1<10?"0":"")+(i+1))
                                 , isEmpty
                                   ? React.createElement('span', {style:{color:C.text3,fontStyle:"italic",fontSize:11}}, lang==="en"?"— no income —":"— 无收入 —")
-                                  : React.createElement('span', {style:{color:"#00D4FF"}}, "$"+k.toFixed(2))
+                                  : React.createElement('span', {style:{color:C.accent}}, "$"+k.toFixed(2))
                                 , isEmpty
                                   ? React.createElement('span', {style:{color:"transparent"}}, "—")
                                   : React.createElement('span', {style:{color:C.text2}}, t+"t · "+mi+"mi")
@@ -7106,7 +7212,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                           })()
                       )
                     ) : React.createElement('div', { style: {fontSize:12,color:"#FFB300",padding:"10px 12px",background:"#1A1000",borderRadius:8,marginBottom:12} }, "⚠ " , lang==="en"?"Some monthly data is missing. Make sure you pasted ALL 3 PDFs (Tax Summary + 1099-K + 1099-NEC).":"月度数据不完整。请确认 3 份 PDF 都粘贴了（Tax Summary + 1099-K + 1099-NEC）。")
-                  , React.createElement('div', { style: {fontSize:12,color:C.text3,padding:"8px 10px",background:"#0A1828",border:"1px solid #1A2A44",borderRadius:8,marginBottom:10,lineHeight:1.6} }
+                  , React.createElement('div', { style: {fontSize:12,color:C.text3,padding:"8px 10px",background:C.bg3,border:"1px solid #1A2A44",borderRadius:8,marginBottom:10,lineHeight:1.6} }
                       , "💡 ", lang==="en"?"Note: 1099-K is gross (rider-paid amount before Uber's service fee). To get accurate net income on Schedule C, also record Uber's $":"提示：1099-K 是 Gross（乘客付的金额，含 Uber 抽成）。Schedule C 报税时，把 Uber 抽成 $"
                       , pasteUberTaxResult.feesTotal.toFixed(2)
                       , lang==="en"?" service fees as a deductible expense.":" 也作为可抵税支出录入。"
@@ -7208,8 +7314,8 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
               , React.createElement('div', { style: {width:34} })
             )
             , React.createElement('div', { style: {padding:"16px 18px",overflowY:"auto",flex:1} }
-              , React.createElement('div', { style: {background:"#0A1828",border:"1px solid #2A4A6A",borderRadius:10,padding:"12px 14px",fontSize:12,color:C.text2,lineHeight:1.6,marginBottom:14} }
-                , React.createElement('div', {style:{fontWeight:700,marginBottom:6,color:"#5AACFF"}}, lang==="en"?"How to use:":"使用方法：")
+              , React.createElement('div', { style: {background:C.bg3,border:"1px solid "+C.border2,borderRadius:10,padding:"12px 14px",fontSize:12,color:C.text2,lineHeight:1.6,marginBottom:14} }
+                , React.createElement('div', {style:{fontWeight:700,marginBottom:6,color:C.accent2}}, lang==="en"?"How to use:":"使用方法：")
                 , React.createElement('div', {}, lang==="en"?"1. Open Uber Driver App → Earnings → Statements":"1. 打开 Uber Driver App → 收入 → Statements")
                 , React.createElement('div', {}, lang==="en"?"2. Pick a full week, download the PDF":"2. 选一整周，下载 PDF")
                 , React.createElement('div', {}, lang==="en"?"3. Open the PDF, select all, copy":"3. 打开 PDF, 长按全选, 复制")
@@ -7230,31 +7336,31 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
               , pasteUberResult ? React.createElement('div', { style: {marginTop:14,padding:"14px 16px",background:"#0A2010",border:"1px solid #2A6020",borderRadius:10} }
                   , React.createElement('div', { style: {fontSize:13,fontWeight:800,color:"#5ADA7A",marginBottom:6} }, "✓ " , lang==="en"?"Parsed — please verify before saving":"解析完成 — 保存前请核对")
                   , React.createElement('div', { style: {fontSize:12,color:C.text3,marginBottom:8} }, "📝 " , lang==="en"?"Tap any number to edit":"点任何数字可修改")
-                  , React.createElement('div', { style: {fontSize:12,color:C.text3,marginBottom:8} }, lang==="en"?"Week: ":"周次：" , React.createElement('b',{style:{color:"#FFD700"}}, pasteUberResult.weekStart, " → " , pasteUberResult.weekEnd))
+                  , React.createElement('div', { style: {fontSize:12,color:C.text3,marginBottom:8} }, lang==="en"?"Week: ":"周次：" , React.createElement('b',{style:{color:C.gold}}, pasteUberResult.weekStart, " → " , pasteUberResult.weekEnd))
                   , React.createElement('div', { style: {display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginTop:6} }
                     , React.createElement('div', {style:{display:"flex",flexDirection:"column",gap:2}}
                       , React.createElement('span',{style:{color:C.text3,fontSize:12}}, "💵 " , lang==="en"?"Fare":"总车费")
-                      , React.createElement('input',{type:"number",step:"0.01",value:pasteUberResult.grossFare,onChange:function(e){setPasteUberResult(Object.assign({},pasteUberResult,{grossFare:e.target.value}));},style:{background:"#0A1828",border:"1px solid #2A3A54",borderRadius:6,padding:"6px 8px",color:"#00D4FF",fontSize:14,fontWeight:700,width:"100%",boxSizing:"border-box"}})
+                      , React.createElement('input',{type:"number",step:"0.01",value:pasteUberResult.grossFare,onChange:function(e){setPasteUberResult(Object.assign({},pasteUberResult,{grossFare:e.target.value}));},style:{background:C.bg3,border:"1px solid #2A3A54",borderRadius:6,padding:"6px 8px",color:C.accent,fontSize:14,fontWeight:700,width:"100%",boxSizing:"border-box"}})
                     )
                     , React.createElement('div', {style:{display:"flex",flexDirection:"column",gap:2}}
                       , React.createElement('span',{style:{color:C.text3,fontSize:12}}, "💰 " , T.tips)
-                      , React.createElement('input',{type:"number",step:"0.01",value:pasteUberResult.tips,onChange:function(e){setPasteUberResult(Object.assign({},pasteUberResult,{tips:e.target.value}));},style:{background:"#0A1828",border:"1px solid #2A3A54",borderRadius:6,padding:"6px 8px",color:"#00E676",fontSize:14,fontWeight:700,width:"100%",boxSizing:"border-box"}})
+                      , React.createElement('input',{type:"number",step:"0.01",value:pasteUberResult.tips,onChange:function(e){setPasteUberResult(Object.assign({},pasteUberResult,{tips:e.target.value}));},style:{background:C.bg3,border:"1px solid #2A3A54",borderRadius:6,padding:"6px 8px",color:C.success,fontSize:14,fontWeight:700,width:"100%",boxSizing:"border-box"}})
                     )
                     , React.createElement('div', {style:{display:"flex",flexDirection:"column",gap:2}}
                       , React.createElement('span',{style:{color:C.text3,fontSize:12}}, "🎁 " , lang==="en"?"Bonus / Prior tips":"奖励 / 遗留小费")
-                      , React.createElement('input',{type:"number",step:"0.01",value:pasteUberResult.bonus||"0.00",onChange:function(e){setPasteUberResult(Object.assign({},pasteUberResult,{bonus:e.target.value}));},style:{background:"#0A1828",border:"1px solid #2A3A54",borderRadius:6,padding:"6px 8px",color:"#FFD700",fontSize:14,fontWeight:700,width:"100%",boxSizing:"border-box"}})
+                      , React.createElement('input',{type:"number",step:"0.01",value:pasteUberResult.bonus||"0.00",onChange:function(e){setPasteUberResult(Object.assign({},pasteUberResult,{bonus:e.target.value}));},style:{background:C.bg3,border:"1px solid #2A3A54",borderRadius:6,padding:"6px 8px",color:C.gold,fontSize:14,fontWeight:700,width:"100%",boxSizing:"border-box"}})
                     )
                     , React.createElement('div', {style:{display:"flex",flexDirection:"column",gap:2}}
                       , React.createElement('span',{style:{color:C.text3,fontSize:12}}, "🌉 " , T.toll)
-                      , React.createElement('input',{type:"number",step:"0.01",value:pasteUberResult.tollReimbursed,onChange:function(e){setPasteUberResult(Object.assign({},pasteUberResult,{tollReimbursed:e.target.value}));},style:{background:"#0A1828",border:"1px solid #2A3A54",borderRadius:6,padding:"6px 8px",color:"#FFB300",fontSize:14,fontWeight:700,width:"100%",boxSizing:"border-box"}})
+                      , React.createElement('input',{type:"number",step:"0.01",value:pasteUberResult.tollReimbursed,onChange:function(e){setPasteUberResult(Object.assign({},pasteUberResult,{tollReimbursed:e.target.value}));},style:{background:C.bg3,border:"1px solid #2A3A54",borderRadius:6,padding:"6px 8px",color:"#FFB300",fontSize:14,fontWeight:700,width:"100%",boxSizing:"border-box"}})
                     )
                     , React.createElement('div', {style:{display:"flex",flexDirection:"column",gap:2}}
                       , React.createElement('span',{style:{color:C.text3,fontSize:12}}, "🏦 " , lang==="en"?"Bank Payout":"银行入账")
-                      , React.createElement('input',{type:"number",step:"0.01",value:pasteUberResult.payoutAmount||"",placeholder:"0.00",onChange:function(e){setPasteUberResult(Object.assign({},pasteUberResult,{payoutAmount:e.target.value}));},style:{background:"#0A1828",border:"1px solid #2A3A54",borderRadius:6,padding:"6px 8px",color:"#5AACFF",fontSize:14,fontWeight:700,width:"100%",boxSizing:"border-box"}})
+                      , React.createElement('input',{type:"number",step:"0.01",value:pasteUberResult.payoutAmount||"",placeholder:"0.00",onChange:function(e){setPasteUberResult(Object.assign({},pasteUberResult,{payoutAmount:e.target.value}));},style:{background:C.bg3,border:"1px solid #2A3A54",borderRadius:6,padding:"6px 8px",color:C.accent2,fontSize:14,fontWeight:700,width:"100%",boxSizing:"border-box"}})
                     )
                     , React.createElement('div', {style:{display:"flex",flexDirection:"column",gap:2}}
                       , React.createElement('span',{style:{color:C.text3,fontSize:12}}, "📅 " , lang==="en"?"Payout Date":"入账日期")
-                      , React.createElement('input',{type:"date",value:pasteUberResult.payoutDate||"",onChange:function(e){setPasteUberResult(Object.assign({},pasteUberResult,{payoutDate:e.target.value}));},style:{background:"#0A1828",border:"1px solid #2A3A54",borderRadius:6,padding:"6px 8px",color:C.text2,fontSize:13,fontWeight:600,width:"100%",boxSizing:"border-box"}})
+                      , React.createElement('input',{type:"date",value:pasteUberResult.payoutDate||"",onChange:function(e){setPasteUberResult(Object.assign({},pasteUberResult,{payoutDate:e.target.value}));},style:{background:C.bg3,border:"1px solid #2A3A54",borderRadius:6,padding:"6px 8px",color:C.text2,fontSize:13,fontWeight:600,width:"100%",boxSizing:"border-box"}})
                     )
                   )
                   , (pasteUberResult.uberServiceFee && +pasteUberResult.uberServiceFee>0) ? React.createElement('div', {style:{marginTop:10,padding:"10px 12px",background:"#1A0A1A",border:"1px solid #5A2A4A",borderRadius:8}}
@@ -7264,8 +7370,8 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                         , React.createElement('div', {style:{flex:1,fontSize:11,color:C.text3,lineHeight:1.4}}, lang==="en"?"This is what Uber takes. Will be auto-recorded as platform expense if you save.":"这是 Uber 从乘客那扣走的。保存时会自动作为平台支出录入。")
                       )
                     ) : null
-                  , React.createElement('div', {style:{marginTop:10,padding:"8px 12px",background:"#0A1828",borderRadius:6,fontSize:13,textAlign:"center"}}
-                    , "📊 ", lang==="en"?"Total: ":"合计：" , React.createElement('b',{style:{color:"#FFD700",fontSize:16}}, "$"+(((+pasteUberResult.grossFare||0)+(+pasteUberResult.tips||0)+(+pasteUberResult.bonus||0)+(+pasteUberResult.tollReimbursed||0)).toFixed(2)))
+                  , React.createElement('div', {style:{marginTop:10,padding:"8px 12px",background:C.bg3,borderRadius:6,fontSize:13,textAlign:"center"}}
+                    , "📊 ", lang==="en"?"Total: ":"合计：" , React.createElement('b',{style:{color:C.gold,fontSize:16}}, "$"+(((+pasteUberResult.grossFare||0)+(+pasteUberResult.tips||0)+(+pasteUberResult.bonus||0)+(+pasteUberResult.tollReimbursed||0)).toFixed(2)))
                   )
                   , (+pasteUberResult.statedEarnings>0) ? (function(){
                       // Uber stated earnings is current-week only — compare against fare+tips (NOT bonus, since bonus is prior-week tips)
@@ -7391,10 +7497,10 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                 , React.createElement('div', { style: {display:"flex",alignItems:"center",gap:14} }
                   , React.createElement('div', { style: {fontSize:32} }, "📱")
                   , React.createElement('div', { style: {flex:1} }
-                    , React.createElement('div', { style: {fontSize:16,fontWeight:800,marginBottom:3,color:"#5AACFF"} }, lang==="en"?"Rideshare Driver":"网约车司机")
+                    , React.createElement('div', { style: {fontSize:16,fontWeight:800,marginBottom:3,color:C.accent2} }, lang==="en"?"Rideshare Driver":"网约车司机")
                     , React.createElement('div', { style: {fontSize:12,color:C.text3,lineHeight:1.5} }, lang==="en"?"Uber, Lyft, Via — record weekly/monthly statements":"Uber、Lyft、Via — 按周/月记录平台账单")
                   )
-                  , React.createElement('div', { style: {color:"#5AACFF",fontSize:18} }, "→")
+                  , React.createElement('div', { style: {color:C.accent2,fontSize:18} }, "→")
                 )
               )
               , React.createElement('button', { onClick: function(){
@@ -7446,7 +7552,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
             , React.createElement('div', { style: {display:"flex",flexDirection:"column",gap:12,marginBottom:20}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 751}}
               // Type toggle: date vs mile
               , React.createElement('div', { style: {display:"flex",gap:6,marginBottom:2} }
-                , React.createElement('button', { onClick: function(){setRf(Object.assign({},rf,{type:"date"}));}, style: {flex:1,padding:"10px 8px",borderRadius:10,border:"1px solid "+(rf.type!=="mile"?"#00D4FF":"#2A3A54"),background:rf.type!=="mile"?"#0A1828":"#0D1426",color:rf.type!=="mile"?"#00D4FF":C.text3,fontSize:13,fontWeight:rf.type!=="mile"?800:600,cursor:"pointer"} }, "📅 " , lang==="en"?"By Date":"按日期")
+                , React.createElement('button', { onClick: function(){setRf(Object.assign({},rf,{type:"date"}));}, style: {flex:1,padding:"10px 8px",borderRadius:10,border:"1px solid "+(rf.type!=="mile"?C.accent:"#2A3A54"),background:rf.type!=="mile"?C.bg3:"#0D1426",color:rf.type!=="mile"?C.accent:C.text3,fontSize:13,fontWeight:rf.type!=="mile"?800:600,cursor:"pointer"} }, "📅 " , lang==="en"?"By Date":"按日期")
                 , React.createElement('button', { onClick: function(){setRf(Object.assign({},rf,{type:"mile"}));}, style: {flex:1,padding:"10px 8px",borderRadius:10,border:"1px solid "+(rf.type==="mile"?"#FFB300":"#2A3A54"),background:rf.type==="mile"?"#1A1000":"#0D1426",color:rf.type==="mile"?"#FFB300":C.text3,fontSize:13,fontWeight:rf.type==="mile"?800:600,cursor:"pointer"} }, "🛣 " , lang==="en"?"By Mileage":"按里程")
               )
               // Mile mode: presets row + current odo banner
@@ -7460,11 +7566,11 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                       , presets.map(function(p){return React.createElement('button',{key:p.key,onClick:function(){
                           var lbl=lang==="en"?p.lbl_en:p.lbl_zh;
                           setRf(Object.assign({},rf,{title:"custom",customTitle:lbl,triggerMile:String(co?(co+p.interval):p.interval),intervalMile:String(p.interval)}));
-                        },style:{flex:"1 0 auto",minWidth:100,padding:"8px 10px",borderRadius:8,border:"1px solid #2A3A54",background:"#0A1828",color:C.text2,fontSize:12,fontWeight:600,cursor:"pointer",textAlign:"left"}}, p.icon, " " , lang==="en"?p.lbl_en:p.lbl_zh, React.createElement('div',{style:{fontSize:11,color:C.text3,marginTop:2}}, "每 "+p.interval.toLocaleString()+" mi"));})
+                        },style:{flex:"1 0 auto",minWidth:100,padding:"8px 10px",borderRadius:8,border:"1px solid #2A3A54",background:C.bg3,color:C.text2,fontSize:12,fontWeight:600,cursor:"pointer",textAlign:"left"}}, p.icon, " " , lang==="en"?p.lbl_en:p.lbl_zh, React.createElement('div',{style:{fontSize:11,color:C.text3,marginTop:2}}, "每 "+p.interval.toLocaleString()+" mi"));})
                       , React.createElement('button',{onClick:function(){setRf(Object.assign({},rf,{title:"custom",customTitle:""}));},style:{flex:"1 0 auto",minWidth:100,padding:"8px 10px",borderRadius:8,border:"1px dashed #2A3A54",background:"transparent",color:C.text3,fontSize:12,fontWeight:600,cursor:"pointer",textAlign:"left"}}, "✏️ " , lang==="en"?"Custom":"自定义")
                     )
                     , React.createElement('div', {style:{background:co>0?"#0A2030":"#2A1500",border:"1px solid "+(co>0?"#1A4060":"#5A3000"),borderRadius:8,padding:"8px 12px",fontSize:13}}
-                      , co>0 ? React.createElement('span', null, "🛣 " , lang==="en"?"Current odometer: ":"当前里程：" , React.createElement('b',{style:{color:"#FFD700"}}, co.toLocaleString()+" mi"), " " , React.createElement('span',{style:{color:C.text3,fontSize:12}}, lang==="en"?"(from latest fuel/charge)":"(取自最近充电/加油记录)"))
+                      , co>0 ? React.createElement('span', null, "🛣 " , lang==="en"?"Current odometer: ":"当前里程：" , React.createElement('b',{style:{color:C.gold}}, co.toLocaleString()+" mi"), " " , React.createElement('span',{style:{color:C.text3,fontSize:12}}, lang==="en"?"(from latest fuel/charge)":"(取自最近充电/加油记录)"))
                         : React.createElement('span',{style:{color:"#FFB300"}}, "⚠ " , lang==="en"?"No odometer data yet — log a fuel/charge entry with mileage first":"暂无里程数据 — 请先在加油/充电记账时输入里程读数")
                     )
                   );
@@ -7493,12 +7599,12 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                     if(isMile){
                       var rem=co>0?((+r.triggerMile)-co):null;
                       var thr=+(r.reminderMile||200);
-                      col=rem===null?"#7A9AB8":rem<=0?"#FF5252":rem<=thr?"#FFB300":"#00E676";
+                      col=rem===null?C.text3:rem<=0?C.danger:rem<=thr?"#FFB300":C.success;
                       statusText=rem===null?(lang==="en"?"No odo":"无里程"):rem<=0?((lang==="en"?"Over by ":"已超 ")+Math.abs(rem).toLocaleString()+" mi"):(rem.toLocaleString()+(lang==="en"?" mi left":" mi"));
                       subText=(lang==="en"?"Due at ":"到期: ")+(+r.triggerMile).toLocaleString()+" mi"+(r.intervalMile?(lang==="en"?" · every "+(+r.intervalMile).toLocaleString()+" mi":" · 每 "+(+r.intervalMile).toLocaleString()+" mi"):(lang==="en"?" · one-time":" · 一次性"));
                     }else{
                       var d=r.date?daysFromToday(r.date):null;
-                      col=d===null?"#7A9AB8":d<0?"#FF5252":d<=3?"#FF6030":d<=7?"#FFB300":"#00E676";
+                      col=d===null?C.text3:d<0?C.danger:d<=3?"#FF6030":d<=7?"#FFB300":C.success;
                       statusText=d===null?"":d<0?(lang==="en"?"Expired":"已过期"):d===0?(lang==="en"?"Today":"今天"):d===1?(lang==="en"?"Tomorrow":"明天"):d+(lang==="en"?" days left":" 天");
                       subText=fmtDate(r.date)+" · "+(r.reminderDays||"7")+" "+(lang==="en"?"days notice":"天提前提醒");
                     }
@@ -7515,7 +7621,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                               setCmpRem(r);
                               setCmpf({currentMile:co>0?String(co):"",intervalMile:r.intervalMile?String(r.intervalMile):""});
                             }, style: {background:"#0A4020",border:"1px solid #2A8050",borderRadius:6,padding:"3px 10px",color:"#5ADA7A",cursor:"pointer",fontSize:12,fontWeight:700} }, "✓ " , lang==="en"?"Done":"完成"):null
-                          , React.createElement('button', { onClick: function(){confirmAction(lang==="en"?"Delete reminder?":"删除提醒？", lang==="en"?"This reminder will be removed.":"此提醒将被移除。", function(){setReminders(reminders.filter(function(x){return x.id!==r.id;}));showToast(lang==="en"?"✓ Reminder deleted":"✓ 提醒已删除");});}, style: {background:"none",border:"1px solid #3A1A1A",borderRadius:6,padding:"2px 8px",color:"#FF5252",cursor:"pointer",fontSize:12} }, T.del)
+                          , React.createElement('button', { onClick: function(){confirmAction(lang==="en"?"Delete reminder?":"删除提醒？", lang==="en"?"This reminder will be removed.":"此提醒将被移除。", function(){setReminders(reminders.filter(function(x){return x.id!==r.id;}));showToast(lang==="en"?"✓ Reminder deleted":"✓ 提醒已删除");});}, style: {background:"none",border:"1px solid #3A1A1A",borderRadius:6,padding:"2px 8px",color:C.danger,cursor:"pointer",fontSize:12} }, T.del)
                         )
                       )
                     );
@@ -7531,7 +7637,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
         React.createElement('div', { style: {position:"fixed",inset:0,background:"rgba(0,0,0,0.94)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:400,padding:"20px"} }
           , React.createElement('div', { style: {background:C.bg2,borderRadius:16,width:"100%",maxWidth:440,border:"1px solid "+C.border,padding:"20px"} }
             , React.createElement('div', { style: {fontSize:17,fontWeight:800,marginBottom:6} }, "✓ " , lang==="en"?"Mark Service Done":"标记保养完成")
-            , React.createElement('div', { style: {fontSize:14,color:"#FFD700",marginBottom:14} }, "🛣 " , cmpRem.title)
+            , React.createElement('div', { style: {fontSize:14,color:C.gold,marginBottom:14} }, "🛣 " , cmpRem.title)
             , React.createElement('div', { style: {fontSize:12,color:C.text3,marginBottom:14,lineHeight:1.5} }, lang==="en"?"Confirm and the next due mileage will be recalculated from your current odometer.":"确认后，下次到期里程会以当前里程为基准重新计算。")
             , React.createElement('div', { style: {display:"flex",flexDirection:"column",gap:12,marginBottom:18} }
               , React.createElement(Field, { label: lang==="en"?"Current odometer (mi)":"当前里程 (mi)", type: "number", value: cmpf.currentMile, onChange: function(v){setCmpf(Object.assign({},cmpf,{currentMile:v}));}, placeholder: "e.g. 51000" })
@@ -7541,7 +7647,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                   if(!cm||cm<=0)return null;
                   if(cmpRem.intervalMile){
                     if(!iv||iv<=0)return null;
-                    return React.createElement('div', {style:{background:"#0A2030",border:"1px solid #1A4060",borderRadius:8,padding:"10px 12px",fontSize:13}}, lang==="en"?"Next due: ":"下次到期：" , React.createElement('b',{style:{color:"#00E676"}}, (cm+iv).toLocaleString()+" mi"));
+                    return React.createElement('div', {style:{background:"#0A2030",border:"1px solid #1A4060",borderRadius:8,padding:"10px 12px",fontSize:13}}, lang==="en"?"Next due: ":"下次到期：" , React.createElement('b',{style:{color:C.success}}, (cm+iv).toLocaleString()+" mi"));
                   }
                   return React.createElement('div', {style:{background:"#1A1000",border:"1px solid #5A3000",borderRadius:8,padding:"10px 12px",fontSize:13,color:"#FFB300"}}, lang==="en"?"One-time reminder will be removed.":"一次性提醒会被删除。");
                 })()
@@ -7577,7 +7683,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
             , React.createElement('div', { style: {background:C.bg3,border:"1px solid "+C.border,borderRadius:12,padding:14,marginBottom:10} }
               , React.createElement('div', { style: {fontSize:15,fontWeight:700,color:C.text2,marginBottom:4} }, "📥 " , lang==="en"?"Uber Data Import":"Uber 数据导入")
               , React.createElement('div', { style: {fontSize:12,color:C.text3,marginBottom:10} }, lang==="en"?"Paste statement PDF text to auto-fill":"粘贴账单 PDF 文字自动填入")
-              , React.createElement('button', { onClick: function(){setShowPlatMgr(false);setPasteUberText("");setPasteUberResult(null);setShowPasteUber(true);}, style: {width:"100%",background:"#0A2040",border:"1px solid #2A5080",borderRadius:10,padding:"10px 14px",color:"#5AACFF",fontSize:13,fontWeight:700,cursor:"pointer",marginBottom:8,display:"flex",justifyContent:"space-between",alignItems:"center"} }
+              , React.createElement('button', { onClick: function(){setShowPlatMgr(false);setPasteUberText("");setPasteUberResult(null);setShowPasteUber(true);}, style: {width:"100%",background:"#0A2040",border:"1px solid #2A5080",borderRadius:10,padding:"10px 14px",color:C.accent2,fontSize:13,fontWeight:700,cursor:"pointer",marginBottom:8,display:"flex",justifyContent:"space-between",alignItems:"center"} }
                 , React.createElement('span', null, "📄 " , lang==="en"?"Weekly Statement":"周报")
                 , React.createElement('span', {style:{color:"#3A6080",fontSize:14}}, "→")
               )
@@ -7590,8 +7696,8 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
               , React.createElement('div', { style: {fontSize:15,fontWeight:700,color:C.text2,marginBottom:10} }, "🏢 " , lang==="en"?"Platform List":"平台列表")
               , React.createElement('input', { value: newPlat, onChange: function(e){setNewPlat(e.target.value);}, placeholder: T.newPlatform, style: Object.assign({},IS,{marginBottom:14}) })
             , React.createElement('div', { style: {fontSize:13,color:C.text3,marginBottom:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 776}}, lang==="en"?"Default":"默认平台")
-            , defPlat.map(function(p){return React.createElement('div', { key: p, style: {display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 0",borderBottom:"1px solid #0F1C30"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 777}}, React.createElement('span', { style: {fontSize:14,color:C.text}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 777}}, p==="其他"&&lang==="en"?"Other":p), React.createElement('button', { onClick: function(){confirmAction(lang==="en"?"Delete platform?":"删除平台？", lang==="en"?"This platform will be removed.":"此平台将被移除。", function(){setDefPlat(defPlat.filter(function(x){return x!==p;}));showToast(lang==="en"?"✓ Platform deleted":"✓ 平台已删除");});}, style: {background:"none",border:"1px solid #3A1A1A",borderRadius:6,padding:"3px 10px",color:"#FF5252",cursor:"pointer",fontSize:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 777}}, T.del));})
-            , custPlat.length>0 ? React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 778}}, React.createElement('div', { style: {fontSize:13,color:C.text3,marginTop:16,marginBottom:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 778}}, lang==="en"?"Custom":"自定义平台"), custPlat.map(function(p){return React.createElement('div', { key: p, style: {display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 0",borderBottom:"1px solid #0F1C30"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 778}}, React.createElement('span', { style: {fontSize:14,color:C.text}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 778}}, p==="其他"&&lang==="en"?"Other":p), React.createElement('button', { onClick: function(){confirmAction(lang==="en"?"Delete platform?":"删除平台？", lang==="en"?"This platform will be removed.":"此平台将被移除。", function(){setCustPlat(custPlat.filter(function(x){return x!==p;}));showToast(lang==="en"?"✓ Platform deleted":"✓ 平台已删除");});}, style: {background:"none",border:"1px solid #3A1A1A",borderRadius:6,padding:"3px 10px",color:"#FF5252",cursor:"pointer",fontSize:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 778}}, T.del));})) : null
+            , defPlat.map(function(p){return React.createElement('div', { key: p, style: {display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 0",borderBottom:"1px solid #0F1C30"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 777}}, React.createElement('span', { style: {fontSize:14,color:C.text}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 777}}, p==="其他"&&lang==="en"?"Other":p), React.createElement('button', { onClick: function(){confirmAction(lang==="en"?"Delete platform?":"删除平台？", lang==="en"?"This platform will be removed.":"此平台将被移除。", function(){setDefPlat(defPlat.filter(function(x){return x!==p;}));showToast(lang==="en"?"✓ Platform deleted":"✓ 平台已删除");});}, style: {background:"none",border:"1px solid #3A1A1A",borderRadius:6,padding:"3px 10px",color:C.danger,cursor:"pointer",fontSize:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 777}}, T.del));})
+            , custPlat.length>0 ? React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 778}}, React.createElement('div', { style: {fontSize:13,color:C.text3,marginTop:16,marginBottom:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 778}}, lang==="en"?"Custom":"自定义平台"), custPlat.map(function(p){return React.createElement('div', { key: p, style: {display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 0",borderBottom:"1px solid #0F1C30"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 778}}, React.createElement('span', { style: {fontSize:14,color:C.text}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 778}}, p==="其他"&&lang==="en"?"Other":p), React.createElement('button', { onClick: function(){confirmAction(lang==="en"?"Delete platform?":"删除平台？", lang==="en"?"This platform will be removed.":"此平台将被移除。", function(){setCustPlat(custPlat.filter(function(x){return x!==p;}));showToast(lang==="en"?"✓ Platform deleted":"✓ 平台已删除");});}, style: {background:"none",border:"1px solid #3A1A1A",borderRadius:6,padding:"3px 10px",color:C.danger,cursor:"pointer",fontSize:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 778}}, T.del));})) : null
             )
             
             )
@@ -7611,10 +7717,10 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
             , React.createElement('div', { style: {background:C.bg3,border:"1px solid "+C.border,borderRadius:12,padding:16,marginBottom:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 791}}
               , React.createElement('div', { style: {fontSize:15,fontWeight:700,color:C.text2,marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 792}}, "☁️ Google Drive "   , lang==="en"?"Auto Sync":"自动同步")
               , gUser&&accessToken ? React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 793}}
-                , React.createElement('div', { style: {fontSize:13,color:"#00E676",marginBottom:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 794}}, "✓ " , gUser.email)
+                , React.createElement('div', { style: {fontSize:13,color:C.success,marginBottom:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 794}}, "✓ " , gUser.email)
                 , React.createElement('div', { style: {fontSize:12,color:C.text3,marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 795}}, lang==="en"?"Auto-saves after every change":"每次修改自动保存")
-                , React.createElement('button', { onClick: function(){if(!confirm(lang==="en"?"Upload current data to Google Drive? This will overwrite the cloud backup.":"上传当前数据到 Google Drive？这会覆盖云端备份。"))return;var data={wl:wl,sl:sl,el:el,fl:fl,ll:ll,veh:veh,cc:cc,custGroups:custGroups,reminders:reminders,custPlat:custPlat,custBrands:custBrands,custLicTypes:custLicTypes,custLoanTypes:custLoanTypes,favNotes:favNotes,favExpenses:favExpenses,notes:notes,incGoals:incGoals,seRate:seRate,fedRate:fedRate,stateRate:stateRate,stdDed:stdDed,mtaRate:mtaRate,savedVehicles:savedVehicles,dl:dl,driverType:driverType,driver:driver};saveToDrive(accessToken,driveFileId,data);}, style: {width:"100%",background:"#0A4020",border:"1px solid #2A8050",borderRadius:10,padding:12,color:"#00E676",fontSize:14,fontWeight:700,cursor:"pointer",marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 796}}, syncing?(lang==="en"?"Saving...":"保存中..."):(lang==="en"?"💾 Save Now":"💾 立即保存"))
-                , React.createElement('button', { onClick: function(){requireDangerConfirm("restoreDrive", lang==="en"?"Restore from Drive":"从 Drive 恢复", lang==="en"?"This will OVERWRITE all your current local data with the cloud backup. This cannot be undone.":"此操作会用云端备份覆盖当前所有本地数据，无法撤销。", function(){loadFromDrive(accessToken);});}, style: {width:"100%",background:"#0A2040",border:"1px solid #1A5080",borderRadius:10,padding:12,color:"#00D4FF",fontSize:14,fontWeight:700,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 797}}, lang==="en"?"📥 Restore from Drive":"📥 从Drive恢复")
+                , React.createElement('button', { onClick: function(){if(!confirm(lang==="en"?"Upload current data to Google Drive? This will overwrite the cloud backup.":"上传当前数据到 Google Drive？这会覆盖云端备份。"))return;var data={wl:wl,sl:sl,el:el,fl:fl,ll:ll,veh:veh,cc:cc,custGroups:custGroups,reminders:reminders,custPlat:custPlat,custBrands:custBrands,custLicTypes:custLicTypes,custLoanTypes:custLoanTypes,favNotes:favNotes,favExpenses:favExpenses,notes:notes,incGoals:incGoals,seRate:seRate,fedRate:fedRate,stateRate:stateRate,stdDed:stdDed,mtaRate:mtaRate,savedVehicles:savedVehicles,dl:dl,driverType:driverType,driver:driver};saveToDrive(accessToken,driveFileId,data);}, style: {width:"100%",background:"#0A4020",border:"1px solid #2A8050",borderRadius:10,padding:12,color:C.success,fontSize:14,fontWeight:700,cursor:"pointer",marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 796}}, syncing?(lang==="en"?"Saving...":"保存中..."):(lang==="en"?"💾 Save Now":"💾 立即保存"))
+                , React.createElement('button', { onClick: function(){requireDangerConfirm("restoreDrive", lang==="en"?"Restore from Drive":"从 Drive 恢复", lang==="en"?"This will OVERWRITE all your current local data with the cloud backup. This cannot be undone.":"此操作会用云端备份覆盖当前所有本地数据，无法撤销。", function(){loadFromDrive(accessToken);});}, style: {width:"100%",background:"#0A2040",border:"1px solid #1A5080",borderRadius:10,padding:12,color:C.accent,fontSize:14,fontWeight:700,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 797}}, lang==="en"?"📥 Restore from Drive":"📥 从Drive恢复")
                 , React.createElement('button', {
                     onClick: function(){
                       confirmAction(
@@ -7631,19 +7737,19 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                   , React.createElement('div', { style: {fontSize:12,fontWeight:700,color:C.text2,marginBottom:6} }, "📅 " , lang==="en"?"Time-shifted Snapshots":"时间快照")
                   , React.createElement('div', { style: {fontSize:12,color:C.text3,marginBottom:10,lineHeight:1.5} }, lang==="en"?"Auto-rotating snapshots on Drive — daily refreshed today, monthly at month start.":"Drive 上自动轮换快照 — 每日今天首次启动刷新，每月月初首次启动刷新。")
                   , React.createElement('div', { style: {display:"grid",gridTemplateColumns:"1fr 1fr",gap:8} }
-                    , React.createElement('div', { style: {background:"#0A1828",border:"1px solid #2A3A54",borderRadius:8,padding:"10px 12px"} }
-                      , React.createElement('div', { style: {fontSize:12,color:"#5AACFF",fontWeight:700,marginBottom:4} }, "🌅 " , lang==="en"?"Daily":"每日")
+                    , React.createElement('div', { style: {background:C.bg3,border:"1px solid #2A3A54",borderRadius:8,padding:"10px 12px"} }
+                      , React.createElement('div', { style: {fontSize:12,color:C.accent2,fontWeight:700,marginBottom:4} }, "🌅 " , lang==="en"?"Daily":"每日")
                       , React.createElement('div', { style: {fontSize:11,color:C.text3,marginBottom:8,minHeight:14} }, driveDailyModTime ? new Date(driveDailyModTime).toLocaleString() : (lang==="en"?"Not yet":"暂无"))
-                      , driveDailyFileId ? React.createElement('button', { onClick: function(){restoreFromDriveSnapshot(accessToken, driveDailyFileId, lang==="en"?"daily":"每日");}, style: {width:"100%",background:"#0A2840",border:"1px solid #2A5080",borderRadius:6,padding:"6px",color:"#5AACFF",fontSize:12,fontWeight:700,cursor:"pointer"} }, "↩️ " , lang==="en"?"Restore":"恢复") : React.createElement('div', {style:{fontSize:11,color:C.text3,textAlign:"center",padding:"6px"}}, lang==="en"?"Pending":"待生成")
+                      , driveDailyFileId ? React.createElement('button', { onClick: function(){restoreFromDriveSnapshot(accessToken, driveDailyFileId, lang==="en"?"daily":"每日");}, style: {width:"100%",background:"#0A2840",border:"1px solid #2A5080",borderRadius:6,padding:"6px",color:C.accent2,fontSize:12,fontWeight:700,cursor:"pointer"} }, "↩️ " , lang==="en"?"Restore":"恢复") : React.createElement('div', {style:{fontSize:11,color:C.text3,textAlign:"center",padding:"6px"}}, lang==="en"?"Pending":"待生成")
                     )
-                    , React.createElement('div', { style: {background:"#0A1828",border:"1px solid #2A3A54",borderRadius:8,padding:"10px 12px"} }
+                    , React.createElement('div', { style: {background:C.bg3,border:"1px solid #2A3A54",borderRadius:8,padding:"10px 12px"} }
                       , React.createElement('div', { style: {fontSize:12,color:"#FFB300",fontWeight:700,marginBottom:4} }, "📆 " , lang==="en"?"Monthly":"每月")
                       , React.createElement('div', { style: {fontSize:11,color:C.text3,marginBottom:8,minHeight:14} }, driveMonthlyModTime ? new Date(driveMonthlyModTime).toLocaleString() : (lang==="en"?"Not yet":"暂无"))
                       , driveMonthlyFileId ? React.createElement('button', { onClick: function(){restoreFromDriveSnapshot(accessToken, driveMonthlyFileId, lang==="en"?"monthly":"每月");}, style: {width:"100%",background:"#1A1000",border:"1px solid #3A2800",borderRadius:6,padding:"6px",color:"#FFB300",fontSize:12,fontWeight:700,cursor:"pointer"} }, "↩️ " , lang==="en"?"Restore":"恢复") : React.createElement('div', {style:{fontSize:11,color:C.text3,textAlign:"center",padding:"6px"}}, lang==="en"?"Pending":"待生成")
                     )
                   )
                 )
-                , syncStatus?React.createElement('div', { style: {fontSize:12,color:"#00E676",marginTop:8,textAlign:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 798}}, syncStatus):null
+                , syncStatus?React.createElement('div', { style: {fontSize:12,color:C.success,marginTop:8,textAlign:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 798}}, syncStatus):null
               ) : gUser ? React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 799}}
                 , React.createElement('div', { style: {fontSize:13,color:"#FFB300",marginBottom:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 799}}, "⚠ " , gUser.email)
                 , React.createElement('div', { style: {fontSize:12,color:C.text3,marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 799}}, lang==="en"?"Drive token expired. Reconnect to enable sync.":"Drive 令牌已失效，请重新连接以启用同步。")
@@ -7935,7 +8041,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                 return React.createElement('div', { style: {background:"#0A2018",border:"1px solid #2A6040",borderRadius:12,padding:14,marginBottom:10} }
                   , React.createElement('div', { style: {fontSize:14,fontWeight:700,color:"#5ADA7A",marginBottom:4} }, "↩️ " , lang==="en"?"Undo Last Restore":"撤销最近一次恢复")
                   , React.createElement('div', { style: {fontSize:12,color:C.text3,marginBottom:6,lineHeight:1.5} }, lang==="en"?"You can roll back to the data that existed before your last \"Restore from File\" action.":"可以回滚到上次「从文件恢复」之前的数据状态。")
-                  , React.createElement('div', { style: {fontSize:12,color:C.text2,marginBottom:10,padding:"6px 10px",background:"#0A1828",borderRadius:6} }, "🕐 ", ts, React.createElement('br'), "📊 ", stats)
+                  , React.createElement('div', { style: {fontSize:12,color:C.text2,marginBottom:10,padding:"6px 10px",background:C.bg3,borderRadius:6} }, "🕐 ", ts, React.createElement('br'), "📊 ", stats)
                   , React.createElement('div', { style: {display:"flex",gap:6} }
                     , React.createElement('button', { onClick: function(){
                         if(!confirm(lang==="en"?"Roll back to pre-restore data? Your CURRENT data will be replaced with the snapshot above.":"回滚到恢复前的数据？当前数据会被上面快照覆盖。"))return;
@@ -7961,7 +8067,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                         if(!confirm(lang==="en"?"Discard the snapshot? You won\'t be able to undo the last restore anymore.":"丢弃快照？以后将无法撤销上次恢复。"))return;
                         try{localStorage.removeItem("nyc_pre_restore_backup");}catch(e){}
                         forceRerender();
-                      }, style: {background:"none",border:"1px solid #3A1A1A",borderRadius:8,padding:"10px 14px",color:"#FF5252",fontSize:12,cursor:"pointer"} }, "✕ " , lang==="en"?"Discard":"丢弃")
+                      }, style: {background:"none",border:"1px solid #3A1A1A",borderRadius:8,padding:"10px 14px",color:C.danger,fontSize:12,cursor:"pointer"} }, "✕ " , lang==="en"?"Discard":"丢弃")
                   )
                 );
               }())
@@ -8004,7 +8110,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
 
             // === DANGER ZONE: Reset all app data ===
             , React.createElement('div', {style:{marginTop:24,paddingTop:16,borderTop:"1px solid #3A1010"}}
-              , React.createElement('div', {style:{fontSize:12,color:"#FF7060",fontWeight:700,marginBottom:8,letterSpacing:0.5}}, "⚠️ ", lang==="en"?"DANGER ZONE":"危险区域")
+              , React.createElement('div', {style:{fontSize:12,color:C.danger,fontWeight:700,marginBottom:8,letterSpacing:0.5}}, "⚠️ ", lang==="en"?"DANGER ZONE":"危险区域")
               , React.createElement('div', {style:{background:"#1A0808",border:"1px solid #5A2020",borderRadius:12,padding:14}}
                 , React.createElement('div', {style:{fontSize:13,fontWeight:700,color:"#FF8855",marginBottom:6}}
                   , "🗑️ ", lang==="en"?"Reset App — Clear All Data":"清空 App — 删除所有数据")
@@ -8232,9 +8338,9 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                   , React.createElement('div', { style: {fontSize:13,fontWeight:800,color:"#CC88FF",letterSpacing:2,marginBottom:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 850}}, lang==="en"?"EXPENSES":"支出明细")
                   , (function(){var totalEntries=0;["车辆","牌照","平台","其他"].forEach(function(g){var cats=reportData.byGroup[g]||[];cats.forEach(function(c){totalEntries+=(c.items?c.items.length:c.count||0);});});return React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 0",borderBottom:"1px solid #1A2A40",marginBottom:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 850}}
                     , React.createElement('span', { style: {fontSize:13,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 850}}, lang==="en"?"Total entries":"总笔数")
-                    , React.createElement('span', { style: {fontSize:14,fontWeight:700,color:"#00D4FF"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 850}}, totalEntries, " " , lang==="en"?(totalEntries===1?"entry":"entries"):"笔")
+                    , React.createElement('span', { style: {fontSize:14,fontWeight:700,color:C.accent}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 850}}, totalEntries, " " , lang==="en"?(totalEntries===1?"entry":"entries"):"笔")
                   );})()
-                  , ["车辆","牌照","平台","其他"].map(function(g){var cats=reportData.byGroup[g];if(!cats||!cats.length)return null;var gTotal=cats.reduce(function(s,c){return s+c.total;},0);var gcl=g==="车辆"?"#00D4FF":g==="牌照"?"#FFD700":g==="平台"?"#CC88FF":"#B0D4E8";var glbl=lang==="en"?(g==="车辆"?"Vehicle":g==="牌照"?"License":g==="平台"?"Platform":"Other"):g;return React.createElement('div', { key: g, style: {marginBottom:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 851}}
+                  , ["车辆","牌照","平台","其他"].map(function(g){var cats=reportData.byGroup[g];if(!cats||!cats.length)return null;var gTotal=cats.reduce(function(s,c){return s+c.total;},0);var gcl=g==="车辆"?C.accent:g==="牌照"?C.gold:g==="平台"?"#CC88FF":"#B0D4E8";var glbl=lang==="en"?(g==="车辆"?"Vehicle":g==="牌照"?"License":g==="平台"?"Platform":"Other"):g;return React.createElement('div', { key: g, style: {marginBottom:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 851}}
                     , React.createElement('div', { style: Object.assign({fontSize:13,fontWeight:700,marginBottom:8},{color:gcl}), __self: this, __source: {fileName: _jsxFileName, lineNumber: 852}}, glbl)
                     , cats.map(function(cat){
                         var ct=cat.items?cat.items.length:(cat.count||0);
@@ -8272,42 +8378,42 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                   );})
                   , React.createElement('div', { style: {borderTop:"2px solid #2A4060",padding:"12px 0",display:"flex",justifyContent:"space-between"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 856}}
                     , React.createElement('span', { style: {fontSize:14,fontWeight:800,color:C.text,letterSpacing:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 857}}, lang==="en"?"TOTAL EXPENSES":"总支出")
-                    , React.createElement('span', { style: {fontSize:16,fontWeight:900,color:"#FF6B35"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 858}}, fmt(reportData.total))
+                    , React.createElement('span', { style: {fontSize:16,fontWeight:900,color:C.danger}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 858}}, fmt(reportData.total))
                   )
                 )
               ) : (
                 React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 862}}
-                  , React.createElement('div', { style: {fontSize:13,fontWeight:800,color:"#00D4FF",letterSpacing:2,marginBottom:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 863}}, lang==="en"?"INCOME":"收入明细")
+                  , React.createElement('div', { style: {fontSize:13,fontWeight:800,color:C.accent,letterSpacing:2,marginBottom:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 863}}, lang==="en"?"INCOME":"收入明细")
                   , reportData.stmts&&reportData.stmts.length>0 ? reportData.stmts.map(function(s){var sub=(+s.grossFare||0)+(+s.tips||0)+(+s.bonus||0)+(+s.tollReimbursed||0)+(+s.otherIncome||0);return React.createElement('div', { key: s.id, style: {marginBottom:14}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 864}}
                     , React.createElement('div', { style: {fontSize:13,fontWeight:700,color:C.text,marginBottom:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 865}}, s.platform)
                     , +s.grossFare>0?React.createElement('div', { style: {display:"flex",justifyContent:"space-between",padding:"3px 0 3px 16px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 866}}, React.createElement('span', { style: {fontSize:13,color:C.text2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 866}}, T.grossFare), React.createElement('span', { style: {fontSize:13,color:C.text}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 866}}, fmt(s.grossFare))):null
                     , +s.tips>0?React.createElement('div', { style: {display:"flex",justifyContent:"space-between",padding:"3px 0 3px 16px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 867}}, React.createElement('span', { style: {fontSize:13,color:C.text2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 867}}, T.tips), React.createElement('span', { style: {fontSize:13,color:C.text}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 867}}, fmt(s.tips))):null
                     , +s.bonus>0?React.createElement('div', { style: {display:"flex",justifyContent:"space-between",padding:"3px 0 3px 16px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 868}}, React.createElement('span', { style: {fontSize:13,color:C.text2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 868}}, T.bonus), React.createElement('span', { style: {fontSize:13,color:C.text}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 868}}, fmt(s.bonus))):null
                     , +s.tollReimbursed>0?React.createElement('div', { style: {display:"flex",justifyContent:"space-between",padding:"3px 0 3px 16px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 869}}, React.createElement('span', { style: {fontSize:13,color:C.text2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 869}}, lang==="en"?"Toll":"过桥"), React.createElement('span', { style: {fontSize:13,color:C.text}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 869}}, fmt(s.tollReimbursed))):null
-                    , React.createElement('div', { style: {display:"flex",justifyContent:"space-between",padding:"6px 0 6px 16px",borderTop:"1px solid #1A2A40",marginTop:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 870}}, React.createElement('span', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 870}}, lang==="en"?"Subtotal":"小计"), React.createElement('span', { style: {fontSize:13,fontWeight:700,color:"#00E676"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 870}}, fmt(sub)))
+                    , React.createElement('div', { style: {display:"flex",justifyContent:"space-between",padding:"6px 0 6px 16px",borderTop:"1px solid #1A2A40",marginTop:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 870}}, React.createElement('span', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 870}}, lang==="en"?"Subtotal":"小计"), React.createElement('span', { style: {fontSize:13,fontWeight:700,color:C.success}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 870}}, fmt(sub)))
                   );}) : React.createElement('div', { style: {fontSize:13,color:C.text3,padding:"8px 0 16px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 871}}, lang==="en"?"No income recorded":"暂无收入记录")
                   , React.createElement('div', { style: {display:"flex",justifyContent:"space-between",padding:"10px 0",borderTop:"1px solid #2A4060",marginBottom:20}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 872}}
                     , React.createElement('span', { style: {fontSize:13,fontWeight:700,color:C.text2,letterSpacing:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 873}}, lang==="en"?"Total Revenue":"总营业额")
-                    , React.createElement('span', { style: {fontSize:14,fontWeight:800,color:"#00D4FF"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 874}}, fmt(reportData.r.ri))
+                    , React.createElement('span', { style: {fontSize:14,fontWeight:800,color:C.accent}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 874}}, fmt(reportData.r.ri))
                   )
                   , React.createElement('div', { style: {borderTop:"1px solid #182540",marginBottom:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 876}} )
                   , React.createElement('div', { style: {fontSize:13,fontWeight:800,color:"#CC88FF",letterSpacing:2,marginBottom:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 877}}, lang==="en"?"EXPENSES":"支出明细")
-                  , ["车辆","牌照","平台","其他"].map(function(g){var items=reportData.byGroup[g];if(!items||!items.length)return null;var gTotal=items.reduce(function(s,c){return s+c.total;},0);var gcl=g==="车辆"?"#00D4FF":g==="牌照"?"#FFD700":g==="平台"?"#CC88FF":"#B0D4E8";var glbl=lang==="en"?(g==="车辆"?"Vehicle":g==="牌照"?"License":g==="平台"?"Platform":"Other"):g;return React.createElement('div', { key: g, style: {marginBottom:14}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 878}}
+                  , ["车辆","牌照","平台","其他"].map(function(g){var items=reportData.byGroup[g];if(!items||!items.length)return null;var gTotal=items.reduce(function(s,c){return s+c.total;},0);var gcl=g==="车辆"?C.accent:g==="牌照"?C.gold:g==="平台"?"#CC88FF":"#B0D4E8";var glbl=lang==="en"?(g==="车辆"?"Vehicle":g==="牌照"?"License":g==="平台"?"Platform":"Other"):g;return React.createElement('div', { key: g, style: {marginBottom:14}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 878}}
                     , React.createElement('div', { style: Object.assign({fontSize:13,fontWeight:700,marginBottom:6},{color:gcl}), __self: this, __source: {fileName: _jsxFileName, lineNumber: 879}}, glbl)
                     , items.map(function(c){return React.createElement('div', { key: c.label, style: {display:"flex",justifyContent:"space-between",padding:"3px 0 3px 16px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 880}}, React.createElement('span', { style: {fontSize:13,color:C.text2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 880}}, c.label, c.count?React.createElement('span',{style:{fontSize:12,color:C.text3,marginLeft:6}},"×",c.count):null), React.createElement('span', { style: {fontSize:13,color:C.text}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 880}}, fmt(c.total)));})
                     , React.createElement('div', { style: {display:"flex",justifyContent:"space-between",padding:"6px 0 6px 16px",borderTop:"1px solid #1A2A40",marginTop:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 881}}, React.createElement('span', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 881}}, lang==="en"?"Subtotal":"小计"), React.createElement('span', { style: {fontSize:13,fontWeight:700,color:"#FF9A65"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 881}}, fmt(gTotal)))
                   );})
                   , React.createElement('div', { style: {borderTop:"2px solid #2A4060",padding:"12px 0",marginBottom:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 883}}
-                    , React.createElement('div', { style: {display:"flex",justifyContent:"space-between",marginBottom:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 884}}, React.createElement('span', { style: {fontSize:13,fontWeight:700,color:C.text2,letterSpacing:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 884}}, lang==="en"?"Total Expenses":"总支出"), React.createElement('span', { style: {fontSize:14,fontWeight:800,color:"#FF6B35"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 884}}, fmt(reportData.r.rTot)))
+                    , React.createElement('div', { style: {display:"flex",justifyContent:"space-between",marginBottom:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 884}}, React.createElement('span', { style: {fontSize:13,fontWeight:700,color:C.text2,letterSpacing:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 884}}, lang==="en"?"Total Expenses":"总支出"), React.createElement('span', { style: {fontSize:14,fontWeight:800,color:C.danger}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 884}}, fmt(reportData.r.rTot)))
                   )
                   , React.createElement('div', { style: {borderTop:"2px solid #2A4060",padding:"14px 0"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 886}}
-                    , (function(){var rn=reportData.r.rn,nc=rn>=0?"#00E676":"#FF5252";return React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 887}}, React.createElement('span', { style: {fontSize:15,fontWeight:900,color:C.text,letterSpacing:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 887}}, lang==="en"?"NET PROFIT":"净利润"), React.createElement('span', { style: Object.assign({fontSize:20,fontWeight:900,letterSpacing:-1},{color:nc}), __self: this, __source: {fileName: _jsxFileName, lineNumber: 887}}, fmt(rn)));}())
+                    , (function(){var rn=reportData.r.rn,nc=rn>=0?C.success:C.danger;return React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 887}}, React.createElement('span', { style: {fontSize:15,fontWeight:900,color:C.text,letterSpacing:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 887}}, lang==="en"?"NET PROFIT":"净利润"), React.createElement('span', { style: Object.assign({fontSize:20,fontWeight:900,letterSpacing:-1},{color:nc}), __self: this, __source: {fileName: _jsxFileName, lineNumber: 887}}, fmt(rn)));}())
                   )
                   , reportData.isYear&&reportData.mData ? (
                     React.createElement('div', { style: {marginTop:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 890}}
                       , React.createElement('div', { style: {borderTop:"1px solid #182540",marginBottom:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 891}} )
-                      , React.createElement('div', { style: {fontSize:13,fontWeight:800,color:"#FFD700",letterSpacing:2,marginBottom:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 892}}, lang==="en"?"MONTHLY BREAKDOWN":"逐月明细")
-                      , reportData.mData.filter(function(m){return m.inc>0||m.exp>0;}).map(function(m){var nc=m.net>=0?"#00E676":"#FF5252";return React.createElement('div', { key: m.m, style: {display:"flex",justifyContent:"space-between",padding:"7px 0",borderBottom:"1px solid #0F1C30"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 893}}, React.createElement('span', { style: {fontSize:13,color:C.text2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 893}}, m.label), React.createElement('span', { style: {fontSize:12,color:"#00D4FF"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 893}}, fmt(m.inc)), React.createElement('span', { style: {fontSize:12,color:"#FF9A65"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 893}}, fmt(m.exp)), React.createElement('span', { style: Object.assign({fontSize:13,fontWeight:700},{color:nc}), __self: this, __source: {fileName: _jsxFileName, lineNumber: 893}}, fmt(m.net)));})
+                      , React.createElement('div', { style: {fontSize:13,fontWeight:800,color:C.gold,letterSpacing:2,marginBottom:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 892}}, lang==="en"?"MONTHLY BREAKDOWN":"逐月明细")
+                      , reportData.mData.filter(function(m){return m.inc>0||m.exp>0;}).map(function(m){var nc=m.net>=0?C.success:C.danger;return React.createElement('div', { key: m.m, style: {display:"flex",justifyContent:"space-between",padding:"7px 0",borderBottom:"1px solid #0F1C30"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 893}}, React.createElement('span', { style: {fontSize:13,color:C.text2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 893}}, m.label), React.createElement('span', { style: {fontSize:12,color:C.accent}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 893}}, fmt(m.inc)), React.createElement('span', { style: {fontSize:12,color:"#FF9A65"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 893}}, fmt(m.exp)), React.createElement('span', { style: Object.assign({fontSize:13,fontWeight:700},{color:nc}), __self: this, __source: {fileName: _jsxFileName, lineNumber: 893}}, fmt(m.net)));})
                     )
                   ) : null
                 )
@@ -8319,13 +8425,13 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
           )
       ) : null
 
-      , React.createElement('div', { style: {position:"fixed",bottom:0,left:0,right:0,display:"flex",background:C.bg2,borderTop:"1px solid "+C.border,zIndex:500,paddingBottom:"env(safe-area-inset-bottom)",alignItems:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 906}}
+      , React.createElement('div', { style: {position:"fixed",bottom:0,left:0,right:0,display:"flex",background:"rgba(18,24,38,0.92)",backdropFilter:"blur(16px)",WebkitBackdropFilter:"blur(16px)",borderTop:"1px solid "+C.border,zIndex:500,paddingBottom:"env(safe-area-inset-bottom)",alignItems:"center",boxShadow:"0 -4px 16px rgba(0,0,0,0.3)"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 906}}
         , (function(){
           var items=[{ti:0,icon:"&#128202;",label:T.dashboard},{ti:1,icon:"&#128181;",label:T.income},{ti:-1,icon:"+",label:T.addExpense,isPlus:true},{ti:2,icon:"&#128184;",label:T.expense},{ti:3,icon:"&#128200;",label:T.report}];
           return React.createElement('div', { style: {display:"contents"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 909}}, items.map(function(item,i){
-            if(item.isPlus){return React.createElement('button', { key: i, onClick: function(){setShowDrawer(false);setSelGrp("车辆");setEf({date:today(),time:nowTime(),category:(veh&&veh.type==="petrol"?"fuel":"charging"),amount:"",notes:"",qty:"",statementMonth:curMo(),isRecurring:false,mode:(driverType==="rideshare"||driverType==="taxi")?driverType:""});setSf("exp");}, style: {flex:1,padding:"6px 2px 10px",background:"none",border:"none",cursor:"pointer",textAlign:"center",display:"flex",flexDirection:"column",alignItems:"center",gap:2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 910}}, React.createElement('div', { style: {width:44,height:44,borderRadius:22,background:"linear-gradient(135deg,#00D4FF,#0055FF)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,color:"#fff",boxShadow:"0 2px 12px rgba(0,212,255,0.4)",marginTop:-18}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 910}}, "+"), React.createElement('span', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 910}}, item.label));}
-            var active=tab===item.ti,cl=active?"#00D4FF":C.text3,bg=active?"#0A1828":"transparent";
-            return React.createElement('button', { key: i, onClick: function(){setTab(item.ti);setShowDrawer(false);setSf(null);setShowBackup(false);setShowPlatMgr(false);setShowRemMgr(false);setShowGoal(false);setReportData(null);}, style: {flex:1,padding:"5px 2px 7px",background:bg,border:"none",fontSize:11,cursor:"pointer",color:cl,fontWeight:active?700:400,textAlign:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 912}}, React.createElement('div', { style: {fontSize:17,marginBottom:2}, dangerouslySetInnerHTML: {__html:item.icon}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 912}} ), item.label);
+            if(item.isPlus){return React.createElement('button', { key: i, onClick: function(){setShowDrawer(false);setSelGrp("车辆");setEf({date:today(),time:nowTime(),category:(veh&&veh.type==="petrol"?"fuel":"charging"),amount:"",notes:"",qty:"",statementMonth:curMo(),isRecurring:false,mode:(driverType==="rideshare"||driverType==="taxi")?driverType:""});setSf("exp");}, style: {flex:1,padding:"6px 2px 10px",background:"none",border:"none",cursor:"pointer",textAlign:"center",display:"flex",flexDirection:"column",alignItems:"center",gap:2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 910}}, React.createElement('div', { style: {width:48,height:48,borderRadius:24,background:"linear-gradient(135deg,#00D4FF,#0055FF)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,color:"#fff",boxShadow:"0 4px 16px rgba(0,212,255,0.5), 0 0 24px rgba(0,212,255,0.2)",marginTop:-22,fontWeight:300}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 910}}, "+"), React.createElement('span', { style: {fontSize:FS.sm,color:C.text3,marginTop:2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 910}}, item.label));}
+            var active=tab===item.ti,cl=active?C.accent:C.text3,bg=active?"linear-gradient(180deg, rgba(0,212,255,0.08), transparent)":"transparent";
+            return React.createElement('button', { key: i, onClick: function(){setTab(item.ti);setShowDrawer(false);setSf(null);setShowBackup(false);setShowPlatMgr(false);setShowRemMgr(false);setShowGoal(false);setReportData(null);}, style: {flex:1,padding:"6px 2px 8px",background:bg,border:"none",fontSize:FS.sm,cursor:"pointer",color:cl,fontWeight:active?700:500,textAlign:"center",borderTop:active?"2px solid "+C.accent:"2px solid transparent",transition:"all 0.15s"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 912}}, React.createElement('div', { style: {fontSize:18,marginBottom:2}, dangerouslySetInnerHTML: {__html:item.icon}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 912}} ), item.label);
           }));
         })()
       )
