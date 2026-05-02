@@ -73,7 +73,16 @@
   -->
   <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin="anonymous"></script>
   <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin="anonymous"></script>
-  <script src="app.js?v=545"></script>
+  <!-- PDF.js for in-browser PDF text extraction (Uber statement import etc.) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" crossorigin="anonymous"></script>
+  <script>
+    if (window['pdfjsLib']) {
+      window['pdfjsLib'].GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    }
+  </script>
+  <!-- SheetJS for Excel/CSV import & export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" crossorigin="anonymous"></script>
+  <script src="app.js?v=556"></script>
   <script>
     // PWA service worker: aggressive auto-update strategy.
     // 1. Register on load
