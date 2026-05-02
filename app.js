@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-var APP_VERSION = "v3.10.73";  // ← single source of truth: bump this once per release
+var APP_VERSION = "v3.10.75";  // ← single source of truth: bump this once per release
 console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
@@ -12,7 +12,7 @@ console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-
       window.Sentry.init({
         dsn:window.SENTRY_DSN,
         environment:(location.hostname==="localhost"||location.hostname==="127.0.0.1")?"development":"production",
-        release:"nyc-driver-tracker@1.3.20",
+        release:"nyc-driver-tracker@1.3.21",
         tracesSampleRate:0.1,
         // Don't send events from local dev
         beforeSend:function(event){
@@ -328,8 +328,9 @@ function parseFuelioReport(text){
     [/^Tolls?\s*:?/i,                           "toll"],
     [/Congestion/i,                             "congestion"],
     [/Home Made Coffee|Home-?made Coffee/i,     "coffee"],
-    [/Uber Expenses,?\s*Fees?\s*&?\s*Tax/i,     "platform"],
-    [/Uber Fee|Uber Tax|Black Car Fund/i,       "platform"],
+    // Uber Expenses Fees Tax — recognize category but mark as ignored (not an expense, belongs in monthly stmt)
+    [/Uber Expenses,?\s*Fees?\s*&?\s*Tax/i,     "_ignore_uberexp"],
+    [/Uber Fee|Black Car Fund/i,                "platform"],
     [/^Parking for EV Charging/i,               "parking"],
     [/^Parking Meter/i,                         "parking"],
     [/^Parking Ticket|Parking Violation/i,      "ticket"],
@@ -467,7 +468,7 @@ function parseFuelioReport(text){
           notes = notes.replace(/[.,;:]+$/,'').trim();
           if(currentCategory && amount > 0){
             // Skip if this is income (negative amount marker, or category looks like income)
-            if(currentCategory === "income" || /UBER INCOME|Uber Paid/i.test(currentCategoryLabel + " " + notes)){
+            if(currentCategory === "income" || /^_ignore_/.test(currentCategory) || /UBER INCOME|Uber Paid/i.test(currentCategoryLabel + " " + notes)){
               i2++; continue;
             }
             var noteText = notes;
@@ -542,7 +543,7 @@ function parseFuelioReport(text){
       }
       if(currentCategory && amount > 0){
         // Skip income
-        if(currentCategory === "income" || /UBER INCOME|Uber Paid/i.test(currentCategoryLabel)){
+        if(currentCategory === "income" || /^_ignore_/.test(currentCategory) || /UBER INCOME|Uber Paid/i.test(currentCategoryLabel)){
           i2 = look; continue;
         }
         var noteText = location ? (location + (notes ? " · "+notes : "")) : notes;
