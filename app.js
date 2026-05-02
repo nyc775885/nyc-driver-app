@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-var APP_VERSION = "v3.10.77";  // ← single source of truth: bump this once per release
+var APP_VERSION = "v3.10.78";  // ← single source of truth: bump this once per release
 console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
@@ -12,7 +12,7 @@ console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-
       window.Sentry.init({
         dsn:window.SENTRY_DSN,
         environment:(location.hostname==="localhost"||location.hostname==="127.0.0.1")?"development":"production",
-        release:"nyc-driver-tracker@1.3.22",
+        release:"nyc-driver-tracker@1.3.23",
         tracesSampleRate:0.1,
         // Don't send events from local dev
         beforeSend:function(event){
@@ -4621,7 +4621,17 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                         setFuelioSelected(sel);
                         setFuelioImportResult(r);
                         setShowFuelioImport(true);
-                        showToast(lang==="en"?"✓ "+r.entries.length+" entries found":"✓ 找到 "+r.entries.length+" 条记录", "success");
+                        // Build category summary for toast
+                        var catSummary = Object.entries(r.stats.byCategory||{}).map(function(kv){
+                          var c = allC[kv[0]];
+                          var lbl = c ? c.label : kv[0];
+                          var count = r.entries.filter(function(e){return e.category===kv[0];}).length;
+                          return lbl+":"+count;
+                        }).join(" · ");
+                        showToast(lang==="en"?
+                          ("✓ "+r.entries.length+" total | "+catSummary):
+                          ("✓ 共"+r.entries.length+"条 | "+catSummary),
+                          "success");
                       }).catch(function(err){
                         showToast(lang==="en"?"PDF read failed: "+err.message:"PDF 读取失败: "+err.message, "error");
                       });
