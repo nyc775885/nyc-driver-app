@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-var APP_VERSION = "v3.10.8";  // ← single source of truth: bump this once per release
+var APP_VERSION = "v3.10.15";  // ← single source of truth: bump this once per release
 console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
@@ -12,7 +12,7 @@ console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-
       window.Sentry.init({
         dsn:window.SENTRY_DSN,
         environment:(location.hostname==="localhost"||location.hostname==="127.0.0.1")?"development":"production",
-        release:"nyc-driver-tracker@1.0.95",
+        release:"nyc-driver-tracker@1.1.1",
         tracesSampleRate:0.1,
         // Don't send events from local dev
         beforeSend:function(event){
@@ -533,7 +533,7 @@ function Empty(p){return React.createElement('div', { style: {textAlign:"center"
 function Row(p){var fw=p.bold?800:600;var cl=p.color||"#E8EAF0";return React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 0",borderBottom:"1px solid #0F1C30"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 40}}, React.createElement('span', { style: {fontSize:14,color:"#C8E8F8"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 40}}, p.label), React.createElement('span', { style: Object.assign({fontSize:15},{fontWeight:fw,color:cl}), __self: this, __source: {fileName: _jsxFileName, lineNumber: 40}}, p.value));}
 function Stat(p){var pad=p.sm?"8px 6px":"12px 10px";var fs1=p.sm?11:12;var fs2=p.sm?13:16;var cl=p.color||"#E8EAF0";return React.createElement('div', { style: {background:C.bg2,borderRadius:10,padding:pad,border:"1px solid "+C.border,textAlign:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 41}}, React.createElement('div', { style: Object.assign({color:"#90B8D0",marginBottom:3},{fontSize:fs1}), __self: this, __source: {fileName: _jsxFileName, lineNumber: 41}}, p.label), React.createElement('div', { style: Object.assign({fontWeight:700},{fontSize:fs2,color:cl}), __self: this, __source: {fileName: _jsxFileName, lineNumber: 41}}, p.value));}
 function ABox(p){return React.createElement('div', { style: {margin:"8px 14px 0",background:p.bg,border:"1px solid "+p.color,borderRadius:10,padding:"10px 14px",fontSize:14,color:p.color,display:"flex",gap:8,alignItems:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 42}}, React.createElement('span', { style: {fontSize:18}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 42}}, p.icon), React.createElement('span', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 42}}, p.text));}
-function Field(p){var el;if(p.options){el=React.createElement('select', { value: p.value, onChange: function(e){p.onChange(e.target.value);}, style: IS, __self: this, __source: {fileName: _jsxFileName, lineNumber: 43}}, p.options.map(function(o){return React.createElement('option', { key: o[0], value: o[0], __self: this, __source: {fileName: _jsxFileName, lineNumber: 43}}, o[1]);}));}else{var isDateTime=p.type==="date"||p.type==="month"||p.type==="time";var baseStyle=isDateTime?Object.assign({},IS,{colorScheme:"dark",color:"#E8EAF0",fontSize:17,padding:"14px 16px",cursor:"pointer"}):IS;var inputProps={type:p.type||"text",value:p.value,onChange:function(e){p.onChange(e.target.value);},placeholder:p.placeholder||"",style:baseStyle,__self:this,__source:{fileName:_jsxFileName,lineNumber:43}};if(isDateTime){inputProps.onClick=function(e){try{if(e.currentTarget.showPicker)e.currentTarget.showPicker();}catch(err){}};}if(p.money){inputProps.step="0.01";inputProps.inputMode="decimal";inputProps.onBlur=function(e){var v=e.target.value;if(v===""||isNaN(+v))return;var formatted=(+v).toFixed(2);if(formatted!==v)p.onChange(formatted);};}var inputEl=React.createElement('input',inputProps);// For date/month inputs, wrap with a Today button
+function Field(p){var el;if(p.options){el=React.createElement('select', { value: p.value, onChange: function(e){p.onChange(e.target.value);}, style: IS, __self: this, __source: {fileName: _jsxFileName, lineNumber: 43}}, p.options.map(function(o){return React.createElement('option', { key: o[0], value: o[0], __self: this, __source: {fileName: _jsxFileName, lineNumber: 43}}, o[1]);}));}else{var isDateTime=p.type==="date"||p.type==="month"||p.type==="time";var baseStyle=isDateTime?Object.assign({},IS,{colorScheme:"dark",color:"#E8EAF0",fontSize:17,padding:"14px 16px",cursor:"pointer"}):IS;var inputProps={type:p.type||"text",value:p.value,onChange:function(e){p.onChange(e.target.value);},placeholder:p.placeholder||"",style:baseStyle,__self:this,__source:{fileName:_jsxFileName,lineNumber:43}};if(isDateTime){inputProps.onClick=function(e){try{if(e.currentTarget.showPicker)e.currentTarget.showPicker();}catch(err){}};}else if(p.type==="number"){inputProps.onFocus=function(e){try{e.target.select();}catch(err){}};}if(p.money){inputProps.step="0.01";inputProps.inputMode="decimal";inputProps.onFocus=function(e){try{e.target.select();}catch(err){}};inputProps.onBlur=function(e){var v=e.target.value;if(v===""||isNaN(+v))return;var formatted=(+v).toFixed(2);if(formatted!==v)p.onChange(formatted);};}var inputEl=React.createElement('input',inputProps);// For date/month inputs, wrap with a Today button
 if(p.type==="date"||p.type==="month"){
   var todayHandler=function(){
     var d=new Date();
@@ -1484,10 +1484,9 @@ function App() {
   // For Schedule C, the PDF export adds it as Line 10 "Commissions and fees" separately.
   var tPlatformFee=mStmts.reduce(function(s,x){return s+(+x.platformFee||0);},0)+mDlPlatformFee;
   var tNetPay=tInc-tPlatformFee; // What you actually receive in your bank from platforms
-  // tollReimbursed: platform refunds toll money to driver, but driver also paid it at the toll booth.
-  // Net effect = $0. We do NOT track actual toll-paid expense (driver would never record manually),
-  // so we subtract tollReimbursed from net profit to keep the math truthful.
-  var tExp=feAll.reduce(function(s,e){return s+(+e.amount||0);},0)+mDailyLease,tFix=fixMo.reduce(function(s,e){return s+(+e.amount||0);},0),net=tInc-tExp-tPlatformFee;
+  // tExp excludes platformfee — that's separately accounted via tPlatformFee from monthly stmts.
+  // Including it here would double-count when net = tInc - tExp - tPlatformFee.
+  var tExp=feAll.reduce(function(s,e){return e.category==="platformfee" ? s : s+(+e.amount||0);},0)+mDailyLease,tFix=fixMo.reduce(function(s,e){return s+(+e.amount||0);},0),net=tInc-tExp-tPlatformFee;
   var tTrips=mWeeks.reduce(function(s,w){return s+(+w.trips||0);},0)+mDailies.reduce(function(s,d){return s+(+d.trips||0);},0);
   var tHours=mWeeks.reduce(function(s,w){return s+(+w.hours||0);},0)+mDailies.reduce(function(s,d){return s+(+d.hours||0);},0);
   var tOnl=mWeeks.reduce(function(s,w){return s+(+w.onlineHours||0);},0),tMiles=mWeeks.reduce(function(s,w){return s+(+w.miles||0);},0)+mDailies.reduce(function(s,d){return s+(+d.miles||0);},0);
@@ -1506,11 +1505,11 @@ function App() {
   var yInc=yStmts.reduce(function(s,x){return s+(+x.grossFare||0)+(+x.tips||0)+(+x.bonus||0)+(+x.otherIncome||0);},0)+yDailyInc;
   var yToll=yStmts.reduce(function(s,x){return s+(+x.tollReimbursed||0);},0)+yDailies.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.tollReimbursed||0):0);},0);
   var yPlatformFee=yStmts.reduce(function(s,x){return s+(+x.platformFee||0);},0)+yDailies.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.platformFee||0):0);},0);
-  var yExp=yExps.reduce(function(s,e){return s+(+e.amount||0);},0)+yFixT+yDailyLease,yNet=yInc-yExp-yPlatformFee;
+  var yExp=yExps.reduce(function(s,e){return e.category==="platformfee" ? s : s+(+e.amount||0);},0)+yFixT+yDailyLease,yNet=yInc-yExp-yPlatformFee;
   var yTrips=wl.filter(function(w){return w.weekStart.slice(0,4)===yr;}).reduce(function(s,w){return s+(+w.trips||0);},0)+yDailies.reduce(function(s,d){return s+(+d.trips||0);},0);
   var yHours=wl.filter(function(w){return w.weekStart.slice(0,4)===yr;}).reduce(function(s,w){return s+(+w.hours||0);},0)+yDailies.reduce(function(s,d){return s+(+d.hours||0);},0);
   var yMiles=wl.filter(function(w){return w.weekStart.slice(0,4)===yr;}).reduce(function(s,w){return s+(+w.miles||0);},0)+yDailies.reduce(function(s,d){return s+(+d.miles||0);},0);  var yStmtTrips=yStmts.reduce(function(s,x){return s+(+x.trips||0);},0),yStmtHours=yStmts.reduce(function(s,x){return s+(+x.onlineHours||0);},0),yStmtMiles=yStmts.reduce(function(s,x){return s+(+x.miles||0);},0);
-  var mData=yMons.map(function(m){var ms=sl.filter(function(x){return x.month===m;}),me=el.filter(function(e){return e.date.slice(0,7)===m;}),md=dl.filter(function(d){return d.date&&d.date.slice(0,7)===m;}),mf=genFixed(fl,m).reduce(function(s,e){return s+(+e.amount||0);},0),inc=ms.reduce(function(s,x){return s+(+x.grossFare||0)+(+x.tips||0)+(+x.bonus||0)+(+x.otherIncome||0);},0)+md.reduce(function(s,d){if(d.mode==="rideshare")return s+(+d.grossFare||0)+(+d.tips||0)+(+d.bonus||0);return s+(+d.cash||0)+(+d.card||0)+(+d.tips||0);},0),exp=me.reduce(function(s,e){return s+(+e.amount||0);},0)+mf+md.reduce(function(s,d){return s+(+d.lease||0);},0),mToll=ms.reduce(function(s,x){return s+(+x.tollReimbursed||0);},0)+md.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.tollReimbursed||0):0);},0),mPlat=ms.reduce(function(s,x){return s+(+x.platformFee||0);},0)+md.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.platformFee||0):0);},0);return {m:m,inc:inc,exp:exp,net:inc-exp-mPlat,label:m.slice(5)+"月"};});
+  var mData=yMons.map(function(m){var ms=sl.filter(function(x){return x.month===m;}),me=el.filter(function(e){return e.date.slice(0,7)===m;}),md=dl.filter(function(d){return d.date&&d.date.slice(0,7)===m;}),mf=genFixed(fl,m).reduce(function(s,e){return s+(+e.amount||0);},0),inc=ms.reduce(function(s,x){return s+(+x.grossFare||0)+(+x.tips||0)+(+x.bonus||0)+(+x.otherIncome||0);},0)+md.reduce(function(s,d){if(d.mode==="rideshare")return s+(+d.grossFare||0)+(+d.tips||0)+(+d.bonus||0);return s+(+d.cash||0)+(+d.card||0)+(+d.tips||0);},0),exp=me.reduce(function(s,e){return e.category==="platformfee" ? s : s+(+e.amount||0);},0)+mf+md.reduce(function(s,d){return s+(+d.lease||0);},0),mToll=ms.reduce(function(s,x){return s+(+x.tollReimbursed||0);},0)+md.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.tollReimbursed||0):0);},0),mPlat=ms.reduce(function(s,x){return s+(+x.platformFee||0);},0)+md.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.platformFee||0):0);},0);return {m:m,inc:inc,exp:exp,net:inc-exp-mPlat,label:m.slice(5)+"月"};});
   var insW=null;if(veh.lastInsp){var ip=veh.lastInsp.split("-"),baseY=+ip[0],baseM=+ip[1]-1;var isTlc=!!(veh.tlcPlate&&veh.tlcPlate.trim());var addMonths=isTlc?4:12;
     // TLC counts by month, not by day. So "Jan inspection + 4 months" means valid through end of April.
     // The due date is the LAST day of (lastInspMonth + addMonths - 1).
@@ -1521,7 +1520,7 @@ function App() {
     insW={next:tY+"-"+p2(tM+1)+"-"+p2(tD),diff:Math.round((idEnd-todayMidnight)/86400000),isTlc:isTlc};}
   var insExpDiff=veh.insExpiry?daysFromToday(veh.insExpiry):null; var expiring=ll.filter(function(l){if(!l.expiryDate)return false;var d=daysFromToday(l.expiryDate);var rd=+(l.reminderDays||60);return d!==null&&d>=0&&d<=rd;});
   var expired=ll.filter(function(l){if(!l.expiryDate)return false;var d=daysFromToday(l.expiryDate);return d!==null&&d<0;}); var totalFix=fl.filter(function(f){return f.active&&f.amount;}).reduce(function(s,f){return s+(f.cycle==="annual"?Math.round(+f.amount/12*100)/100:+f.amount);},0); var bldRep=function(p){var isM=p==="month",ri=isM?tInc:yInc,rg=isM?tGross:yStmts.reduce(function(s,x){return s+(+x.grossFare||0);},0),rt=isM?tTips:yStmts.reduce(function(s,x){return s+(+x.tips||0);},0),rb=isM?tBonus:yStmts.reduce(function(s,x){return s+(+x.bonus||0);},0),rtr=isM?tToll:yStmts.reduce(function(s,x){return s+(+x.tollReimbursed||0);},0),rTot=isM?tExp:yExp,rn=ri-rTot,rT=isM?tTrips:yTrips,rH=isM?tHours:yHours,rM=isM?tMiles:yMiles;return {ri:ri,rg:rg,rt:rt,rb:rb,rtr:rtr,rTot:rTot,rn:rn,rTrips:rT,rHours:rH,rMiles:rM};};
-  var yAllExps=function(){return yExps.concat(yMons.reduce(function(acc,m){return acc.concat(genFixed(fl,m));},[]));}; var hourlyRate=tHours>0?Math.round(tInc/tHours*100)/100:0,lastMo=prevMo(mo),lmStmts=sl.filter(function(x){return x.month===lastMo;}),lmWeeks=wl.filter(function(w){return w.weekStart.slice(0,7)===lastMo;}),lmFixMo=genFixed(fl,lastMo),lmDailies=dl.filter(function(d){return d.date&&d.date.slice(0,7)===lastMo;}),lmDlInc=lmDailies.reduce(function(s,d){if(d.mode==="rideshare")return s+(+d.grossFare||0)+(+d.tips||0)+(+d.bonus||0);return s+(+d.cash||0)+(+d.card||0)+(+d.tips||0);},0),lmDlLease=lmDailies.reduce(function(s,d){return s+(+d.lease||0);},0),lmDlHours=lmDailies.reduce(function(s,d){return s+(+d.hours||0);},0),lmFeAll=el.filter(function(e){var c=allC[e.category];if(c&&c.mo)return (e.statementMonth||e.date.slice(0,7))===lastMo;return e.date.slice(0,7)===lastMo;}).concat(lmFixMo),lmInc=lmStmts.reduce(function(s,x){return s+(+x.grossFare||0)+(+x.tips||0)+(+x.bonus||0)+(+x.otherIncome||0);},0)+lmDlInc,lmExp=lmFeAll.reduce(function(s,e){return s+(+e.amount||0);},0)+lmDlLease,lmToll=lmStmts.reduce(function(s,x){return s+(+x.tollReimbursed||0);},0)+lmDailies.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.tollReimbursed||0):0);},0),lmPlatformFee=lmStmts.reduce(function(s,x){return s+(+x.platformFee||0);},0)+lmDailies.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.platformFee||0):0);},0),lmNet=lmInc-lmExp-lmPlatformFee,lmHours=lmWeeks.reduce(function(s,w){return s+(+w.hours||0);},0)+lmDlHours,lmHourly=lmHours>0?Math.round(lmInc/lmHours*100)/100:0,nextExpiry=ll.filter(function(l){return l.expiryDate;}).sort(function(a,b){return a.expiryDate.localeCompare(b.expiryDate);})[0]
+  var yAllExps=function(){return yExps.concat(yMons.reduce(function(acc,m){return acc.concat(genFixed(fl,m));},[]));}; var hourlyRate=tHours>0?Math.round(tInc/tHours*100)/100:0,lastMo=prevMo(mo),lmStmts=sl.filter(function(x){return x.month===lastMo;}),lmWeeks=wl.filter(function(w){return w.weekStart.slice(0,7)===lastMo;}),lmFixMo=genFixed(fl,lastMo),lmDailies=dl.filter(function(d){return d.date&&d.date.slice(0,7)===lastMo;}),lmDlInc=lmDailies.reduce(function(s,d){if(d.mode==="rideshare")return s+(+d.grossFare||0)+(+d.tips||0)+(+d.bonus||0);return s+(+d.cash||0)+(+d.card||0)+(+d.tips||0);},0),lmDlLease=lmDailies.reduce(function(s,d){return s+(+d.lease||0);},0),lmDlHours=lmDailies.reduce(function(s,d){return s+(+d.hours||0);},0),lmFeAll=el.filter(function(e){var c=allC[e.category];if(c&&c.mo)return (e.statementMonth||e.date.slice(0,7))===lastMo;return e.date.slice(0,7)===lastMo;}).concat(lmFixMo),lmInc=lmStmts.reduce(function(s,x){return s+(+x.grossFare||0)+(+x.tips||0)+(+x.bonus||0)+(+x.otherIncome||0);},0)+lmDlInc,lmExp=lmFeAll.reduce(function(s,e){return e.category==="platformfee" ? s : s+(+e.amount||0);},0)+lmDlLease,lmToll=lmStmts.reduce(function(s,x){return s+(+x.tollReimbursed||0);},0)+lmDailies.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.tollReimbursed||0):0);},0),lmPlatformFee=lmStmts.reduce(function(s,x){return s+(+x.platformFee||0);},0)+lmDailies.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.platformFee||0):0);},0),lmNet=lmInc-lmExp-lmPlatformFee,lmHours=lmWeeks.reduce(function(s,w){return s+(+w.hours||0);},0)+lmDlHours,lmHourly=lmHours>0?Math.round(lmInc/lmHours*100)/100:0,nextExpiry=ll.filter(function(l){return l.expiryDate;}).sort(function(a,b){return a.expiryDate.localeCompare(b.expiryDate);})[0]
     // YEAR-OVER-YEAR comparisons
     // (a) Same month last year — for month-view comparison
     , lyMo = (function(){var p=mo.split("-");return (+p[0]-1)+"-"+p[1];})()
@@ -1532,7 +1531,7 @@ function App() {
     , lyMoDlLease = lyMoDailies.reduce(function(s,d){return s+(+d.lease||0);},0)
     , lyMoFeAll = el.filter(function(e){var c=allC[e.category];if(c&&c.mo)return (e.statementMonth||e.date.slice(0,7))===lyMo;return e.date.slice(0,7)===lyMo;}).concat(lyMoFixMo)
     , lyMoInc = lyMoStmts.reduce(function(s,x){return s+(+x.grossFare||0)+(+x.tips||0)+(+x.bonus||0)+(+x.otherIncome||0);},0)+lyMoDlInc
-    , lyMoExp = lyMoFeAll.reduce(function(s,e){return s+(+e.amount||0);},0)+lyMoDlLease
+    , lyMoExp = lyMoFeAll.reduce(function(s,e){return e.category==="platformfee" ? s : s+(+e.amount||0);},0)+lyMoDlLease
     , lyMoToll = lyMoStmts.reduce(function(s,x){return s+(+x.tollReimbursed||0);},0)+lyMoDailies.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.tollReimbursed||0):0);},0)
     , lyMoPlatformFee = lyMoStmts.reduce(function(s,x){return s+(+x.platformFee||0);},0)+lyMoDailies.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.platformFee||0):0);},0)
     , lyMoNet = lyMoInc-lyMoExp-lyMoPlatformFee
@@ -1546,7 +1545,7 @@ function App() {
     , pyDlLease = pyDailies.reduce(function(s,d){return s+(+d.lease||0);},0)
     , pyFixT = prevYrMons.reduce(function(s,m){return s+genFixed(fl,m).reduce(function(a,e){return a+(+e.amount||0);},0);},0)
     , pyInc = pyStmts.reduce(function(s,x){return s+(+x.grossFare||0)+(+x.tips||0)+(+x.bonus||0)+(+x.otherIncome||0);},0)+pyDlInc
-    , pyExp = pyExpsList.reduce(function(s,e){return s+(+e.amount||0);},0)+pyFixT+pyDlLease
+    , pyExp = pyExpsList.reduce(function(s,e){return e.category==="platformfee" ? s : s+(+e.amount||0);},0)+pyFixT+pyDlLease
     , pyToll = pyStmts.reduce(function(s,x){return s+(+x.tollReimbursed||0);},0)+pyDailies.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.tollReimbursed||0):0);},0)
     , pyPlatformFee = pyStmts.reduce(function(s,x){return s+(+x.platformFee||0);},0)+pyDailies.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.platformFee||0):0);},0)
     , pyNet = pyInc-pyExp-pyPlatformFee
@@ -2792,124 +2791,6 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
             , dashV==="month" ? (
               React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 265}}
                 , React.createElement(MoNav, { val: mo, set: setMo, lang: lang, onPick: function(){setMpState({value:mo,onChange:function(v){setMo(v);}});}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 266}} )
-                , incGoal&&+incGoal>0 ? React.createElement(Card, { style: {marginBottom:10,padding:"12px 14px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 267}}, React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 267}}, React.createElement('div', { style: {fontSize:13,fontWeight:700,color:"#FFD700"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 267}}, "🎯 " , lang==="en"?"Monthly Goal":"本月目标"), React.createElement('div', { style: {display:"flex",alignItems:"center",gap:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 267}}, React.createElement('span', { style: {fontSize:13,color:C.text2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 267}}, fmt(tInc), " / "  , fmt(+incGoal)), React.createElement('button', { onClick: function(){setShowGoal(true);}, style: {background:"none",border:"none",color:C.text3,fontSize:12,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 267}}, "✏️"))), React.createElement('div', { style: {height:8,borderRadius:4,background:"#1A2A40",overflow:"hidden",marginBottom:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 267}}, React.createElement('div', { style: {height:8,borderRadius:4,width:Math.min(100,Math.round(tInc/+incGoal*100))+"%",background:tInc>=+incGoal?"linear-gradient(90deg,#00E676,#FFD700)":"linear-gradient(90deg,#00D4FF,#0055FF)"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 267}} )), React.createElement('div', { style: {fontSize:12,color:tInc>=+incGoal?"#00E676":"#7A9AB8"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 267}}, tInc>=+incGoal?(lang==="en"?"🎉 Goal reached!":"🎉 目标达成！"):(lang==="en"?"Still need: ":"还差: ")+fmt(+incGoal-tInc)+" ("+Math.round(tInc/+incGoal*100)+"%)")) : React.createElement('button', { onClick: function(){setShowGoal(true);}, style: {width:"100%",background:C.bg3,border:"1px dashed #2A4A6A",borderRadius:10,padding:"8px 14px",color:C.text3,fontSize:12,cursor:"pointer",marginBottom:10,textAlign:"left"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 267}}, "🎯 " , lang==="en"?"Set monthly goal...":"设定本月收入目标...")
-                , (function(){var hm=mData.filter(function(m){return m.inc>0;});if(hm.length<2)return null;var mx=Math.max.apply(null,hm.map(function(m){return m.inc;}));return React.createElement(Card, { style: {marginBottom:8,padding:"12px 14px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 268}}, React.createElement('div', { style: {fontSize:13,fontWeight:700,color:C.text2,marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 268}}, "📊 " , lang==="en"?("Income Trend · "+yr):("收入趋势 · "+yr+"年")), React.createElement('div', { style: {display:"flex",alignItems:"center",gap:3,height:60}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 268}}, mData.map(function(m,i){if(!m.inc)return React.createElement('div', { key: i, style: {flex:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 268}} );var h=Math.round(8+m.inc/mx*48);var isCur=m.m===mo;return React.createElement('div', { key: i, onClick: function(){setMo(m.m);setDashV("month");}, style: {flex:1,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 268}}, React.createElement('div', { style: {width:"100%",height:h,borderRadius:"3px 3px 0 0",background:isCur?"#00D4FF":m.net>=0?"#00E676":"#FF5252",opacity:isCur?1:0.7}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 268}} ));}), " " ), React.createElement('div', { style: {display:"flex",fontSize:11,color:C.text3,marginTop:3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 268}}, mData.map(function(m,i){return React.createElement('div', { key: i, style: {flex:1,textAlign:"center",color:m.m===mo?"#00D4FF":"#7A9AB8"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 268}}, m.label.slice(0,3));})));}())
-                // === Recent Bank Payout Card ===
-                , (function(){
-                    if(driverType==="taxi") return null;
-                    var paid=wl.filter(function(w){return w.payoutAmount&&+w.payoutAmount>0;}).sort(function(a,b){
-                      return (b.payoutDate||b.weekStart||"").localeCompare(a.payoutDate||a.weekStart||"");
-                    });
-                    if(!paid.length) return null;
-                    var latest=paid[0];
-                    return React.createElement(Card, {style:{marginBottom:8,padding:"12px 14px",background:"#0A2030",border:"1px solid #2A5080"}}
-                      , React.createElement('div', {style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}
-                        , React.createElement('div', {style:{fontSize:12,color:"#7AC0E8",letterSpacing:0.3}}, "\ud83c\udfe6 " , lang==="en"?"LATEST BANK PAYOUT":"\u6700\u8fd1\u94f6\u884c\u5165\u8d26")
-                        , React.createElement('div', {style:{fontSize:12,color:C.text3}}, latest.payoutDate || (lang==="en"?"date unknown":"\u65e5\u671f\u672a\u77e5"))
-                      )
-                      , React.createElement('div', {style:{fontSize:22,fontWeight:800,color:"#5AACFF"}}, "$" , (+latest.payoutAmount).toFixed(2))
-                      , React.createElement('div', {style:{fontSize:12,color:C.text3,marginTop:4}}, latest.platform , " \u00b7 " , lang==="en"?"work week ":"\u5de5\u4f5c\u5468 " , latest.weekStart)
-                    );
-                  }())
-                // === #10: Expense Distribution Pie Chart (current month) ===
-                , (function(){
-                    if(tExp<=0) return null;
-                    var groupTotals={"车辆":0,"牌照":0,"平台":0,"其他":0};
-                    feAll.forEach(function(e){
-                      var cat=allC[e.category];
-                      var g=cat?(cat.g||"其他"):"其他";
-                      if(groupTotals[g]===undefined) g="其他";
-                      groupTotals[g]+=(+e.amount||0);
-                    });
-                    var total=Object.values(groupTotals).reduce(function(a,b){return a+b;},0);
-                    if(total<=0) return null;
-                    var colors={"车辆":"#00D4FF","牌照":"#FFD700","平台":"#CC88FF","其他":"#A8D0E8"};
-                    var labels=lang==="en"?{"车辆":"Vehicle","牌照":"License","平台":"Platform","其他":"Other"}:{"车辆":"车辆","牌照":"牌照","平台":"平台","其他":"其他"};
-                    var cx=60, cy=60, r=50;
-                    var startAngle=-Math.PI/2;
-                    var slices=[];
-                    ["车辆","牌照","平台","其他"].forEach(function(g){
-                      if(!groupTotals[g]) return;
-                      var pct=groupTotals[g]/total;
-                      var endAngle=startAngle+pct*2*Math.PI;
-                      var x1=cx+r*Math.cos(startAngle), y1=cy+r*Math.sin(startAngle);
-                      var x2=cx+r*Math.cos(endAngle), y2=cy+r*Math.sin(endAngle);
-                      var largeArc=pct>0.5?1:0;
-                      // Special case: if exactly one slice (100%), draw full circle
-                      var path;
-                      if(pct>=0.999){
-                        path="M"+(cx-r)+","+cy+" A"+r+","+r+" 0 1,1 "+(cx+r)+","+cy+" A"+r+","+r+" 0 1,1 "+(cx-r)+","+cy+" Z";
-                      }else{
-                        path="M"+cx.toFixed(2)+","+cy.toFixed(2)+" L"+x1.toFixed(2)+","+y1.toFixed(2)+" A"+r+","+r+" 0 "+largeArc+",1 "+x2.toFixed(2)+","+y2.toFixed(2)+" Z";
-                      }
-                      slices.push({path:path,color:colors[g],label:labels[g],amount:groupTotals[g],pct:pct});
-                      startAngle=endAngle;
-                    });
-                    return React.createElement(Card, {style:{marginBottom:8,padding:"12px 14px"}}
-                      , React.createElement('div', {style:{fontSize:13,fontWeight:700,color:C.text2,marginBottom:10}}, "🥧 " , lang==="en"?"Expense Distribution":"支出分布")
-                      , React.createElement('div', {style:{display:"flex",alignItems:"center",gap:14}}
-                        , React.createElement('svg', {viewBox:"0 0 120 120",width:110,height:110,style:{flexShrink:0}}
-                          , slices.map(function(s,i){return React.createElement('path', {key:i,d:s.path,fill:s.color,stroke:C.bg2,strokeWidth:1.5});})
-                          , React.createElement('circle', {cx:60,cy:60,r:24,fill:C.bg})
-                          , React.createElement('text', {x:60,y:58,textAnchor:"middle",fill:C.text2,fontSize:10}, lang==="en"?"Total":"总计")
-                          , React.createElement('text', {x:60,y:70,textAnchor:"middle",fill:"#FF6B35",fontSize:12,fontWeight:700}, fmt(total))
-                        )
-                        , React.createElement('div', {style:{flex:1,display:"flex",flexDirection:"column",gap:5}}
-                          , slices.map(function(s,i){return React.createElement('div', {key:i,style:{display:"flex",alignItems:"center",gap:6,fontSize:12}}
-                            , React.createElement('div', {style:{width:10,height:10,borderRadius:2,background:s.color,flexShrink:0}})
-                            , React.createElement('span', {style:{flex:1,color:C.text2}}, s.label)
-                            , React.createElement('span', {style:{color:C.text3}}, Math.round(s.pct*100), "%")
-                            , React.createElement('span', {style:{color:C.text,fontWeight:600,minWidth:48,textAlign:"right"}}, fmt(s.amount))
-                          );})
-                        )
-                      )
-                    );
-                  }())
-                // === #11: Multi-line trend chart (income/expense/net) ===
-                , (function(){
-                    var hm=mData.filter(function(m){return m.inc>0||m.exp>0;});
-                    if(hm.length<2) return null;
-                    // Find max across income, expense, |net|
-                    var allVals=[];
-                    mData.forEach(function(m){if(m.inc)allVals.push(m.inc); if(m.exp)allVals.push(m.exp); if(m.net)allVals.push(Math.abs(m.net));});
-                    var mx=Math.max.apply(null,allVals);
-                    if(mx<=0) return null;
-                    var W=300, H=80, padY=8, padX=10;
-                    var n=mData.length;
-                    var sx=function(i){return padX+(i/(n-1))*(W-2*padX);};
-                    var sy=function(v){return padY+(1-v/mx)*(H-2*padY);};
-                    var sym=function(v){return padY+(0.5-v/mx*0.5)*(H-2*padY);};  // for net (around 0 baseline)
-                    // Build paths
-                    var incPath="", expPath="", netPath="";
-                    var incPoints=[], expPoints=[], netPoints=[];
-                    mData.forEach(function(m,i){
-                      var x=sx(i);
-                      incPoints.push({x:x,y:sy(m.inc),v:m.inc});
-                      expPoints.push({x:x,y:sy(m.exp),v:m.exp});
-                      netPoints.push({x:x,y:sy(Math.max(0,m.net)),v:m.net});
-                    });
-                    incPath=incPoints.map(function(p,i){return (i===0?"M":"L")+p.x.toFixed(1)+","+p.y.toFixed(1);}).join(" ");
-                    expPath=expPoints.map(function(p,i){return (i===0?"M":"L")+p.x.toFixed(1)+","+p.y.toFixed(1);}).join(" ");
-                    netPath=netPoints.map(function(p,i){return (i===0?"M":"L")+p.x.toFixed(1)+","+p.y.toFixed(1);}).join(" ");
-                    return React.createElement(Card, {style:{marginBottom:8,padding:"12px 14px"}}
-                      , React.createElement('div', {style:{fontSize:13,fontWeight:700,color:C.text2,marginBottom:8}}, "📈 " , lang==="en"?("Trends · "+yr):("月度趋势 · "+yr+"年"))
-                      , React.createElement('div', {style:{display:"flex",gap:12,fontSize:11,marginBottom:6,color:C.text3}}
-                        , React.createElement('span', null, React.createElement('span',{style:{display:"inline-block",width:8,height:2,background:"#00D4FF",verticalAlign:"middle",marginRight:4}}), lang==="en"?"Income":"收入")
-                        , React.createElement('span', null, React.createElement('span',{style:{display:"inline-block",width:8,height:2,background:"#FF6B35",verticalAlign:"middle",marginRight:4}}), lang==="en"?"Expense":"支出")
-                        , React.createElement('span', null, React.createElement('span',{style:{display:"inline-block",width:8,height:2,background:"#00E676",verticalAlign:"middle",marginRight:4}}), lang==="en"?"Net":"净利润")
-                      )
-                      , React.createElement('svg', {viewBox:"0 0 "+W+" "+H,width:"100%",height:H,preserveAspectRatio:"none"}
-                        , React.createElement('path', {d:incPath,stroke:"#00D4FF",strokeWidth:2,fill:"none",strokeLinejoin:"round"})
-                        , React.createElement('path', {d:expPath,stroke:"#FF6B35",strokeWidth:2,fill:"none",strokeLinejoin:"round"})
-                        , React.createElement('path', {d:netPath,stroke:"#00E676",strokeWidth:2,fill:"none",strokeLinejoin:"round",strokeDasharray:"4,2"})
-                        // Highlight current month
-                        , (function(){var i=mData.findIndex(function(m){return m.m===mo;}); if(i<0||!incPoints[i]) return null; return React.createElement('circle', {cx:incPoints[i].x,cy:incPoints[i].y,r:3,fill:"#00D4FF",stroke:C.bg2,strokeWidth:1});}())
-                      )
-                      , React.createElement('div', {style:{display:"flex",fontSize:10,color:C.text3,marginTop:4}}
-                        , mData.map(function(m,i){return React.createElement('div', {key:i,style:{flex:1,textAlign:"center",color:m.m===mo?"#00D4FF":C.text3}}, m.label.slice(0,3));})
-                      )
-                    );
-                  }())
                 , (function(){
                     // === Two-column big number card: Platform Pay + Net Profit ===
                     // 营业额 (revenue): tInc = grossFare + tips + bonus + other (NOT including toll)
@@ -2931,12 +2812,12 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                         // Platform Pay card
                         React.createElement(Card, {style:{padding:"12px 12px",cursor:"pointer"},onClick:function(){__bucketExpanded[bigNumKey]=!bigExp;forceRerender();}},
                           React.createElement('div', {style:{display:"flex",alignItems:"center",justifyContent:"space-between"}},
-                            React.createElement('div', {style:{fontSize:11,color:"#8ACCA8",letterSpacing:0.3}}, "📱 ", lang==="en"?"Platform Pay":"平台收入"),
+                            React.createElement('div', {style:{fontSize:11,color:"#8ACCA8",letterSpacing:0.3}}, "📱 ", lang==="en"?"Platform Pay":"平台到账"),
                             React.createElement('span', {style:{fontSize:10,color:C.text3}}, bigExp?"▲":"▼")
                           ),
                           React.createElement('div', {style:{fontSize:22,fontWeight:800,color:"#5AACFF",letterSpacing:-0.5,marginTop:4}}, fmt(platformPay)),
                           tToll>0 ? React.createElement('div', {style:{fontSize:10,color:C.text3,marginTop:3}}, "−", lang==="en"?"toll ":"过桥 ", fmt(tToll)) : null,
-                          tToll>0 ? React.createElement('div', {style:{fontSize:11,color:"#8ACCA8",fontWeight:600}}, lang==="en"?"actual ":"实赚 ", fmt(realEarnings)) : null
+                          tToll>0 ? React.createElement('div', {style:{fontSize:11,color:"#8ACCA8",fontWeight:600}}, lang==="en"?"actual ":"实收 ", fmt(realEarnings)) : null
                         ),
                         // Net Profit card
                         React.createElement(Card, {style:{padding:"12px 12px",cursor:"pointer"},onClick:function(){__bucketExpanded[bigNumKey]=!bigExp;forceRerender();}},
@@ -2986,7 +2867,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                           ) : null,
                           // = Platform Pay (实银行入账)
                           React.createElement('div', {style:{display:"flex",justifyContent:"space-between",paddingTop:5,borderTop:"1px dashed #1F3A5A"}},
-                            React.createElement('span', {style:{color:C.text2,fontWeight:600}}, "📱 ", lang==="en"?"Platform Pay":"平台收入"),
+                            React.createElement('span', {style:{color:C.text2,fontWeight:600}}, "📱 ", lang==="en"?"Platform Pay":"平台到账"),
                             React.createElement('b', {style:{color:"#5AACFF"}}, fmt(platformPay))
                           ),
                           // − Toll paid (booth)
@@ -2996,7 +2877,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                           ) : null,
                           // = Real earnings
                           tToll>0 ? React.createElement('div', {style:{display:"flex",justifyContent:"space-between",paddingTop:5,borderTop:"1px dashed #1F3A5A"}},
-                            React.createElement('span', {style:{color:C.text2,fontWeight:600}}, lang==="en"?"Real Earnings":"实赚"),
+                            React.createElement('span', {style:{color:C.text2,fontWeight:600}}, lang==="en"?"Real Earnings":"实收"),
                             React.createElement('b', {style:{color:"#FFD700"}}, fmt(realEarnings))
                           ) : null,
                           // − Other expenses
@@ -3013,10 +2894,166 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                       ) : null
                     );
                   }())
+                , incGoal&&+incGoal>0 ? React.createElement(Card, { style: {marginBottom:10,padding:"12px 14px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 267}}, React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 267}}, React.createElement('div', { style: {fontSize:13,fontWeight:700,color:"#FFD700"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 267}}, "🎯 " , lang==="en"?"Monthly Goal":"本月目标"), React.createElement('div', { style: {display:"flex",alignItems:"center",gap:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 267}}, React.createElement('span', { style: {fontSize:13,color:C.text2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 267}}, fmt(tInc), " / "  , fmt(+incGoal)), React.createElement('button', { onClick: function(){setShowGoal(true);}, style: {background:"none",border:"none",color:C.text3,fontSize:12,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 267}}, "✏️"))), React.createElement('div', { style: {height:8,borderRadius:4,background:"#1A2A40",overflow:"hidden",marginBottom:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 267}}, React.createElement('div', { style: {height:8,borderRadius:4,width:Math.min(100,Math.round(tInc/+incGoal*100))+"%",background:tInc>=+incGoal?"linear-gradient(90deg,#00E676,#FFD700)":"linear-gradient(90deg,#00D4FF,#0055FF)"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 267}} )), React.createElement('div', { style: {fontSize:12,color:tInc>=+incGoal?"#00E676":"#7A9AB8"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 267}}, tInc>=+incGoal?(lang==="en"?"🎉 Goal reached!":"🎉 目标达成！"):(lang==="en"?"Still need: ":"还差: ")+fmt(+incGoal-tInc)+" ("+Math.round(tInc/+incGoal*100)+"%)")) : React.createElement('button', { onClick: function(){setShowGoal(true);}, style: {width:"100%",background:C.bg3,border:"1px dashed #2A4A6A",borderRadius:10,padding:"8px 14px",color:C.text3,fontSize:12,cursor:"pointer",marginBottom:10,textAlign:"left"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 267}}, "🎯 " , lang==="en"?"Set monthly goal...":"设定本月收入目标...")
+                , (function(){
+                    if(dashV !== "year") return null;
+                    var hm=mData.filter(function(m){return m.inc>0;});if(hm.length<2)return null;var mx=Math.max.apply(null,hm.map(function(m){return m.inc;}));return React.createElement(Card, { style: {marginBottom:8,padding:"12px 14px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 268}}, React.createElement('div', { style: {fontSize:13,fontWeight:700,color:C.text2,marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 268}}, "📊 " , lang==="en"?("Income Trend · "+yr):("收入趋势 · "+yr+"年")), React.createElement('div', { style: {display:"flex",alignItems:"center",gap:3,height:60}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 268}}, mData.map(function(m,i){if(!m.inc)return React.createElement('div', { key: i, style: {flex:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 268}} );var h=Math.round(8+m.inc/mx*48);var isCur=m.m===mo;return React.createElement('div', { key: i, onClick: function(){setMo(m.m);setDashV("month");}, style: {flex:1,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 268}}, React.createElement('div', { style: {width:"100%",height:h,borderRadius:"3px 3px 0 0",background:isCur?"#00D4FF":m.net>=0?"#00E676":"#FF5252",opacity:isCur?1:0.7}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 268}} ));}), " " ), React.createElement('div', { style: {display:"flex",fontSize:11,color:C.text3,marginTop:3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 268}}, mData.map(function(m,i){return React.createElement('div', { key: i, style: {flex:1,textAlign:"center",color:m.m===mo?"#00D4FF":"#7A9AB8"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 268}}, m.label.slice(0,3));})));
+                  }())
+                // === Month view: This-month-by-week bar chart ===
+                , (function(){
+                    if(dashV !== "month") return null;
+                    // Compute weekly buckets for this month (group by ISO week start)
+                    var weeks = {};
+                    // Sources: monthly stmts (sl), daily entries (dl rideshare), weekly stmts (wl)
+                    // We use sl + dl mostly. For sl we have no date, so put it on the 1st of month.
+                    var moDays = mDailies.filter(function(d){return d.mode==="rideshare";});
+                    moDays.forEach(function(d){
+                      var wk = wkMon(d.date);
+                      var inc = (+d.grossFare||0) + (+d.tips||0) + (+d.bonus||0);
+                      if(!weeks[wk]) weeks[wk] = 0;
+                      weeks[wk] += inc;
+                    });
+                    // Add monthly stmt total to first week of the month if no daily data
+                    if(Object.keys(weeks).length === 0 && tInc > 0){
+                      var firstDay = mo + "-01";
+                      weeks[wkMon(firstDay)] = tInc;
+                    }
+                    var weekKeys = Object.keys(weeks).sort();
+                    if(weekKeys.length < 2) return null; // Only show if 2+ weeks have data
+                    var maxWk = Math.max.apply(null, weekKeys.map(function(k){return weeks[k];}));
+                    return React.createElement(Card, {style:{marginBottom:8,padding:"12px 14px"}}
+                      , React.createElement('div', {style:{fontSize:13,fontWeight:700,color:C.text2,marginBottom:8}}, "📊 ", lang==="en"?"This Month by Week":"本月按周")
+                      , React.createElement('div', {style:{display:"flex",alignItems:"flex-end",gap:6,height:80}}
+                        , weekKeys.map(function(wk, i){
+                            var v = weeks[wk];
+                            var h = Math.round(8 + v/maxWk*64);
+                            return React.createElement('div', {key:wk, style:{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3}}
+                              , React.createElement('div', {style:{fontSize:10,color:C.text3,fontWeight:600}}, "$"+Math.round(v))
+                              , React.createElement('div', {style:{width:"100%",height:h,background:"linear-gradient(180deg,#00D4FF,#0088CC)",borderRadius:"4px 4px 0 0"}})
+                            );
+                          })
+                      )
+                      , React.createElement('div', {style:{display:"flex",fontSize:10,color:C.text3,marginTop:4,gap:6}}
+                        , weekKeys.map(function(wk,i){
+                            return React.createElement('div', {key:wk, style:{flex:1,textAlign:"center"}}, lang==="en"?"W":"周", i+1, " · ", wk.slice(5));
+                          })
+                      )
+                    );
+                  }())
+                // === Month view: This-month by-platform comparison ===
+                , (function(){
+                    if(dashV !== "month") return null;
+                    // Aggregate revenue by platform from sl + dl
+                    var byPlat = {};
+                    mStmts.forEach(function(x){
+                      var p = x.platform || "Other";
+                      if(!byPlat[p]) byPlat[p] = 0;
+                      byPlat[p] += (+x.grossFare||0) + (+x.tips||0) + (+x.bonus||0) + (+x.otherIncome||0);
+                    });
+                    mDailies.filter(function(d){return d.mode==="rideshare";}).forEach(function(d){
+                      var p = d.platform || "Uber";
+                      if(!byPlat[p]) byPlat[p] = 0;
+                      byPlat[p] += (+d.grossFare||0) + (+d.tips||0) + (+d.bonus||0);
+                    });
+                    var platKeys = Object.keys(byPlat).filter(function(p){return byPlat[p] > 0;}).sort(function(a,b){return byPlat[b]-byPlat[a];});
+                    if(platKeys.length < 2) return null; // Only show if 2+ platforms
+                    var maxPlat = Math.max.apply(null, platKeys.map(function(p){return byPlat[p];}));
+                    var totalPlat = platKeys.reduce(function(s,p){return s+byPlat[p];},0);
+                    var platColors = {"Uber":"#FFFFFF","Lyft":"#FF00BF","Curb":"#00C853","Via":"#5AACFF"};
+                    return React.createElement(Card, {style:{marginBottom:8,padding:"12px 14px"}}
+                      , React.createElement('div', {style:{fontSize:13,fontWeight:700,color:C.text2,marginBottom:10}}, "📱 ", lang==="en"?"This Month by Platform":"本月分平台")
+                      , platKeys.map(function(p){
+                          var v = byPlat[p];
+                          var pct = Math.round(v/totalPlat*100);
+                          var bw = Math.max(5, Math.round(v/maxPlat*100)) + "%";
+                          var color = platColors[p] || "#8ABCD0";
+                          return React.createElement('div', {key:p, style:{marginBottom:8}}
+                            , React.createElement('div', {style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}
+                              , React.createElement('span', {style:{fontSize:13,color:C.text,fontWeight:600}}, p)
+                              , React.createElement('div', {style:{display:"flex",alignItems:"center",gap:6}}
+                                , React.createElement('span', {style:{fontSize:14,fontWeight:700,color:color}}, fmt(v))
+                                , React.createElement('span', {style:{fontSize:11,color:C.text3}}, pct, "%")
+                              )
+                            )
+                            , React.createElement('div', {style:{height:6,borderRadius:3,background:"#1A2A44"}}
+                              , React.createElement('div', {style:{height:6,borderRadius:3,width:bw,background:color,opacity:0.85}})
+                            )
+                          );
+                        })
+                    );
+                  }())
+                // === Recent Bank Payout Card ===
+                , (function(){
+                    if(driverType==="taxi") return null;
+                    var paid=wl.filter(function(w){return w.payoutAmount&&+w.payoutAmount>0;}).sort(function(a,b){
+                      return (b.payoutDate||b.weekStart||"").localeCompare(a.payoutDate||a.weekStart||"");
+                    });
+                    if(!paid.length) return null;
+                    var latest=paid[0];
+                    return React.createElement(Card, {style:{marginBottom:8,padding:"12px 14px",background:"#0A2030",border:"1px solid #2A5080"}}
+                      , React.createElement('div', {style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}
+                        , React.createElement('div', {style:{fontSize:12,color:"#7AC0E8",letterSpacing:0.3}}, "\ud83c\udfe6 " , lang==="en"?"LATEST BANK PAYOUT":"\u6700\u8fd1\u94f6\u884c\u5165\u8d26")
+                        , React.createElement('div', {style:{fontSize:12,color:C.text3}}, latest.payoutDate || (lang==="en"?"date unknown":"\u65e5\u671f\u672a\u77e5"))
+                      )
+                      , React.createElement('div', {style:{fontSize:22,fontWeight:800,color:"#5AACFF"}}, "$" , (+latest.payoutAmount).toFixed(2))
+                      , React.createElement('div', {style:{fontSize:12,color:C.text3,marginTop:4}}, latest.platform , " \u00b7 " , lang==="en"?"work week ":"\u5de5\u4f5c\u5468 " , latest.weekStart)
+                    );
+                  }())
+
+                // === #11: Multi-line trend chart (income/expense/net) — year view only ===
+                , (function(){
+                    if(dashV !== "year") return null;
+                    var hm=mData.filter(function(m){return m.inc>0||m.exp>0;});
+                    if(hm.length<2) return null;
+                    // Find max across income, expense, |net|
+                    var allVals=[];
+                    mData.forEach(function(m){if(m.inc)allVals.push(m.inc); if(m.exp)allVals.push(m.exp); if(m.net)allVals.push(Math.abs(m.net));});
+                    var mx=Math.max.apply(null,allVals);
+                    if(mx<=0) return null;
+                    var W=300, H=80, padY=8, padX=10;
+                    var n=mData.length;
+                    var sx=function(i){return padX+(i/(n-1))*(W-2*padX);};
+                    var sy=function(v){return padY+(1-v/mx)*(H-2*padY);};
+                    var sym=function(v){return padY+(0.5-v/mx*0.5)*(H-2*padY);};  // for net (around 0 baseline)
+                    // Build paths
+                    var incPath="", expPath="", netPath="";
+                    var incPoints=[], expPoints=[], netPoints=[];
+                    mData.forEach(function(m,i){
+                      var x=sx(i);
+                      incPoints.push({x:x,y:sy(m.inc),v:m.inc});
+                      expPoints.push({x:x,y:sy(m.exp),v:m.exp});
+                      netPoints.push({x:x,y:sy(Math.max(0,m.net)),v:m.net});
+                    });
+                    incPath=incPoints.map(function(p,i){return (i===0?"M":"L")+p.x.toFixed(1)+","+p.y.toFixed(1);}).join(" ");
+                    expPath=expPoints.map(function(p,i){return (i===0?"M":"L")+p.x.toFixed(1)+","+p.y.toFixed(1);}).join(" ");
+                    netPath=netPoints.map(function(p,i){return (i===0?"M":"L")+p.x.toFixed(1)+","+p.y.toFixed(1);}).join(" ");
+                    return React.createElement(Card, {style:{marginBottom:8,padding:"12px 14px"}}
+                      , React.createElement('div', {style:{fontSize:13,fontWeight:700,color:C.text2,marginBottom:8}}, "📈 " , lang==="en"?("Trends · "+yr):("月度趋势 · "+yr+"年"))
+                      , React.createElement('div', {style:{display:"flex",gap:12,fontSize:11,marginBottom:6,color:C.text3}}
+                        , React.createElement('span', null, React.createElement('span',{style:{display:"inline-block",width:8,height:2,background:"#00D4FF",verticalAlign:"middle",marginRight:4}}), lang==="en"?"Income":"收入")
+                        , React.createElement('span', null, React.createElement('span',{style:{display:"inline-block",width:8,height:2,background:"#FF6B35",verticalAlign:"middle",marginRight:4}}), lang==="en"?"Expense":"支出")
+                        , React.createElement('span', null, React.createElement('span',{style:{display:"inline-block",width:8,height:2,background:"#00E676",verticalAlign:"middle",marginRight:4}}), lang==="en"?"Net":"净利润")
+                      )
+                      , React.createElement('svg', {viewBox:"0 0 "+W+" "+H,width:"100%",height:H,preserveAspectRatio:"none"}
+                        , React.createElement('path', {d:incPath,stroke:"#00D4FF",strokeWidth:2,fill:"none",strokeLinejoin:"round"})
+                        , React.createElement('path', {d:expPath,stroke:"#FF6B35",strokeWidth:2,fill:"none",strokeLinejoin:"round"})
+                        , React.createElement('path', {d:netPath,stroke:"#00E676",strokeWidth:2,fill:"none",strokeLinejoin:"round",strokeDasharray:"4,2"})
+                        // Highlight current month
+                        , (function(){var i=mData.findIndex(function(m){return m.m===mo;}); if(i<0||!incPoints[i]) return null; return React.createElement('circle', {cx:incPoints[i].x,cy:incPoints[i].y,r:3,fill:"#00D4FF",stroke:C.bg2,strokeWidth:1});}())
+                      )
+                      , React.createElement('div', {style:{display:"flex",fontSize:10,color:C.text3,marginTop:4}}
+                        , mData.map(function(m,i){return React.createElement('div', {key:i,style:{flex:1,textAlign:"center",color:m.m===mo?"#00D4FF":C.text3}}, m.label.slice(0,3));})
+                      )
+                    );
+                  }())
+
                 , tInc>0&&tExp>0 ? (function(){var grps={"车辆":0,"牌照":0,"平台":0,"其他":0};feAll.forEach(function(e){var cat=allC[e.category];var g=cat?(cat.g||"其他"):"其他";if(grps[g]!==undefined)grps[g]+=(+e.amount||0);else grps["其他"]+=(+e.amount||0);});var gcols={"车辆":"#00D4FF","牌照":"#FFD700","平台":"#CC88FF","其他":"#A8D0E8"};var glbls=lang==="en"?{"车辆":"Vehicle","牌照":"License","平台":"Platform","其他":"Other"}:{"车辆":"车辆","牌照":"牌照","平台":"平台","其他":"其他"};if(!Object.values(grps).some(function(v){return v>0;}))return null;return React.createElement(Card, { style: {marginTop:8,padding:"12px 14px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, React.createElement('div', { style: {fontSize:13,fontWeight:700,marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, lang==="en"?"Expense Breakdown":"支出分布"), React.createElement('div', { style: {display:"flex",height:10,borderRadius:5,overflow:"hidden",marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, Object.entries(grps).map(function(kv){if(!kv[1])return null;return React.createElement('div', { key: kv[0], style: {width:Math.round(kv[1]/tExp*100)+"%",background:gcols[kv[0]],minWidth:2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}} );})), React.createElement('div', { style: {display:"grid",gridTemplateColumns:"1fr 1fr",gap:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, Object.entries(grps).map(function(kv){if(!kv[1])return null;return React.createElement('div', { key: kv[0], style: {display:"flex",alignItems:"center",gap:5}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, React.createElement('div', { style: {width:10,height:10,borderRadius:2,background:gcols[kv[0]],flexShrink:0}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}} ), React.createElement('span', { style: {fontSize:12,color:C.text2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, glbls[kv[0]]), React.createElement('span', { style: {fontSize:12,fontWeight:700,color:gcols[kv[0]],marginLeft:"auto"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, Math.round(kv[1]/tExp*100), "%"));}), " " ), React.createElement('div', { style: {borderTop:"1px solid #1E3050",marginTop:8,paddingTop:6,display:"flex",justifyContent:"space-between"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, React.createElement('span', { style: {fontSize:12,color:C.text2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, lang==="en"?"Net Rate":"净利润率"), React.createElement('span', { style: {fontSize:13,fontWeight:800,color:net>=0?"#00E676":"#FF5252"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, tInc>0?Math.round(net/tInc*100):0, "%")));}()) : null
                 , achievements.length>0 ? React.createElement('div', { style: {display:"flex",flexWrap:"wrap",gap:8,marginBottom:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 275}}, achievements.map(function(a,i){return React.createElement(Badge, { key: i, icon: a.icon, text: a.text, color: a.color, bg: a.bg, __self: this, __source: {fileName: _jsxFileName, lineNumber: 275}} );})) : null
                 , tInc > 0 ? React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 276}}
                   , React.createElement('div', { style: {display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:6,marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 277}}, React.createElement(Stat, { sm: true, label: lang==="en"?"Gross":"总车费", value: fmt(tGross), color: "#00D4FF", __self: this, __source: {fileName: _jsxFileName, lineNumber: 277}} ), React.createElement(Stat, { sm: true, label: T.tips, value: fmt(tTips), color: "#00E676", __self: this, __source: {fileName: _jsxFileName, lineNumber: 277}} ), React.createElement(Stat, { sm: true, label: T.bonus, value: fmt(tBonus), color: "#FFD700", __self: this, __source: {fileName: _jsxFileName, lineNumber: 277}} ), React.createElement(Stat, { sm: true, label: T.toll, value: fmt(tToll), color: "#45B7D1", __self: this, __source: {fileName: _jsxFileName, lineNumber: 277}} ))
+                , React.createElement('div', { style: {display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:6,marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 282}}
+                  , (function(){var vt=tTrips?String(tTrips):"—",vh=tHours?String(tHours):"—",vo=tOnl?String(tOnl):"—",vm=tMiles?String(tMiles):"—";return React.createElement('div', { style: {display:"contents"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 283}}, React.createElement(Stat, { sm: true, label: T.trips, value: vt, __self: this, __source: {fileName: _jsxFileName, lineNumber: 283}} ), React.createElement(Stat, { sm: true, label: lang==="en"?"Drive h":"行驶h", value: vh, __self: this, __source: {fileName: _jsxFileName, lineNumber: 283}} ), React.createElement(Stat, { sm: true, label: lang==="en"?"Online h":"在线h", value: vo, __self: this, __source: {fileName: _jsxFileName, lineNumber: 283}} ), React.createElement(Stat, { sm: true, label: T.miles, value: vm, __self: this, __source: {fileName: _jsxFileName, lineNumber: 283}} ));}())
+                )
                   , hourlyRate>0 ? React.createElement(Card, { style: {marginBottom:8,padding:"10px 14px",background:C.bg3,border:"1px solid "+C.border}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 278}}, React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 278}}, React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 278}}, React.createElement('div', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 278}}, T.hourlyRate), React.createElement('div', { style: {fontSize:22,fontWeight:900,color:"#FFD700"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 278}}, fmt(hourlyRate), React.createElement('span', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 278}}, T.perHour))), lmHourly>0?React.createElement('div', { style: {textAlign:"right"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 278}}, React.createElement('div', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 278}}, T.lastMonth+" "+fmt(lmHourly)+T.perHour), React.createElement('div', { style: Object.assign({fontSize:12,fontWeight:700},{color:hourlyRate>=lmHourly?"#00E676":"#FF5252"}), __self: this, __source: {fileName: _jsxFileName, lineNumber: 278}}, hourlyRate>=lmHourly?"▲":"▼", " " , fmt(Math.abs(hourlyRate-lmHourly)))):null)) : null
                   , lmInc>0 ? React.createElement(Card, { style: {marginBottom:8,padding:"10px 14px",background:C.bg3,border:"1px solid #151F30"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 279}}, React.createElement('div', { style: {fontSize:12,color:C.text3,marginBottom:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 279}}, T.vsLastMonth), React.createElement('div', { style: {display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 279}}, React.createElement('div', { style: {textAlign:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 279}}, React.createElement('div', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 279}}, T.income), React.createElement('div', { style: Object.assign({fontSize:13,fontWeight:700},{color:tInc>=lmInc?"#00E676":"#FF5252"}), __self: this, __source: {fileName: _jsxFileName, lineNumber: 279}}, tInc>=lmInc?"▲":"▼", Math.round(Math.abs(tInc-lmInc)/lmInc*100), "%")), React.createElement('div', { style: {textAlign:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 279}}, React.createElement('div', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 279}}, T.expense), React.createElement('div', { style: Object.assign({fontSize:13,fontWeight:700},{color:tExp<=lmExp?"#00E676":"#FF5252"}), __self: this, __source: {fileName: _jsxFileName, lineNumber: 279}}, tExp<=lmExp?"▼":"▲", lmExp>0?Math.round(Math.abs(tExp-lmExp)/lmExp*100):0, "%")), React.createElement('div', { style: {textAlign:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 279}}, React.createElement('div', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 279}}, T.netProfit), React.createElement('div', { style: Object.assign({fontSize:13,fontWeight:700},{color:net>=lmNet?"#00E676":"#FF5252"}), __self: this, __source: {fileName: _jsxFileName, lineNumber: 279}}, net>=lmNet?"▲":"▼", lmNet!==0?Math.round(Math.abs(net-lmNet)/Math.abs(lmNet)*100):0, "%")))) : null
                 ) : null
@@ -3140,9 +3177,61 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                     ) : null
                   );
                 }())
-                , React.createElement('div', { style: {display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:6,marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 282}}
-                  , (function(){var vt=tTrips?String(tTrips):"—",vh=tHours?String(tHours):"—",vo=tOnl?String(tOnl):"—",vm=tMiles?String(tMiles):"—";return React.createElement('div', { style: {display:"contents"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 283}}, React.createElement(Stat, { sm: true, label: T.trips, value: vt, __self: this, __source: {fileName: _jsxFileName, lineNumber: 283}} ), React.createElement(Stat, { sm: true, label: lang==="en"?"Drive h":"行驶h", value: vh, __self: this, __source: {fileName: _jsxFileName, lineNumber: 283}} ), React.createElement(Stat, { sm: true, label: lang==="en"?"Online h":"在线h", value: vo, __self: this, __source: {fileName: _jsxFileName, lineNumber: 283}} ), React.createElement(Stat, { sm: true, label: T.miles, value: vm, __self: this, __source: {fileName: _jsxFileName, lineNumber: 283}} ));}())
-                )
+
+                // === #10: Expense Distribution Pie Chart (current month) ===
+                , (function(){
+                    if(tExp<=0) return null;
+                    var groupTotals={"车辆":0,"牌照":0,"平台":0,"其他":0};
+                    feAll.forEach(function(e){
+                      var cat=allC[e.category];
+                      var g=cat?(cat.g||"其他"):"其他";
+                      if(groupTotals[g]===undefined) g="其他";
+                      groupTotals[g]+=(+e.amount||0);
+                    });
+                    var total=Object.values(groupTotals).reduce(function(a,b){return a+b;},0);
+                    if(total<=0) return null;
+                    var colors={"车辆":"#00D4FF","牌照":"#FFD700","平台":"#CC88FF","其他":"#A8D0E8"};
+                    var labels=lang==="en"?{"车辆":"Vehicle","牌照":"License","平台":"Platform","其他":"Other"}:{"车辆":"车辆","牌照":"牌照","平台":"平台","其他":"其他"};
+                    var cx=60, cy=60, r=50;
+                    var startAngle=-Math.PI/2;
+                    var slices=[];
+                    ["车辆","牌照","平台","其他"].forEach(function(g){
+                      if(!groupTotals[g]) return;
+                      var pct=groupTotals[g]/total;
+                      var endAngle=startAngle+pct*2*Math.PI;
+                      var x1=cx+r*Math.cos(startAngle), y1=cy+r*Math.sin(startAngle);
+                      var x2=cx+r*Math.cos(endAngle), y2=cy+r*Math.sin(endAngle);
+                      var largeArc=pct>0.5?1:0;
+                      // Special case: if exactly one slice (100%), draw full circle
+                      var path;
+                      if(pct>=0.999){
+                        path="M"+(cx-r)+","+cy+" A"+r+","+r+" 0 1,1 "+(cx+r)+","+cy+" A"+r+","+r+" 0 1,1 "+(cx-r)+","+cy+" Z";
+                      }else{
+                        path="M"+cx.toFixed(2)+","+cy.toFixed(2)+" L"+x1.toFixed(2)+","+y1.toFixed(2)+" A"+r+","+r+" 0 "+largeArc+",1 "+x2.toFixed(2)+","+y2.toFixed(2)+" Z";
+                      }
+                      slices.push({path:path,color:colors[g],label:labels[g],amount:groupTotals[g],pct:pct});
+                      startAngle=endAngle;
+                    });
+                    return React.createElement(Card, {style:{marginBottom:8,padding:"12px 14px"}}
+                      , React.createElement('div', {style:{fontSize:13,fontWeight:700,color:C.text2,marginBottom:10}}, "🥧 " , lang==="en"?"Expense Distribution":"支出分布")
+                      , React.createElement('div', {style:{display:"flex",alignItems:"center",gap:14}}
+                        , React.createElement('svg', {viewBox:"0 0 120 120",width:110,height:110,style:{flexShrink:0}}
+                          , slices.map(function(s,i){return React.createElement('path', {key:i,d:s.path,fill:s.color,stroke:C.bg2,strokeWidth:1.5});})
+                          , React.createElement('circle', {cx:60,cy:60,r:24,fill:C.bg})
+                          , React.createElement('text', {x:60,y:58,textAnchor:"middle",fill:C.text2,fontSize:10}, lang==="en"?"Total":"总计")
+                          , React.createElement('text', {x:60,y:70,textAnchor:"middle",fill:"#FF6B35",fontSize:12,fontWeight:700}, fmt(total))
+                        )
+                        , React.createElement('div', {style:{flex:1,display:"flex",flexDirection:"column",gap:5}}
+                          , slices.map(function(s,i){return React.createElement('div', {key:i,style:{display:"flex",alignItems:"center",gap:6,fontSize:12}}
+                            , React.createElement('div', {style:{width:10,height:10,borderRadius:2,background:s.color,flexShrink:0}})
+                            , React.createElement('span', {style:{flex:1,color:C.text2}}, s.label)
+                            , React.createElement('span', {style:{color:C.text3}}, Math.round(s.pct*100), "%")
+                            , React.createElement('span', {style:{color:C.text,fontWeight:600,minWidth:48,textAlign:"right"}}, fmt(s.amount))
+                          );})
+                        )
+                      )
+                    );
+                  }())
                 , tExp > 0 ? (
                   React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 286}}
                     , React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 287}}
@@ -3473,6 +3562,8 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
               var vGross=isMonth?tGross:yStmts.reduce(function(s,x){return s+(+x.grossFare||0);},0)+yDailies.reduce(function(s,d){return s+(+d.cash||0)+(+d.card||0);},0);
               var vTips=isMonth?tTips:yStmts.reduce(function(s,x){return s+(+x.tips||0);},0)+yDailies.reduce(function(s,d){return s+(+d.tips||0);},0);
               var vBonus=isMonth?tBonus:yStmts.reduce(function(s,x){return s+(+x.bonus||0);},0);
+              var vToll=isMonth?tToll:yStmts.reduce(function(s,x){return s+(+x.tollReimbursed||0);},0)+yDailies.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.tollReimbursed||0):0);},0);
+              var vGrossTotal = vInc + vToll;  // "总营业额" includes toll
               // Mode breakdown — rideshare comes from sl + dl(rideshare), taxi comes from dl(taxi only)
               var rsStmtInc = isMonth?mStmts.reduce(function(s,x){return s+(+x.grossFare||0)+(+x.tips||0)+(+x.bonus||0)+(+x.tollReimbursed||0)+(+x.otherIncome||0);},0):yStmts.reduce(function(s,x){return s+(+x.grossFare||0)+(+x.tips||0)+(+x.bonus||0)+(+x.tollReimbursed||0)+(+x.otherIncome||0);},0);
               var dlSrc = isMonth ? mDailies : yDailies;
@@ -3488,7 +3579,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
               if(vInc<=0)return null;
               return React.createElement(Card, { style: {marginBottom:12} }
                 , React.createElement('div', { style: {fontSize:13,color:C.text3,marginBottom:4} }, T.totalIncome)
-                , React.createElement('div', { style: {fontSize:20,fontWeight:700,color:C.text,marginBottom:8} }, fmt(vInc))
+                , React.createElement('div', { style: {fontSize:20,fontWeight:700,color:C.text,marginBottom:8} }, fmt(vGrossTotal))
                 // Mode breakdown row — only show when BOTH modes have data
                 , (rsInc>0 && txInc>0) ? React.createElement('div', { style: {display:"flex",gap:10,fontSize:12,marginBottom:8,padding:"6px 10px",background:C.bg3,borderRadius:8} }
                     , React.createElement('span', null, "📱 " , lang==="en"?"Rideshare":"网约车" , " ", React.createElement('b',{style:{color:"#5AACFF"}}, fmt(rsInc)))
@@ -3521,11 +3612,12 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                         })
                     );
                   }())
-                // Gross/Tips/Bonus row
-                , React.createElement('div', { style: {display:"flex",gap:12,fontSize:13,marginBottom:6} }
+                // Gross/Tips/Bonus/Toll row
+                , React.createElement('div', { style: {display:"flex",gap:12,fontSize:13,marginBottom:6,flexWrap:"wrap"} }
                     , React.createElement('span', { style: {color:C.text2} }, (lang==="en"?"Gross ":"总车费 ") , fmt(vGross))
                     , React.createElement('span', { style: {color:"#00E676"} }, T.tips, " " , fmt(vTips))
                     , vBonus>0 ? React.createElement('span', { style: {color:"#FFD700"} }, T.bonus, " " , fmt(vBonus)) : null
+                    , vToll>0 ? React.createElement('span', { style: {color:"#45B7D1"} }, T.toll, " " , fmt(vToll)) : null
                   )
                 // Data source counts (small dim text)
                 , React.createElement('div', { style: {fontSize:11,color:C.text3,letterSpacing:0.3} }
