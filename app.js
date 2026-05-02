@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-var APP_VERSION = "v3.10.53";  // ← single source of truth: bump this once per release
+var APP_VERSION = "v3.10.56";  // ← single source of truth: bump this once per release
 console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
@@ -12,7 +12,7 @@ console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-
       window.Sentry.init({
         dsn:window.SENTRY_DSN,
         environment:(location.hostname==="localhost"||location.hostname==="127.0.0.1")?"development":"production",
-        release:"nyc-driver-tracker@1.3.6",
+        release:"nyc-driver-tracker@1.3.8",
         tracesSampleRate:0.1,
         // Don't send events from local dev
         beforeSend:function(event){
@@ -2061,6 +2061,8 @@ function App() {
   var rOnb=useState(function(){return !lsLoad("nyc_seenOnboarding",false);}),showOnboarding=rOnb[0],_setShowOnboarding=rOnb[1];
   function setShowOnboarding(v){_setShowOnboarding(v);if(!v)try{localStorage.setItem("nyc_seenOnboarding","true");}catch(e){}}
   var rOnbStep=useState(0),onbStep=rOnbStep[0],setOnbStep=rOnbStep[1];
+  // Danger zone toggle (collapsed by default to avoid accidental clicks)
+  var rDanger=useState(false),dangerOpen=rDanger[0],setDangerOpen=rDanger[1];
   // Collapsible state for advanced cards (default collapsed). Persisted across sessions.
   var rColl=useState(function(){return lsLoad("nyc_collOpen",{energy:false,fuelchart:false,pie:false,expDet:false,expRatio:false,energyYr:false,bigNum:false});}),collOpen=rColl[0],_setCollOpen=rColl[1];
   function setCollOpen(v){_setCollOpen(v);try{localStorage.setItem("nyc_collOpen",JSON.stringify(v));}catch(e){}}
@@ -3162,16 +3164,16 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                   background:"linear-gradient(180deg, "+C.bg3+" 0%, "+C.bg2+" 100%)",
                   border:"1px solid "+C.border,
                   borderRadius:RADIUS.md,
-                  padding:"14px 6px",
+                  padding:"8px 4px",
                   cursor:"pointer",
                   textAlign:"center",
                   boxShadow:SHADOW.sm,
                   transition:"transform 0.1s, box-shadow 0.15s, border-color 0.15s"
                 };
-                var iconStyle={fontSize:26,marginBottom:6,filter:"drop-shadow(0 1px 2px rgba(0,0,0,0.3))"};
-                var labelStyle={fontSize:FS.md,fontWeight:700,color:C.text,letterSpacing:0.2};
-                var hintStyle={fontSize:FS.xs,color:C.text3,marginTop:3,fontWeight:500};
-                return React.createElement('div', {style:{display:"flex",gap:10,marginBottom:14}}
+                var iconStyle={fontSize:18,marginBottom:2,filter:"drop-shadow(0 1px 2px rgba(0,0,0,0.3))"};
+                var labelStyle={fontSize:FS.sm+1,fontWeight:700,color:C.text,letterSpacing:0.1};
+                var hintStyle={fontSize:FS.xs,color:C.text3,marginTop:1,fontWeight:500};
+                return React.createElement('div', {style:{display:"flex",gap:8,marginBottom:12}}
                   , React.createElement('button', {onClick:function(){setSf("quick_fuel");}, style:btnStyle}
                     , React.createElement('div', {style:iconStyle}, fuelIcon)
                     , React.createElement('div', {style:labelStyle}, fuelLabel)
@@ -3429,7 +3431,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                             React.createElement('div', {style:{fontSize:FS.sm,color:C.accent2,letterSpacing:0.5,fontWeight:600,textTransform:"uppercase"}}, "📱 ", lang==="en"?"Platform Pay":"平台到账"),
                             React.createElement('span', {style:{fontSize:FS.xs,color:C.text3}}, bigExp?"▲":"▼")
                           ),
-                          React.createElement('div', {style:{fontSize:FS.xxxl,fontWeight:900,color:C.accent2,letterSpacing:-1.2,lineHeight:1,fontVariantNumeric:"tabular-nums",position:"relative"}}, fmt(platformPay)),
+                          React.createElement('div', {style:{fontSize:FS.xxl,fontWeight:900,color:C.accent2,letterSpacing:-1.2,lineHeight:1,fontVariantNumeric:"tabular-nums",position:"relative"}}, fmt(platformPay)),
                           tToll>0 ? React.createElement('div', {style:{fontSize:FS.xs,color:C.text3,marginTop:6,position:"relative"}}, "−", lang==="en"?"toll ":"过桥 ", fmt(tToll)) : null,
                           tToll>0 ? React.createElement('div', {style:{fontSize:FS.sm,color:C.success,fontWeight:700,marginTop:2,position:"relative"}}, lang==="en"?"net ":"实收 ", fmt(realEarnings)) : null
                         ),
@@ -3457,7 +3459,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                             React.createElement('div', {style:{fontSize:FS.sm,color:net>=0?C.success:C.danger,letterSpacing:0.5,fontWeight:600,textTransform:"uppercase",opacity:0.85}}, "💰 ", lang==="en"?"Net Profit":"净收入"),
                             React.createElement('span', {style:{fontSize:FS.xs,color:C.text3}}, bigExp?"▲":"▼")
                           ),
-                          (function(){var nc=net>=0?C.success:C.danger;return React.createElement('div', {style:{fontSize:FS.xxxl,fontWeight:900,color:nc,letterSpacing:-1.2,lineHeight:1,fontVariantNumeric:"tabular-nums",position:"relative"}}, fmt(net));}()),
+                          (function(){var nc=net>=0?C.success:C.danger;return React.createElement('div', {style:{fontSize:FS.xxl,fontWeight:900,color:nc,letterSpacing:-1.2,lineHeight:1,fontVariantNumeric:"tabular-nums",position:"relative"}}, fmt(net));}()),
                           React.createElement('div', {style:{fontSize:FS.xs,color:C.text3,marginTop:8,position:"relative"}}, lang==="en"?"after all expenses":"扣除所有开销")
                         )
                       ),
@@ -4071,7 +4073,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
             , (mDailies.length>0 || mDailyInc>0) ? React.createElement('div', { style: {marginBottom:14,padding:"16px 18px",background:"linear-gradient(135deg, rgba(0,230,118,0.06), "+C.bg2+" 60%)",border:"1px solid "+C.border,borderRadius:RADIUS.lg,boxShadow:SHADOW.md,position:"relative",overflow:"hidden"} }
               , React.createElement('div', {style:{position:"absolute",top:-30,right:-30,width:90,height:90,borderRadius:"50%",background:"radial-gradient(circle, rgba(0,230,118,0.15) 0%, transparent 70%)",pointerEvents:"none"}})
               , React.createElement('div', { style: {fontSize:FS.xs+1,color:C.text3,marginBottom:4,letterSpacing:0.8,textTransform:"uppercase",fontWeight:600,position:"relative"} }, lang==="en"?"This Month — Gross":"本月毛收入")
-              , React.createElement('div', { style: {fontSize:FS.xxxl,fontWeight:900,color:C.success,marginBottom:8,letterSpacing:-0.8,fontVariantNumeric:"tabular-nums",position:"relative"} }, fmt(mDailyInc))
+              , React.createElement('div', { style: {fontSize:FS.xxl,fontWeight:900,color:C.success,marginBottom:8,letterSpacing:-0.8,fontVariantNumeric:"tabular-nums",position:"relative"} }, fmt(mDailyInc))
               , mDailyLease>0 ? React.createElement('div', { style: {fontSize:FS.md+1,color:"#FF9A65",marginBottom:4,position:"relative"} }, "− " , lang==="en"?"Lease ":"租金 " , fmt(mDailyLease)) : null
               , mDailyLease>0 ? React.createElement('div', { style: {fontSize:FS.lg,color:"#FFB300",fontWeight:700,paddingTop:8,borderTop:"1px solid "+C.border,position:"relative"} }, lang==="en"?"Net":"净收入" , ": " , fmt(mDailyInc-mDailyLease)) : null
             ) : null
@@ -4369,7 +4371,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
               return React.createElement('div', { style: {marginBottom:14,padding:"16px 18px",background:"linear-gradient(135deg, rgba(0,212,255,0.06), "+C.bg2+" 60%)",border:"1px solid "+C.border,borderRadius:RADIUS.lg,boxShadow:SHADOW.md,position:"relative",overflow:"hidden"} }
                 , React.createElement('div', {style:{position:"absolute",top:-30,right:-30,width:90,height:90,borderRadius:"50%",background:"radial-gradient(circle, rgba(0,212,255,0.15) 0%, transparent 70%)",pointerEvents:"none"}})
                 , React.createElement('div', { style: {fontSize:FS.xs+1,color:C.text3,marginBottom:4,letterSpacing:0.8,textTransform:"uppercase",fontWeight:600,position:"relative"} }, T.totalIncome)
-                , React.createElement('div', { style: {fontSize:FS.xxxl,fontWeight:900,color:C.text,marginBottom:10,letterSpacing:-0.8,fontVariantNumeric:"tabular-nums",position:"relative"} }, fmt(vGrossTotal))
+                , React.createElement('div', { style: {fontSize:FS.xxl,fontWeight:900,color:C.text,marginBottom:10,letterSpacing:-0.8,fontVariantNumeric:"tabular-nums",position:"relative"} }, fmt(vGrossTotal))
                 // Mode breakdown row — only show when BOTH modes have data
                 , (rsInc>0 && txInc>0) ? React.createElement('div', { style: {display:"flex",gap:10,fontSize:FS.md,marginBottom:10,padding:"8px 12px",background:C.bg4,borderRadius:RADIUS.sm,border:"1px solid "+C.border,position:"relative"} }
                     , React.createElement('span', null, "📱 " , lang==="en"?"Rideshare":"网约车" , " ", React.createElement('b',{style:{color:C.accent2}}, fmt(rsInc)))
@@ -7740,12 +7742,12 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                     , React.createElement('div', { style: {background:C.bg3,border:"1px solid #2A3A54",borderRadius:8,padding:"10px 12px"} }
                       , React.createElement('div', { style: {fontSize:12,color:C.accent2,fontWeight:700,marginBottom:4} }, "🌅 " , lang==="en"?"Daily":"每日")
                       , React.createElement('div', { style: {fontSize:11,color:C.text3,marginBottom:8,minHeight:14} }, driveDailyModTime ? new Date(driveDailyModTime).toLocaleString() : (lang==="en"?"Not yet":"暂无"))
-                      , driveDailyFileId ? React.createElement('button', { onClick: function(){restoreFromDriveSnapshot(accessToken, driveDailyFileId, lang==="en"?"daily":"每日");}, style: {width:"100%",background:"#0A2840",border:"1px solid #2A5080",borderRadius:6,padding:"6px",color:C.accent2,fontSize:12,fontWeight:700,cursor:"pointer"} }, "↩️ " , lang==="en"?"Restore":"恢复") : React.createElement('div', {style:{fontSize:11,color:C.text3,textAlign:"center",padding:"6px"}}, lang==="en"?"Pending":"待生成")
+                      , driveDailyFileId ? React.createElement('button', { onClick: function(){requireDangerConfirm("restoreDaily", lang==="en"?"Restore from Daily Snapshot":"从每日快照恢复", lang==="en"?"This will OVERWRITE all current data with the daily snapshot from Drive. This cannot be undone.":"将用 Drive 上的每日快照覆盖当前所有数据，无法撤销。", function(){restoreFromDriveSnapshot(accessToken, driveDailyFileId, lang==="en"?"daily":"每日");});}, style: {width:"100%",background:"#0A2840",border:"1px solid #2A5080",borderRadius:6,padding:"6px",color:C.accent2,fontSize:12,fontWeight:700,cursor:"pointer"} }, "↩️ " , lang==="en"?"Restore":"恢复") : React.createElement('div', {style:{fontSize:11,color:C.text3,textAlign:"center",padding:"6px"}}, lang==="en"?"Pending":"待生成")
                     )
                     , React.createElement('div', { style: {background:C.bg3,border:"1px solid #2A3A54",borderRadius:8,padding:"10px 12px"} }
                       , React.createElement('div', { style: {fontSize:12,color:"#FFB300",fontWeight:700,marginBottom:4} }, "📆 " , lang==="en"?"Monthly":"每月")
                       , React.createElement('div', { style: {fontSize:11,color:C.text3,marginBottom:8,minHeight:14} }, driveMonthlyModTime ? new Date(driveMonthlyModTime).toLocaleString() : (lang==="en"?"Not yet":"暂无"))
-                      , driveMonthlyFileId ? React.createElement('button', { onClick: function(){restoreFromDriveSnapshot(accessToken, driveMonthlyFileId, lang==="en"?"monthly":"每月");}, style: {width:"100%",background:"#1A1000",border:"1px solid #3A2800",borderRadius:6,padding:"6px",color:"#FFB300",fontSize:12,fontWeight:700,cursor:"pointer"} }, "↩️ " , lang==="en"?"Restore":"恢复") : React.createElement('div', {style:{fontSize:11,color:C.text3,textAlign:"center",padding:"6px"}}, lang==="en"?"Pending":"待生成")
+                      , driveMonthlyFileId ? React.createElement('button', { onClick: function(){requireDangerConfirm("restoreMonthly", lang==="en"?"Restore from Monthly Snapshot":"从每月快照恢复", lang==="en"?"This will OVERWRITE all current data with the monthly snapshot from Drive. This cannot be undone.":"将用 Drive 上的每月快照覆盖当前所有数据，无法撤销。", function(){restoreFromDriveSnapshot(accessToken, driveMonthlyFileId, lang==="en"?"monthly":"每月");});}, style: {width:"100%",background:"#1A1000",border:"1px solid #3A2800",borderRadius:6,padding:"6px",color:"#FFB300",fontSize:12,fontWeight:700,cursor:"pointer"} }, "↩️ " , lang==="en"?"Restore":"恢复") : React.createElement('div', {style:{fontSize:11,color:C.text3,textAlign:"center",padding:"6px"}}, lang==="en"?"Pending":"待生成")
                     )
                   )
                 )
@@ -8108,13 +8110,33 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
               }catch(err){setSyncStatus(lang==="en"?"✗ Import failed":"✗ 导入失败");setTimeout(function(){setSyncStatus("");},2500);alert((lang==="en"?"Error: ":"错误：")+err.message);}inputEl.value="";},100);});};reader.readAsText(file);}, style: {width:"100%",background:C.bg3,border:"1px solid #2A3A54",borderRadius:8,padding:"8px",color:C.text,fontSize:13,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 808}} )
             )
 
-            // === DANGER ZONE: Reset all app data ===
-            , React.createElement('div', {style:{marginTop:24,paddingTop:16,borderTop:"1px solid #3A1010"}}
-              , React.createElement('div', {style:{fontSize:12,color:C.danger,fontWeight:700,marginBottom:8,letterSpacing:0.5}}, "⚠️ ", lang==="en"?"DANGER ZONE":"危险区域")
-              , React.createElement('div', {style:{background:"#1A0808",border:"1px solid #5A2020",borderRadius:12,padding:14}}
-                , React.createElement('div', {style:{fontSize:13,fontWeight:700,color:"#FF8855",marginBottom:6}}
+            // === DANGER ZONE: Reset all app data (collapsible — closed by default) ===
+            , React.createElement('div', {style:{marginTop:24,paddingTop:16,borderTop:"1px solid "+C.border}}
+              , React.createElement('button', {
+                  onClick: function(){setDangerOpen(!dangerOpen);},
+                  style:{
+                    width:"100%",
+                    background:"none",
+                    border:"none",
+                    fontSize:FS.sm+1,
+                    color:C.text3,
+                    fontWeight:600,
+                    letterSpacing:0.5,
+                    padding:"8px 4px",
+                    cursor:"pointer",
+                    display:"flex",
+                    alignItems:"center",
+                    justifyContent:"space-between",
+                    textAlign:"left"
+                  }
+                }
+                , React.createElement('span', null, "⚠️ ", lang==="en"?"Danger Zone":"危险操作")
+                , React.createElement('span', {style:{fontSize:FS.sm,opacity:0.6}}, dangerOpen?"▼":"▶")
+              )
+              , dangerOpen ? React.createElement('div', {style:{background:"#1A0808",border:"1px solid #5A2020",borderRadius:RADIUS.md,padding:14,marginTop:8}}
+                , React.createElement('div', {style:{fontSize:FS.md+1,fontWeight:700,color:"#FF8855",marginBottom:6}}
                   , "🗑️ ", lang==="en"?"Reset App — Clear All Data":"清空 App — 删除所有数据")
-                , React.createElement('div', {style:{fontSize:11,color:"#D08070",lineHeight:1.6,marginBottom:10}}
+                , React.createElement('div', {style:{fontSize:FS.sm,color:"#D08070",lineHeight:1.6,marginBottom:10}}
                   , lang==="en"?
                     "Erases ALL local data: expenses, income, vehicles, notes, settings, fixed fees, licenses, reminders. App returns to fresh-install state. Cloud backup on Drive is also deleted (if connected). This CANNOT be undone — make sure you have a JSON backup first.":
                     "清空所有本地数据：支出、收入、车辆、记事、设定、固定月费、证件、提醒等等。App 回到刚装好的状态。如果连接了 Drive，云端备份也会一起删除。无法撤销 — 确保你已经导出了 JSON 备份。"
@@ -8130,8 +8152,14 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                         "Type DELETE to confirm:":
                         "输入 DELETE 确认：";
                       var input = prompt(step2);
-                      if(input !== "DELETE"){
+                      if(input === null){
+                        // User clicked Cancel on the prompt
                         showToast(lang==="en"?"Cancelled":"已取消","info");
+                        return;
+                      }
+                      var inputClean = (input||"").trim().toUpperCase();
+                      if(inputClean !== "DELETE"){
+                        showToast(lang==="en"?"Cancelled — must type DELETE exactly":"已取消 — 必须输入 DELETE","warn");
                         return;
                       }
                       setSyncStatus(lang==="en"?"⏳ Clearing...":"⏳ 清空中...");
@@ -8182,7 +8210,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                     },
                     style:{width:"100%",background:"linear-gradient(135deg,#5A1010,#2A0808)",border:"1px solid #8A2020",color:"#FF8866",fontSize:14,fontWeight:800,padding:"12px",borderRadius:10,cursor:"pointer"}
                   }, "🗑️ ", lang==="en"?"Clear Everything":"清空全部数据")
-              )
+              ) : null
             )
 
             )
