@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-var APP_VERSION = "v3.10.67";  // ← single source of truth: bump this once per release
+var APP_VERSION = "v3.10.69";  // ← single source of truth: bump this once per release
 console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
@@ -12,7 +12,7 @@ console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-
       window.Sentry.init({
         dsn:window.SENTRY_DSN,
         environment:(location.hostname==="localhost"||location.hostname==="127.0.0.1")?"development":"production",
-        release:"nyc-driver-tracker@1.3.17",
+        release:"nyc-driver-tracker@1.3.18",
         tracesSampleRate:0.1,
         // Don't send events from local dev
         beforeSend:function(event){
@@ -327,6 +327,9 @@ function parseFuelioReport(text){
     [/^Tolls?.*EZpass/i,                        "toll"],
     [/^Tolls?\s*:?/i,                           "toll"],
     [/Congestion/i,                             "congestion"],
+    [/Home Made Coffee|Home-?made Coffee/i,     "coffee"],
+    [/Uber Expenses,?\s*Fees?\s*&?\s*Tax/i,     "platformfee"],
+    [/Uber Fee|Uber Tax|Black Car Fund/i,       "platformfee"],
     [/^Parking for EV Charging/i,               "parking"],
     [/^Parking Meter/i,                         "parking"],
     [/^Parking Ticket|Parking Violation/i,      "ticket"],
@@ -366,7 +369,23 @@ function parseFuelioReport(text){
     [/Black Car|Uber Fee/i,                     "platform"]
   ];
   // Skip patterns — these are NOT expenses
-  var skipPatterns = [/UBER INCOME/i, /^Income\s*$/i, /^Records\b/i, /^Total\b/i, /^Period:/i, /^By Month/i, /^Distance/i, /^Fuel consumption/i, /^Average cost/i, /^TESLA Y/i, /^License plate/i, /^VIN:/i, /^Report\b/i, /^Phone Bill\s*:/i];
+  // Skip patterns — these are NOT expenses (income, headers, etc.)
+  var skipPatterns = [
+    /UBER INCOME/i,                  // income, not expense
+    /^Uber Paid/i,                   // income detail line
+    /^Income\s*$/i,
+    /^Records\s/i,
+    /^Total\b/i,
+    /^Period:/i,
+    /^By Month/i,
+    /^Distance/i,
+    /^Fuel consumption/i,
+    /^Average cost/i,
+    /^TESLA Y/i,
+    /^License plate/i,
+    /^VIN:/i,
+    /^Report\b/i
+  ];
   function categorize(label){
     for(var i=0;i<categoryMap.length;i++){
       if(categoryMap[i][0].test(label)) return categoryMap[i][1];
@@ -374,6 +393,21 @@ function parseFuelioReport(text){
     return null;
   }
   // Split text into lines, normalize whitespace
+  // Pre-process: PDF text extraction sometimes glues amount + next date together
+  // e.g. "$4.6701-12-2026" → "$4.67\n01-12-2026"
+  // e.g. "$10.00Phone Bill" → "$10.00\nPhone Bill"
+  // e.g. "1.33 mi/kWhRevel" → "1.33 mi/kWh\nRevel"
+  text = text.replace(/(\$\d[\d,]*\.\d{2})(\d{2}-\d{2}-\d{4})/g, "$1\n$2");
+  text = text.replace(/(\$\d[\d,]*\.\d{2})([A-Z])/g, "$1\n$2");
+  text = text.replace(/(\d+\s*mi\/kWh)([A-Z])/g, "$1\n$2");
+  text = text.replace(/(\d+\.\d+\s*kWh)([A-Z])/g, "$1\n$2");
+  text = text.replace(/(\$\d[\d,]*\.\d{2})([\u4e00-\u9fff])/g, "$1\n$2");
+  // CRITICAL: location/notes text glued to next date — e.g. "Lower Eastside.01-09-2026" or "11378 01-24-2026"
+  // Date format MM-DD-YYYY where MM is 01-12 — fairly safe
+  text = text.replace(/([A-Za-z\u4e00-\u9fff,.\s)\]\d])\s*(0[1-9]-\d{2}-\d{4}|1[0-2]-\d{2}-\d{4})/g, function(m, p1, p2){
+    // Don't split if p1 is part of an already-existing date (e.g. "MM-DD-YYYY" where YYYY ends with digit)
+    return p1 + "\n" + p2;
+  });
   var lines = text.split(/\n+/).map(function(l){return l.trim();}).filter(function(l){return l.length>0;});
   // Find "By Month" anchor — entries start after it
   var startIdx = -1;
@@ -396,7 +430,9 @@ function parseFuelioReport(text){
     // Year-month header (like "2023-08") — informational, skip
     if(/^\d{4}-\d{2}\s*$/.test(line)){ i2++; continue; }
     // Category header: "Gas: $288.01" or "Tolls - EZpassNY: $456.98" or just "Wash" / "Parking for EV Charging.: $156.85"
-    var catM = line.match(/^([A-Za-z][A-Za-z0-9 \-,&'.()/]*?)\s*:?\s*\$([\d,]+\.\d{2})\s*$/);
+    // Category header: "Gas: $288.01" or "Tolls - EZpassNY: $456.98" or just "Wash" / "Parking for EV Charging.: $156.85" or "(Home Made Coffee): $88.73"
+    // Allow leading parenthesis or bracket. Negative amounts with leading minus also valid (income lines we'll skip).
+    var catM = line.match(/^([(\[]?[A-Za-z][A-Za-z0-9 \-,&'.()/\[\]$]*?)\s*:?\s*-?\$([\d,]+\.\d{2})\s*$/);
     if(catM){
       var label = catM[1].trim();
       var catId = categorize(label);
@@ -406,14 +442,59 @@ function parseFuelioReport(text){
       currentCategoryLabel = label;
       i2++; continue;
     }
-    // Date line: MM-DD-YYYY
-    var dateM = line.match(/^(\d{2})-(\d{2})-(\d{4})\s*$/);
+    // Date line: MM-DD-YYYY (with optional inline content)
+    // Format A (Gas/Charging): just "01-28-2026" → next lines have odo/amount/notes
+    // Format B (other categories): "01-28-2026 Description $XX.XX [optional miles]"
+    var dateOnly = line.match(/^(\d{2})-(\d{2})-(\d{4})\s*$/);
+    var dateInline = line.match(/^(\d{2})-(\d{2})-(\d{4})\s+(.+)$/);
+    var dateM = dateOnly || dateInline;
     if(dateM){
       var dateStr = dateM[3]+"-"+dateM[1]+"-"+dateM[2];
-      // Look ahead for odometer (next non-empty line that matches "X,XXX mi" or "XXXX mi" or just bare number)
+      // FORMAT B: inline content — try to extract amount + notes from the rest of the line
+      if(dateInline){
+        var rest = dateM[4];
+        // Find the FIRST $ amount in the rest of the line
+        var inlineAmtM = rest.match(/\$([\d,]+\.\d{2})/);
+        if(inlineAmtM){
+          var amount = parseFloat(inlineAmtM[1].replace(/,/g,""));
+          // Notes = everything before the $ amount
+          var notes = rest.substring(0, rest.indexOf(inlineAmtM[0])).trim();
+          // Optional: trailing miles after amount, like "$10.00 45,152 mi"
+          var afterAmt = rest.substring(rest.indexOf(inlineAmtM[0]) + inlineAmtM[0].length).trim();
+          var odoM = afterAmt.match(/^([\d,]+)\s*mi/);
+          var odo = odoM ? parseInt(odoM[1].replace(/,/g,""), 10) : 0;
+          // Strip trailing punctuation from notes
+          notes = notes.replace(/[.,;:]+$/,'').trim();
+          if(currentCategory && amount > 0){
+            // Skip if this is income (negative amount marker, or category looks like income)
+            if(currentCategory === "income" || /UBER INCOME|Uber Paid/i.test(currentCategoryLabel + " " + notes)){
+              i2++; continue;
+            }
+            var noteText = notes;
+            var isUnrecognized = currentCategory === "other" && !/^Other\b/i.test(currentCategoryLabel);
+            if(isUnrecognized && currentCategoryLabel){
+              noteText = "[" + currentCategoryLabel + "]" + (noteText ? " · "+noteText : "");
+            }
+            result.entries.push({
+              date: dateStr,
+              category: currentCategory,
+              categoryLabel: currentCategoryLabel,
+              amount: amount,
+              odometer: odo,
+              notes: noteText
+            });
+            result.stats.count++;
+            result.stats.totalCost += amount;
+            result.stats.byCategory[currentCategory] = (result.stats.byCategory[currentCategory]||0) + amount;
+          }
+          i2++; continue;
+        }
+        // No amount on inline line — fall through to multi-line parsing below
+      }
+      // FORMAT A: Multi-line — look ahead for odo/amount/notes on subsequent lines
       var odo = 0, amount = 0, notes = "", location = "";
       var look = i2+1;
-      // Odometer (optional) — "1,323 mi"
+      // Try to find odometer in next 1-2 lines (but description might be there instead)
       if(look < lines.length){
         var odoM = lines[look].match(/^([\d,]+)\s*mi\s*$/);
         if(odoM){
@@ -421,18 +502,29 @@ function parseFuelioReport(text){
           look++;
         }
       }
-      // Amount — "$26.10"
-      if(look < lines.length){
-        var amtM = lines[look].match(/^\$([\d,]+\.\d{2})\s*$/);
-        if(amtM){
-          amount = parseFloat(amtM[1].replace(/,/g,""));
-          look++;
+      // Amount — "$26.10" — search up to 3 lines forward (description might come before amount)
+      var amtFoundAt = -1;
+      for(var ax = look; ax < Math.min(look + 3, lines.length); ax++){
+        var amtTry = lines[ax].match(/^\$([\d,]+\.\d{2})\s*$/) || lines[ax].match(/^\$([\d,]+\.\d{2})/);
+        if(amtTry){
+          amount = parseFloat(amtTry[1].replace(/,/g,""));
+          amtFoundAt = ax;
+          // Lines BETWEEN look and amtFoundAt are description (e.g. "Coffee", "Uber Expense Fee and Tax")
+          for(var nx = look; nx < amtFoundAt; nx++){
+            notes += (notes?" · ":"") + lines[nx];
+          }
+          look = ax + 1;
+          break;
         }
       }
-      // Location (free text, 1 line)
-      if(look < lines.length && !/^\d{2}-\d{2}-\d{4}/.test(lines[look]) && !/^\$/.test(lines[look])){
-        location = lines[look];
-        look++;
+      // Location (free text, 1 line) — only if we have amount
+      if(amount > 0 && look < lines.length && !/^\d{2}-\d{2}-\d{4}/.test(lines[look]) && !/^\$/.test(lines[look])){
+        // Don't grab if it looks like a category header
+        var locCatTest = lines[look].match(/^([(\[]?[A-Za-z][A-Za-z0-9 \-,&'.()/\[\]$]*?)\s*:?\s*-?\$[\d,]+\.\d{2}\s*$/);
+        if(!locCatTest){
+          location = lines[look];
+          look++;
+        }
       }
       // Notes (free text, optional 1-2 lines until next date or category)
       while(look < lines.length){
@@ -441,17 +533,21 @@ function parseFuelioReport(text){
         if(/^\$[\d,]+\.\d{2}\s*$/.test(nl)) break;
         if(/^\d{4}-\d{2}\s*$/.test(nl)) break;
         // Stop at next category header
-        var ncatM = nl.match(/^([A-Za-z][A-Za-z0-9 \-,&'.()/]*?)\s*:?\s*\$[\d,]+\.\d{2}\s*$/);
+        // Stop at next category header (also allow parens/brackets/negative amounts)
+        var ncatM = nl.match(/^([(\[]?[A-Za-z][A-Za-z0-9 \-,&'.()/\[\]$]*?)\s*:?\s*-?\$[\d,]+\.\d{2}\s*$/);
         if(ncatM){ break; }
         notes += (notes?" · ":"") + nl;
         look++;
         if(look - i2 > 5) break; // safety
       }
       if(currentCategory && amount > 0){
-        // If category was unrecognized (fell back to "other"), prepend the original Fuelio label to notes
+        // Skip income
+        if(currentCategory === "income" || /UBER INCOME|Uber Paid/i.test(currentCategoryLabel)){
+          i2 = look; continue;
+        }
         var noteText = location ? (location + (notes ? " · "+notes : "")) : notes;
-        var isUnrecognized = currentCategory === "other" && !/^Other\b/i.test(currentCategoryLabel);
-        if(isUnrecognized && currentCategoryLabel){
+        var isUnrecognized2 = currentCategory === "other" && !/^Other\b/i.test(currentCategoryLabel);
+        if(isUnrecognized2 && currentCategoryLabel){
           noteText = "[" + currentCategoryLabel + "]" + (noteText ? " · "+noteText : "");
         }
         result.entries.push({
