@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-var APP_VERSION = "v3.10.17";  // ← single source of truth: bump this once per release
+var APP_VERSION = "v3.10.18";  // ← single source of truth: bump this once per release
 console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
@@ -12,7 +12,7 @@ console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-
       window.Sentry.init({
         dsn:window.SENTRY_DSN,
         environment:(location.hostname==="localhost"||location.hostname==="127.0.0.1")?"development":"production",
-        release:"nyc-driver-tracker@1.1.3",
+        release:"nyc-driver-tracker@1.1.5",
         tracesSampleRate:0.1,
         // Don't send events from local dev
         beforeSend:function(event){
@@ -1040,6 +1040,8 @@ function YearPicker(p){
     )
   );
 }
+
+function Badge(p){return React.createElement('div', { style: {display:"inline-flex",alignItems:"center",gap:6,background:p.bg||"#1A2A10",border:"1px solid "+(p.color||"#00E676"),borderRadius:20,padding:"6px 12px",fontSize:13,fontWeight:700,color:p.color||"#00E676"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 53}}, React.createElement('span', { style: {fontSize:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 53}}, p.icon), p.text);}
 
 // PIN-based lock screen. Shown when:
 //   - User is idle for the configured timeout (default 5 min)
