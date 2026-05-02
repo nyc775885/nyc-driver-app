@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-var APP_VERSION = "v3.11.35";  // ← single source of truth: bump this once per release
+var APP_VERSION = "v3.11.39";  // ← single source of truth: bump this once per release
 console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
@@ -12,7 +12,7 @@ console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-
       window.Sentry.init({
         dsn:window.SENTRY_DSN,
         environment:(location.hostname==="localhost"||location.hostname==="127.0.0.1")?"development":"production",
-        release:"nyc-driver-tracker@1.5.35",
+        release:"nyc-driver-tracker@1.5.39",
         tracesSampleRate:0.1,
         // Don't send events from local dev
         beforeSend:function(event){
@@ -1775,7 +1775,7 @@ function LockScreen(p){
 function App() {
   var r0=useState(0),tab=r0[0],setTab=r0[1]; var r1=useState("month"),dashV=r1[0],setDashV=r1[1]; var r1c=useState("month"),incV=r1c[0],setIncV=r1c[1];
   var r2=useState("month"),repP=r2[0],setRepP=r2[1]; var r3=useState(curMo()),mo=r3[0],setMo=r3[1];
-  var r4=useState(curYr()),yr=r4[0],setYr=r4[1]; var r5=useState("ops"),incT=r5[0],setIncT=r5[1];
+  var r4=useState(curYr()),yr=r4[0],setYr=r4[1];
   var r6=useState(function(){try{var s=localStorage.getItem("nyc_sf");return s||null;}catch(e){return null;}}()),sf=r6[0],_setSf=r6[1];function setSf(v){_setSf(v);try{if(v)localStorage.setItem("nyc_sf",v);else localStorage.removeItem("nyc_sf");}catch(e){}} var r7=useState("month"),expV=r7[0],setExpV=r7[1];
   var r8=useState(false),mExpDet=r8[0],setMExpDet=r8[1]; var r9=useState(false),yExpDet=r9[0],setYExpDet=r9[1];
   var r10=useState("车辆"),selGrp=r10[0],setSelGrp=r10[1];
@@ -1955,8 +1955,6 @@ function App() {
   var r25g=useState(function(){return lsLoad("nyc_favStations",{charging:[],fuel:[]});}),favStations=r25g[0],_setFavStations=r25g[1];function setFavStations(v){_setFavStations(v);try{localStorage.setItem("nyc_favStations",JSON.stringify(v));}catch(e){}}
   // Calculator state
   var rCalc=useState({display:"0",prevValue:null,operator:null,waitingForOperand:false,history:[],memory:0}),calcState=rCalc[0],setCalcState=rCalc[1];
-  // FAB confirm state — first tap shows confirm button, second tap on confirm opens form
-  var rPlusC=useState(false),plusConfirm=rPlusC[0],setPlusConfirm=rPlusC[1];
   // Floating calculator — can be shown/minimized on any page
   // mode: "hidden" | "minimized" (small chip in corner) | "floating" (full popup)
   var rCalcF=useState(function(){return lsLoad("nyc_calcFloat",{mode:"hidden",x:null,y:null,scale:1});}),calcFloat=rCalcF[0],_setCalcFloat=rCalcF[1];
@@ -1970,7 +1968,7 @@ function App() {
       idbListSnapshots().then(function(snaps){ setSnapshotList(snaps); });
     }
   }, [showBackup]); var r28=useState(function(){return lsLoad("nyc_user",null);}),gUser=r28[0],setGUser=r28[1];
-  var r29=useState(""),gStatus=r29[0],setGStatus=r29[1]; var r30=useState(null),openSec=r30[0],setOpenSec=r30[1];
+  var r30=useState(null),openSec=r30[0],setOpenSec=r30[1];
   var r32=useState(false),showPlatMgr=r32[0],setShowPlatMgr=r32[1];
   var r34=useState(function(){return lsLoad("nyc_reminders",[]);}),reminders=r34[0],setReminders=r34[1]; var r35=useState({type:"date",title:"",customTitle:"",date:"",note:"",reminderDays:"7",triggerMile:"",intervalMile:"",reminderMile:"200"}),rf=r35[0],setRf=r35[1];
   // Uber paste-import modal
@@ -2054,10 +2052,25 @@ function App() {
   var fixMo=useMemo(function(){return genFixed(fl,mo);},[fl,mo]);
   var feAll=useMemo(function(){return el.filter(function(e){var c=allC[e.category];if(c&&c.mo)return (e.statementMonth||e.date.slice(0,7))===mo;return e.date.slice(0,7)===mo;}).concat(fixMo);},[el,allC,mo,fixMo]);
   var mDailies=useMemo(function(){return dl.filter(function(d){return d.date&&d.date.slice(0,7)===mo;});},[dl,mo]);
-  // dl supports BOTH modes. For income aggregation:
+  // Helper: is this a "cash tip only" entry? (Reference-only, NOT included in income calculations)
+  // Detected via: explicit cashTip flag OR (legacy) notes containing "现金小费"/"Cash tip"
+  var isCashTip = function(d){
+    if(d.cashTip === true) return true;
+    if(d.notes && typeof d.notes === "string"){
+      var n = d.notes;
+      if(n.indexOf("现金小费") >= 0 || n.indexOf("Cash tip") >= 0 || n.indexOf("cash tip") >= 0) return true;
+    }
+    return false;
+  };
+  // Cash tips: track separately for reference, NOT included in income totals
+  var mCashTips = useMemo(function(){
+    return mDailies.reduce(function(s,d){return isCashTip(d) ? s + (+d.tips||0) : s;}, 0);
+  },[mDailies]);
+  // dl supports BOTH modes. For income aggregation (cash tips EXCLUDED):
   //   - taxi entry: cash + card + tips
   //   - rideshare entry: grossFare + tips + bonus + tollReimbursed
   var mDailyInc=mDailies.reduce(function(s,d){
+    if(isCashTip(d)) return s; // Skip cash-tip-only entries from income
     if(d.mode==="rideshare"){
       return s + (+d.grossFare||0) + (+d.tips||0) + (+d.bonus||0);
     }
@@ -2100,7 +2113,10 @@ function App() {
   var yExps=useMemo(function(){return el.filter(function(e){return e.date.slice(0,4)===yr;});},[el,yr]);
   var yFixT=yMons.reduce(function(s,m){return s+genFixed(fl,m).reduce(function(a,e){return a+(+e.amount||0);},0);},0);
   var yDailies=dl.filter(function(d){return d.date&&d.date.slice(0,4)===yr;});
+  // Year cash tips (reference only, NOT included in yInc)
+  var yCashTips = yDailies.reduce(function(s,d){return isCashTip(d) ? s + (+d.tips||0) : s;}, 0);
   var yDailyInc=yDailies.reduce(function(s,d){
+    if(isCashTip(d)) return s; // exclude cash-tip-only entries from income
     if(d.mode==="rideshare"){
       return s + (+d.grossFare||0) + (+d.tips||0) + (+d.bonus||0);
     }
@@ -2114,7 +2130,7 @@ function App() {
   var yTrips=wl.filter(function(w){return w.weekStart.slice(0,4)===yr;}).reduce(function(s,w){return s+(+w.trips||0);},0)+yDailies.reduce(function(s,d){return s+(+d.trips||0);},0);
   var yHours=wl.filter(function(w){return w.weekStart.slice(0,4)===yr;}).reduce(function(s,w){return s+(+w.hours||0);},0)+yDailies.reduce(function(s,d){return s+(+d.hours||0);},0);
   var yMiles=wl.filter(function(w){return w.weekStart.slice(0,4)===yr;}).reduce(function(s,w){return s+(+w.miles||0);},0)+yDailies.reduce(function(s,d){return s+(+d.miles||0);},0);  var yStmtTrips=yStmts.reduce(function(s,x){return s+(+x.trips||0);},0),yStmtHours=yStmts.reduce(function(s,x){return s+(+x.onlineHours||0);},0),yStmtMiles=yStmts.reduce(function(s,x){return s+(+x.miles||0);},0);
-  var mData=yMons.map(function(m){var ms=sl.filter(function(x){return x.month===m;}),me=el.filter(function(e){return e.date.slice(0,7)===m;}),md=dl.filter(function(d){return d.date&&d.date.slice(0,7)===m;}),mf=genFixed(fl,m).reduce(function(s,e){return s+(+e.amount||0);},0),inc=ms.reduce(function(s,x){return s+(+x.grossFare||0)+(+x.tips||0)+(+x.bonus||0)+(+x.otherIncome||0);},0)+md.reduce(function(s,d){if(d.mode==="rideshare")return s+(+d.grossFare||0)+(+d.tips||0)+(+d.bonus||0);return s+(+d.cash||0)+(+d.card||0)+(+d.tips||0);},0),exp=me.reduce(function(s,e){return e.category==="platform" ? s : s+(+e.amount||0);},0)+mf+md.reduce(function(s,d){return s+(+d.lease||0);},0),mToll=ms.reduce(function(s,x){return s+(+x.tollReimbursed||0);},0)+md.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.tollReimbursed||0):0);},0),mPlat=ms.reduce(function(s,x){return s+(+x.platformFee||0);},0)+md.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.platformFee||0):0);},0);return {m:m,inc:inc,exp:exp,net:inc-exp-mPlat,label:m.slice(5)+"月"};});
+  var mData=yMons.map(function(m){var ms=sl.filter(function(x){return x.month===m;}),me=el.filter(function(e){return e.date.slice(0,7)===m;}),md=dl.filter(function(d){return d.date&&d.date.slice(0,7)===m;}),mf=genFixed(fl,m).reduce(function(s,e){return s+(+e.amount||0);},0),inc=ms.reduce(function(s,x){return s+(+x.grossFare||0)+(+x.tips||0)+(+x.bonus||0)+(+x.otherIncome||0);},0)+md.reduce(function(s,d){if(isCashTip(d))return s;if(d.mode==="rideshare")return s+(+d.grossFare||0)+(+d.tips||0)+(+d.bonus||0);return s+(+d.cash||0)+(+d.card||0)+(+d.tips||0);},0),exp=me.reduce(function(s,e){return e.category==="platform" ? s : s+(+e.amount||0);},0)+mf+md.reduce(function(s,d){return s+(+d.lease||0);},0),mToll=ms.reduce(function(s,x){return s+(+x.tollReimbursed||0);},0)+md.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.tollReimbursed||0):0);},0),mPlat=ms.reduce(function(s,x){return s+(+x.platformFee||0);},0)+md.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.platformFee||0):0);},0);return {m:m,inc:inc,exp:exp,net:inc-exp-mPlat,label:m.slice(5)+"月"};});
   var insW=null;if(veh.lastInsp){var ip=veh.lastInsp.split("-"),baseY=+ip[0],baseM=+ip[1]-1;var isTlc=!!(veh.tlcPlate&&veh.tlcPlate.trim());var addMonths=isTlc?4:12;
     // TLC counts by month, not by day. So "Jan inspection + 4 months" means valid through end of April.
     // The due date is the LAST day of (lastInspMonth + addMonths - 1).
@@ -2125,7 +2141,7 @@ function App() {
     insW={next:tY+"-"+p2(tM+1)+"-"+p2(tD),diff:Math.round((idEnd-todayMidnight)/86400000),isTlc:isTlc};}
   var insExpDiff=veh.insExpiry?daysFromToday(veh.insExpiry):null; var expiring=ll.filter(function(l){if(!l.expiryDate)return false;var d=daysFromToday(l.expiryDate);var rd=+(l.reminderDays||60);return d!==null&&d>=0&&d<=rd;});
   var expired=ll.filter(function(l){if(!l.expiryDate)return false;var d=daysFromToday(l.expiryDate);return d!==null&&d<0;}); var totalFix=fl.filter(function(f){return f.active&&f.amount;}).reduce(function(s,f){return s+(f.cycle==="annual"?Math.round(+f.amount/12*100)/100:+f.amount);},0); var bldRep=function(p){var isM=p==="month",ri=isM?tInc:yInc,rg=isM?tGross:yStmts.reduce(function(s,x){return s+(+x.grossFare||0);},0),rt=isM?tTips:yStmts.reduce(function(s,x){return s+(+x.tips||0);},0),rb=isM?tBonus:yStmts.reduce(function(s,x){return s+(+x.bonus||0);},0),rtr=isM?tToll:yStmts.reduce(function(s,x){return s+(+x.tollReimbursed||0);},0),rTot=isM?tExp:yExp,rn=ri-rTot,rT=isM?tTrips:yTrips,rH=isM?tHours:yHours,rM=isM?tMiles:yMiles;return {ri:ri,rg:rg,rt:rt,rb:rb,rtr:rtr,rTot:rTot,rn:rn,rTrips:rT,rHours:rH,rMiles:rM};};
-  var yAllExps=function(){return yExps.concat(yMons.reduce(function(acc,m){return acc.concat(genFixed(fl,m));},[]));}; var hourlyRate=tHours>0?Math.round(tInc/tHours*100)/100:0,lastMo=prevMo(mo),lmStmts=sl.filter(function(x){return x.month===lastMo;}),lmWeeks=wl.filter(function(w){return w.weekStart.slice(0,7)===lastMo;}),lmFixMo=genFixed(fl,lastMo),lmDailies=dl.filter(function(d){return d.date&&d.date.slice(0,7)===lastMo;}),lmDlInc=lmDailies.reduce(function(s,d){if(d.mode==="rideshare")return s+(+d.grossFare||0)+(+d.tips||0)+(+d.bonus||0);return s+(+d.cash||0)+(+d.card||0)+(+d.tips||0);},0),lmDlLease=lmDailies.reduce(function(s,d){return s+(+d.lease||0);},0),lmDlHours=lmDailies.reduce(function(s,d){return s+(+d.hours||0);},0),lmFeAll=el.filter(function(e){var c=allC[e.category];if(c&&c.mo)return (e.statementMonth||e.date.slice(0,7))===lastMo;return e.date.slice(0,7)===lastMo;}).concat(lmFixMo),lmInc=lmStmts.reduce(function(s,x){return s+(+x.grossFare||0)+(+x.tips||0)+(+x.bonus||0)+(+x.otherIncome||0);},0)+lmDlInc,lmExp=lmFeAll.reduce(function(s,e){return e.category==="platform" ? s : s+(+e.amount||0);},0)+lmDlLease,lmToll=lmStmts.reduce(function(s,x){return s+(+x.tollReimbursed||0);},0)+lmDailies.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.tollReimbursed||0):0);},0),lmPlatformFee=lmStmts.reduce(function(s,x){return s+(+x.platformFee||0);},0)+lmDailies.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.platformFee||0):0);},0),lmNet=lmInc-lmExp-lmPlatformFee,lmHours=lmWeeks.reduce(function(s,w){return s+(+w.hours||0);},0)+lmDlHours,lmHourly=lmHours>0?Math.round(lmInc/lmHours*100)/100:0,nextExpiry=ll.filter(function(l){return l.expiryDate;}).sort(function(a,b){return a.expiryDate.localeCompare(b.expiryDate);})[0]
+  var yAllExps=function(){return yExps.concat(yMons.reduce(function(acc,m){return acc.concat(genFixed(fl,m));},[]));}; var hourlyRate=tHours>0?Math.round(tInc/tHours*100)/100:0,lastMo=prevMo(mo),lmStmts=sl.filter(function(x){return x.month===lastMo;}),lmWeeks=wl.filter(function(w){return w.weekStart.slice(0,7)===lastMo;}),lmFixMo=genFixed(fl,lastMo),lmDailies=dl.filter(function(d){return d.date&&d.date.slice(0,7)===lastMo;}),lmDlInc=lmDailies.reduce(function(s,d){if(isCashTip(d))return s;if(d.mode==="rideshare")return s+(+d.grossFare||0)+(+d.tips||0)+(+d.bonus||0);return s+(+d.cash||0)+(+d.card||0)+(+d.tips||0);},0),lmDlLease=lmDailies.reduce(function(s,d){return s+(+d.lease||0);},0),lmDlHours=lmDailies.reduce(function(s,d){return s+(+d.hours||0);},0),lmFeAll=el.filter(function(e){var c=allC[e.category];if(c&&c.mo)return (e.statementMonth||e.date.slice(0,7))===lastMo;return e.date.slice(0,7)===lastMo;}).concat(lmFixMo),lmInc=lmStmts.reduce(function(s,x){return s+(+x.grossFare||0)+(+x.tips||0)+(+x.bonus||0)+(+x.otherIncome||0);},0)+lmDlInc,lmExp=lmFeAll.reduce(function(s,e){return e.category==="platform" ? s : s+(+e.amount||0);},0)+lmDlLease,lmToll=lmStmts.reduce(function(s,x){return s+(+x.tollReimbursed||0);},0)+lmDailies.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.tollReimbursed||0):0);},0),lmPlatformFee=lmStmts.reduce(function(s,x){return s+(+x.platformFee||0);},0)+lmDailies.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.platformFee||0):0);},0),lmNet=lmInc-lmExp-lmPlatformFee,lmHours=lmWeeks.reduce(function(s,w){return s+(+w.hours||0);},0)+lmDlHours,lmHourly=lmHours>0?Math.round(lmInc/lmHours*100)/100:0,nextExpiry=ll.filter(function(l){return l.expiryDate;}).sort(function(a,b){return a.expiryDate.localeCompare(b.expiryDate);})[0]
     // YEAR-OVER-YEAR comparisons
     // (a) Same month last year — for month-view comparison
     , lyMo = (function(){var p=mo.split("-");return (+p[0]-1)+"-"+p[1];})()
@@ -3122,17 +3138,34 @@ function App() {
       if(!veh.vehicleId) return; // wait for veh to be ready
       var elNeedsTag = el.some(function(e){return !e.vehicleId;});
       var dlNeedsTag = dl.some(function(d){return !d.vehicleId;});
-      if(!elNeedsTag && !dlNeedsTag){
+      // Migrate legacy cash-tip entries: detect by notes content, add cashTip:true flag
+      var dlCashTipMigrated = localStorage.getItem("nyc_cashTipMigrated_v1") === "1";
+      var dlNeedsCashTipTag = !dlCashTipMigrated && dl.some(function(d){
+        if(d.cashTip === true) return false;
+        if(!d.notes || typeof d.notes !== "string") return false;
+        return d.notes.indexOf("现金小费") >= 0 || d.notes.indexOf("Cash tip") >= 0 || d.notes.indexOf("cash tip") >= 0;
+      });
+      if(!elNeedsTag && !dlNeedsTag && !dlNeedsCashTipTag){
         localStorage.setItem("nyc_vehMigrated_v1","1");
+        if(!dlCashTipMigrated) localStorage.setItem("nyc_cashTipMigrated_v1","1");
         return;
       }
       if(elNeedsTag){
         setEl(el.map(function(e){return e.vehicleId ? e : Object.assign({}, e, {vehicleId: veh.vehicleId});}));
       }
-      if(dlNeedsTag){
-        setDl(dl.map(function(d){return d.vehicleId ? d : Object.assign({}, d, {vehicleId: veh.vehicleId});}));
+      if(dlNeedsTag || dlNeedsCashTipTag){
+        setDl(dl.map(function(d){
+          var updated = d;
+          if(!d.vehicleId){ updated = Object.assign({}, updated, {vehicleId: veh.vehicleId}); }
+          if(d.cashTip !== true && d.notes && typeof d.notes === "string" &&
+             (d.notes.indexOf("现金小费") >= 0 || d.notes.indexOf("Cash tip") >= 0 || d.notes.indexOf("cash tip") >= 0)){
+            updated = Object.assign({}, updated, {cashTip: true});
+          }
+          return updated;
+        }));
       }
       localStorage.setItem("nyc_vehMigrated_v1","1");
+      localStorage.setItem("nyc_cashTipMigrated_v1","1");
     }catch(e){}
   }, [veh.vehicleId]); // re-run if veh ID just got created
   // ============ Auto-snapshot to IndexedDB ============
@@ -3421,7 +3454,9 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                   , React.createElement('button', {onClick:function(){setSf("quick_tip");}, style:btnStyle}
                     , React.createElement('div', {style:iconStyle}, "💵")
                     , React.createElement('div', {style:labelStyle}, lang==="en"?"Cash Tip":"现金小费")
-                    , lastTip ? React.createElement('div', {style:hintStyle}, lang==="en"?"last ":"上次 ", fmt(+lastTip.tips)) : null
+                    , mCashTips > 0
+                      ? React.createElement('div', {style:Object.assign({},hintStyle,{color:C.gold,fontWeight:700})}, lang==="en"?"month ":"本月 ", fmt(mCashTips))
+                      : (lastTip ? React.createElement('div', {style:hintStyle}, lang==="en"?"last ":"上次 ", fmt(+lastTip.tips)) : null)
                   )
                 );
               }())
@@ -3435,12 +3470,6 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                 var yoyMonthSection=null;
                 var yoyYearSection=null;
                 var mileageDeduction=null;
-
-                // Helper: render a "vs X" comparison row
-                var compRow = function(labelKey, baseInc, baseExp, baseNet){
-                  var dInc = baseInc>0 ? Math.round((tInc-baseInc)/baseInc*100) : (dashV==="year" ? (pyInc>0?Math.round((yInc-pyInc)/pyInc*100):0) : 0);
-                  return null; // placeholder, we inline below
-                };
 
                 if(dashV==="month"){
                   // MONTH VIEW: vs last month
@@ -6324,13 +6353,129 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
             } else {
               // Create new daily log entry for that date, rideshare mode, only tips field filled
               var timePart2 = theTime ? " ("+theTime+")" : "";
-              var newDl={id:Date.now(),date:theDate,mode:"rideshare",tips:amt.toFixed(2),tipPlatform:plat,grossFare:"",bonus:"",tollReimbursed:"",cash:"",card:"",lease:"",hours:"",miles:"",notes:platTag+timePart2+(theNotes?" "+theNotes:" "+(lang==="en"?"Cash tip":"现金小费")),vehicleId:veh.vehicleId};
+              var newDl={id:Date.now(),date:theDate,mode:"rideshare",tips:amt.toFixed(2),tipPlatform:plat,grossFare:"",bonus:"",tollReimbursed:"",cash:"",card:"",lease:"",hours:"",miles:"",notes:platTag+timePart2+(theNotes?" "+theNotes:" "+(lang==="en"?"Cash tip":"现金小费")),vehicleId:veh.vehicleId,cashTip:true};
               var ndl=[newDl].concat(dl);
               setDl(ndl);autoSave({dl:ndl});
               showToast(lang==="en"?("✓ $"+amt.toFixed(2)+" tip ["+plat+"] recorded on "+theDate):("✓ "+theDate+" 记入小费 $"+amt.toFixed(2)+" ["+plat+"]"));
             }
             setSf(null);setQuickF({});
           }}
+            // === Cash tips summary card with month/year navigation ===
+            , (function(){
+                // Filter all cash tips
+                var allCashTips = dl.filter(function(d){
+                  if(d.cashTip === true) return true;
+                  if(d.notes && typeof d.notes === "string"){
+                    var n = d.notes;
+                    return n.indexOf("现金小费") >= 0 || n.indexOf("Cash tip") >= 0 || n.indexOf("cash tip") >= 0;
+                  }
+                  return false;
+                });
+                if(allCashTips.length === 0) return null;
+                
+                // View state in quickF — defaults to month + current month
+                var view = quickF.cashView || "month"; // "month" or "year"
+                var selMo = quickF.cashSelMo || today().slice(0,7);
+                var selYr = quickF.cashSelYr || today().slice(0,4);
+                
+                // Compute totals for selected period
+                var selTotal = 0, allTimeTotal = 0;
+                var byMonth = {}; // for selected year
+                allCashTips.forEach(function(d){
+                  var amt = +d.tips || 0;
+                  allTimeTotal += amt;
+                  if(!d.date) return;
+                  var dMo = d.date.slice(0,7);
+                  var dYr = d.date.slice(0,4);
+                  if(view === "month" && dMo === selMo) selTotal += amt;
+                  if(view === "year" && dYr === selYr) {
+                    selTotal += amt;
+                    byMonth[dMo] = (byMonth[dMo] || 0) + amt;
+                  }
+                });
+                
+                // Period label
+                var periodLabel = "";
+                if(view === "month"){
+                  var mp = selMo.split("-");
+                  periodLabel = lang === "en" 
+                    ? (["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][+mp[1]-1] + " " + mp[0])
+                    : (mp[0] + "年 " + mp[1] + "月");
+                } else {
+                  periodLabel = lang === "en" ? ("Year " + selYr) : (selYr + " 年");
+                }
+                
+                // Prev/next handlers
+                var goPrev = function(){
+                  if(view === "month"){
+                    setQuickF(Object.assign({},quickF,{cashSelMo: prevMo(selMo)}));
+                  } else {
+                    setQuickF(Object.assign({},quickF,{cashSelYr: String(+selYr - 1)}));
+                  }
+                };
+                var goNext = function(){
+                  if(view === "month"){
+                    setQuickF(Object.assign({},quickF,{cashSelMo: nextMo(selMo)}));
+                  } else {
+                    setQuickF(Object.assign({},quickF,{cashSelYr: String(+selYr + 1)}));
+                  }
+                };
+                var monthList = Object.keys(byMonth).sort(); // chronological
+                
+                return React.createElement('div', {style:{marginBottom:10,padding:"10px 12px",background:"linear-gradient(135deg, rgba(255,215,0,0.08), rgba(255,215,0,0.02))",border:"1px solid rgba(255,215,0,0.25)",borderRadius:10}}
+                  , React.createElement('div', {style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}
+                    , React.createElement('div', {style:{fontSize:10,color:C.gold,letterSpacing:0.5,textTransform:"uppercase",fontWeight:700,opacity:0.9}}, "💵 ", lang==="en"?"Cash tips (ref only)":"现金小费（仅记录）")
+                    // Month/Year segmented toggle
+                    , React.createElement('div', {style:{display:"flex",gap:0,background:C.bg3,borderRadius:6,padding:2,border:"1px solid "+C.border}}
+                      , React.createElement('button', {
+                          onClick: function(){setQuickF(Object.assign({},quickF,{cashView:"month"}));},
+                          style:{background:view==="month"?"rgba(255,215,0,0.2)":"transparent",border:"none",color:view==="month"?C.gold:C.text3,fontSize:10,padding:"4px 10px",borderRadius:4,cursor:"pointer",fontWeight:700}
+                        }, lang==="en"?"Month":"月")
+                      , React.createElement('button', {
+                          onClick: function(){setQuickF(Object.assign({},quickF,{cashView:"year"}));},
+                          style:{background:view==="year"?"rgba(255,215,0,0.2)":"transparent",border:"none",color:view==="year"?C.gold:C.text3,fontSize:10,padding:"4px 10px",borderRadius:4,cursor:"pointer",fontWeight:700}
+                        }, lang==="en"?"Year":"年")
+                    )
+                  )
+                  // Period navigator: ‹ Period › with big total
+                  , React.createElement('div', {style:{display:"flex",alignItems:"center",gap:8,marginBottom:10}}
+                    , React.createElement('button', {
+                        onClick: goPrev,
+                        style:{background:C.bg3,border:"1px solid "+C.border,borderRadius:6,padding:"6px 10px",color:C.gold,fontSize:14,cursor:"pointer",fontWeight:700,flexShrink:0}
+                      }, "‹")
+                    , React.createElement('div', {style:{flex:1,padding:"6px 10px",background:"rgba(255,215,0,0.08)",borderRadius:8,border:"1px solid rgba(255,215,0,0.2)",textAlign:"center"}}
+                      , React.createElement('div', {style:{fontSize:10,color:C.text3,letterSpacing:0.3,marginBottom:2}}, periodLabel)
+                      , React.createElement('div', {style:{fontSize:20,fontWeight:800,color:C.gold,fontVariantNumeric:"tabular-nums",lineHeight:1}}, fmt(selTotal))
+                    )
+                    , React.createElement('button', {
+                        onClick: goNext,
+                        style:{background:C.bg3,border:"1px solid "+C.border,borderRadius:6,padding:"6px 10px",color:C.gold,fontSize:14,cursor:"pointer",fontWeight:700,flexShrink:0}
+                      }, "›")
+                  )
+                  // Year mode: monthly breakdown bars
+                  , (view === "year" && monthList.length > 0) ? React.createElement('div', null
+                    , React.createElement('div', {style:{fontSize:9,color:C.text3,letterSpacing:0.5,textTransform:"uppercase",fontWeight:600,marginBottom:5}}, lang==="en"?"Monthly breakdown":"按月分布")
+                    , monthList.map(function(m,i){
+                        var amt = byMonth[m];
+                        var maxAmt = Math.max.apply(null, monthList.map(function(mm){return byMonth[mm];}));
+                        var barW = maxAmt > 0 ? Math.round(amt / maxAmt * 100) : 0;
+                        var isCurMo = m === today().slice(0,7);
+                        return React.createElement('div', {key:i, onClick: function(){setQuickF(Object.assign({},quickF,{cashView:"month",cashSelMo:m}));}, style:{display:"flex",alignItems:"center",gap:8,padding:"3px 0",fontSize:11,cursor:"pointer"}}
+                          , React.createElement('span', {style:{color:isCurMo?C.gold:C.text3,fontWeight:isCurMo?700:400,minWidth:50,fontVariantNumeric:"tabular-nums"}}, m.slice(5)+lang==="en"?"":"月")
+                          , React.createElement('div', {style:{flex:1,height:6,background:"rgba(255,215,0,0.05)",borderRadius:3,overflow:"hidden"}}
+                            , React.createElement('div', {style:{height:"100%",width:barW+"%",background:isCurMo?"linear-gradient(90deg,#FFD700,#FFA500)":"rgba(255,215,0,0.4)",borderRadius:3}})
+                          )
+                          , React.createElement('span', {style:{color:isCurMo?C.gold:C.text2,fontWeight:isCurMo?700:600,minWidth:55,textAlign:"right",fontVariantNumeric:"tabular-nums"}}, fmt(amt))
+                        );
+                      })
+                  ) : null
+                  // All-time total
+                  , React.createElement('div', {style:{fontSize:10,color:C.text3,marginTop:8,paddingTop:6,borderTop:"1px dashed rgba(255,215,0,0.15)",display:"flex",justifyContent:"space-between"}}
+                    , React.createElement('span', null, lang==="en"?("All time · "+allCashTips.length+" entries"):("累计 · "+allCashTips.length+" 笔"))
+                    , React.createElement('span', {style:{color:C.gold,fontWeight:600,fontVariantNumeric:"tabular-nums"}}, fmt(allTimeTotal))
+                  )
+                );
+              }())
             // Recent 2 tips · tap to use
             , recentTips.length > 0 ? React.createElement('div', {style:{marginBottom:8,padding:"8px 10px",background:C.bg3,border:"1px solid "+C.border,borderRadius:8}}
                 , React.createElement('div', {style:{fontSize:10,color:C.text3,letterSpacing:0.5,marginBottom:6,textTransform:"uppercase",fontWeight:600}}, lang==="en"?"Recent tips · tap to use":"最近小费 · 点击使用")
@@ -6354,7 +6499,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
               ) : null
             , React.createElement('div', {style:{fontSize:11,color:C.text3,marginBottom:8,padding:"8px 10px",background:C.bg3,borderRadius:8,lineHeight:1.5}}
               , targetDl ? (lang==="en"?("➕ Adds to "+targetDate+" daily log"):("➕ 加入 "+targetDate+" 的日记账小费")) : (lang==="en"?("📝 Creates "+targetDate+" daily log"):("📝 新建 "+targetDate+" 日记账"))
-              , React.createElement('div', {style:{fontSize:10,color:C.text3,marginTop:3}}, lang==="en"?"Cash tips count toward income (separate from in-app tips)":"现金小费算收入（与平台 app 内小费分开）")
+              , React.createElement('div', {style:{fontSize:10,color:C.text3,marginTop:3}}, lang==="en"?"💡 Cash tips are tracked for reference only — NOT counted in income/profit calculations":"💡 现金小费仅作记录跟踪，不计入收入/利润计算")
             )
             , React.createElement(Field, {label:lang==="en"?"Tip Amount ($)":"小费金额 ($)", type:"number", value:quickF.amount||"", onChange:function(v){setQuickF(Object.assign({},quickF,{amount:v}));}, money:true, placeholder:"0.00"})
             , React.createElement('div', {style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}
@@ -7050,22 +7195,6 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
             if(sf==="calculator") setSf(null);
           };
           // Inline calculator helpers (defined inside the modal scope to keep state changes simple)
-          var doInputDigit = function(d){
-            if(calcState.waitingForOperand){
-              setCalcState(Object.assign({},calcState,{display:String(d),waitingForOperand:false}));
-            } else {
-              setCalcState(Object.assign({},calcState,{display:calcState.display==="0"?String(d):calcState.display+d}));
-            }
-          };
-          var doInputDot = function(){
-            if(calcState.waitingForOperand){
-              setCalcState(Object.assign({},calcState,{display:"0.",waitingForOperand:false}));
-              return;
-            }
-            if(calcState.display.indexOf(".")===-1){
-              setCalcState(Object.assign({},calcState,{display:calcState.display+"."}));
-            }
-          };
           var doClear = function(){
             setCalcState({display:"",prevValue:null,operator:null,waitingForOperand:false,history:calcState.history||[],memory:calcState.memory||0});
           };
@@ -7076,13 +7205,6 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
           var doPercent = function(){
             var v = parseFloat(calcState.display) || 0;
             setCalcState(Object.assign({},calcState,{display:String(v/100)}));
-          };
-          var doBackspace = function(){
-            if(calcState.display.length<=1 || (calcState.display.length===2 && calcState.display.startsWith("-"))){
-              setCalcState(Object.assign({},calcState,{display:""}));
-            } else {
-              setCalcState(Object.assign({},calcState,{display:calcState.display.slice(0,-1)}));
-            }
           };
           var compute = function(prev, curr, op){
             switch(op){
