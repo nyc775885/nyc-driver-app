@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-var APP_VERSION = "v3.10.65";  // ← single source of truth: bump this once per release
+var APP_VERSION = "v3.10.67";  // ← single source of truth: bump this once per release
 console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
@@ -12,7 +12,7 @@ console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-
       window.Sentry.init({
         dsn:window.SENTRY_DSN,
         environment:(location.hostname==="localhost"||location.hostname==="127.0.0.1")?"development":"production",
-        release:"nyc-driver-tracker@1.3.16",
+        release:"nyc-driver-tracker@1.3.17",
         tracesSampleRate:0.1,
         // Don't send events from local dev
         beforeSend:function(event){
@@ -323,30 +323,47 @@ function parseFuelioReport(text){
   // Order matters: more specific patterns first
   var categoryMap = [
     [/^Gas\s*:?/i,                              result.isEv ? "charging" : "fuel"],
+    [/charg|Supercharger|^Electric/i,           "charging"],
     [/^Tolls?.*EZpass/i,                        "toll"],
     [/^Tolls?\s*:?/i,                           "toll"],
+    [/Congestion/i,                             "congestion"],
     [/^Parking for EV Charging/i,               "parking"],
     [/^Parking Meter/i,                         "parking"],
-    [/^Parking\s*:?/i,                          "parking"],
+    [/^Parking Ticket|Parking Violation/i,      "ticket"],
+    [/^Parking\s*:?|Garage|Meter/i,             "parking"],
     [/^Insurance.*TLC/i,                        "insurance"],
-    [/^Insurance\s*:?/i,                        "insurance"],
+    [/^Insurance\s*:?|Liability/i,              "insurance"],
     [/^Loan.*Auto Loan APY/i,                   "carloan"],
     [/^Loan.*Auto Loan/i,                       "carloan"],
-    [/^Loan\s*:?/i,                             "carloan"],
-    [/^Phone Bill/i,                            "phonebill"],
-    [/^DMV Registration/i,                      "dmv"],
-    [/^TLC Vehicle License/i,                   "fhv"],
-    [/^TLC.*Inspection/i,                       "fhv"],
-    [/^Dunkin/i,                                "coffee"],
-    [/Coffee|Starbucks/i,                       "coffee"],
-    [/^Wash/i,                                  "carwash"],
-    [/Car Wash/i,                               "carwash"],
+    [/^Loan\s*:?|Car Payment|Finance/i,         "carloan"],
+    [/^Phone Bill|Verizon|T-?Mobile|AT&T/i,     "phonebill"],
+    [/^DMV Registration|Registration/i,         "dmv"],
+    [/^TLC Vehicle License|FHV/i,               "fhv"],
+    [/^TLC.*Inspection|Inspection/i,            "fhv"],
+    [/^TLC.*Driver/i,                           "tlc"],
+    [/Drug Test/i,                              "drug"],
+    [/Fingerprint/i,                            "finger"],
+    [/Defensive Driving/i,                      "defensive"],
+    [/WAV.*Training|Wheelchair/i,               "wav"],
+    [/Medical|Physical Exam/i,                  "medical"],
+    [/Background.*Check/i,                      "background"],
+    [/^Dunkin|Coffee|Starbucks/i,               "coffee"],
+    [/^Wash|Car Wash|Detail/i,                  "carwash"],
     [/^Parts/i,                                 "other"],
     [/^TESLA service/i,                         "maint"],
-    [/^Service|Maintenance/i,                   "maint"],
-    [/^Tires/i,                                 "tires"],
-    [/^Wipers/i,                                "wipers"],
-    [/Oil change|Engine oil/i,                  "oil"]
+    [/Oil Change|Engine Oil/i,                  "oil"],
+    [/^Tires|Tire/i,                            "tires"],
+    [/^Wipers|Wiper/i,                          "wipers"],
+    [/Brake/i,                                  "brakes"],
+    [/Battery/i,                                "battery"],
+    [/^Service|Maintenance|Tune Up|Alignment|Rotation/i,  "maint"],
+    [/Repair|Body Shop|Collision/i,             "repair"],
+    [/Ticket|Violation|Fine/i,                  "ticket"],
+    [/Lawyer|Attorney|Legal/i,                  "other"],
+    [/Health Insurance/i,                       "health"],
+    [/Quarterly Tax|Estimated Tax/i,            "tax"],
+    [/Accountant|CPA|Tax Prep/i,                "accountant"],
+    [/Black Car|Uber Fee/i,                     "platform"]
   ];
   // Skip patterns — these are NOT expenses
   var skipPatterns = [/UBER INCOME/i, /^Income\s*$/i, /^Records\b/i, /^Total\b/i, /^Period:/i, /^By Month/i, /^Distance/i, /^Fuel consumption/i, /^Average cost/i, /^TESLA Y/i, /^License plate/i, /^VIN:/i, /^Report\b/i, /^Phone Bill\s*:/i];
@@ -383,10 +400,10 @@ function parseFuelioReport(text){
     if(catM){
       var label = catM[1].trim();
       var catId = categorize(label);
-      if(catId){
-        currentCategory = catId;
-        currentCategoryLabel = label;
-      }
+      // CHANGED: If we don't recognize the category, default to "other" instead of skipping
+      // This way users don't lose data — they can re-categorize later
+      currentCategory = catId || "other";
+      currentCategoryLabel = label;
       i2++; continue;
     }
     // Date line: MM-DD-YYYY
@@ -431,7 +448,12 @@ function parseFuelioReport(text){
         if(look - i2 > 5) break; // safety
       }
       if(currentCategory && amount > 0){
+        // If category was unrecognized (fell back to "other"), prepend the original Fuelio label to notes
         var noteText = location ? (location + (notes ? " · "+notes : "")) : notes;
+        var isUnrecognized = currentCategory === "other" && !/^Other\b/i.test(currentCategoryLabel);
+        if(isUnrecognized && currentCategoryLabel){
+          noteText = "[" + currentCategoryLabel + "]" + (noteText ? " · "+noteText : "");
+        }
         result.entries.push({
           date: dateStr,
           category: currentCategory,
@@ -611,6 +633,10 @@ function parseFuelioCSV(text){
       }
       var odo = parseFloat(row.Odo || "0") || 0;
       var notes = (row.CostTitle || "") + (row.Notes ? " · "+row.Notes : "");
+      // If we fell back to "other", prepend the original Fuelio category name to notes for clarity
+      if(catId === "other" && catName && !/^Other$/i.test(catName)){
+        notes = "[" + catName + "]" + (notes.trim() ? " · "+notes.trim() : "");
+      }
       result.entries.push({
         date: date,
         time: time,
@@ -4498,7 +4524,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                       });
                     }
                   })
-                , "📥 ", lang==="en"?"Pick Fuelio PDF (charging/fuel)":"选 Fuelio PDF（充电/加油）"
+                , "📥 ", lang==="en"?"Pick Fuelio PDF (all expenses)":"选 Fuelio PDF（所有支出）"
               )
             )
             // Fuelio CSV file picker — multi-file, full data import (charging + all expenses)
