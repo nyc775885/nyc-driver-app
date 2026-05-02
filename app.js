@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-var APP_VERSION = "v3.11.30";  // ← single source of truth: bump this once per release
+var APP_VERSION = "v3.11.35";  // ← single source of truth: bump this once per release
 console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
@@ -12,7 +12,7 @@ console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-
       window.Sentry.init({
         dsn:window.SENTRY_DSN,
         environment:(location.hostname==="localhost"||location.hostname==="127.0.0.1")?"development":"production",
-        release:"nyc-driver-tracker@1.5.30",
+        release:"nyc-driver-tracker@1.5.35",
         tracesSampleRate:0.1,
         // Don't send events from local dev
         beforeSend:function(event){
@@ -7144,6 +7144,54 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
           };
           // === Voice input: parse spoken phrase to a number/expression ===
           // Handles Chinese & English: "二十三点五" / "twenty-three point five" / "100加50" → applies to calculator
+          // Try to parse as expression first (e.g. "1 + 1", "5加3", "10 times 2")
+          var parseSpokenExpression = function(s){
+            if(!s) return null;
+            // Normalize: replace Chinese operators and English words with symbols
+            var normalized = s.toLowerCase().trim();
+            // Chinese operators
+            normalized = normalized.replace(/加/g, " + ");
+            normalized = normalized.replace(/减|减去/g, " - ");
+            normalized = normalized.replace(/乘|乘以|乘上|x|×/g, " * ");
+            normalized = normalized.replace(/除|除以/g, " / ");
+            normalized = normalized.replace(/等于|得|结果/g, ""); // strip
+            // English operators
+            normalized = normalized.replace(/\bplus\b/g, " + ");
+            normalized = normalized.replace(/\bminus\b/g, " - ");
+            normalized = normalized.replace(/\btimes\b|\bmultiplied by\b/g, " * ");
+            normalized = normalized.replace(/\bdivided by\b|\bover\b/g, " / ");
+            normalized = normalized.replace(/\bequals\b/g, "");
+            // Find operator position (only if string contains exactly one operator)
+            var opMatch = normalized.match(/[\+\-\*\/]/g);
+            if(!opMatch || opMatch.length === 0) return null;
+            // Split by first operator found
+            var opChars = ["+","-","*","/"];
+            var splitOp = null, splitIdx = -1;
+            for(var oi=0; oi<opChars.length; oi++){
+              var idx = normalized.indexOf(opChars[oi]);
+              if(idx > 0 && (splitIdx < 0 || idx < splitIdx)){
+                splitOp = opChars[oi];
+                splitIdx = idx;
+              }
+            }
+            if(!splitOp) return null;
+            var leftStr = normalized.slice(0, splitIdx).trim();
+            var rightStr = normalized.slice(splitIdx+1).trim();
+            // Each side might still be Chinese/English number — parse with parseSpokenToNumber
+            var leftN = parseSpokenToNumber(leftStr);
+            var rightN = parseSpokenToNumber(rightStr);
+            if(!leftN || !rightN) return null;
+            var result;
+            switch(splitOp){
+              case "+": result = leftN.n + rightN.n; break;
+              case "-": result = leftN.n - rightN.n; break;
+              case "*": result = leftN.n * rightN.n; break;
+              case "/": result = rightN.n === 0 ? 0 : leftN.n / rightN.n; break;
+            }
+            // Convert back to display operator
+            var displayOp = splitOp === "*" ? "×" : (splitOp === "/" ? "÷" : (splitOp === "-" ? "−" : "+"));
+            return {type:"expr", a: leftN.n, op: displayOp, b: rightN.n, n: result, raw: s};
+          };
           var parseSpokenToNumber = function(s){
             if(!s) return null;
             s = s.toLowerCase().trim();
@@ -7232,20 +7280,50 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
               setCalcState(Object.assign({},calcState,{voiceListening:true}));
               showToast(lang==="en"?"🎤 Listening... say a number":"🎤 听着呢… 说个数字","info");
               rec.onresult = function(ev){
-                // Try each alternative until one parses
-                var found = null;
+                // Try each alternative — first try expression, then plain number
+                var foundExpr = null, foundNum = null, allTranscripts = [];
                 for(var i=0;i<ev.results[0].length;i++){
                   var t = ev.results[0][i].transcript;
-                  var p = parseSpokenToNumber(t);
-                  if(p){ found = p; break; }
+                  allTranscripts.push(t);
+                  // Try expression first (e.g. "1+1", "5加3")
+                  if(!foundExpr){
+                    var pe = parseSpokenExpression(t);
+                    if(pe) foundExpr = pe;
+                  }
+                  // Then try plain number
+                  if(!foundNum){
+                    var pn = parseSpokenToNumber(t);
+                    if(pn) foundNum = pn;
+                  }
+                  if(foundExpr) break; // expression found, stop
                 }
-                setCalcState(function(prev){
-                  return Object.assign({},prev,{voiceListening:false, display: found ? String(found.n) : prev.display, waitingForOperand:false});
-                });
-                if(found){
-                  showToast(lang==="en"?("✓ Heard: "+found.raw+" → "+found.n):("✓ 听到："+found.raw+" → "+found.n),"success");
+                if(foundExpr){
+                  // Apply expression: set display to result, also push to history
+                  setCalcState(function(prev){
+                    var newHist = (prev.history||[]).slice();
+                    newHist.unshift(foundExpr.a + " " + foundExpr.op + " " + foundExpr.b + " = " + foundExpr.n);
+                    if(newHist.length>20) newHist = newHist.slice(0,20);
+                    return Object.assign({},prev,{
+                      voiceListening:false,
+                      display: String(foundExpr.n),
+                      prevValue:null,
+                      operator:null,
+                      waitingForOperand:true,
+                      history:newHist
+                    });
+                  });
+                  showToast(lang==="en"
+                    ? ("✓ Heard: "+foundExpr.raw+" → "+foundExpr.a+" "+foundExpr.op+" "+foundExpr.b+" = "+foundExpr.n)
+                    : ("✓ 听到："+foundExpr.raw+" → "+foundExpr.a+" "+foundExpr.op+" "+foundExpr.b+" = "+foundExpr.n)
+                    ,"success");
+                } else if(foundNum){
+                  setCalcState(function(prev){
+                    return Object.assign({},prev,{voiceListening:false, display: String(foundNum.n), waitingForOperand:false});
+                  });
+                  showToast(lang==="en"?("✓ Heard: "+foundNum.raw+" → "+foundNum.n):("✓ 听到："+foundNum.raw+" → "+foundNum.n),"success");
                 } else {
-                  showToast(lang==="en"?"Couldn't parse a number":"没听清数字","error");
+                  setCalcState(function(prev){return Object.assign({},prev,{voiceListening:false});});
+                  showToast(lang==="en"?("Couldn't parse: "+allTranscripts[0]):("没听清: "+allTranscripts[0]),"error");
                 }
               };
               rec.onerror = function(ev){
@@ -7437,22 +7515,22 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
               , React.createElement('div', {
                   onMouseDown: isFloat ? startDrag : undefined,
                   onTouchStart: isFloat ? startDrag : undefined,
-                  style: {background:isFloat?"rgba(18,24,38,"+(fopacity*0.85)+")":C.bg2,padding:isFloat?"10px 12px":"16px 18px",borderBottom:"1px solid "+C.border,display:"flex",justifyContent:"space-between",alignItems:"center",position:isFloat?"static":"sticky",top:0,zIndex:10,cursor:isFloat?"move":"default",userSelect:"none",WebkitUserSelect:"none",touchAction:isFloat?"none":"auto"}
+                  style: {background:isFloat?"rgba(18,24,38,"+(fopacity*0.85)+")":C.bg2,padding:barMode?"5px 8px":(isFloat?"10px 12px":"16px 18px"),borderBottom:"1px solid "+C.border,display:"flex",justifyContent:"space-between",alignItems:"center",position:isFloat?"static":"sticky",top:0,zIndex:10,cursor:isFloat?"move":"default",userSelect:"none",WebkitUserSelect:"none",touchAction:isFloat?"none":"auto"}
                 }
-                , React.createElement('div', {style:{display:"flex",gap:6}}
+                , React.createElement('div', {style:{display:"flex",gap:barMode?4:6}}
                   // Close button
-                  , React.createElement('button', {onClick:closeAndCloseAll, style:{background:"#1E3050",border:"none",color:"#8ABCD0",fontSize:14,cursor:"pointer",width:isFloat?28:34,height:isFloat?28:34,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center"}, title:lang==="en"?"Close":"关闭"}, "✕")
+                  , React.createElement('button', {onClick:closeAndCloseAll, style:{background:"#1E3050",border:"none",color:"#8ABCD0",fontSize:barMode?12:14,cursor:"pointer",width:barMode?22:(isFloat?28:34),height:barMode?22:(isFloat?28:34),borderRadius:6,display:"flex",alignItems:"center",justifyContent:"center"}, title:lang==="en"?"Close":"关闭"}, "✕")
                   // Minimize button
-                  , React.createElement('button', {onClick:minimize, style:{background:C.bg3,border:"1px solid "+C.border,color:C.text3,fontSize:14,cursor:"pointer",width:isFloat?28:34,height:isFloat?28:34,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center"}, title:lang==="en"?"Minimize to corner":"最小化到角落"}, "−")
+                  , React.createElement('button', {onClick:minimize, style:{background:C.bg3,border:"1px solid "+C.border,color:C.text3,fontSize:barMode?12:14,cursor:"pointer",width:barMode?22:(isFloat?28:34),height:barMode?22:(isFloat?28:34),borderRadius:6,display:"flex",alignItems:"center",justifyContent:"center"}, title:lang==="en"?"Minimize to corner":"最小化到角落"}, "−")
                 )
-                , React.createElement('div', {style:{fontSize:isFloat?14:16,fontWeight:800,display:"flex",alignItems:"center",gap:5,minWidth:0,overflow:"hidden",flexShrink:1}}
-                  , isFloat ? React.createElement('span',{style:{fontSize:11,color:C.text3,letterSpacing:1,marginRight:2}},"⋮⋮") : null
+                , React.createElement('div', {style:{fontSize:isFloat?(barMode?12:14):16,fontWeight:800,display:"flex",alignItems:"center",gap:5,minWidth:0,overflow:"hidden",flexShrink:1}}
+                  , (isFloat && !barMode) ? React.createElement('span',{style:{fontSize:11,color:C.text3,letterSpacing:1,marginRight:2}},"⋮⋮") : null
                   , "🧮"
                   , isFloat ? null : React.createElement('span', {style:{marginLeft:6}}, lang==="en"?"Calculator":"计算器")
                 )
                 , React.createElement('div', {style:{display:"flex",gap:4,alignItems:"center"}}
-                  // Zoom out (only when floating)
-                  , isFloat ? React.createElement('button', {
+                  // Zoom out (hidden in barMode — bar IS the small mode)
+                  , (isFloat && !barMode) ? React.createElement('button', {
                       onClick: function(){
                         var ns = Math.max(0.6, (calcFloat.scale||1) - 0.1);
                         setCalcFloat(Object.assign({},calcFloat,{scale: Math.round(ns*10)/10}));
@@ -7460,8 +7538,8 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                       style:{background:C.bg3,border:"1px solid "+C.border,color:C.text2,fontSize:14,cursor:"pointer",width:24,height:24,borderRadius:6,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700},
                       title: lang==="en"?"Smaller":"缩小"
                     }, "−") : null
-                  // Scale label (only when floating)
-                  , isFloat ? React.createElement('button', {
+                  // Scale label (hidden in barMode)
+                  , (isFloat && !barMode) ? React.createElement('button', {
                       onClick: function(){
                         // Tap label → reset to 100%
                         setCalcFloat(Object.assign({},calcFloat,{scale: 1}));
@@ -7470,8 +7548,8 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                       style:{background:"none",border:"none",color:C.text3,fontSize:9,cursor:"pointer",padding:"0 2px",fontVariantNumeric:"tabular-nums",minWidth:28,textAlign:"center"},
                       title: lang==="en"?"Tap to reset to 100%":"点击还原 100%"
                     }, Math.round((calcFloat.scale||1)*100) + "%") : null
-                  // Zoom in (only when floating)
-                  , isFloat ? React.createElement('button', {
+                  // Zoom in (hidden in barMode)
+                  , (isFloat && !barMode) ? React.createElement('button', {
                       onClick: function(){
                         var ns = Math.min(1.5, (calcFloat.scale||1) + 0.1);
                         setCalcFloat(Object.assign({},calcFloat,{scale: Math.round(ns*10)/10}));
@@ -7493,24 +7571,104 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                         setCalcFloat(Object.assign({},calcFloat,{opacity: nxt}));
                         showToast(lang==="en"?("Opacity: "+Math.round(nxt*100)+"%"):("透明度："+Math.round(nxt*100)+"%"),"info");
                       },
-                      style:{background:C.bg3,border:"1px solid "+C.border,color:C.text2,fontSize:12,cursor:"pointer",width:24,height:24,borderRadius:6,display:"flex",alignItems:"center",justifyContent:"center",marginLeft:2},
+                      style:{background:C.bg3,border:"1px solid "+C.border,color:C.text2,fontSize:barMode?10:12,cursor:"pointer",width:barMode?22:24,height:barMode?22:24,borderRadius:6,display:"flex",alignItems:"center",justifyContent:"center",marginLeft:2},
                       title: lang==="en"?"Cycle opacity (see through)":"切换透明度（看穿背景）"
                     }, "👁") : null
+                  // M+ and AC — only shown in barMode header (moved from main row to reduce crowding)
+                  , barMode ? React.createElement('button', {
+                      onClick: doMemPlus,
+                      style:{background:"rgba(0,230,118,0.15)",border:"1px solid rgba(0,230,118,0.35)",color:C.success,fontSize:10,cursor:"pointer",padding:"3px 7px",borderRadius:6,fontWeight:700,height:22,whiteSpace:"nowrap"},
+                      title: lang==="en"?"Add to memory":"加入内存"
+                    }, "M+") : null
+                  , barMode ? React.createElement('button', {
+                      onClick: doClear,
+                      style:{background:C.bg4,border:"1px solid "+C.border,color:C.text2,fontSize:10,cursor:"pointer",padding:"3px 7px",borderRadius:6,fontWeight:700,height:22,whiteSpace:"nowrap"},
+                      title: lang==="en"?"Clear current":"清空当前"
+                    }, "AC") : null
                   // Bar mode toggle — shrink to horizontal strip
                   , isFloat ? React.createElement('button', {
                       onClick: function(){
                         setCalcFloat(Object.assign({},calcFloat,{barMode: !barMode}));
                         showToast(barMode ? (lang==="en"?"✓ Full mode":"✓ 完整模式") : (lang==="en"?"✓ Bar mode":"✓ 长条模式"),"info");
                       },
-                      style:{background:barMode?"rgba(0,212,255,0.15)":C.bg3,border:"1px solid "+(barMode?"rgba(0,212,255,0.4)":C.border),color:barMode?C.accent:C.text2,fontSize:12,cursor:"pointer",width:24,height:24,borderRadius:6,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700},
+                      style:{background:barMode?"rgba(0,212,255,0.25)":"rgba(0,212,255,0.08)",border:"1px solid "+(barMode?"rgba(0,212,255,0.5)":"rgba(0,212,255,0.3)"),color:barMode?"#fff":C.accent,fontSize:barMode?10:11,cursor:"pointer",padding:barMode?"3px 6px":"4px 8px",borderRadius:6,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700,gap:3,whiteSpace:"nowrap",height:barMode?22:"auto"},
                       title: lang==="en"?(barMode?"Expand to full":"Shrink to bar"):(barMode?"展开":"长条模式")
-                    }, barMode ? "▢" : "▭") : null
-                  , React.createElement('button', {onClick:function(){setCalcState({display:"",prevValue:null,operator:null,waitingForOperand:false,history:[],memory:0});showToast(lang==="en"?"✓ All cleared":"✓ 已全部清空");}, style:{background:"none",border:"1px solid "+C.border,color:C.text3,fontSize:11,cursor:"pointer",padding:"5px 9px",borderRadius:8}}, lang==="en"?"Clear":"清空")
+                    }
+                      , React.createElement('span', {style:{fontSize:barMode?11:13}}, barMode ? "▢" : "▭")
+                      , React.createElement('span', null, barMode ? (lang==="en"?"Full":"展开") : (lang==="en"?"Bar":"长条"))
+                    ) : null
+                  // Clear button hidden in barMode (AC in header replaces it)
+                  , barMode ? null : React.createElement('button', {onClick:function(){setCalcState({display:"",prevValue:null,operator:null,waitingForOperand:false,history:[],memory:0});showToast(lang==="en"?"✓ All cleared":"✓ 已全部清空");}, style:{background:"none",border:"1px solid "+C.border,color:C.text3,fontSize:11,cursor:"pointer",padding:"5px 9px",borderRadius:6}}, lang==="en"?"Clear":"清空")
                 )
               )
-              , React.createElement('div', {style:{padding:barMode?"6px":(isFloat?Math.max(6, Math.round(12*fscale))+"px":"12px"),display:barMode?"flex":"block",alignItems:barMode?"center":"stretch",gap:barMode?6:0}}
+              , React.createElement('div', {style:{padding:barMode?"6px 8px":(isFloat?Math.max(6, Math.round(12*fscale))+"px":"12px"),display:barMode?"flex":"block",alignItems:barMode?"center":"stretch",gap:barMode?5:0}}
+
+                // ============ BAR MODE: SINGLE HORIZONTAL ROW ============
+                , barMode ? React.createElement(React.Fragment, null
+                  // Memory indicator (only if has memory) — small chip on the left
+                  , (calcState.memory && calcState.memory !== 0) ? React.createElement('div', {
+                      onClick: doMemRecall,
+                      style:{flexShrink:0,fontSize:10,color:C.gold,fontWeight:700,letterSpacing:0.3,fontVariantNumeric:"tabular-nums",padding:"2px 6px",background:"rgba(255,215,0,0.12)",border:"1px solid rgba(255,215,0,0.3)",borderRadius:5,cursor:"pointer",height:32,display:"flex",alignItems:"center"},
+                      title: lang==="en"?"Tap to recall (MR)":"点击读取(MR)"
+                    }, "M ", calcState.memory.toFixed(0)) : null
+                  // Operator preview (e.g., "5 +") if a chained operation is pending
+                  , (calcState.prevValue!==null && calcState.operator) ? React.createElement('div', {
+                      style:{flexShrink:0,fontSize:11,color:C.text3,fontVariantNumeric:"tabular-nums",height:32,display:"flex",alignItems:"center",padding:"0 4px"}
+                    }, calcState.prevValue+" "+calcState.operator) : null
+                  // Number input — flex grows to fill space
+                  , React.createElement('input', {
+                      type: "text",
+                      inputMode: "decimal",
+                      autoFocus: false,
+                      value: calcState.display,
+                      placeholder: "0",
+                      onChange: function(e){
+                        var v = e.target.value;
+                        v = v.replace(/[^0-9.\-]/g, "");
+                        if(v.indexOf("-") > 0) v = v.replace(/-/g, "");
+                        var dots = v.split(".").length - 1;
+                        if(dots > 1){
+                          var firstDot = v.indexOf(".");
+                          v = v.slice(0,firstDot+1) + v.slice(firstDot+1).replace(/\./g, "");
+                        }
+                        setCalcState(Object.assign({},calcState,{display:v,waitingForOperand:false}));
+                      },
+                      onKeyDown: function(e){
+                        var k = e.key;
+                        if(k === "Enter" || k === "="){ e.preventDefault(); doEquals(); return; }
+                        if(k === "+"){ e.preventDefault(); doOperator("+"); return; }
+                        if(k === "-"){
+                          if(calcState.display === "0" || calcState.display === "" || calcState.waitingForOperand){
+                            return;
+                          }
+                          e.preventDefault(); doOperator("−"); return;
+                        }
+                        if(k === "*" || k === "x" || k === "X"){ e.preventDefault(); doOperator("×"); return; }
+                        if(k === "/"){ e.preventDefault(); doOperator("÷"); return; }
+                        if(k === "%"){ e.preventDefault(); doPercent(); return; }
+                        if(k === "Escape"){ e.preventDefault(); doClear(); return; }
+                      },
+                      style: {flex:"1 1 auto",minWidth:60,height:32,fontSize:22,fontWeight:800,color:C.text,textAlign:"right",letterSpacing:-0.3,fontVariantNumeric:"tabular-nums",background:"rgba(255,255,255,0.04)",border:"1px solid "+C.border,borderRadius:6,outline:"none",padding:"0 8px",fontFamily:"inherit",WebkitAppearance:"none"}
+                    })
+                  // Voice mic button
+                  , React.createElement('button', {
+                      onClick: doVoiceInput,
+                      title: lang==="en"?"Voice input":"语音输入",
+                      style: {flexShrink:0,width:34,height:32,borderRadius:6,background: calcState.voiceListening ? "rgba(255,82,82,0.2)" : "rgba(0,212,255,0.1)",border: "1px solid " + (calcState.voiceListening ? "rgba(255,82,82,0.5)" : "rgba(0,212,255,0.3)"),color: calcState.voiceListening ? C.danger : C.accent,fontSize:14,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0}
+                    }, "🎤")
+                  // Operator buttons — bigger now that M+/AC are gone
+                  , React.createElement('button', {onClick:function(){doOperator("+");}, style:{flexShrink:0,width:34,height:32,fontSize:18,fontWeight:700,background:"rgba(0,212,255,0.12)",border:"1px solid rgba(0,212,255,0.3)",color:C.accent,borderRadius:6,cursor:"pointer",padding:0}}, "+")
+                  , React.createElement('button', {onClick:function(){doOperator("−");}, style:{flexShrink:0,width:34,height:32,fontSize:18,fontWeight:700,background:"rgba(0,212,255,0.12)",border:"1px solid rgba(0,212,255,0.3)",color:C.accent,borderRadius:6,cursor:"pointer",padding:0}}, "−")
+                  , React.createElement('button', {onClick:function(){doOperator("×");}, style:{flexShrink:0,width:34,height:32,fontSize:18,fontWeight:700,background:"rgba(0,212,255,0.12)",border:"1px solid rgba(0,212,255,0.3)",color:C.accent,borderRadius:6,cursor:"pointer",padding:0}}, "×")
+                  , React.createElement('button', {onClick:function(){doOperator("÷");}, style:{flexShrink:0,width:34,height:32,fontSize:18,fontWeight:700,background:"rgba(0,212,255,0.12)",border:"1px solid rgba(0,212,255,0.3)",color:C.accent,borderRadius:6,cursor:"pointer",padding:0}}, "÷")
+                  // = button (highlighted)
+                  , React.createElement('button', {onClick:doEquals, style:{flexShrink:0,width:42,height:32,fontSize:18,fontWeight:800,background:"linear-gradient(135deg,#00D4FF,#0055FF)",border:"none",color:"#fff",borderRadius:6,cursor:"pointer",padding:0}}, "=")
+                ) :
+
+                // ============ FULL MODE: original block layout ============
+                React.createElement(React.Fragment, null
                 // Display
-                , React.createElement('div', {style:{background:C.bg3,border:"1px solid "+C.border,borderRadius:RADIUS.md,padding:barMode?"6px 10px":"14px 14px 10px",marginBottom:barMode?0:10,minHeight:barMode?40:60,display:"flex",flexDirection:"column",justifyContent:"flex-end",boxShadow:SHADOW.sm,position:"relative",flex:barMode?"1 1 auto":"none",minWidth:barMode?100:"auto"}}
+                , React.createElement('div', {style:{background:C.bg3,border:"1px solid "+C.border,borderRadius:RADIUS.md,padding:"14px 14px 10px",marginBottom:10,minHeight:60,display:"flex",flexDirection:"column",justifyContent:"flex-end",boxShadow:SHADOW.sm,position:"relative"}}
                   // Memory indicator (top-left of display)
                   , (calcState.memory && calcState.memory !== 0) ? React.createElement('div', {style:{position:"absolute",top:6,left:10,fontSize:10,color:C.gold,fontWeight:700,letterSpacing:0.5,fontVariantNumeric:"tabular-nums"}}, "M ", calcState.memory.toFixed(2)) : null
                   , (calcState.prevValue!==null && calcState.operator) ? React.createElement('div', {style:{fontSize:12,color:C.text3,textAlign:"right",marginBottom:4,fontVariantNumeric:"tabular-nums"}}, calcState.prevValue+" "+calcState.operator) : null
@@ -7573,41 +7731,35 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                   )
                 )
                 // BAR MODE: condensed horizontal button strip (M+ / M- / +/- / = inline next to display)
-                , barMode ? React.createElement('div', {style:{display:"flex",gap:4,alignItems:"stretch",flexShrink:0}}
-                  , btn("M+", doMemPlus, {background:"rgba(0,230,118,0.12)",color:C.success,fontSize:11,padding:"0 8px",fontWeight:700,border:"1px solid rgba(0,230,118,0.3)",borderRadius:6,minWidth:32})
-                  , btn("M−", doMemMinus, {background:"rgba(255,82,82,0.12)",color:C.danger,fontSize:11,padding:"0 8px",fontWeight:700,border:"1px solid rgba(255,82,82,0.25)",borderRadius:6,minWidth:32})
-                  , (calcState.memory && calcState.memory !== 0) ? btn("MR", doMemRecall, {background:"rgba(255,215,0,0.15)",color:C.gold,fontSize:11,padding:"0 8px",fontWeight:700,border:"1px solid rgba(255,215,0,0.4)",borderRadius:6,minWidth:32}) : null
-                  , btn("AC", doClear, {background:C.bg4,color:C.text2,fontSize:12,padding:"0 10px",fontWeight:700,borderRadius:6,minWidth:36})
-                  , btn("=", doEquals, Object.assign({},equalStyle,{fontSize:16,padding:"0 14px",borderRadius:6,minWidth:46}))
-                ) : null
                 // Memory buttons row — hidden in ultraCompact, only essentials in compact
-                , (isFloat && (ultraCompact || barMode)) ? null : React.createElement('div', {style:{display:"grid",gridTemplateColumns: (isFloat && compact) ? "1fr 1fr 1fr" : "1fr 1fr 1fr 1fr 1fr",gap:5,marginBottom:6}}
+                , (isFloat && ultraCompact) ? null : React.createElement('div', {style:{display:"grid",gridTemplateColumns: (isFloat && compact) ? "1fr 1fr 1fr" : "1fr 1fr 1fr 1fr 1fr",gap:5,marginBottom:6}}
                   , (isFloat && compact) ? null : btn("MC", doMemClear, {background:C.bg4,color:C.text3,fontSize:memFont,padding:memPad+"px 0",fontWeight:700,borderRadius:8})
                   , btn("MR", doMemRecall, {background:(calcState.memory&&calcState.memory!==0)?"rgba(255,215,0,0.1)":C.bg4,color:(calcState.memory&&calcState.memory!==0)?C.gold:C.text3,fontSize:memFont,padding:memPad+"px 0",fontWeight:700,border:"1px solid "+((calcState.memory&&calcState.memory!==0)?"rgba(255,215,0,0.3)":C.border),borderRadius:8})
                   , (isFloat && compact) ? null : btn("MS", doMemStore, {background:C.bg4,color:C.text3,fontSize:memFont,padding:memPad+"px 0",fontWeight:700,borderRadius:8})
                   , btn("M+", doMemPlus, {background:"rgba(0,230,118,0.08)",color:C.success,fontSize:memFont,padding:memPad+"px 0",fontWeight:700,border:"1px solid rgba(0,230,118,0.25)",borderRadius:8})
                   , btn("M−", doMemMinus, {background:"rgba(255,82,82,0.08)",color:C.danger,fontSize:memFont,padding:memPad+"px 0",fontWeight:700,border:"1px solid rgba(255,82,82,0.25)",borderRadius:8})
                 )
-                // Operator row — always visible (core functionality), hidden in barMode
-                , barMode ? null : React.createElement('div', {style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:6,marginBottom:6}}
+                // Operator row — always visible (core functionality)
+                , React.createElement('div', {style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:6,marginBottom:6}}
                   , btn("÷", function(){doOperator("÷");}, Object.assign({},opStyle,{fontSize:btnFont,padding:btnPad+"px 0",borderRadius:8}))
                   , btn("×", function(){doOperator("×");}, Object.assign({},opStyle,{fontSize:btnFont,padding:btnPad+"px 0",borderRadius:8}))
                   , btn("−", function(){doOperator("−");}, Object.assign({},opStyle,{fontSize:btnFont,padding:btnPad+"px 0",borderRadius:8}))
                   , btn("+", function(){doOperator("+");}, Object.assign({},opStyle,{fontSize:btnFont,padding:btnPad+"px 0",borderRadius:8}))
                 )
-                // Function row — AC + = always; ±/% hidden in ultraCompact, hidden in barMode
-                , barMode ? null : React.createElement('div', {style:{display:"grid",gridTemplateColumns: (isFloat && ultraCompact) ? "1fr 2fr" : "1fr 1fr 1fr 2fr",gap:6}}
+                // Function row — AC + = always; ±/% hidden in ultraCompact
+                , React.createElement('div', {style:{display:"grid",gridTemplateColumns: (isFloat && ultraCompact) ? "1fr 2fr" : "1fr 1fr 1fr 2fr",gap:6}}
                   , btn("AC", doClear, Object.assign({},fnStyle,{fontSize:Math.max(11, Math.round(13*fscale)),padding:btnPad+"px 0",borderRadius:8}))
                   , (isFloat && ultraCompact) ? null : btn("±", doToggleSign, Object.assign({},fnStyle,{fontSize:Math.max(11, Math.round(13*fscale)),padding:btnPad+"px 0",borderRadius:8}))
                   , (isFloat && ultraCompact) ? null : btn("%", doPercent, Object.assign({},fnStyle,{fontSize:Math.max(11, Math.round(13*fscale)),padding:btnPad+"px 0",borderRadius:8}))
                   , btn("=", doEquals, Object.assign({},equalStyle,{fontSize:btnFont,padding:btnPad+"px 0",borderRadius:8}))
                 )
-                // Hint text — hidden in compact / bar mode
-                , (isFloat && (compact || barMode)) ? null : React.createElement('div', {style:{fontSize:10,color:C.text3,marginTop:8,textAlign:"center",lineHeight:1.4}}
+                // Hint text — hidden in compact mode
+                , (isFloat && compact) ? null : React.createElement('div', {style:{fontSize:10,color:C.text3,marginTop:8,textAlign:"center",lineHeight:1.4}}
                   , lang==="en"?
                       "Type · 🎤 voice · Enter = · Esc clear · drag header to move":
                       "打字 · 🎤 语音 · Enter 等于 · Esc 清空 · 拖动顶部移动"
                 )
+                ) // ← end of FULL MODE Fragment
                 // History
                 , (calcState.history && calcState.history.length>0 && !isFloat) ? React.createElement('div', {style:{marginTop:24,padding:"14px 16px",background:C.bg2,border:"1px solid "+C.border,borderRadius:RADIUS.md}}
                   , React.createElement('div', {style:{fontSize:11,color:C.text3,letterSpacing:0.5,textTransform:"uppercase",fontWeight:600,marginBottom:8}}, lang==="en"?"History":"历史记录")
