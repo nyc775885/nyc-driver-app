@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-var APP_VERSION = "v3.11.6";  // ← single source of truth: bump this once per release
+var APP_VERSION = "v3.11.12";  // ← single source of truth: bump this once per release
 console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
@@ -12,7 +12,7 @@ console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-
       window.Sentry.init({
         dsn:window.SENTRY_DSN,
         environment:(location.hostname==="localhost"||location.hostname==="127.0.0.1")?"development":"production",
-        release:"nyc-driver-tracker@1.5.6",
+        release:"nyc-driver-tracker@1.5.12",
         tracesSampleRate:0.1,
         // Don't send events from local dev
         beforeSend:function(event){
@@ -73,8 +73,8 @@ class ErrorBoundary extends React.Component {
     return this.props.children;
   }
 }
-var CATS_ZH={fuel:{label:"燃油费",icon:"⛽",g:"车辆",taxable:true},charging:{label:"充电费",icon:"⚡",g:"车辆",taxable:true},toll:{label:"过桥费(月结)",icon:"🌉",g:"车辆",mo:true,taxable:true},congestion:{label:"拥堵费(月结)",icon:"🏙",g:"车辆",mo:true,taxable:true},parking:{label:"停车费",icon:"🅿",g:"车辆",taxable:true},ticket:{label:"停车罚款",icon:"🎫",g:"车辆",taxable:false},carwash:{label:"洗车费",icon:"🧼",g:"车辆",taxable:true},oil:{label:"换机油",icon:"🛢",g:"车辆",taxable:true},tires:{label:"轮胎",icon:"🔄",g:"车辆",taxable:true},brakes:{label:"刹车",icon:"🔩",g:"车辆",taxable:true},battery:{label:"电池",icon:"🔋",g:"车辆",taxable:true},ac:{label:"冷暖气维修",icon:"❄",g:"车辆",taxable:true},cabinFilter:{label:"空调滤芯",icon:"🌬",g:"车辆",taxable:true},airFilter:{label:"空气滤芯",icon:"💨",g:"车辆",taxable:true},wipers:{label:"雨刮片",icon:"🌂",g:"车辆",taxable:true},washer:{label:"玻璃水",icon:"💧",g:"车辆",taxable:true},maint:{label:"定期保养",icon:"🔧",g:"车辆",taxable:true},repair:{label:"意外维修",icon:"🛠",g:"车辆",taxable:true},insurance:{label:"TLC商业保险",icon:"🛡",g:"车辆",taxable:true},carloan:{label:"车贷月付",icon:"💳",g:"车辆",taxable:true},rentalcar:{label:"周租车费",icon:"🔑",g:"车辆",taxable:true},tlc:{label:"TLC驾照费",icon:"📋",g:"牌照",taxable:true},fhv:{label:"FHV车辆执照费",icon:"🚗",g:"牌照",taxable:true},dmv:{label:"DMV驾照",icon:"📝",g:"牌照",taxable:true},drug:{label:"验毒检查",icon:"🧪",g:"牌照",taxable:true},finger:{label:"指纹背景调查",icon:"👆",g:"牌照",taxable:true},ddcourse:{label:"TLC 24小时培训",icon:"📚",g:"牌照",taxable:true},defensive:{label:"DDC防御驾驶课程",icon:"🎓",g:"牌照",taxable:true},wav:{label:"WAV轮椅车辆培训",icon:"♿",g:"牌照",taxable:true},medical:{label:"体检费用",icon:"🩺",g:"牌照",taxable:true},background:{label:"其他背景调查费",icon:"🔎",g:"牌照",taxable:true},platform:{label:"平台费(月结)",icon:"📱",g:"平台",mo:true,taxable:true},blackcar:{label:"Black Car Fund(月结)",icon:"🖤",g:"平台",mo:true,taxable:true},uberpro:{label:"Uber Pro",icon:"⭐",g:"平台",taxable:true},phonebill:{label:"手机费",icon:"📱",g:"平台",taxable:true},coffee:{label:"现磨咖啡",icon:"☕",g:"其他",taxable:false},tax:{label:"季度预缴税",icon:"🧾",g:"其他",taxable:false},accountant:{label:"会计费用",icon:"🧮",g:"其他",taxable:true},health:{label:"健康保险",icon:"🏥",g:"其他",taxable:true},meals:{label:"工作餐饮",icon:"🍱",g:"其他",taxable:false},other:{label:"其他支出",icon:"💼",g:"其他",taxable:true}};
-var CATS_EN={fuel:{label:"Gas",icon:"⛽",g:"车辆",taxable:true},charging:{label:"Charging",icon:"⚡",g:"车辆",taxable:true},toll:{label:"Toll(mo)",icon:"🌉",g:"车辆",mo:true,taxable:true},congestion:{label:"Congestion(mo)",icon:"🏙",g:"车辆",mo:true,taxable:true},parking:{label:"Parking",icon:"🅿",g:"车辆",taxable:true},ticket:{label:"Parking Fine",icon:"🎫",g:"车辆",taxable:false},carwash:{label:"Car Wash",icon:"🧼",g:"车辆",taxable:true},oil:{label:"Oil Change",icon:"🛢",g:"车辆",taxable:true},tires:{label:"Tires",icon:"🔄",g:"车辆",taxable:true},brakes:{label:"Brakes",icon:"🔩",g:"车辆",taxable:true},battery:{label:"Battery",icon:"🔋",g:"车辆",taxable:true},ac:{label:"A/C Repair",icon:"❄",g:"车辆",taxable:true},cabinFilter:{label:"Cabin Filter",icon:"🌬",g:"车辆",taxable:true},airFilter:{label:"Air Filter",icon:"💨",g:"车辆",taxable:true},wipers:{label:"Wipers",icon:"🌂",g:"车辆",taxable:true},washer:{label:"Washer Fluid",icon:"💧",g:"车辆",taxable:true},maint:{label:"Maintenance",icon:"🔧",g:"车辆",taxable:true},repair:{label:"Repair",icon:"🛠",g:"车辆",taxable:true},insurance:{label:"TLC Insurance",icon:"🛡",g:"车辆",taxable:true},carloan:{label:"Car Loan",icon:"💳",g:"车辆",taxable:true},rentalcar:{label:"Weekly Rental",icon:"🔑",g:"车辆",taxable:true},tlc:{label:"TLC License",icon:"📋",g:"牌照",taxable:true},fhv:{label:"FHV License",icon:"🚗",g:"牌照",taxable:true},dmv:{label:"DMV License",icon:"📝",g:"牌照",taxable:true},drug:{label:"Drug Test",icon:"🧪",g:"牌照",taxable:true},finger:{label:"Fingerprint",icon:"👆",g:"牌照",taxable:true},ddcourse:{label:"TLC Training",icon:"📚",g:"牌照",taxable:true},defensive:{label:"DDC Course",icon:"🎓",g:"牌照",taxable:true},wav:{label:"WAV Training",icon:"♿",g:"牌照",taxable:true},medical:{label:"Medical Exam",icon:"🩺",g:"牌照",taxable:true},background:{label:"Background Check",icon:"🔎",g:"牌照",taxable:true},platform:{label:"Platform Fee(mo)",icon:"📱",g:"平台",mo:true,taxable:true},blackcar:{label:"Black Car Fund(mo)",icon:"🖤",g:"平台",mo:true,taxable:true},uberpro:{label:"Uber Pro",icon:"⭐",g:"平台",taxable:true},phonebill:{label:"Phone Bill",icon:"📱",g:"平台",taxable:true},coffee:{label:"Fresh Coffee",icon:"☕",g:"其他",taxable:false},tax:{label:"Quarterly Tax",icon:"🧾",g:"其他",taxable:false},accountant:{label:"Accountant",icon:"🧮",g:"其他",taxable:true},health:{label:"Health Insurance",icon:"🏥",g:"其他",taxable:true},meals:{label:"Meals",icon:"🍱",g:"其他",taxable:false},other:{label:"Other",icon:"💼",g:"其他",taxable:true}};
+var CATS_ZH={fuel:{label:"燃油费",icon:"⛽",g:"车辆",taxable:true},charging:{label:"充电费",icon:"⚡",g:"车辆",taxable:true},toll:{label:"过桥费(月结)",icon:"🌉",g:"车辆",mo:true,taxable:true},congestion:{label:"拥堵费(月结)",icon:"🏙",g:"车辆",mo:true,taxable:true},parking:{label:"停车费",icon:"🅿",g:"车辆",taxable:true},ticket:{label:"停车罚款",icon:"🎫",g:"车辆",taxable:false},carwash:{label:"洗车费",icon:"🧼",g:"车辆",taxable:true},oil:{label:"换机油",icon:"🛢",g:"车辆",taxable:true},tires:{label:"轮胎",icon:"🔄",g:"车辆",taxable:true},brakes:{label:"刹车",icon:"🔩",g:"车辆",taxable:true},battery:{label:"电池",icon:"🔋",g:"车辆",taxable:true},ac:{label:"冷暖气维修",icon:"❄",g:"车辆",taxable:true},cabinFilter:{label:"空调滤芯",icon:"🌬",g:"车辆",taxable:true},airFilter:{label:"空气滤芯",icon:"💨",g:"车辆",taxable:true},wipers:{label:"雨刮片",icon:"🌂",g:"车辆",taxable:true},washer:{label:"玻璃水",icon:"💧",g:"车辆",taxable:true},maint:{label:"定期保养",icon:"🔧",g:"车辆",taxable:true},repair:{label:"意外维修",icon:"🛠",g:"车辆",taxable:true},insurance:{label:"TLC商业保险",icon:"🛡",g:"车辆",taxable:true},carloan:{label:"车贷月付",icon:"💳",g:"车辆",taxable:true},rentalcar:{label:"周租车费",icon:"🔑",g:"车辆",taxable:true},tlc:{label:"TLC驾照费",icon:"📋",g:"牌照",taxable:true},fhv:{label:"FHV车辆执照费",icon:"🚗",g:"牌照",taxable:true},dmv:{label:"DMV驾照",icon:"📝",g:"牌照",taxable:true},drug:{label:"验毒检查",icon:"🧪",g:"牌照",taxable:true},finger:{label:"指纹背景调查",icon:"👆",g:"牌照",taxable:true},ddcourse:{label:"TLC 24小时培训",icon:"📚",g:"牌照",taxable:true},defensive:{label:"DDC防御驾驶课程",icon:"🎓",g:"牌照",taxable:true},wav:{label:"WAV轮椅车辆培训",icon:"♿",g:"牌照",taxable:true},medical:{label:"体检费用",icon:"🩺",g:"牌照",taxable:true},background:{label:"其他背景调查费",icon:"🔎",g:"牌照",taxable:true},platform:{label:"被平台收取的费用(仅记录)",icon:"📋",g:"平台",mo:true,taxable:true,refOnly:true},blackcar:{label:"Black Car Fund(月结)",icon:"🖤",g:"平台",mo:true,taxable:true},uberpro:{label:"Uber Pro",icon:"⭐",g:"平台",taxable:true},phonebill:{label:"手机费",icon:"📱",g:"平台",taxable:true},coffee:{label:"现磨咖啡",icon:"☕",g:"其他",taxable:false},tax:{label:"季度预缴税",icon:"🧾",g:"其他",taxable:false},accountant:{label:"会计费用",icon:"🧮",g:"其他",taxable:true},health:{label:"健康保险",icon:"🏥",g:"其他",taxable:true},meals:{label:"工作餐饮",icon:"🍱",g:"其他",taxable:false},other:{label:"其他支出",icon:"💼",g:"其他",taxable:true}};
+var CATS_EN={fuel:{label:"Gas",icon:"⛽",g:"车辆",taxable:true},charging:{label:"Charging",icon:"⚡",g:"车辆",taxable:true},toll:{label:"Toll(mo)",icon:"🌉",g:"车辆",mo:true,taxable:true},congestion:{label:"Congestion(mo)",icon:"🏙",g:"车辆",mo:true,taxable:true},parking:{label:"Parking",icon:"🅿",g:"车辆",taxable:true},ticket:{label:"Parking Fine",icon:"🎫",g:"车辆",taxable:false},carwash:{label:"Car Wash",icon:"🧼",g:"车辆",taxable:true},oil:{label:"Oil Change",icon:"🛢",g:"车辆",taxable:true},tires:{label:"Tires",icon:"🔄",g:"车辆",taxable:true},brakes:{label:"Brakes",icon:"🔩",g:"车辆",taxable:true},battery:{label:"Battery",icon:"🔋",g:"车辆",taxable:true},ac:{label:"A/C Repair",icon:"❄",g:"车辆",taxable:true},cabinFilter:{label:"Cabin Filter",icon:"🌬",g:"车辆",taxable:true},airFilter:{label:"Air Filter",icon:"💨",g:"车辆",taxable:true},wipers:{label:"Wipers",icon:"🌂",g:"车辆",taxable:true},washer:{label:"Washer Fluid",icon:"💧",g:"车辆",taxable:true},maint:{label:"Maintenance",icon:"🔧",g:"车辆",taxable:true},repair:{label:"Repair",icon:"🛠",g:"车辆",taxable:true},insurance:{label:"TLC Insurance",icon:"🛡",g:"车辆",taxable:true},carloan:{label:"Car Loan",icon:"💳",g:"车辆",taxable:true},rentalcar:{label:"Weekly Rental",icon:"🔑",g:"车辆",taxable:true},tlc:{label:"TLC License",icon:"📋",g:"牌照",taxable:true},fhv:{label:"FHV License",icon:"🚗",g:"牌照",taxable:true},dmv:{label:"DMV License",icon:"📝",g:"牌照",taxable:true},drug:{label:"Drug Test",icon:"🧪",g:"牌照",taxable:true},finger:{label:"Fingerprint",icon:"👆",g:"牌照",taxable:true},ddcourse:{label:"TLC Training",icon:"📚",g:"牌照",taxable:true},defensive:{label:"DDC Course",icon:"🎓",g:"牌照",taxable:true},wav:{label:"WAV Training",icon:"♿",g:"牌照",taxable:true},medical:{label:"Medical Exam",icon:"🩺",g:"牌照",taxable:true},background:{label:"Background Check",icon:"🔎",g:"牌照",taxable:true},platform:{label:"Platform Fees Charged(ref only)",icon:"📋",g:"平台",mo:true,taxable:true,refOnly:true},blackcar:{label:"Black Car Fund(mo)",icon:"🖤",g:"平台",mo:true,taxable:true},uberpro:{label:"Uber Pro",icon:"⭐",g:"平台",taxable:true},phonebill:{label:"Phone Bill",icon:"📱",g:"平台",taxable:true},coffee:{label:"Fresh Coffee",icon:"☕",g:"其他",taxable:false},tax:{label:"Quarterly Tax",icon:"🧾",g:"其他",taxable:false},accountant:{label:"Accountant",icon:"🧮",g:"其他",taxable:true},health:{label:"Health Insurance",icon:"🏥",g:"其他",taxable:true},meals:{label:"Meals",icon:"🍱",g:"其他",taxable:false},other:{label:"Other",icon:"💼",g:"其他",taxable:true}};
 var PLATS=["Uber","Lyft","Via","Uber Black","Lyft Lux","其他"];
 var GROUPS=["车辆","牌照","平台","其他","自定义"];
 var TABS=["仪表盘","收入","支出","报告"];
@@ -1166,7 +1166,9 @@ function BucketList(p){
   items.forEach(function(x){var g=catGrp(x.category,aC);B[g]?B[g].items.push(x):B["其他"].items.push(x);});
   return React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 49}}, ["车辆","牌照","平台","其他"].map(function(bk){
     var bkt=B[bk];if(!bkt.items.length)return null;
-    var bT=bkt.items.reduce(function(s,e){return s+(+e.amount||0);},0);
+    // Bucket subtotal excludes ref-only categories (they're shown for reference, not counted)
+    var bT=bkt.items.reduce(function(s,e){var c=aC[e.category];if(c&&c.refOnly)return s;return s+(+e.amount||0);},0);
+    var bRefT=bkt.items.reduce(function(s,e){var c=aC[e.category];if(c&&c.refOnly)return s+(+e.amount||0);return s;},0);
     var bcl=bkt.color;
     // Group items by category within this bucket
     var byCat={};
@@ -1189,17 +1191,19 @@ function BucketList(p){
         var cat=byCat[ck];
         var groupKey=bk+"|"+ck;
         var isExp=__bucketExpanded[groupKey]===true;  // default collapsed — must be explicitly opened
+        var catDef = aC[cat.items[0] && cat.items[0].category];
+        var isRefOnly = catDef && catDef.refOnly;
         return React.createElement('div', { key: ck, style: {marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 49}}
-          , React.createElement('button', { onClick: function(){toggle(groupKey);}, style: {width:"100%",background:C.bg2,border:"1px solid "+C.border,borderRadius:10,padding:"10px 14px",display:"flex",justifyContent:"space-between",alignItems:"center",cursor:"pointer",marginBottom:isExp?8:0}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 49}}
+          , React.createElement('button', { onClick: function(){toggle(groupKey);}, style: {width:"100%",background:isRefOnly?"rgba(255,215,0,0.04)":C.bg2,border:"1px solid "+(isRefOnly?"rgba(255,215,0,0.2)":C.border),borderRadius:10,padding:"10px 14px",display:"flex",justifyContent:"space-between",alignItems:"center",cursor:"pointer",marginBottom:isExp?8:0}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 49}}
             , React.createElement('div', { style: {display:"flex",alignItems:"center",gap:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 49}}
               , React.createElement('span', { style: {fontSize:18}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 49}}, cat.icon)
               , React.createElement('div', { style: {textAlign:"left"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 49}}
-                , React.createElement('div', { style: {fontSize:14,fontWeight:600,color:C.text}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 49}}, cat.label)
-                , React.createElement('div', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 49}}, cat.items.length+" "+(p.lang==="en"?(cat.items.length===1?"entry":"entries"):"笔"))
+                , React.createElement('div', { style: {fontSize:14,fontWeight:600,color:isRefOnly?"#FFD89A":C.text}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 49}}, cat.label)
+                , React.createElement('div', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 49}}, cat.items.length+" "+(p.lang==="en"?(cat.items.length===1?"entry":"entries"):"笔"), isRefOnly ? (p.lang==="en"?" · ref only":" · 仅记录") : "")
               )
             )
             , React.createElement('div', { style: {display:"flex",alignItems:"center",gap:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 49}}
-              , React.createElement('span', { style: {fontSize:14,fontWeight:600,color:C.text}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 49}}, fmt(cat.total))
+              , React.createElement('span', { style: {fontSize:14,fontWeight:600,color:isRefOnly?"#C0A878":C.text}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 49}}, fmt(cat.total))
               , React.createElement('span', { style: {fontSize:13,color:C.text3,minWidth:14}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 49}}, isExp?"▲":"▼")
             )
           )
@@ -1949,6 +1953,8 @@ function App() {
   var r25e=useState(function(){return lsLoad("nyc_favNotes",{});}),favNotes=r25e[0],_setFavNotes=r25e[1];function setFavNotes(v){_setFavNotes(v);try{localStorage.setItem("nyc_favNotes",JSON.stringify(v));}catch(e){}}
   // favStations: {charging:[name1,name2,...], fuel:[name1,name2,...]} — favorited charging/fuel stations
   var r25g=useState(function(){return lsLoad("nyc_favStations",{charging:[],fuel:[]});}),favStations=r25g[0],_setFavStations=r25g[1];function setFavStations(v){_setFavStations(v);try{localStorage.setItem("nyc_favStations",JSON.stringify(v));}catch(e){}}
+  // Calculator state
+  var rCalc=useState({display:"0",prevValue:null,operator:null,waitingForOperand:false,history:[]}),calcState=rCalc[0],setCalcState=rCalc[1];
   // favExpenses: [{id, label, category, amount, notes, icon}] - quick expense templates
   var r25f=useState(function(){return lsLoad("nyc_favExpenses",[]);}),favExpenses=r25f[0],_setFavExpenses=r25f[1];function setFavExpenses(v){_setFavExpenses(v);try{localStorage.setItem("nyc_favExpenses",JSON.stringify(v));}catch(e){}}
   var r25d=useState(function(){return lsLoad("nyc_custLoanTypes",[]);}),custLoanTypes=r25d[0],_setCustLoanTypes=r25d[1];function setCustLoanTypes(v){_setCustLoanTypes(v);try{localStorage.setItem("nyc_custLoanTypes",JSON.stringify(v));}catch(e){}}
@@ -3391,7 +3397,15 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                   , React.createElement('button', {onClick:function(){setSf("quick_fuel");}, style:btnStyle}
                     , React.createElement('div', {style:iconStyle}, fuelIcon)
                     , React.createElement('div', {style:labelStyle}, fuelLabel)
-                    , lastFuel ? React.createElement('div', {style:hintStyle}, lang==="en"?"last ":"上次 ", fmt(+lastFuel.amount)) : null
+                    , lastFuel ? (function(){
+                        // For charging/fuel: show unit price ($/kWh or $/gal) instead of total
+                        if(lastFuel.qty && +lastFuel.qty > 0){
+                          var unitP = (+lastFuel.amount / +lastFuel.qty).toFixed(3);
+                          var unit = isEv ? "kWh" : (lang==="en"?"gal":"加仑");
+                          return React.createElement('div', {style:hintStyle}, "$"+unitP+"/"+unit);
+                        }
+                        return React.createElement('div', {style:hintStyle}, lang==="en"?"last ":"上次 ", fmt(+lastFuel.amount));
+                      }()) : null
                   )
                   , React.createElement('button', {onClick:function(){setSf("quick_coffee");}, style:btnStyle}
                     , React.createElement('div', {style:iconStyle}, "☕")
@@ -6087,23 +6101,24 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
           var titleStr=isEv?(lang==="en"?"⚡ Quick Charge":"⚡ 快速充电"):(lang==="en"?"⛽ Quick Fuel":"⛽ 快速加油");
           var locLabel=isEv?(lang==="en"?"Charging Station":"充电站"):(lang==="en"?"Gas Station":"加油站");
           var locPlaceholder=isEv?(lang==="en"?"e.g. Tesla Supercharger - Bay Parkway":"如 Tesla Supercharger - Bay Parkway"):(lang==="en"?"e.g. Shell, Sunoco":"如 壳牌、Sunoco");
-          // Last entry of this type, used for hints
-          var lastEntry=el.filter(function(e){return e.category===fuelCat;}).sort(function(a,b){return (b.date||"").localeCompare(a.date||"");})[0];
+          // Last 2 entries of this type (for showing recent unit prices)
+          var recentEntries=el.filter(function(e){return e.category===fuelCat;}).sort(function(a,b){return (b.date||"").localeCompare(a.date||"");}).slice(0,2);
+          var lastEntry = recentEntries[0];
           var lastOdo=el.filter(function(e){return e.odometer&&+e.odometer>0;}).sort(function(a,b){var c=(b.date||"").localeCompare(a.date||"");return c!==0?c:(+b.odometer||0)-(+a.odometer||0);})[0];
           var lastOdoVal = lastOdo ? +lastOdo.odometer : 0;
-          // Default date/time to today/now if not set yet
-          if(!quickF.date) quickF.date = today();
-          if(!quickF.time) quickF.time = nowTime();
-          // Unit price calculation (live)
-          var unitPrice = "";
-          if(quickF.amount && quickF.qty && +quickF.qty>0){
-            unitPrice = (+quickF.amount / +quickF.qty).toFixed(3);
+          // Pre-fill date/time and unit price from last entry — actual values, not placeholder
+          if(typeof quickF.date === "undefined") quickF.date = today();
+          if(typeof quickF.time === "undefined") quickF.time = nowTime();
+          if(typeof quickF.unitPrice === "undefined" && lastEntry && lastEntry.qty && +lastEntry.qty>0){
+            quickF.unitPrice = (+lastEntry.amount / +lastEntry.qty).toFixed(3);
           }
-          // Last unit price (for hint)
-          var lastUnitPrice = "";
-          if(lastEntry && lastEntry.qty && +lastEntry.qty>0){
-            lastUnitPrice = (+lastEntry.amount / +lastEntry.qty).toFixed(3);
+          // Calculate amount from unitPrice * qty when both provided
+          var computedAmount = "";
+          if(quickF.unitPrice && quickF.qty && +quickF.unitPrice>0 && +quickF.qty>0){
+            computedAmount = (+quickF.unitPrice * +quickF.qty).toFixed(2);
           }
+          // The displayed amount: user can type freely; if empty, fall back to computed
+          var displayAmount = quickF.amount || computedAmount;
           // Efficiency: if we have last odometer + this odometer + qty
           var efficiency = "";
           if(quickF.odometer && lastOdoVal>0 && +quickF.odometer>lastOdoVal && quickF.qty && +quickF.qty>0){
@@ -6111,34 +6126,51 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
             efficiency = (milesDriven / +quickF.qty).toFixed(2);
           }
           return React.createElement(Modal, {title:titleStr, onClose:function(){setSf(null);setQuickF({});}, onSave:function(){
-            if(!quickF.amount){showToast(lang==="en"?"Enter amount":"请输入金额");return;}
+            // Use displayed amount (typed or auto-computed)
+            var finalAmount = quickF.amount ? +quickF.amount : (computedAmount ? +computedAmount : 0);
+            if(!finalAmount){showToast(lang==="en"?"Enter amount or unit price + qty":"请输入金额，或单价+数量");return;}
             // Build notes: include location prefix + user notes
             var combinedNotes = "";
             if(quickF.location){ combinedNotes = quickF.location; }
             if(quickF.notes){ combinedNotes = combinedNotes ? combinedNotes+" · "+quickF.notes : quickF.notes; }
-            var newEntry={id:Date.now(),date:quickF.date||today(),time:quickF.time||nowTime(),category:fuelCat,amount:+quickF.amount,qty:+quickF.qty||0,odometer:+quickF.odometer||0,notes:combinedNotes,vehicleId:veh.vehicleId};
+            var newEntry={id:Date.now(),date:quickF.date||today(),time:quickF.time||nowTime(),category:fuelCat,amount:finalAmount,qty:+quickF.qty||0,odometer:+quickF.odometer||0,notes:combinedNotes,vehicleId:veh.vehicleId};
             var nel=[newEntry].concat(el);
             setEl(nel);autoSave({el:nel});
             setSf(null);setQuickF({});
             showToast(lang==="en"?"✓ Saved":"✓ 已保存");
           }}
-            // Vehicle type indicator (small hint at top)
-            , React.createElement('div', {style:{fontSize:11,color:C.text3,marginBottom:8,padding:"6px 10px",background:C.bg3,borderRadius:8,lineHeight:1.4}}
-              , isEv ? "⚡ " : "⛽ "
-              , lang==="en"?
-                ("Vehicle type: "+(veh.type==="electric"?"Electric":(veh.type==="hybrid"?"Hybrid":(veh.type==="petrol"?"Petrol":"Auto-detected")))+(isEv?" → charging":" → fuel")):
-                ("车辆类型："+(veh.type==="electric"?"电动":(veh.type==="hybrid"?"混合动力":(veh.type==="petrol"?"燃油":"自动识别")))+(isEv?" → 充电":" → 加油"))
-            )
+            // Recent 2 entries (unit prices) — tap to use
+            , recentEntries.length > 0 ? React.createElement('div', {style:{marginBottom:10,padding:"8px 10px",background:C.bg3,border:"1px solid "+C.border,borderRadius:8}}
+                , React.createElement('div', {style:{fontSize:10,color:C.text3,letterSpacing:0.5,marginBottom:6,textTransform:"uppercase",fontWeight:600}}, lang==="en"?"Recent unit prices · tap to use":"最近单价 · 点击使用")
+                , recentEntries.map(function(e,i){
+                    if(!e.qty || +e.qty<=0) return null;
+                    var up = (+e.amount / +e.qty).toFixed(3);
+                    var dt = e.date || "";
+                    var sel = quickF.unitPrice === up;
+                    return React.createElement('button', {
+                      key:i,
+                      onClick: function(){
+                        setQuickF(Object.assign({},quickF,{unitPrice:up,amount:""}));
+                        showToast(lang==="en"?("✓ Using $"+up+"/"+unitShort):("✓ 使用 $"+up+"/"+unitShort));
+                      },
+                      style: {display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:12,color:C.text2,padding:"6px 8px",margin:"2px -2px",borderRadius:6,cursor:"pointer",background:sel?"rgba(0,212,255,0.08)":"transparent",border:"1px solid "+(sel?"rgba(0,212,255,0.3)":"transparent"),width:"100%",textAlign:"left"}
+                    }
+                      , React.createElement('span', null, dt + (e.notes ? " · " + (e.notes.length>28?e.notes.slice(0,28)+"...":e.notes) : ""))
+                      , React.createElement('b', {style:{color:sel?C.accent:C.text,fontVariantNumeric:"tabular-nums",fontSize:13}}, "$"+up+"/"+unitShort)
+                    );
+                  })
+              ) : null
+            // Unit price field (pre-filled from last entry)
             , React.createElement('div', {style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}
-              , React.createElement(Field, {label:lang==="en"?"Amount ($)":"金额 ($)", type:"number", value:quickF.amount||"", onChange:function(v){setQuickF(Object.assign({},quickF,{amount:v}));}, money:true, placeholder:lastEntry?"last "+(+lastEntry.amount).toFixed(2):"0.00"})
-              , React.createElement(Field, {label:unitLabel, type:"number", value:quickF.qty||"", onChange:function(v){setQuickF(Object.assign({},quickF,{qty:v}));}, placeholder:lastEntry&&lastEntry.qty?"last "+lastEntry.qty:"0"})
+              , React.createElement(Field, {label:lang==="en"?("Unit Price ($/"+unitShort+")"):("单价 ($/"+unitShort+")"), type:"number", value:quickF.unitPrice||"", onChange:function(v){setQuickF(Object.assign({},quickF,{unitPrice:v,amount:""}));}, money:true, placeholder:"0.000"})
+              , React.createElement(Field, {label:unitLabel, type:"number", value:quickF.qty||"", onChange:function(v){setQuickF(Object.assign({},quickF,{qty:v,amount:""}));}, placeholder:lastEntry&&lastEntry.qty?"last "+lastEntry.qty:"0"})
             )
-            // Live unit price + efficiency calc display
-            , (unitPrice || lastUnitPrice) ? React.createElement('div', {style:{fontSize:11,color:C.text3,marginTop:-4,marginBottom:8,padding:"6px 10px",background:C.bg3,borderRadius:6,display:"flex",justifyContent:"space-between",flexWrap:"wrap",gap:8}}
-              , unitPrice ? React.createElement('span', null, lang==="en"?"Unit price: ":"单价：", React.createElement('b',{style:{color:C.accent}}, "$"+unitPrice+"/"+unitShort)) : null
-              , (lastUnitPrice && !unitPrice) ? React.createElement('span', {style:{color:C.text3}}, lang==="en"?"Last unit: ":"上次单价：", "$"+lastUnitPrice+"/"+unitShort) : null
-              , efficiency ? React.createElement('span', null, lang==="en"?"Efficiency: ":"效率：", React.createElement('b',{style:{color:C.success}}, efficiency+" mi/"+unitShort)) : null
-            ) : null
+            // Total amount (auto-computed but editable)
+            , React.createElement(Field, {label:lang==="en"?("Total ($) — auto: $"+(computedAmount||"0.00")):("总金额 ($) — 自动算: $"+(computedAmount||"0.00")), type:"number", value:displayAmount, onChange:function(v){setQuickF(Object.assign({},quickF,{amount:v}));}, money:true, placeholder:"0.00"})
+            // Efficiency calc display
+            , efficiency ? React.createElement('div', {style:{fontSize:11,color:C.success,marginTop:-4,marginBottom:8,padding:"6px 10px",background:"rgba(0,230,118,0.05)",borderRadius:6,fontWeight:600}}
+                , lang==="en"?"⚡ Efficiency: ":"⚡ 效率：", React.createElement('b', null, efficiency+" mi/"+unitShort)
+              ) : null
             , React.createElement(Field, {label:lang==="en"?"Odometer (mi) — optional":"当前里程 (mi) — 选填", type:"number", value:quickF.odometer||"", onChange:function(v){setQuickF(Object.assign({},quickF,{odometer:v}));}, placeholder:lastOdoVal>0?"last "+lastOdoVal.toLocaleString():"0"})
             // Charging/fuel station with favorites
             , (function(){
@@ -6201,9 +6233,13 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
         }()) : null
 
       , sf==="quick_coffee" ? (function(){
-          var lastEntry=el.filter(function(e){return e.category==="coffee";}).sort(function(a,b){return (b.date||"").localeCompare(a.date||"");})[0];
-          if(!quickF.date) quickF.date = today();
-          if(!quickF.time) quickF.time = nowTime();
+          var recentEntries=el.filter(function(e){return e.category==="coffee";}).sort(function(a,b){return (b.date||"").localeCompare(a.date||"");}).slice(0,2);
+          var lastEntry = recentEntries[0];
+          if(typeof quickF.date === "undefined") quickF.date = today();
+          if(typeof quickF.time === "undefined") quickF.time = nowTime();
+          if(typeof quickF.amount === "undefined" && lastEntry){
+            quickF.amount = (+lastEntry.amount).toFixed(2);
+          }
           return React.createElement(Modal, {title:lang==="en"?"☕ Quick Coffee":"☕ 快速咖啡", onClose:function(){setSf(null);setQuickF({});}, onSave:function(){
             if(!quickF.amount){showToast(lang==="en"?"Enter amount":"请输入金额");return;}
             var newEntry={id:Date.now(),date:quickF.date||today(),time:quickF.time||nowTime(),category:"coffee",amount:+quickF.amount,notes:quickF.notes||"",vehicleId:veh.vehicleId};
@@ -6212,7 +6248,27 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
             setSf(null);setQuickF({});
             showToast(lang==="en"?"✓ Saved":"✓ 已保存");
           }}
-            , React.createElement(Field, {label:lang==="en"?"Amount ($)":"金额 ($)", type:"number", value:quickF.amount||"", onChange:function(v){setQuickF(Object.assign({},quickF,{amount:v}));}, money:true, placeholder:lastEntry?"last "+(+lastEntry.amount).toFixed(2):"0.00"})
+            // Recent 2 entries (amounts) — tap to use
+            , recentEntries.length > 0 ? React.createElement('div', {style:{marginBottom:10,padding:"8px 10px",background:C.bg3,border:"1px solid "+C.border,borderRadius:8}}
+                , React.createElement('div', {style:{fontSize:10,color:C.text3,letterSpacing:0.5,marginBottom:6,textTransform:"uppercase",fontWeight:600}}, lang==="en"?"Recent amounts · tap to use":"最近金额 · 点击使用")
+                , recentEntries.map(function(e,i){
+                    var dt = e.date || "";
+                    var amt = (+e.amount).toFixed(2);
+                    var sel = quickF.amount === amt;
+                    return React.createElement('button', {
+                      key:i,
+                      onClick: function(){
+                        setQuickF(Object.assign({},quickF,{amount:amt}));
+                        showToast(lang==="en"?("✓ Using $"+amt):("✓ 使用 $"+amt));
+                      },
+                      style: {display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:12,color:C.text2,padding:"6px 8px",margin:"2px -2px",borderRadius:6,cursor:"pointer",background:sel?"rgba(0,212,255,0.08)":"transparent",border:"1px solid "+(sel?"rgba(0,212,255,0.3)":"transparent"),width:"100%",textAlign:"left"}
+                    }
+                      , React.createElement('span', null, dt + (e.notes ? " · " + (e.notes.length>28?e.notes.slice(0,28)+"...":e.notes) : ""))
+                      , React.createElement('b', {style:{color:sel?C.accent:C.text,fontVariantNumeric:"tabular-nums",fontSize:13}}, "$"+amt)
+                    );
+                  })
+              ) : null
+            , React.createElement(Field, {label:lang==="en"?"Amount ($)":"金额 ($)", type:"number", value:quickF.amount||"", onChange:function(v){setQuickF(Object.assign({},quickF,{amount:v}));}, money:true, placeholder:"0.00"})
             , React.createElement('div', {style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}
               , React.createElement(Field, {label:T.date, type:"date", value:quickF.date||today(), onChange:function(v){setQuickF(Object.assign({},quickF,{date:v}));}})
               , React.createElement(Field, {label:T.time, type:"time", value:quickF.time||nowTime(), onChange:function(v){setQuickF(Object.assign({},quickF,{time:v}));}})
@@ -6223,12 +6279,16 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
 
       , sf==="quick_tip" ? (function(){
           // Cash tip from passenger — adds to a daily log (today by default)
-          var lastTip=dl.filter(function(d){return +d.tips>0;}).sort(function(a,b){return (b.date||"").localeCompare(a.date||"");})[0];
-          // Last platform used for cash tips (default Uber)
+          // Recent 2 cash tips
+          var recentTips=dl.filter(function(d){return +d.tips>0;}).sort(function(a,b){return (b.date||"").localeCompare(a.date||"");}).slice(0,2);
+          var lastTip = recentTips[0];
           var lastPlat = lastTip && lastTip.tipPlatform ? lastTip.tipPlatform : "Uber";
-          if(!quickF.platform) quickF.platform = lastPlat;
-          if(!quickF.date) quickF.date = today();
-          if(!quickF.time) quickF.time = nowTime();
+          if(typeof quickF.platform === "undefined") quickF.platform = lastPlat;
+          if(typeof quickF.date === "undefined") quickF.date = today();
+          if(typeof quickF.time === "undefined") quickF.time = nowTime();
+          if(typeof quickF.amount === "undefined" && lastTip){
+            quickF.amount = (+lastTip.tips).toFixed(2);
+          }
           // Look for daily log on the chosen date (live, updates as user changes date)
           var targetDate = quickF.date || today();
           var targetDl = dl.find(function(d){return d.date===targetDate;});
@@ -6265,11 +6325,32 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
             }
             setSf(null);setQuickF({});
           }}
+            // Recent 2 tips · tap to use
+            , recentTips.length > 0 ? React.createElement('div', {style:{marginBottom:8,padding:"8px 10px",background:C.bg3,border:"1px solid "+C.border,borderRadius:8}}
+                , React.createElement('div', {style:{fontSize:10,color:C.text3,letterSpacing:0.5,marginBottom:6,textTransform:"uppercase",fontWeight:600}}, lang==="en"?"Recent tips · tap to use":"最近小费 · 点击使用")
+                , recentTips.map(function(d,i){
+                    var dt = d.date || "";
+                    var plat2 = d.tipPlatform || "";
+                    var amt = (+d.tips).toFixed(2);
+                    var sel = quickF.amount === amt;
+                    return React.createElement('button', {
+                      key:i,
+                      onClick: function(){
+                        setQuickF(Object.assign({},quickF,{amount:amt,platform:plat2||quickF.platform}));
+                        showToast(lang==="en"?("✓ Using $"+amt):("✓ 使用 $"+amt));
+                      },
+                      style: {display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:12,color:C.text2,padding:"6px 8px",margin:"2px -2px",borderRadius:6,cursor:"pointer",background:sel?"rgba(0,212,255,0.08)":"transparent",border:"1px solid "+(sel?"rgba(0,212,255,0.3)":"transparent"),width:"100%",textAlign:"left"}
+                    }
+                      , React.createElement('span', null, dt + (plat2 ? " · "+plat2 : ""))
+                      , React.createElement('b', {style:{color:sel?C.accent:C.gold,fontVariantNumeric:"tabular-nums",fontSize:13}}, "$"+amt)
+                    );
+                  })
+              ) : null
             , React.createElement('div', {style:{fontSize:11,color:C.text3,marginBottom:8,padding:"8px 10px",background:C.bg3,borderRadius:8,lineHeight:1.5}}
               , targetDl ? (lang==="en"?("➕ Adds to "+targetDate+" daily log"):("➕ 加入 "+targetDate+" 的日记账小费")) : (lang==="en"?("📝 Creates "+targetDate+" daily log"):("📝 新建 "+targetDate+" 日记账"))
               , React.createElement('div', {style:{fontSize:10,color:C.text3,marginTop:3}}, lang==="en"?"Cash tips count toward income (separate from in-app tips)":"现金小费算收入（与平台 app 内小费分开）")
             )
-            , React.createElement(Field, {label:lang==="en"?"Tip Amount ($)":"小费金额 ($)", type:"number", value:quickF.amount||"", onChange:function(v){setQuickF(Object.assign({},quickF,{amount:v}));}, money:true, placeholder:lastTip?"last "+(+lastTip.tips).toFixed(2):"0.00"})
+            , React.createElement(Field, {label:lang==="en"?"Tip Amount ($)":"小费金额 ($)", type:"number", value:quickF.amount||"", onChange:function(v){setQuickF(Object.assign({},quickF,{amount:v}));}, money:true, placeholder:"0.00"})
             , React.createElement('div', {style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}
               , React.createElement(Field, {label:T.date, type:"date", value:quickF.date||today(), onChange:function(v){setQuickF(Object.assign({},quickF,{date:v}));}})
               , React.createElement(Field, {label:T.time, type:"time", value:quickF.time||nowTime(), onChange:function(v){setQuickF(Object.assign({},quickF,{time:v}));}})
@@ -6534,6 +6615,12 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
             )
           )
           , (function(){var c=allC[ef.category],isMo=c&&c.mo;var isPlatformCat=c&&c.g==="平台";if(isMo){return React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 539}}, React.createElement('div', { style: {background:"#0A1428",border:"1px solid #1A3060",borderRadius:10,padding:"10px 13px",fontSize:14,color:C.text2,marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 539}}, lang==="en"?"Monthly billing item":"月结项目"), React.createElement(Field, { label: lang==="en"?"Billing Month":"账单月份", type: "month", value: ef.statementMonth, onChange: function(v){setEf(Object.assign({},ef,{statementMonth:v}));}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 539}} ), isPlatformCat ? React.createElement(Field, { label: T.platform_lbl, value: ef.platform||"", onChange: function(v){if(v==="__new__"){inputAction({title:lang==="en"?"New platform name":"新平台名称",placeholder:lang==="en"?"e.g. Curb, Via":"如 Curb, Via",onSubmit:function(n){if(n&&n.trim()){var nm=n.trim();if(allPlat.indexOf(nm)<0)setCustPlat(custPlat.concat([nm]));setEf(Object.assign({},ef,{platform:nm}));}}});return;}setEf(Object.assign({},ef,{platform:v}));}, options: [["",T.pleaseSelect]].concat(allPlat.map(function(p){return [p, p==="其他"&&lang==="en"?"Other":p];})).concat([["__new__",lang==="en"?"+ Add new platform...":"+ 添加新平台..."]]) }) : null);}var todayStr=today();var ydayDate=new Date();ydayDate.setDate(ydayDate.getDate()-1);var ydayStr=ydayDate.getFullYear()+"-"+p2(ydayDate.getMonth()+1)+"-"+p2(ydayDate.getDate());var dbyDate=new Date();dbyDate.setDate(dbyDate.getDate()-2);var dbyStr=dbyDate.getFullYear()+"-"+p2(dbyDate.getMonth()+1)+"-"+p2(dbyDate.getDate());var quickBtn=function(label,onClick,active){return React.createElement('button',{onClick:onClick,style:{flex:1,background:active?C.bg3:C.bg3,border:"1px solid "+(active?C.accent:"#2A3A54"),borderRadius:6,padding:"4px 6px",color:active?C.accent:C.text2,fontSize:12,fontWeight:active?700:500,cursor:"pointer"}},label);};return React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 539}}, React.createElement('div',{style:{display:"flex",gap:5,marginBottom:5}},quickBtn(lang==="en"?"Today":"今天",function(){setEf(Object.assign({},ef,{date:todayStr,time:nowTime()}));},ef.date===todayStr),quickBtn(lang==="en"?"Yesterday":"昨天",function(){setEf(Object.assign({},ef,{date:ydayStr}));},ef.date===ydayStr),quickBtn(lang==="en"?"2 days ago":"前天",function(){setEf(Object.assign({},ef,{date:dbyStr}));},ef.date===dbyStr),quickBtn(lang==="en"?"Now":"现在",function(){setEf(Object.assign({},ef,{time:nowTime()}));})), React.createElement('div', {style:{display:"grid",gridTemplateColumns:"3fr 2fr",gap:6}}, React.createElement('input', { type: "date", value: ef.date, onChange: function(e){setEf(Object.assign({},ef,{date:e.target.value}));}, onClick: function(e){try{if(e.currentTarget.showPicker)e.currentTarget.showPicker();}catch(err){}}, style: Object.assign({},IS,{colorScheme:"dark",fontSize:13,padding:"8px",cursor:"pointer"}) } ), React.createElement('input', { type: "time", value: ef.time, onChange: function(e){setEf(Object.assign({},ef,{time:e.target.value}));}, onClick: function(e){try{if(e.currentTarget.showPicker)e.currentTarget.showPicker();}catch(err){}}, style: Object.assign({},IS,{colorScheme:"dark",fontSize:13,padding:"8px",cursor:"pointer"}) } )), isPlatformCat ? React.createElement(Field, { label: T.platform_lbl, value: ef.platform||"", onChange: function(v){if(v==="__new__"){inputAction({title:lang==="en"?"New platform name":"新平台名称",placeholder:lang==="en"?"e.g. Curb, Via":"如 Curb, Via",onSubmit:function(n){if(n&&n.trim()){var nm=n.trim();if(allPlat.indexOf(nm)<0)setCustPlat(custPlat.concat([nm]));setEf(Object.assign({},ef,{platform:nm}));}}});return;}setEf(Object.assign({},ef,{platform:v}));}, options: [["",T.pleaseSelect]].concat(allPlat.map(function(p){return [p, p==="其他"&&lang==="en"?"Other":p];})).concat([["__new__",lang==="en"?"+ Add new platform...":"+ 添加新平台..."]]) }) : null);}())
+          , (function(){var c=allC[ef.category];if(!c||!c.refOnly)return null;return React.createElement('div', {style:{background:"linear-gradient(135deg, rgba(255,215,0,0.08), rgba(40,30,5,0.4))",border:"1px solid rgba(255,215,0,0.3)",borderRadius:RADIUS.md,padding:"10px 12px",marginBottom:10,fontSize:12,lineHeight:1.5,color:"#FFD89A"}}
+            , React.createElement('div', {style:{fontWeight:700,marginBottom:3}}, "📋 ", lang==="en"?"Reference only — not counted in expenses":"仅作记录 · 不计入总支出")
+            , React.createElement('div', {style:{fontSize:11,color:"#C0A878"}}, lang==="en"?
+                "Platform fees (Service Fee, Booking Fee, etc.) are already deducted via your monthly statement. This category lets you log them for your own reference without double-counting.":
+                "平台抽成（Service Fee、Booking Fee 等）已通过月度账单扣除。此类别仅供你自己留档查阅，避免重复计算。")
+          );}())
           // === SMART 3-WAY CALC for fuel/charging ===
           // Fill any 2 of {amount, qty, unitPrice} → 3rd auto-calculates.
           // Track manual edit order in ef._editOrder (last 2 = manual; the other = auto).
@@ -6801,6 +6888,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
             , React.createElement('div', { style: {padding:"10px 0",flex:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 602}}
               , (function(){
                 var mainItems = [
+                  {icon:"🧮",label:lang==="en"?"Calculator":"计算器",action:function(){setShowDrawer(false);setSf("calculator");}},
                   {icon:"📝",label:lang==="en"?"Notes":"记事本",action:function(){setShowDrawer(false);setSf("notes");}},
                   {icon:"🧾",label:lang==="en"?"Tax Center":"税务中心",action:function(){setShowDrawer(false);setSf("tax_center");}},
                   {icon:"&#128190;",label:T.backup,action:function(){setShowDrawer(false);setShowBackup(true);}},
@@ -6903,6 +6991,161 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
           )
         )
       ) : null
+
+      , sf==="calculator" ? (function(){
+          // Inline calculator helpers (defined inside the modal scope to keep state changes simple)
+          var doInputDigit = function(d){
+            if(calcState.waitingForOperand){
+              setCalcState(Object.assign({},calcState,{display:String(d),waitingForOperand:false}));
+            } else {
+              setCalcState(Object.assign({},calcState,{display:calcState.display==="0"?String(d):calcState.display+d}));
+            }
+          };
+          var doInputDot = function(){
+            if(calcState.waitingForOperand){
+              setCalcState(Object.assign({},calcState,{display:"0.",waitingForOperand:false}));
+              return;
+            }
+            if(calcState.display.indexOf(".")===-1){
+              setCalcState(Object.assign({},calcState,{display:calcState.display+"."}));
+            }
+          };
+          var doClear = function(){
+            setCalcState({display:"0",prevValue:null,operator:null,waitingForOperand:false,history:calcState.history||[]});
+          };
+          var doToggleSign = function(){
+            var v = parseFloat(calcState.display);
+            setCalcState(Object.assign({},calcState,{display:String(-v)}));
+          };
+          var doPercent = function(){
+            var v = parseFloat(calcState.display);
+            setCalcState(Object.assign({},calcState,{display:String(v/100)}));
+          };
+          var doBackspace = function(){
+            if(calcState.display.length<=1 || (calcState.display.length===2 && calcState.display.startsWith("-"))){
+              setCalcState(Object.assign({},calcState,{display:"0"}));
+            } else {
+              setCalcState(Object.assign({},calcState,{display:calcState.display.slice(0,-1)}));
+            }
+          };
+          var compute = function(prev, curr, op){
+            switch(op){
+              case "+": return prev+curr;
+              case "−": return prev-curr;
+              case "×": return prev*curr;
+              case "÷": return curr===0 ? 0 : prev/curr;
+              default: return curr;
+            }
+          };
+          var doOperator = function(op){
+            var curr = parseFloat(calcState.display);
+            if(calcState.prevValue===null){
+              setCalcState(Object.assign({},calcState,{prevValue:curr,operator:op,waitingForOperand:true}));
+            } else if(calcState.operator){
+              var result = compute(calcState.prevValue, curr, calcState.operator);
+              var newHist = (calcState.history||[]).slice();
+              newHist.unshift(calcState.prevValue+" "+calcState.operator+" "+curr+" = "+result);
+              if(newHist.length>20) newHist = newHist.slice(0,20);
+              setCalcState({display:String(result),prevValue:result,operator:op,waitingForOperand:true,history:newHist});
+            }
+          };
+          var doEquals = function(){
+            var curr = parseFloat(calcState.display);
+            if(calcState.prevValue!==null && calcState.operator){
+              var result = compute(calcState.prevValue, curr, calcState.operator);
+              var newHist = (calcState.history||[]).slice();
+              newHist.unshift(calcState.prevValue+" "+calcState.operator+" "+curr+" = "+result);
+              if(newHist.length>20) newHist = newHist.slice(0,20);
+              setCalcState({display:String(result),prevValue:null,operator:null,waitingForOperand:true,history:newHist});
+            }
+          };
+          var btn = function(label, onClick, style){
+            return React.createElement('button', {
+              onClick: onClick,
+              style: Object.assign({
+                background: C.bg3,
+                border: "1px solid "+C.border,
+                color: C.text,
+                fontSize: 22,
+                fontWeight: 600,
+                padding: "16px 0",
+                borderRadius: 12,
+                cursor: "pointer",
+                transition: "all 0.1s",
+                fontVariantNumeric: "tabular-nums"
+              }, style||{})
+            }, label);
+          };
+          var opStyle = {background:"linear-gradient(135deg, rgba(0,212,255,0.15), rgba(0,85,255,0.05))",border:"1px solid rgba(0,212,255,0.3)",color:C.accent,fontWeight:700};
+          var fnStyle = {background:C.bg4,color:C.text2,fontSize:18};
+          var equalStyle = {background:"linear-gradient(135deg,#00D4FF,#0055FF)",border:"none",color:"#fff",fontWeight:800,fontSize:24};
+          return React.createElement('div', {style:{position:"fixed",inset:0,background:C.bg,zIndex:300,overflowY:"auto"}}
+            , React.createElement('div', {style:{maxWidth:480,margin:"0 auto",padding:"0 0 80px"}}
+              // Header
+              , React.createElement('div', {style:{background:C.bg2,padding:"16px 18px",borderBottom:"1px solid "+C.border,display:"flex",justifyContent:"space-between",alignItems:"center",position:"sticky",top:0,zIndex:10}}
+                , React.createElement('button', {onClick:function(){setSf(null);}, style:{background:"#1E3050",border:"none",color:"#8ABCD0",fontSize:16,cursor:"pointer",width:34,height:34,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center"}}, "✕")
+                , React.createElement('div', {style:{fontSize:16,fontWeight:800}}, "🧮 ", lang==="en"?"Calculator":"计算器")
+                , React.createElement('button', {onClick:function(){setCalcState({display:"0",prevValue:null,operator:null,waitingForOperand:false,history:[]});showToast(lang==="en"?"✓ History cleared":"✓ 历史已清空");}, style:{background:"none",border:"1px solid "+C.border,color:C.text3,fontSize:11,cursor:"pointer",padding:"6px 10px",borderRadius:8}}, lang==="en"?"Clear":"清空")
+              )
+              , React.createElement('div', {style:{padding:"18px"}}
+                // Display
+                , React.createElement('div', {style:{background:C.bg3,border:"1px solid "+C.border,borderRadius:RADIUS.lg,padding:"24px 20px",marginBottom:14,minHeight:90,display:"flex",flexDirection:"column",justifyContent:"flex-end",boxShadow:SHADOW.sm}}
+                  , (calcState.prevValue!==null && calcState.operator) ? React.createElement('div', {style:{fontSize:14,color:C.text3,textAlign:"right",marginBottom:6,fontVariantNumeric:"tabular-nums"}}, calcState.prevValue+" "+calcState.operator) : null
+                  , React.createElement('div', {style:{fontSize:42,fontWeight:800,color:C.text,textAlign:"right",letterSpacing:-0.5,fontVariantNumeric:"tabular-nums",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}, calcState.display)
+                )
+                // Buttons grid
+                , React.createElement('div', {style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:8}}
+                  , btn("AC", doClear, fnStyle)
+                  , btn("±", doToggleSign, fnStyle)
+                  , btn("%", doPercent, fnStyle)
+                  , btn("÷", function(){doOperator("÷");}, opStyle)
+
+                  , btn("7", function(){doInputDigit(7);})
+                  , btn("8", function(){doInputDigit(8);})
+                  , btn("9", function(){doInputDigit(9);})
+                  , btn("×", function(){doOperator("×");}, opStyle)
+
+                  , btn("4", function(){doInputDigit(4);})
+                  , btn("5", function(){doInputDigit(5);})
+                  , btn("6", function(){doInputDigit(6);})
+                  , btn("−", function(){doOperator("−");}, opStyle)
+
+                  , btn("1", function(){doInputDigit(1);})
+                  , btn("2", function(){doInputDigit(2);})
+                  , btn("3", function(){doInputDigit(3);})
+                  , btn("+", function(){doOperator("+");}, opStyle)
+
+                  , btn("0", function(){doInputDigit(0);}, {gridColumn:"span 2"})
+                  , btn(".", doInputDot)
+                  , btn("=", doEquals, equalStyle)
+                )
+                // Backspace as a small extra row
+                , React.createElement('button', {
+                    onClick: doBackspace,
+                    style: {width:"100%",marginTop:10,background:C.bg4,border:"1px solid "+C.border,color:C.text2,fontSize:14,padding:"10px",borderRadius:10,cursor:"pointer"}
+                  }, "⌫ ", lang==="en"?"Backspace":"退格")
+                // History
+                , (calcState.history && calcState.history.length>0) ? React.createElement('div', {style:{marginTop:24,padding:"14px 16px",background:C.bg2,border:"1px solid "+C.border,borderRadius:RADIUS.md}}
+                  , React.createElement('div', {style:{fontSize:11,color:C.text3,letterSpacing:0.5,textTransform:"uppercase",fontWeight:600,marginBottom:8}}, lang==="en"?"History":"历史记录")
+                  , calcState.history.slice(0,10).map(function(h,i){
+                      return React.createElement('div', {
+                        key:i,
+                        onClick: function(){
+                          // tap to recall result
+                          var parts = h.split(" = ");
+                          if(parts.length===2){
+                            setCalcState(Object.assign({},calcState,{display:parts[1],waitingForOperand:true}));
+                            showToast(lang==="en"?("✓ Recalled "+parts[1]):("✓ 已读取 "+parts[1]));
+                          }
+                        },
+                        style: {fontSize:13,color:C.text2,padding:"6px 0",borderBottom:i<calcState.history.length-1?"1px solid "+C.border:"none",fontVariantNumeric:"tabular-nums",cursor:"pointer"}
+                      }, h);
+                    })
+                ) : null
+              )
+            )
+          );
+        }()) : null
 
       , sf==="notes" ? (
         React.createElement('div', { style: {position:"fixed",inset:0,background:C.bg,zIndex:300,overflowY:"auto"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 622}}
