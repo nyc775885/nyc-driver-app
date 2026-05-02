@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-var APP_VERSION = "v3.10.16";  // ← single source of truth: bump this once per release
+var APP_VERSION = "v3.10.17";  // ← single source of truth: bump this once per release
 console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
@@ -12,7 +12,7 @@ console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-
       window.Sentry.init({
         dsn:window.SENTRY_DSN,
         environment:(location.hostname==="localhost"||location.hostname==="127.0.0.1")?"development":"production",
-        release:"nyc-driver-tracker@1.1.2",
+        release:"nyc-driver-tracker@1.1.3",
         tracesSampleRate:0.1,
         // Don't send events from local dev
         beforeSend:function(event){
@@ -1641,7 +1641,7 @@ function App() {
   function setIncGoal(v){_setIncGoal(v);try{localStorage.setItem("nyc_incGoal",JSON.stringify(v));}catch(e){}} var r52=useState(false),showGoal=r52[0],setShowGoal=r52[1]; var r52b=useState(false),showDP=r52b[0],setShowDP=r52b[1]; var r52c=useState(false),showTP=r52c[0],setShowTP=r52c[1]; var r52d=useState(null),mpState=r52d[0],setMpState=r52d[1]; var r52d2=useState(null),ypState=r52d2[0],setYpState=r52d2[1]; var r52z=useState(false),trendOpen=r52z[0],setTrendOpen=r52z[1]; var r52y=useState(0),_forceCount=r52y[0],_setForceCount=r52y[1]; var forceRerender=function(){_setForceCount(function(x){return x+1;});};
   // Collapsible state for advanced cards (default collapsed)
   var rColl=useState({energy:false,fuelchart:false,pie:false,expDet:false,expRatio:false}),collOpen=rColl[0],setCollOpen=rColl[1];
-  var toggleColl=function(k){setCollOpen(Object.assign({},collOpen,{[k]:!collOpen[k]}));};
+  var toggleColl=function(k){var nv=Object.assign({},collOpen);nv[k]=!collOpen[k];setCollOpen(nv);};
 
   // Last time local data was modified (ISO string). Used by smart sync.
   // Bumped whenever any persisted state changes. Stored in localStorage so it survives reloads.
