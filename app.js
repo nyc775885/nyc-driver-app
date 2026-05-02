@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-var APP_VERSION = "v3.11.25";  // ← single source of truth: bump this once per release
+var APP_VERSION = "v3.11.28";  // ← single source of truth: bump this once per release
 console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
@@ -12,7 +12,7 @@ console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-
       window.Sentry.init({
         dsn:window.SENTRY_DSN,
         environment:(location.hostname==="localhost"||location.hostname==="127.0.0.1")?"development":"production",
-        release:"nyc-driver-tracker@1.5.25",
+        release:"nyc-driver-tracker@1.5.28",
         tracesSampleRate:0.1,
         // Don't send events from local dev
         beforeSend:function(event){
@@ -7286,37 +7286,52 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
           var fx = (calcFloat.x != null) ? calcFloat.x : null;
           var fy = (calcFloat.y != null) ? calcFloat.y : null;
           var fscale = (calcFloat.scale && calcFloat.scale > 0) ? calcFloat.scale : 1;
+          var fopacity = (calcFloat.opacity != null) ? calcFloat.opacity : 0.92;
+          // Convert hex bg to rgba with opacity
+          var floatBg = "rgba(10,14,26,"+fopacity+")"; // C.bg = #0A0E1A
+          // Compactness levels based on scale:
+          // scale > 0.85 = full mode (everything visible)
+          // scale 0.70-0.85 = compact mode (hide MC/MS, smaller fonts)
+          // scale < 0.70 = ultra-compact (hide all M-buttons + ±/%, only digits + ops + =)
+          var compact = fscale < 0.85;
+          var ultraCompact = fscale < 0.70;
+          // Width scales with fscale; min 200, max 380
+          var floatW = Math.max(200, Math.min(380, Math.round(380 * fscale)));
+          // Display number font: scales but with floor of 22px so digits stay readable
+          var dispFont = Math.max(22, Math.round(30 * fscale));
+          var btnFont = Math.max(11, Math.round(18 * fscale));
+          var btnPad = Math.max(6, Math.round(10 * fscale));
+          var memFont = Math.max(9, Math.round(11 * fscale));
+          var memPad = Math.max(4, Math.round(7 * fscale));
           var outerStyle = isFloat ? (
             (fx != null && fy != null) ? {
               position:"fixed",
               top:fy,
               left:fx,
-              width:Math.min(window.innerWidth - 24, 380),
-              background:C.bg,
-              border:"1px solid "+C.accent,
+              width:floatW,
+              background:floatBg,
+              backdropFilter:"blur(12px) saturate(1.4)",
+              WebkitBackdropFilter:"blur(12px) saturate(1.4)",
+              border:"2px solid "+C.accent,
               borderRadius:RADIUS.lg,
-              boxShadow:"0 12px 48px rgba(0,0,0,0.6), 0 0 24px rgba(0,212,255,0.25)",
+              boxShadow:"0 8px 28px rgba(0,0,0,0.85), 0 0 0 1px rgba(0,212,255,0.4), 0 0 32px rgba(0,212,255,0.35)",
               zIndex:550,
               overflow:"hidden",
-              animation:"fadeIn 0.15s",
-              transform: "scale("+fscale+")",
-              transformOrigin: "top left"
+              animation:"fadeIn 0.15s"
             } : {
               position:"fixed",
               bottom:80,
               right:12,
-              left:12,
-              maxWidth:380,
-              margin:"0 auto",
-              background:C.bg,
-              border:"1px solid "+C.accent,
+              width:floatW,
+              background:floatBg,
+              backdropFilter:"blur(12px) saturate(1.4)",
+              WebkitBackdropFilter:"blur(12px) saturate(1.4)",
+              border:"2px solid "+C.accent,
               borderRadius:RADIUS.lg,
-              boxShadow:"0 12px 48px rgba(0,0,0,0.6), 0 0 24px rgba(0,212,255,0.25)",
+              boxShadow:"0 8px 28px rgba(0,0,0,0.85), 0 0 0 1px rgba(0,212,255,0.4), 0 0 32px rgba(0,212,255,0.35)",
               zIndex:550,
               overflow:"hidden",
-              animation:"fadeIn 0.15s",
-              transform: "scale("+fscale+")",
-              transformOrigin: "bottom right"
+              animation:"fadeIn 0.15s"
             }
           ) : {
             position:"fixed",
@@ -7374,6 +7389,43 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
             window.addEventListener("touchmove", onMove, {passive:false});
             window.addEventListener("touchend", onEnd);
           };
+          // Resize handler — drag bottom-right corner to scale calculator
+          var startResize = function(e){
+            if(!isFloat) return;
+            e.preventDefault();
+            e.stopPropagation();
+            var t = e.touches ? e.touches[0] : e;
+            var startX = t.clientX, startY = t.clientY;
+            var origScale = fscale;
+            var moved = false;
+            var lastScale = origScale;
+            var onMove = function(ev){
+              var t2 = ev.touches ? ev.touches[0] : ev;
+              var dx = t2.clientX - startX;
+              var dy = t2.clientY - startY;
+              if(Math.abs(dx) > 3 || Math.abs(dy) > 3) moved = true;
+              // Use larger of dx/dy to scale; every 250px diagonal = 1x
+              var delta = (dx + dy) / 250;
+              var newScale = Math.max(0.55, Math.min(1.5, origScale + delta));
+              newScale = Math.round(newScale * 20) / 20; // snap to 5% steps
+              if(newScale !== lastScale){
+                lastScale = newScale;
+                // Live update via state — re-renders with new sizes
+                setCalcFloat(Object.assign({},calcFloat,{scale: newScale}));
+              }
+              if(ev.cancelable) ev.preventDefault();
+            };
+            var onEnd = function(){
+              window.removeEventListener("mousemove", onMove);
+              window.removeEventListener("mouseup", onEnd);
+              window.removeEventListener("touchmove", onMove);
+              window.removeEventListener("touchend", onEnd);
+            };
+            window.addEventListener("mousemove", onMove);
+            window.addEventListener("mouseup", onEnd);
+            window.addEventListener("touchmove", onMove, {passive:false});
+            window.addEventListener("touchend", onEnd);
+          };
           var innerStyle = isFloat ? {padding:0} : {maxWidth:480,margin:"0 auto",padding:"0 0 80px"};
           return React.createElement('div', {style:outerStyle}
             , React.createElement('div', {style:innerStyle}
@@ -7381,7 +7433,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
               , React.createElement('div', {
                   onMouseDown: isFloat ? startDrag : undefined,
                   onTouchStart: isFloat ? startDrag : undefined,
-                  style: {background:C.bg2,padding:isFloat?"10px 12px":"16px 18px",borderBottom:"1px solid "+C.border,display:"flex",justifyContent:"space-between",alignItems:"center",position:isFloat?"static":"sticky",top:0,zIndex:10,cursor:isFloat?"move":"default",userSelect:"none",WebkitUserSelect:"none",touchAction:isFloat?"none":"auto"}
+                  style: {background:isFloat?"rgba(18,24,38,"+(fopacity*0.85)+")":C.bg2,padding:isFloat?"10px 12px":"16px 18px",borderBottom:"1px solid "+C.border,display:"flex",justifyContent:"space-between",alignItems:"center",position:isFloat?"static":"sticky",top:0,zIndex:10,cursor:isFloat?"move":"default",userSelect:"none",WebkitUserSelect:"none",touchAction:isFloat?"none":"auto"}
                 }
                 , React.createElement('div', {style:{display:"flex",gap:6}}
                   // Close button
@@ -7422,10 +7474,27 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                       style:{background:C.bg3,border:"1px solid "+C.border,color:C.text2,fontSize:14,cursor:"pointer",width:24,height:24,borderRadius:6,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700},
                       title: lang==="en"?"Larger":"放大"
                     }, "+") : null
+                  // Opacity cycler (only when floating) — cycles through 100/75/50/30
+                  , isFloat ? React.createElement('button', {
+                      onClick: function(){
+                        var levels = [0.92, 0.7, 0.45, 0.25];
+                        var cur = calcFloat.opacity != null ? calcFloat.opacity : 0.92;
+                        // Find current index, go to next
+                        var idx = 0;
+                        for(var i=0;i<levels.length;i++){
+                          if(Math.abs(levels[i] - cur) < 0.05){ idx = i; break; }
+                        }
+                        var nxt = levels[(idx+1) % levels.length];
+                        setCalcFloat(Object.assign({},calcFloat,{opacity: nxt}));
+                        showToast(lang==="en"?("Opacity: "+Math.round(nxt*100)+"%"):("透明度："+Math.round(nxt*100)+"%"),"info");
+                      },
+                      style:{background:C.bg3,border:"1px solid "+C.border,color:C.text2,fontSize:12,cursor:"pointer",width:24,height:24,borderRadius:6,display:"flex",alignItems:"center",justifyContent:"center",marginLeft:2},
+                      title: lang==="en"?"Cycle opacity (see through)":"切换透明度（看穿背景）"
+                    }, "👁") : null
                   , React.createElement('button', {onClick:function(){setCalcState({display:"",prevValue:null,operator:null,waitingForOperand:false,history:[],memory:0});showToast(lang==="en"?"✓ All cleared":"✓ 已全部清空");}, style:{background:"none",border:"1px solid "+C.border,color:C.text3,fontSize:11,cursor:"pointer",padding:"5px 9px",borderRadius:8}}, lang==="en"?"Clear":"清空")
                 )
               )
-              , React.createElement('div', {style:{padding:"12px"}}
+              , React.createElement('div', {style:{padding:isFloat?Math.max(6, Math.round(12*fscale))+"px":"12px"}}
                 // Display
                 , React.createElement('div', {style:{background:C.bg3,border:"1px solid "+C.border,borderRadius:RADIUS.md,padding:"14px 14px 10px",marginBottom:10,minHeight:60,display:"flex",flexDirection:"column",justifyContent:"flex-end",boxShadow:SHADOW.sm,position:"relative"}}
                   // Memory indicator (top-left of display)
@@ -7465,7 +7534,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                           if(k === "%"){ e.preventDefault(); doPercent(); return; }
                           if(k === "Escape"){ e.preventDefault(); doClear(); return; }
                         },
-                        style: {flex:1,minWidth:0,fontSize:30,fontWeight:800,color:C.text,textAlign:"right",letterSpacing:-0.3,fontVariantNumeric:"tabular-nums",background:"transparent",border:"none",outline:"none",padding:0,fontFamily:"inherit",WebkitAppearance:"none"}
+                        style: {flex:1,minWidth:0,fontSize:isFloat?dispFont:30,fontWeight:800,color:C.text,textAlign:"right",letterSpacing:-0.3,fontVariantNumeric:"tabular-nums",background:"transparent",border:"none",outline:"none",padding:0,fontFamily:"inherit",WebkitAppearance:"none"}
                       })
                     // Voice input button
                     , React.createElement('button', {
@@ -7489,30 +7558,30 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                       }, "🎤")
                   )
                 )
-                // Memory buttons row
-                , React.createElement('div', {style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr 1fr",gap:5,marginBottom:6}}
-                  , btn("MC", doMemClear, {background:C.bg4,color:C.text3,fontSize:11,padding:"7px 0",fontWeight:700,borderRadius:8})
-                  , btn("MR", doMemRecall, {background:(calcState.memory&&calcState.memory!==0)?"rgba(255,215,0,0.1)":C.bg4,color:(calcState.memory&&calcState.memory!==0)?C.gold:C.text3,fontSize:11,padding:"7px 0",fontWeight:700,border:"1px solid "+((calcState.memory&&calcState.memory!==0)?"rgba(255,215,0,0.3)":C.border),borderRadius:8})
-                  , btn("MS", doMemStore, {background:C.bg4,color:C.text3,fontSize:11,padding:"7px 0",fontWeight:700,borderRadius:8})
-                  , btn("M+", doMemPlus, {background:"rgba(0,230,118,0.08)",color:C.success,fontSize:11,padding:"7px 0",fontWeight:700,border:"1px solid rgba(0,230,118,0.25)",borderRadius:8})
-                  , btn("M−", doMemMinus, {background:"rgba(255,82,82,0.08)",color:C.danger,fontSize:11,padding:"7px 0",fontWeight:700,border:"1px solid rgba(255,82,82,0.25)",borderRadius:8})
+                // Memory buttons row — hidden in ultraCompact, only essentials in compact
+                , (isFloat && ultraCompact) ? null : React.createElement('div', {style:{display:"grid",gridTemplateColumns: (isFloat && compact) ? "1fr 1fr 1fr" : "1fr 1fr 1fr 1fr 1fr",gap:5,marginBottom:6}}
+                  , (isFloat && compact) ? null : btn("MC", doMemClear, {background:C.bg4,color:C.text3,fontSize:memFont,padding:memPad+"px 0",fontWeight:700,borderRadius:8})
+                  , btn("MR", doMemRecall, {background:(calcState.memory&&calcState.memory!==0)?"rgba(255,215,0,0.1)":C.bg4,color:(calcState.memory&&calcState.memory!==0)?C.gold:C.text3,fontSize:memFont,padding:memPad+"px 0",fontWeight:700,border:"1px solid "+((calcState.memory&&calcState.memory!==0)?"rgba(255,215,0,0.3)":C.border),borderRadius:8})
+                  , (isFloat && compact) ? null : btn("MS", doMemStore, {background:C.bg4,color:C.text3,fontSize:memFont,padding:memPad+"px 0",fontWeight:700,borderRadius:8})
+                  , btn("M+", doMemPlus, {background:"rgba(0,230,118,0.08)",color:C.success,fontSize:memFont,padding:memPad+"px 0",fontWeight:700,border:"1px solid rgba(0,230,118,0.25)",borderRadius:8})
+                  , btn("M−", doMemMinus, {background:"rgba(255,82,82,0.08)",color:C.danger,fontSize:memFont,padding:memPad+"px 0",fontWeight:700,border:"1px solid rgba(255,82,82,0.25)",borderRadius:8})
                 )
-                // Operator row
+                // Operator row — always visible (core functionality)
                 , React.createElement('div', {style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:6,marginBottom:6}}
-                  , btn("÷", function(){doOperator("÷");}, Object.assign({},opStyle,{fontSize:18,padding:"10px 0",borderRadius:8}))
-                  , btn("×", function(){doOperator("×");}, Object.assign({},opStyle,{fontSize:18,padding:"10px 0",borderRadius:8}))
-                  , btn("−", function(){doOperator("−");}, Object.assign({},opStyle,{fontSize:18,padding:"10px 0",borderRadius:8}))
-                  , btn("+", function(){doOperator("+");}, Object.assign({},opStyle,{fontSize:18,padding:"10px 0",borderRadius:8}))
+                  , btn("÷", function(){doOperator("÷");}, Object.assign({},opStyle,{fontSize:btnFont,padding:btnPad+"px 0",borderRadius:8}))
+                  , btn("×", function(){doOperator("×");}, Object.assign({},opStyle,{fontSize:btnFont,padding:btnPad+"px 0",borderRadius:8}))
+                  , btn("−", function(){doOperator("−");}, Object.assign({},opStyle,{fontSize:btnFont,padding:btnPad+"px 0",borderRadius:8}))
+                  , btn("+", function(){doOperator("+");}, Object.assign({},opStyle,{fontSize:btnFont,padding:btnPad+"px 0",borderRadius:8}))
                 )
-                // Function row — AC, ±, %, =
-                , React.createElement('div', {style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 2fr",gap:6}}
-                  , btn("AC", doClear, Object.assign({},fnStyle,{fontSize:13,padding:"10px 0",borderRadius:8}))
-                  , btn("±", doToggleSign, Object.assign({},fnStyle,{fontSize:13,padding:"10px 0",borderRadius:8}))
-                  , btn("%", doPercent, Object.assign({},fnStyle,{fontSize:13,padding:"10px 0",borderRadius:8}))
-                  , btn("=", doEquals, Object.assign({},equalStyle,{fontSize:18,padding:"10px 0",borderRadius:8}))
+                // Function row — AC + = always; ±/% hidden in ultraCompact
+                , React.createElement('div', {style:{display:"grid",gridTemplateColumns: (isFloat && ultraCompact) ? "1fr 2fr" : "1fr 1fr 1fr 2fr",gap:6}}
+                  , btn("AC", doClear, Object.assign({},fnStyle,{fontSize:Math.max(11, Math.round(13*fscale)),padding:btnPad+"px 0",borderRadius:8}))
+                  , (isFloat && ultraCompact) ? null : btn("±", doToggleSign, Object.assign({},fnStyle,{fontSize:Math.max(11, Math.round(13*fscale)),padding:btnPad+"px 0",borderRadius:8}))
+                  , (isFloat && ultraCompact) ? null : btn("%", doPercent, Object.assign({},fnStyle,{fontSize:Math.max(11, Math.round(13*fscale)),padding:btnPad+"px 0",borderRadius:8}))
+                  , btn("=", doEquals, Object.assign({},equalStyle,{fontSize:btnFont,padding:btnPad+"px 0",borderRadius:8}))
                 )
-                // Hint text
-                , React.createElement('div', {style:{fontSize:10,color:C.text3,marginTop:8,textAlign:"center",lineHeight:1.4}}
+                // Hint text — hidden in compact mode (saves vertical space)
+                , (isFloat && compact) ? null : React.createElement('div', {style:{fontSize:10,color:C.text3,marginTop:8,textAlign:"center",lineHeight:1.4}}
                   , lang==="en"?
                       "Type · 🎤 voice · Enter = · Esc clear · drag header to move":
                       "打字 · 🎤 语音 · Enter 等于 · Esc 清空 · 拖动顶部移动"
@@ -7536,6 +7605,33 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                     })
                 ) : null
               )
+              // Resize handle — bottom-right corner (only when floating)
+              , isFloat ? React.createElement('div', {
+                  onMouseDown: startResize,
+                  onTouchStart: startResize,
+                  style: {
+                    position:"absolute",
+                    bottom:0,
+                    right:0,
+                    width:22,
+                    height:22,
+                    cursor:"nwse-resize",
+                    display:"flex",
+                    alignItems:"flex-end",
+                    justifyContent:"flex-end",
+                    padding:3,
+                    color:C.accent,
+                    fontSize:11,
+                    fontWeight:800,
+                    userSelect:"none",
+                    WebkitUserSelect:"none",
+                    touchAction:"none",
+                    background:"linear-gradient(135deg, transparent 50%, rgba(0,212,255,0.25) 50%)",
+                    borderBottomRightRadius:RADIUS.lg,
+                    opacity:0.9
+                  },
+                  title: lang==="en"?"Drag to resize":"拖拽改大小"
+                }, "⤡") : null
             )
           );
         }()) : null
