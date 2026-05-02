@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-var APP_VERSION = "v3.11.28";  // ← single source of truth: bump this once per release
+var APP_VERSION = "v3.11.30";  // ← single source of truth: bump this once per release
 console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
@@ -12,7 +12,7 @@ console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-
       window.Sentry.init({
         dsn:window.SENTRY_DSN,
         environment:(location.hostname==="localhost"||location.hostname==="127.0.0.1")?"development":"production",
-        release:"nyc-driver-tracker@1.5.28",
+        release:"nyc-driver-tracker@1.5.30",
         tracesSampleRate:0.1,
         // Don't send events from local dev
         beforeSend:function(event){
@@ -7289,14 +7289,18 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
           var fopacity = (calcFloat.opacity != null) ? calcFloat.opacity : 0.92;
           // Convert hex bg to rgba with opacity
           var floatBg = "rgba(10,14,26,"+fopacity+")"; // C.bg = #0A0E1A
+          // Bar mode: horizontal strip — only display + minimal essential
+          var barMode = !!calcFloat.barMode;
           // Compactness levels based on scale:
           // scale > 0.85 = full mode (everything visible)
           // scale 0.70-0.85 = compact mode (hide MC/MS, smaller fonts)
           // scale < 0.70 = ultra-compact (hide all M-buttons + ±/%, only digits + ops + =)
-          var compact = fscale < 0.85;
-          var ultraCompact = fscale < 0.70;
-          // Width scales with fscale; min 200, max 380
-          var floatW = Math.max(200, Math.min(380, Math.round(380 * fscale)));
+          var compact = fscale < 0.85 || barMode;
+          var ultraCompact = fscale < 0.70 || barMode;
+          // Width scales with fscale; bar mode stretches wider
+          var floatW = barMode
+            ? Math.max(280, Math.min(window.innerWidth - 24, Math.round(420 * fscale)))
+            : Math.max(200, Math.min(380, Math.round(380 * fscale)));
           // Display number font: scales but with floor of 22px so digits stay readable
           var dispFont = Math.max(22, Math.round(30 * fscale));
           var btnFont = Math.max(11, Math.round(18 * fscale));
@@ -7441,9 +7445,10 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                   // Minimize button
                   , React.createElement('button', {onClick:minimize, style:{background:C.bg3,border:"1px solid "+C.border,color:C.text3,fontSize:14,cursor:"pointer",width:isFloat?28:34,height:isFloat?28:34,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center"}, title:lang==="en"?"Minimize to corner":"最小化到角落"}, "−")
                 )
-                , React.createElement('div', {style:{fontSize:isFloat?14:16,fontWeight:800,display:"flex",alignItems:"center",gap:5}}
+                , React.createElement('div', {style:{fontSize:isFloat?14:16,fontWeight:800,display:"flex",alignItems:"center",gap:5,minWidth:0,overflow:"hidden",flexShrink:1}}
                   , isFloat ? React.createElement('span',{style:{fontSize:11,color:C.text3,letterSpacing:1,marginRight:2}},"⋮⋮") : null
-                  , "🧮 ", lang==="en"?"Calculator":"计算器"
+                  , "🧮"
+                  , isFloat ? null : React.createElement('span', {style:{marginLeft:6}}, lang==="en"?"Calculator":"计算器")
                 )
                 , React.createElement('div', {style:{display:"flex",gap:4,alignItems:"center"}}
                   // Zoom out (only when floating)
@@ -7491,12 +7496,21 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                       style:{background:C.bg3,border:"1px solid "+C.border,color:C.text2,fontSize:12,cursor:"pointer",width:24,height:24,borderRadius:6,display:"flex",alignItems:"center",justifyContent:"center",marginLeft:2},
                       title: lang==="en"?"Cycle opacity (see through)":"切换透明度（看穿背景）"
                     }, "👁") : null
+                  // Bar mode toggle — shrink to horizontal strip
+                  , isFloat ? React.createElement('button', {
+                      onClick: function(){
+                        setCalcFloat(Object.assign({},calcFloat,{barMode: !barMode}));
+                        showToast(barMode ? (lang==="en"?"✓ Full mode":"✓ 完整模式") : (lang==="en"?"✓ Bar mode":"✓ 长条模式"),"info");
+                      },
+                      style:{background:barMode?"rgba(0,212,255,0.15)":C.bg3,border:"1px solid "+(barMode?"rgba(0,212,255,0.4)":C.border),color:barMode?C.accent:C.text2,fontSize:12,cursor:"pointer",width:24,height:24,borderRadius:6,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700},
+                      title: lang==="en"?(barMode?"Expand to full":"Shrink to bar"):(barMode?"展开":"长条模式")
+                    }, barMode ? "▢" : "▭") : null
                   , React.createElement('button', {onClick:function(){setCalcState({display:"",prevValue:null,operator:null,waitingForOperand:false,history:[],memory:0});showToast(lang==="en"?"✓ All cleared":"✓ 已全部清空");}, style:{background:"none",border:"1px solid "+C.border,color:C.text3,fontSize:11,cursor:"pointer",padding:"5px 9px",borderRadius:8}}, lang==="en"?"Clear":"清空")
                 )
               )
-              , React.createElement('div', {style:{padding:isFloat?Math.max(6, Math.round(12*fscale))+"px":"12px"}}
+              , React.createElement('div', {style:{padding:barMode?"6px":(isFloat?Math.max(6, Math.round(12*fscale))+"px":"12px"),display:barMode?"flex":"block",alignItems:barMode?"center":"stretch",gap:barMode?6:0}}
                 // Display
-                , React.createElement('div', {style:{background:C.bg3,border:"1px solid "+C.border,borderRadius:RADIUS.md,padding:"14px 14px 10px",marginBottom:10,minHeight:60,display:"flex",flexDirection:"column",justifyContent:"flex-end",boxShadow:SHADOW.sm,position:"relative"}}
+                , React.createElement('div', {style:{background:C.bg3,border:"1px solid "+C.border,borderRadius:RADIUS.md,padding:barMode?"6px 10px":"14px 14px 10px",marginBottom:barMode?0:10,minHeight:barMode?40:60,display:"flex",flexDirection:"column",justifyContent:"flex-end",boxShadow:SHADOW.sm,position:"relative",flex:barMode?"1 1 auto":"none",minWidth:barMode?100:"auto"}}
                   // Memory indicator (top-left of display)
                   , (calcState.memory && calcState.memory !== 0) ? React.createElement('div', {style:{position:"absolute",top:6,left:10,fontSize:10,color:C.gold,fontWeight:700,letterSpacing:0.5,fontVariantNumeric:"tabular-nums"}}, "M ", calcState.memory.toFixed(2)) : null
                   , (calcState.prevValue!==null && calcState.operator) ? React.createElement('div', {style:{fontSize:12,color:C.text3,textAlign:"right",marginBottom:4,fontVariantNumeric:"tabular-nums"}}, calcState.prevValue+" "+calcState.operator) : null
@@ -7558,30 +7572,38 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                       }, "🎤")
                   )
                 )
+                // BAR MODE: condensed horizontal button strip (M+ / M- / +/- / = inline next to display)
+                , barMode ? React.createElement('div', {style:{display:"flex",gap:4,alignItems:"stretch",flexShrink:0}}
+                  , btn("M+", doMemPlus, {background:"rgba(0,230,118,0.12)",color:C.success,fontSize:11,padding:"0 8px",fontWeight:700,border:"1px solid rgba(0,230,118,0.3)",borderRadius:6,minWidth:32})
+                  , btn("M−", doMemMinus, {background:"rgba(255,82,82,0.12)",color:C.danger,fontSize:11,padding:"0 8px",fontWeight:700,border:"1px solid rgba(255,82,82,0.25)",borderRadius:6,minWidth:32})
+                  , (calcState.memory && calcState.memory !== 0) ? btn("MR", doMemRecall, {background:"rgba(255,215,0,0.15)",color:C.gold,fontSize:11,padding:"0 8px",fontWeight:700,border:"1px solid rgba(255,215,0,0.4)",borderRadius:6,minWidth:32}) : null
+                  , btn("AC", doClear, {background:C.bg4,color:C.text2,fontSize:12,padding:"0 10px",fontWeight:700,borderRadius:6,minWidth:36})
+                  , btn("=", doEquals, Object.assign({},equalStyle,{fontSize:16,padding:"0 14px",borderRadius:6,minWidth:46}))
+                ) : null
                 // Memory buttons row — hidden in ultraCompact, only essentials in compact
-                , (isFloat && ultraCompact) ? null : React.createElement('div', {style:{display:"grid",gridTemplateColumns: (isFloat && compact) ? "1fr 1fr 1fr" : "1fr 1fr 1fr 1fr 1fr",gap:5,marginBottom:6}}
+                , (isFloat && (ultraCompact || barMode)) ? null : React.createElement('div', {style:{display:"grid",gridTemplateColumns: (isFloat && compact) ? "1fr 1fr 1fr" : "1fr 1fr 1fr 1fr 1fr",gap:5,marginBottom:6}}
                   , (isFloat && compact) ? null : btn("MC", doMemClear, {background:C.bg4,color:C.text3,fontSize:memFont,padding:memPad+"px 0",fontWeight:700,borderRadius:8})
                   , btn("MR", doMemRecall, {background:(calcState.memory&&calcState.memory!==0)?"rgba(255,215,0,0.1)":C.bg4,color:(calcState.memory&&calcState.memory!==0)?C.gold:C.text3,fontSize:memFont,padding:memPad+"px 0",fontWeight:700,border:"1px solid "+((calcState.memory&&calcState.memory!==0)?"rgba(255,215,0,0.3)":C.border),borderRadius:8})
                   , (isFloat && compact) ? null : btn("MS", doMemStore, {background:C.bg4,color:C.text3,fontSize:memFont,padding:memPad+"px 0",fontWeight:700,borderRadius:8})
                   , btn("M+", doMemPlus, {background:"rgba(0,230,118,0.08)",color:C.success,fontSize:memFont,padding:memPad+"px 0",fontWeight:700,border:"1px solid rgba(0,230,118,0.25)",borderRadius:8})
                   , btn("M−", doMemMinus, {background:"rgba(255,82,82,0.08)",color:C.danger,fontSize:memFont,padding:memPad+"px 0",fontWeight:700,border:"1px solid rgba(255,82,82,0.25)",borderRadius:8})
                 )
-                // Operator row — always visible (core functionality)
-                , React.createElement('div', {style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:6,marginBottom:6}}
+                // Operator row — always visible (core functionality), hidden in barMode
+                , barMode ? null : React.createElement('div', {style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:6,marginBottom:6}}
                   , btn("÷", function(){doOperator("÷");}, Object.assign({},opStyle,{fontSize:btnFont,padding:btnPad+"px 0",borderRadius:8}))
                   , btn("×", function(){doOperator("×");}, Object.assign({},opStyle,{fontSize:btnFont,padding:btnPad+"px 0",borderRadius:8}))
                   , btn("−", function(){doOperator("−");}, Object.assign({},opStyle,{fontSize:btnFont,padding:btnPad+"px 0",borderRadius:8}))
                   , btn("+", function(){doOperator("+");}, Object.assign({},opStyle,{fontSize:btnFont,padding:btnPad+"px 0",borderRadius:8}))
                 )
-                // Function row — AC + = always; ±/% hidden in ultraCompact
-                , React.createElement('div', {style:{display:"grid",gridTemplateColumns: (isFloat && ultraCompact) ? "1fr 2fr" : "1fr 1fr 1fr 2fr",gap:6}}
+                // Function row — AC + = always; ±/% hidden in ultraCompact, hidden in barMode
+                , barMode ? null : React.createElement('div', {style:{display:"grid",gridTemplateColumns: (isFloat && ultraCompact) ? "1fr 2fr" : "1fr 1fr 1fr 2fr",gap:6}}
                   , btn("AC", doClear, Object.assign({},fnStyle,{fontSize:Math.max(11, Math.round(13*fscale)),padding:btnPad+"px 0",borderRadius:8}))
                   , (isFloat && ultraCompact) ? null : btn("±", doToggleSign, Object.assign({},fnStyle,{fontSize:Math.max(11, Math.round(13*fscale)),padding:btnPad+"px 0",borderRadius:8}))
                   , (isFloat && ultraCompact) ? null : btn("%", doPercent, Object.assign({},fnStyle,{fontSize:Math.max(11, Math.round(13*fscale)),padding:btnPad+"px 0",borderRadius:8}))
                   , btn("=", doEquals, Object.assign({},equalStyle,{fontSize:btnFont,padding:btnPad+"px 0",borderRadius:8}))
                 )
-                // Hint text — hidden in compact mode (saves vertical space)
-                , (isFloat && compact) ? null : React.createElement('div', {style:{fontSize:10,color:C.text3,marginTop:8,textAlign:"center",lineHeight:1.4}}
+                // Hint text — hidden in compact / bar mode
+                , (isFloat && (compact || barMode)) ? null : React.createElement('div', {style:{fontSize:10,color:C.text3,marginTop:8,textAlign:"center",lineHeight:1.4}}
                   , lang==="en"?
                       "Type · 🎤 voice · Enter = · Esc clear · drag header to move":
                       "打字 · 🎤 语音 · Enter 等于 · Esc 清空 · 拖动顶部移动"
