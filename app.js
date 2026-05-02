@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-var APP_VERSION = "v3.10.57";  // ← single source of truth: bump this once per release
+var APP_VERSION = "v3.10.61";  // ← single source of truth: bump this once per release
 console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
@@ -12,7 +12,7 @@ console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-
       window.Sentry.init({
         dsn:window.SENTRY_DSN,
         environment:(location.hostname==="localhost"||location.hostname==="127.0.0.1")?"development":"production",
-        release:"nyc-driver-tracker@1.3.9",
+        release:"nyc-driver-tracker@1.3.12",
         tracesSampleRate:0.1,
         // Don't send events from local dev
         beforeSend:function(event){
@@ -2354,6 +2354,31 @@ function App() {
       fetch("https://www.googleapis.com/drive/v3/files/"+fileId+"?alt=media",{headers:{Authorization:"Bearer "+tok}})
       .then(function(r){return r.json();})
       .then(function(data){
+        // === TOMBSTONE CHECK: was this account cleared on another device? ===
+        if(data && data._tombstone === true){
+          // Another device cleared all data — wipe local too to keep devices in sync
+          var clearedAt = data.clearedAt || "another device";
+          setSyncStatus(lang==="en"?"⚠️ Cleared on another device":"⚠️ 在另一台设备已清空");
+          // Wipe everything except the Google sign-in (so we can show the message)
+          try{
+            var keysToRemove = [];
+            for(var i=0; i<localStorage.length; i++){
+              var k = localStorage.key(i);
+              if(k && k.indexOf("nyc_") === 0 && k !== "nyc_user") keysToRemove.push(k);
+            }
+            keysToRemove.forEach(function(k){ try{ localStorage.removeItem(k); }catch(e){} });
+          }catch(e){}
+          // Clear React state
+          setEl([]);setSl([]);setWl([]);setFl([]);setLl([]);setDl([]);setReminders([]);setNotes([]);
+          setVeh({});setDriver({});setSavedVehicles([]);
+          alert(lang==="en"?
+            "⚠️ This account was cleared on another device.\n\nThis device's data has been removed to stay in sync.\n\nIf you want to start fresh, you're done — enjoy! If this was a mistake, restore from a JSON backup file.":
+            "⚠️ 此账号在另一台设备上已被清空。\n\n本设备的数据已同步移除。\n\n如果你正想重新开始，那就好了 — 享受吧！如果是误操作，请从 JSON 备份文件恢复。");
+          setTimeout(function(){
+            window.location.replace(window.location.pathname + "?cleared=" + Date.now());
+          }, 500);
+          return;
+        }
         if(data.wl)setWl(data.wl);
         if(data.sl)setSl(data.sl);
         if(data.el)setEl(data.el);
@@ -8135,112 +8160,80 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
               )
               , dangerOpen ? React.createElement('div', {style:{background:"#1A0808",border:"1px solid #5A2020",borderRadius:RADIUS.md,padding:14,marginTop:8}}
                 , React.createElement('div', {style:{fontSize:FS.md+1,fontWeight:700,color:"#FF8855",marginBottom:6}}
-                  , "🗑️ ", lang==="en"?"Reset App — Clear All Data":"清空 App — 删除所有数据")
+                  , "🗑️ ", lang==="en"?"Clear Everything":"清空全部数据")
                 , React.createElement('div', {style:{fontSize:FS.sm,color:"#D08070",lineHeight:1.6,marginBottom:10}}
                   , lang==="en"?
-                    "Erases ALL local data: expenses, income, vehicles, notes, settings, fixed fees, licenses, reminders. App returns to fresh-install state. Cloud backup on Drive is also deleted (if connected). This CANNOT be undone — make sure you have a JSON backup first.":
-                    "清空所有本地数据：支出、收入、车辆、记事、设定、固定月费、证件、提醒等等。App 回到刚装好的状态。如果连接了 Drive，云端备份也会一起删除。无法撤销 — 确保你已经导出了 JSON 备份。"
+                    "Erases all data from this device, AND signals all your other devices (same Google account) to auto-clear next time they open. Cannot be undone — make a JSON backup first.":
+                    "清空本设备的所有数据，并通知你其他设备（同一 Google 账号）下次打开时自动清空。无法撤销 — 请先导出 JSON 备份。"
                 )
                 , React.createElement('button', {
                     onClick: function(){
-                      // Two-step confirmation
                       var step1 = lang==="en"?
-                        "⚠️ FINAL WARNING\n\nThis will permanently delete ALL your data:\n- Expenses, income, vehicles\n- Settings, notes, reminders\n- Cloud backup on Google Drive\n\nApp will reload as a fresh install.\n\nProceed?":
-                        "⚠️ 最后警告\n\n将永久删除所有数据：\n- 支出、收入、车辆\n- 设定、记事、提醒\n- Google Drive 上的云端备份\n\nApp 将重置为初始状态。\n\n继续？";
+                        "⚠️ FINAL WARNING\n\nThis will:\n- Erase all data on THIS device\n- Auto-clear other devices (same Google account) next time they open\n- Make a JSON backup first if you want to recover\n\nProceed?":
+                        "⚠️ 最后警告\n\n此操作：\n- 清空本设备所有数据\n- 通知其他设备（同一 Google 账号）下次打开时自动清空\n- 想要可恢复，请先导出 JSON 备份\n\n继续？";
                       if(!confirm(step1)) return;
-                      var step2 = lang==="en"?
-                        "Type DELETE to confirm:":
-                        "输入 DELETE 确认：";
-                      var input = prompt(step2);
-                      if(input === null){
-                        // User clicked Cancel on the prompt
-                        showToast(lang==="en"?"Cancelled":"已取消","info");
-                        return;
-                      }
+                      var input = prompt(lang==="en"?"Type DELETE to confirm:":"输入 DELETE 确认：");
+                      if(input === null){showToast(lang==="en"?"Cancelled":"已取消","info");return;}
                       var inputClean = (input||"").trim().toUpperCase();
-                      if(inputClean !== "DELETE"){
-                        showToast(lang==="en"?"Cancelled — must type DELETE exactly":"已取消 — 必须输入 DELETE","warn");
-                        return;
-                      }
+                      if(inputClean !== "DELETE"){showToast(lang==="en"?"Cancelled — must type DELETE":"已取消 — 必须输入 DELETE","warn");return;}
                       setSyncStatus(lang==="en"?"⏳ Clearing...":"⏳ 清空中...");
-                      // 1) Delete cloud backup if connected
-                      var deleteCloud = function(callback){
+                      // 1) Write TOMBSTONE to Drive (other devices will detect this and auto-clear)
+                      var writeTombstone = function(callback){
                         if(!gUser || !accessToken || !driveFileId){ callback(); return; }
                         try{
-                          fetch("https://www.googleapis.com/drive/v3/files/"+driveFileId, {
-                            method:"DELETE",
-                            headers:{Authorization:"Bearer "+accessToken}
+                          var tombstone = JSON.stringify({
+                            _tombstone: true,
+                            clearedAt: new Date().toISOString(),
+                            clearedBy: (gUser && gUser.email) || "unknown"
+                          });
+                          var bound = "-------nycdriver-clear";
+                          var meta = JSON.stringify({name:"nyc-driver-data.json", mimeType:"application/json"});
+                          var body = "--"+bound+"\r\nContent-Type: application/json\r\n\r\n"+meta+"\r\n--"+bound+"\r\nContent-Type: application/json\r\n\r\n"+tombstone+"\r\n--"+bound+"--";
+                          fetch("https://www.googleapis.com/upload/drive/v3/files/"+driveFileId+"?uploadType=multipart", {
+                            method:"PATCH",
+                            headers:{Authorization:"Bearer "+accessToken,"Content-Type":"multipart/related; boundary="+bound},
+                            body: body
                           }).then(function(){
-                            // Also try to delete the daily/monthly snapshots
-                            var snapshots = [driveDailyFileId, driveMonthlyFileId].filter(Boolean);
-                            var done = 0;
+                            // Also write tombstone to daily/monthly snapshots so they don't restore old data
+                            var snapshots = [
+                              {fid:driveDailyFileId, name:"nyc-driver-data-daily.json"},
+                              {fid:driveMonthlyFileId, name:"nyc-driver-data-monthly.json"}
+                            ].filter(function(s){return s.fid;});
                             if(snapshots.length === 0){ callback(); return; }
-                            snapshots.forEach(function(fid){
-                              fetch("https://www.googleapis.com/drive/v3/files/"+fid, {
-                                method:"DELETE",
-                                headers:{Authorization:"Bearer "+accessToken}
-                              }).then(function(){
-                                done++;
-                                if(done === snapshots.length) callback();
-                              }).catch(function(){
-                                done++;
-                                if(done === snapshots.length) callback();
-                              });
+                            var done = 0;
+                            snapshots.forEach(function(s){
+                              var snapMeta = JSON.stringify({name:s.name, mimeType:"application/json"});
+                              var snapBody = "--"+bound+"\r\nContent-Type: application/json\r\n\r\n"+snapMeta+"\r\n--"+bound+"\r\nContent-Type: application/json\r\n\r\n"+tombstone+"\r\n--"+bound+"--";
+                              fetch("https://www.googleapis.com/upload/drive/v3/files/"+s.fid+"?uploadType=multipart", {
+                                method:"PATCH",
+                                headers:{Authorization:"Bearer "+accessToken,"Content-Type":"multipart/related; boundary="+bound},
+                                body: snapBody
+                              }).then(function(){done++;if(done===snapshots.length)callback();}).catch(function(){done++;if(done===snapshots.length)callback();});
                             });
                           }).catch(function(){ callback(); });
                         }catch(e){ callback(); }
                       };
-                      deleteCloud(function(){
-                        // 2) Wipe ALL localStorage entries (everything starting with nyc_)
+                      writeTombstone(function(){
                         try{
-                          var keysToRemove = [];
-                          for(var i=0; i<localStorage.length; i++){
-                            var k = localStorage.key(i);
-                            if(k && k.indexOf("nyc_") === 0) keysToRemove.push(k);
-                          }
-                          keysToRemove.forEach(function(k){ try{ localStorage.removeItem(k); }catch(e){} });
-                          // Also clear non-nyc keys we might have set
-                          ["lastBackup","backupReminderDismissed"].forEach(function(k){ try{ localStorage.removeItem(k); }catch(e){} });
-                          // Nuclear option: clear all of localStorage (in case I missed any keys)
+                          // Clear ALL localStorage (nuclear)
                           try{ localStorage.clear(); }catch(e){}
-                          // Also clear sessionStorage
                           try{ sessionStorage.clear(); }catch(e){}
-                          // Try to clear IndexedDB databases
                           if(window.indexedDB && indexedDB.databases){
-                            try{
-                              indexedDB.databases().then(function(dbs){
-                                dbs.forEach(function(db){
-                                  try{ indexedDB.deleteDatabase(db.name); }catch(e){}
-                                });
-                              }).catch(function(){});
-                            }catch(e){}
+                            try{ indexedDB.databases().then(function(dbs){dbs.forEach(function(db){try{indexedDB.deleteDatabase(db.name);}catch(e){}});}).catch(function(){}); }catch(e){}
                           }
-                          // Unregister service workers so the next load gets a fresh start
                           if(navigator.serviceWorker && navigator.serviceWorker.getRegistrations){
-                            try{
-                              navigator.serviceWorker.getRegistrations().then(function(regs){
-                                regs.forEach(function(reg){ try{ reg.unregister(); }catch(e){} });
-                              }).catch(function(){});
-                            }catch(e){}
+                            try{ navigator.serviceWorker.getRegistrations().then(function(regs){regs.forEach(function(r){try{r.unregister();}catch(e){}});}).catch(function(){}); }catch(e){}
                           }
-                          // Clear caches API
                           if(window.caches && caches.keys){
-                            try{
-                              caches.keys().then(function(names){
-                                names.forEach(function(n){ try{ caches.delete(n); }catch(e){} });
-                              }).catch(function(){});
-                            }catch(e){}
+                            try{ caches.keys().then(function(names){names.forEach(function(n){try{caches.delete(n);}catch(e){}});}).catch(function(){}); }catch(e){}
                           }
                         }catch(e){}
-                        // 3) Hard reload after a delay (give async cleanup time)
                         setTimeout(function(){
-                          // Use replace + ?v=timestamp to force fresh load (bypass cache)
-                          var url = window.location.pathname + "?reset=" + Date.now();
-                          window.location.replace(url);
-                        }, 800);
+                          window.location.replace(window.location.pathname + "?reset=" + Date.now());
+                        }, 1000);
                       });
                     },
-                    style:{width:"100%",background:"linear-gradient(135deg,#5A1010,#2A0808)",border:"1px solid #8A2020",color:"#FF8866",fontSize:14,fontWeight:800,padding:"12px",borderRadius:10,cursor:"pointer"}
+                    style:{width:"100%",background:"linear-gradient(135deg,#5A1010,#2A0808)",border:"1px solid #8A2020",color:"#FF8866",fontSize:FS.md+1,fontWeight:800,padding:"12px",borderRadius:RADIUS.sm,cursor:"pointer"}
                   }, "🗑️ ", lang==="en"?"Clear Everything":"清空全部数据")
               ) : null
             )
