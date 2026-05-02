@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-var APP_VERSION = "v3.11.19";  // ← single source of truth: bump this once per release
+var APP_VERSION = "v3.11.25";  // ← single source of truth: bump this once per release
 console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
@@ -12,7 +12,7 @@ console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-
       window.Sentry.init({
         dsn:window.SENTRY_DSN,
         environment:(location.hostname==="localhost"||location.hostname==="127.0.0.1")?"development":"production",
-        release:"nyc-driver-tracker@1.5.19",
+        release:"nyc-driver-tracker@1.5.25",
         tracesSampleRate:0.1,
         // Don't send events from local dev
         beforeSend:function(event){
@@ -1957,6 +1957,10 @@ function App() {
   var rCalc=useState({display:"0",prevValue:null,operator:null,waitingForOperand:false,history:[],memory:0}),calcState=rCalc[0],setCalcState=rCalc[1];
   // FAB confirm state — first tap shows confirm button, second tap on confirm opens form
   var rPlusC=useState(false),plusConfirm=rPlusC[0],setPlusConfirm=rPlusC[1];
+  // Floating calculator — can be shown/minimized on any page
+  // mode: "hidden" | "minimized" (small chip in corner) | "floating" (full popup)
+  var rCalcF=useState(function(){return lsLoad("nyc_calcFloat",{mode:"hidden",x:null,y:null,scale:1});}),calcFloat=rCalcF[0],_setCalcFloat=rCalcF[1];
+  function setCalcFloat(v){_setCalcFloat(v);try{localStorage.setItem("nyc_calcFloat",JSON.stringify(v));}catch(e){}}
   // favExpenses: [{id, label, category, amount, notes, icon}] - quick expense templates
   var r25f=useState(function(){return lsLoad("nyc_favExpenses",[]);}),favExpenses=r25f[0],_setFavExpenses=r25f[1];function setFavExpenses(v){_setFavExpenses(v);try{localStorage.setItem("nyc_favExpenses",JSON.stringify(v));}catch(e){}}
   var r25d=useState(function(){return lsLoad("nyc_custLoanTypes",[]);}),custLoanTypes=r25d[0],_setCustLoanTypes=r25d[1];function setCustLoanTypes(v){_setCustLoanTypes(v);try{localStorage.setItem("nyc_custLoanTypes",JSON.stringify(v));}catch(e){}}
@@ -6926,7 +6930,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
             , React.createElement('div', { style: {padding:"10px 0",flex:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 602}}
               , (function(){
                 var mainItems = [
-                  {icon:"🧮",label:lang==="en"?"Calculator":"计算器",action:function(){setShowDrawer(false);setSf("calculator");}},
+                  {icon:"🧮",label:lang==="en"?"Calculator":"计算器",action:function(){setShowDrawer(false);setCalcFloat(Object.assign({},calcFloat,{mode:"floating"}));}},
                   {icon:"📝",label:lang==="en"?"Notes":"记事本",action:function(){setShowDrawer(false);setSf("notes");}},
                   {icon:"🧾",label:lang==="en"?"Tax Center":"税务中心",action:function(){setShowDrawer(false);setSf("tax_center");}},
                   {icon:"&#128190;",label:T.backup,action:function(){setShowDrawer(false);setShowBackup(true);}},
@@ -7030,7 +7034,21 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
         )
       ) : null
 
-      , sf==="calculator" ? (function(){
+      , (sf==="calculator" || calcFloat.mode==="floating") ? (function(){
+          var isFloat = calcFloat.mode==="floating" && sf!=="calculator";
+          var closeAndCloseAll = function(){
+            // From floating: hide; from full: just close sf
+            if(isFloat){
+              setCalcFloat(Object.assign({},calcFloat,{mode:"hidden"}));
+            } else {
+              setSf(null);
+            }
+          };
+          var minimize = function(){
+            // Minimize to corner chip — works for both floating and full
+            setCalcFloat(Object.assign({},calcFloat,{mode:"minimized"}));
+            if(sf==="calculator") setSf(null);
+          };
           // Inline calculator helpers (defined inside the modal scope to keep state changes simple)
           var doInputDigit = function(d){
             if(calcState.waitingForOperand){
@@ -7049,19 +7067,19 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
             }
           };
           var doClear = function(){
-            setCalcState({display:"0",prevValue:null,operator:null,waitingForOperand:false,history:calcState.history||[],memory:calcState.memory||0});
+            setCalcState({display:"",prevValue:null,operator:null,waitingForOperand:false,history:calcState.history||[],memory:calcState.memory||0});
           };
           var doToggleSign = function(){
-            var v = parseFloat(calcState.display);
+            var v = parseFloat(calcState.display) || 0;
             setCalcState(Object.assign({},calcState,{display:String(-v)}));
           };
           var doPercent = function(){
-            var v = parseFloat(calcState.display);
+            var v = parseFloat(calcState.display) || 0;
             setCalcState(Object.assign({},calcState,{display:String(v/100)}));
           };
           var doBackspace = function(){
             if(calcState.display.length<=1 || (calcState.display.length===2 && calcState.display.startsWith("-"))){
-              setCalcState(Object.assign({},calcState,{display:"0"}));
+              setCalcState(Object.assign({},calcState,{display:""}));
             } else {
               setCalcState(Object.assign({},calcState,{display:calcState.display.slice(0,-1)}));
             }
@@ -7076,7 +7094,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
             }
           };
           var doOperator = function(op){
-            var curr = parseFloat(calcState.display);
+            var curr = parseFloat(calcState.display) || 0;
             if(calcState.prevValue===null){
               setCalcState(Object.assign({},calcState,{prevValue:curr,operator:op,waitingForOperand:true}));
             } else if(calcState.operator){
@@ -7088,7 +7106,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
             }
           };
           var doEquals = function(){
-            var curr = parseFloat(calcState.display);
+            var curr = parseFloat(calcState.display) || 0;
             if(calcState.prevValue!==null && calcState.operator){
               var result = compute(calcState.prevValue, curr, calcState.operator);
               var newHist = (calcState.history||[]).slice();
@@ -7124,6 +7142,125 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
             setCalcState(Object.assign({},calcState,{memory:v,waitingForOperand:true}));
             showToast(lang==="en"?("MS → memory = "+v.toFixed(2)):("MS → 存入记忆 "+v.toFixed(2)),"success");
           };
+          // === Voice input: parse spoken phrase to a number/expression ===
+          // Handles Chinese & English: "二十三点五" / "twenty-three point five" / "100加50" → applies to calculator
+          var parseSpokenToNumber = function(s){
+            if(!s) return null;
+            s = s.toLowerCase().trim();
+            // First try direct number parse
+            var direct = s.replace(/[^\d.\-]/g, "");
+            if(direct && !isNaN(parseFloat(direct))) return {n: parseFloat(direct), raw: s};
+            // Chinese number parsing
+            var zhDigits = {"零":0,"〇":0,"一":1,"二":2,"两":2,"三":3,"四":4,"五":5,"六":6,"七":7,"八":8,"九":9};
+            var zhUnits = {"十":10,"百":100,"千":1000,"万":10000};
+            // "十五" → 15, "三十" → 30, "三百二十" → 320
+            var parseZh = function(text){
+              var n=0, current=0;
+              for(var i=0;i<text.length;i++){
+                var ch = text[i];
+                if(zhDigits[ch] !== undefined){
+                  current = zhDigits[ch];
+                } else if(zhUnits[ch] !== undefined){
+                  if(current===0) current = 1;
+                  n += current * zhUnits[ch];
+                  current = 0;
+                }
+              }
+              return n + current;
+            };
+            // Handle decimal: "二十三点五" → 23.5
+            if(s.indexOf("点") >= 0){
+              var parts = s.split("点");
+              var intPart = parseZh(parts[0]);
+              var decStr = "";
+              for(var j=0;j<parts[1].length;j++){
+                var d = zhDigits[parts[1][j]];
+                if(d !== undefined) decStr += d;
+              }
+              if(decStr) return {n: parseFloat(intPart + "." + decStr), raw:s};
+              return {n: intPart, raw:s};
+            }
+            // Pure Chinese number
+            if(/^[零〇一二两三四五六七八九十百千万]+$/.test(s)){
+              return {n: parseZh(s), raw:s};
+            }
+            // English word numbers (basic)
+            var enWords = {zero:0,one:1,two:2,three:3,four:4,five:5,six:6,seven:7,eight:8,nine:9,ten:10,eleven:11,twelve:12,thirteen:13,fourteen:14,fifteen:15,sixteen:16,seventeen:17,eighteen:18,nineteen:19,twenty:20,thirty:30,forty:40,fifty:50,sixty:60,seventy:70,eighty:80,ninety:90,hundred:100,thousand:1000};
+            // "twenty three point five"
+            if(s.indexOf("point") >= 0){
+              var enParts = s.split("point");
+              var enInt = enParts[0].trim().split(/[\s-]+/).reduce(function(acc, w){
+                if(enWords[w] !== undefined){
+                  if(enWords[w] === 100 || enWords[w] === 1000){ return acc * enWords[w]; }
+                  return acc + enWords[w];
+                }
+                return acc;
+              }, 0);
+              var enDec = "";
+              enParts[1].trim().split(/\s+/).forEach(function(w){
+                if(enWords[w] !== undefined && enWords[w] < 10) enDec += enWords[w];
+              });
+              if(enDec) return {n: parseFloat(enInt + "." + enDec), raw:s};
+              return {n: enInt, raw:s};
+            }
+            // "twenty three" or "three hundred fifty"
+            var words = s.split(/[\s-]+/);
+            var hasWord = false;
+            var enResult = words.reduce(function(acc, w){
+              if(enWords[w] !== undefined){
+                hasWord = true;
+                if(enWords[w] === 100 || enWords[w] === 1000){ return acc===0 ? enWords[w] : acc * enWords[w]; }
+                return acc + enWords[w];
+              }
+              return acc;
+            }, 0);
+            if(hasWord) return {n: enResult, raw:s};
+            return null;
+          };
+          var doVoiceInput = function(){
+            var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if(!SR){
+              showToast(lang==="en"?"Voice input not supported on this browser":"此浏览器不支持语音输入","error");
+              return;
+            }
+            try{
+              var rec = new SR();
+              rec.lang = lang==="en" ? "en-US" : "zh-CN";
+              rec.interimResults = false;
+              rec.continuous = false;
+              rec.maxAlternatives = 3;
+              setCalcState(Object.assign({},calcState,{voiceListening:true}));
+              showToast(lang==="en"?"🎤 Listening... say a number":"🎤 听着呢… 说个数字","info");
+              rec.onresult = function(ev){
+                // Try each alternative until one parses
+                var found = null;
+                for(var i=0;i<ev.results[0].length;i++){
+                  var t = ev.results[0][i].transcript;
+                  var p = parseSpokenToNumber(t);
+                  if(p){ found = p; break; }
+                }
+                setCalcState(function(prev){
+                  return Object.assign({},prev,{voiceListening:false, display: found ? String(found.n) : prev.display, waitingForOperand:false});
+                });
+                if(found){
+                  showToast(lang==="en"?("✓ Heard: "+found.raw+" → "+found.n):("✓ 听到："+found.raw+" → "+found.n),"success");
+                } else {
+                  showToast(lang==="en"?"Couldn't parse a number":"没听清数字","error");
+                }
+              };
+              rec.onerror = function(ev){
+                setCalcState(function(prev){return Object.assign({},prev,{voiceListening:false});});
+                showToast(lang==="en"?("Voice error: "+ev.error):("语音错误："+ev.error),"error");
+              };
+              rec.onend = function(){
+                setCalcState(function(prev){return Object.assign({},prev,{voiceListening:false});});
+              };
+              rec.start();
+            }catch(err){
+              setCalcState(function(prev){return Object.assign({},prev,{voiceListening:false});});
+              showToast(lang==="en"?"Voice input failed":"语音输入失败","error");
+            }
+          };
           var btn = function(label, onClick, style){
             return React.createElement('button', {
               onClick: onClick,
@@ -7144,92 +7281,244 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
           var opStyle = {background:"linear-gradient(135deg, rgba(0,212,255,0.15), rgba(0,85,255,0.05))",border:"1px solid rgba(0,212,255,0.3)",color:C.accent,fontWeight:700};
           var fnStyle = {background:C.bg4,color:C.text2,fontSize:18};
           var equalStyle = {background:"linear-gradient(135deg,#00D4FF,#0055FF)",border:"none",color:"#fff",fontWeight:800,fontSize:24};
-          return React.createElement('div', {style:{position:"fixed",inset:0,background:C.bg,zIndex:300,overflowY:"auto"}}
-            , React.createElement('div', {style:{maxWidth:480,margin:"0 auto",padding:"0 0 80px"}}
-              // Header
-              , React.createElement('div', {style:{background:C.bg2,padding:"16px 18px",borderBottom:"1px solid "+C.border,display:"flex",justifyContent:"space-between",alignItems:"center",position:"sticky",top:0,zIndex:10}}
-                , React.createElement('button', {onClick:function(){setSf(null);}, style:{background:"#1E3050",border:"none",color:"#8ABCD0",fontSize:16,cursor:"pointer",width:34,height:34,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center"}}, "✕")
-                , React.createElement('div', {style:{fontSize:16,fontWeight:800}}, "🧮 ", lang==="en"?"Calculator":"计算器")
-                , React.createElement('button', {onClick:function(){setCalcState({display:"0",prevValue:null,operator:null,waitingForOperand:false,history:[],memory:0});showToast(lang==="en"?"✓ All cleared":"✓ 已全部清空");}, style:{background:"none",border:"1px solid "+C.border,color:C.text3,fontSize:11,cursor:"pointer",padding:"6px 10px",borderRadius:8}}, lang==="en"?"Clear":"清空")
-              )
-              , React.createElement('div', {style:{padding:"18px"}}
-                // Display
-                , React.createElement('div', {style:{background:C.bg3,border:"1px solid "+C.border,borderRadius:RADIUS.lg,padding:"24px 20px",marginBottom:14,minHeight:90,display:"flex",flexDirection:"column",justifyContent:"flex-end",boxShadow:SHADOW.sm,position:"relative"}}
-                  // Memory indicator (top-left of display)
-                  , (calcState.memory && calcState.memory !== 0) ? React.createElement('div', {style:{position:"absolute",top:8,left:14,fontSize:11,color:C.gold,fontWeight:700,letterSpacing:0.5,fontVariantNumeric:"tabular-nums"}}, "M ", calcState.memory.toFixed(2)) : null
-                  , (calcState.prevValue!==null && calcState.operator) ? React.createElement('div', {style:{fontSize:14,color:C.text3,textAlign:"right",marginBottom:6,fontVariantNumeric:"tabular-nums"}}, calcState.prevValue+" "+calcState.operator) : null
-                  // Editable input — uses system keyboard on mobile, physical keyboard on desktop
-                  , React.createElement('input', {
-                      type: "text",
-                      inputMode: "decimal",
-                      autoFocus: true,
-                      value: calcState.display,
-                      onChange: function(e){
-                        var v = e.target.value;
-                        // Sanitize: keep only digits, dot, minus
-                        v = v.replace(/[^0-9.\-]/g, "");
-                        // Only allow one minus, only at the beginning
-                        if(v.indexOf("-") > 0) v = v.replace(/-/g, "");
-                        // Only allow one dot
-                        var dots = v.split(".").length - 1;
-                        if(dots > 1){
-                          var firstDot = v.indexOf(".");
-                          v = v.slice(0,firstDot+1) + v.slice(firstDot+1).replace(/\./g, "");
-                        }
-                        if(v === "" || v === "-") v = v;
-                        setCalcState(Object.assign({},calcState,{display:v||"0",waitingForOperand:false}));
+          // Outer wrapper: full-screen for "calculator" sf, or floating panel for floating mode
+          // Compute floating position — use saved x/y, or default to bottom center
+          var fx = (calcFloat.x != null) ? calcFloat.x : null;
+          var fy = (calcFloat.y != null) ? calcFloat.y : null;
+          var fscale = (calcFloat.scale && calcFloat.scale > 0) ? calcFloat.scale : 1;
+          var outerStyle = isFloat ? (
+            (fx != null && fy != null) ? {
+              position:"fixed",
+              top:fy,
+              left:fx,
+              width:Math.min(window.innerWidth - 24, 380),
+              background:C.bg,
+              border:"1px solid "+C.accent,
+              borderRadius:RADIUS.lg,
+              boxShadow:"0 12px 48px rgba(0,0,0,0.6), 0 0 24px rgba(0,212,255,0.25)",
+              zIndex:550,
+              overflow:"hidden",
+              animation:"fadeIn 0.15s",
+              transform: "scale("+fscale+")",
+              transformOrigin: "top left"
+            } : {
+              position:"fixed",
+              bottom:80,
+              right:12,
+              left:12,
+              maxWidth:380,
+              margin:"0 auto",
+              background:C.bg,
+              border:"1px solid "+C.accent,
+              borderRadius:RADIUS.lg,
+              boxShadow:"0 12px 48px rgba(0,0,0,0.6), 0 0 24px rgba(0,212,255,0.25)",
+              zIndex:550,
+              overflow:"hidden",
+              animation:"fadeIn 0.15s",
+              transform: "scale("+fscale+")",
+              transformOrigin: "bottom right"
+            }
+          ) : {
+            position:"fixed",
+            inset:0,
+            background:C.bg,
+            zIndex:300,
+            overflowY:"auto"
+          };
+          // Drag handler — only active when floating
+          var startDrag = function(e){
+            if(!isFloat) return;
+            // Don't start drag if clicking buttons inside header
+            var tag = (e.target.tagName||"").toUpperCase();
+            if(tag === "BUTTON" || tag === "INPUT") return;
+            e.preventDefault();
+            var t = e.touches ? e.touches[0] : e;
+            var startX = t.clientX, startY = t.clientY;
+            // Initial position of the panel (use bounding rect to handle the default centered case)
+            var panel = e.currentTarget.parentNode.parentNode;
+            var rect = panel.getBoundingClientRect();
+            var origX = rect.left, origY = rect.top;
+            var moved = false;
+            var onMove = function(ev){
+              var t2 = ev.touches ? ev.touches[0] : ev;
+              var dx = t2.clientX - startX, dy = t2.clientY - startY;
+              if(Math.abs(dx) > 3 || Math.abs(dy) > 3) moved = true;
+              var newX = origX + dx;
+              var newY = origY + dy;
+              // Clamp to viewport
+              var w = panel.offsetWidth, h = panel.offsetHeight;
+              if(newX < 4) newX = 4;
+              if(newY < 4) newY = 4;
+              if(newX + w > window.innerWidth - 4) newX = window.innerWidth - w - 4;
+              if(newY + h > window.innerHeight - 4) newY = window.innerHeight - h - 4;
+              panel.style.left = newX + "px";
+              panel.style.top = newY + "px";
+              panel.style.right = "auto";
+              panel.style.bottom = "auto";
+              panel.style.margin = "0";
+              if(ev.cancelable) ev.preventDefault();
+            };
+            var onEnd = function(){
+              window.removeEventListener("mousemove", onMove);
+              window.removeEventListener("mouseup", onEnd);
+              window.removeEventListener("touchmove", onMove);
+              window.removeEventListener("touchend", onEnd);
+              if(moved){
+                // Save final position
+                var rect2 = panel.getBoundingClientRect();
+                setCalcFloat(Object.assign({},calcFloat,{x:rect2.left, y:rect2.top}));
+              }
+            };
+            window.addEventListener("mousemove", onMove);
+            window.addEventListener("mouseup", onEnd);
+            window.addEventListener("touchmove", onMove, {passive:false});
+            window.addEventListener("touchend", onEnd);
+          };
+          var innerStyle = isFloat ? {padding:0} : {maxWidth:480,margin:"0 auto",padding:"0 0 80px"};
+          return React.createElement('div', {style:outerStyle}
+            , React.createElement('div', {style:innerStyle}
+              // Header — also acts as drag handle when floating
+              , React.createElement('div', {
+                  onMouseDown: isFloat ? startDrag : undefined,
+                  onTouchStart: isFloat ? startDrag : undefined,
+                  style: {background:C.bg2,padding:isFloat?"10px 12px":"16px 18px",borderBottom:"1px solid "+C.border,display:"flex",justifyContent:"space-between",alignItems:"center",position:isFloat?"static":"sticky",top:0,zIndex:10,cursor:isFloat?"move":"default",userSelect:"none",WebkitUserSelect:"none",touchAction:isFloat?"none":"auto"}
+                }
+                , React.createElement('div', {style:{display:"flex",gap:6}}
+                  // Close button
+                  , React.createElement('button', {onClick:closeAndCloseAll, style:{background:"#1E3050",border:"none",color:"#8ABCD0",fontSize:14,cursor:"pointer",width:isFloat?28:34,height:isFloat?28:34,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center"}, title:lang==="en"?"Close":"关闭"}, "✕")
+                  // Minimize button
+                  , React.createElement('button', {onClick:minimize, style:{background:C.bg3,border:"1px solid "+C.border,color:C.text3,fontSize:14,cursor:"pointer",width:isFloat?28:34,height:isFloat?28:34,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center"}, title:lang==="en"?"Minimize to corner":"最小化到角落"}, "−")
+                )
+                , React.createElement('div', {style:{fontSize:isFloat?14:16,fontWeight:800,display:"flex",alignItems:"center",gap:5}}
+                  , isFloat ? React.createElement('span',{style:{fontSize:11,color:C.text3,letterSpacing:1,marginRight:2}},"⋮⋮") : null
+                  , "🧮 ", lang==="en"?"Calculator":"计算器"
+                )
+                , React.createElement('div', {style:{display:"flex",gap:4,alignItems:"center"}}
+                  // Zoom out (only when floating)
+                  , isFloat ? React.createElement('button', {
+                      onClick: function(){
+                        var ns = Math.max(0.6, (calcFloat.scale||1) - 0.1);
+                        setCalcFloat(Object.assign({},calcFloat,{scale: Math.round(ns*10)/10}));
                       },
-                      onKeyDown: function(e){
-                        // Physical keyboard shortcuts (desktop)
-                        var k = e.key;
-                        if(k === "Enter" || k === "="){ e.preventDefault(); doEquals(); return; }
-                        if(k === "+"){ e.preventDefault(); doOperator("+"); return; }
-                        if(k === "-"){
-                          // Allow minus at start of empty/zero display (negative input)
-                          if(calcState.display === "0" || calcState.display === "" || calcState.waitingForOperand){
+                      style:{background:C.bg3,border:"1px solid "+C.border,color:C.text2,fontSize:14,cursor:"pointer",width:24,height:24,borderRadius:6,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700},
+                      title: lang==="en"?"Smaller":"缩小"
+                    }, "−") : null
+                  // Scale label (only when floating)
+                  , isFloat ? React.createElement('button', {
+                      onClick: function(){
+                        // Tap label → reset to 100%
+                        setCalcFloat(Object.assign({},calcFloat,{scale: 1}));
+                        showToast(lang==="en"?"✓ Reset zoom":"✓ 还原大小","info");
+                      },
+                      style:{background:"none",border:"none",color:C.text3,fontSize:9,cursor:"pointer",padding:"0 2px",fontVariantNumeric:"tabular-nums",minWidth:28,textAlign:"center"},
+                      title: lang==="en"?"Tap to reset to 100%":"点击还原 100%"
+                    }, Math.round((calcFloat.scale||1)*100) + "%") : null
+                  // Zoom in (only when floating)
+                  , isFloat ? React.createElement('button', {
+                      onClick: function(){
+                        var ns = Math.min(1.5, (calcFloat.scale||1) + 0.1);
+                        setCalcFloat(Object.assign({},calcFloat,{scale: Math.round(ns*10)/10}));
+                      },
+                      style:{background:C.bg3,border:"1px solid "+C.border,color:C.text2,fontSize:14,cursor:"pointer",width:24,height:24,borderRadius:6,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700},
+                      title: lang==="en"?"Larger":"放大"
+                    }, "+") : null
+                  , React.createElement('button', {onClick:function(){setCalcState({display:"",prevValue:null,operator:null,waitingForOperand:false,history:[],memory:0});showToast(lang==="en"?"✓ All cleared":"✓ 已全部清空");}, style:{background:"none",border:"1px solid "+C.border,color:C.text3,fontSize:11,cursor:"pointer",padding:"5px 9px",borderRadius:8}}, lang==="en"?"Clear":"清空")
+                )
+              )
+              , React.createElement('div', {style:{padding:"12px"}}
+                // Display
+                , React.createElement('div', {style:{background:C.bg3,border:"1px solid "+C.border,borderRadius:RADIUS.md,padding:"14px 14px 10px",marginBottom:10,minHeight:60,display:"flex",flexDirection:"column",justifyContent:"flex-end",boxShadow:SHADOW.sm,position:"relative"}}
+                  // Memory indicator (top-left of display)
+                  , (calcState.memory && calcState.memory !== 0) ? React.createElement('div', {style:{position:"absolute",top:6,left:10,fontSize:10,color:C.gold,fontWeight:700,letterSpacing:0.5,fontVariantNumeric:"tabular-nums"}}, "M ", calcState.memory.toFixed(2)) : null
+                  , (calcState.prevValue!==null && calcState.operator) ? React.createElement('div', {style:{fontSize:12,color:C.text3,textAlign:"right",marginBottom:4,fontVariantNumeric:"tabular-nums"}}, calcState.prevValue+" "+calcState.operator) : null
+                  // Editable input + voice mic button (right side)
+                  , React.createElement('div', {style:{display:"flex",alignItems:"center",gap:8}}
+                    , React.createElement('input', {
+                        type: "text",
+                        inputMode: "decimal",
+                        autoFocus: !isFloat,
+                        value: calcState.display,
+                        placeholder: "0",
+                        onChange: function(e){
+                          var v = e.target.value;
+                          v = v.replace(/[^0-9.\-]/g, "");
+                          if(v.indexOf("-") > 0) v = v.replace(/-/g, "");
+                          var dots = v.split(".").length - 1;
+                          if(dots > 1){
+                            var firstDot = v.indexOf(".");
+                            v = v.slice(0,firstDot+1) + v.slice(firstDot+1).replace(/\./g, "");
+                          }
+                          setCalcState(Object.assign({},calcState,{display:v,waitingForOperand:false}));
+                        },
+                        onKeyDown: function(e){
+                          var k = e.key;
+                          if(k === "Enter" || k === "="){ e.preventDefault(); doEquals(); return; }
+                          if(k === "+"){ e.preventDefault(); doOperator("+"); return; }
+                          if(k === "-"){
+                            if(calcState.display === "0" || calcState.display === "" || calcState.waitingForOperand){
+                              return;
+                            }
                             e.preventDefault(); doOperator("−"); return;
                           }
-                          // Otherwise treat as operator
-                          e.preventDefault(); doOperator("−"); return;
+                          if(k === "*" || k === "x" || k === "X"){ e.preventDefault(); doOperator("×"); return; }
+                          if(k === "/"){ e.preventDefault(); doOperator("÷"); return; }
+                          if(k === "%"){ e.preventDefault(); doPercent(); return; }
+                          if(k === "Escape"){ e.preventDefault(); doClear(); return; }
+                        },
+                        style: {flex:1,minWidth:0,fontSize:30,fontWeight:800,color:C.text,textAlign:"right",letterSpacing:-0.3,fontVariantNumeric:"tabular-nums",background:"transparent",border:"none",outline:"none",padding:0,fontFamily:"inherit",WebkitAppearance:"none"}
+                      })
+                    // Voice input button
+                    , React.createElement('button', {
+                        onClick: doVoiceInput,
+                        title: lang==="en"?"Voice input — say a number":"语音输入 — 说一个数字",
+                        style: {
+                          flexShrink: 0,
+                          width: 34,
+                          height: 34,
+                          borderRadius: 17,
+                          background: calcState.voiceListening ? "rgba(255,82,82,0.2)" : "rgba(0,212,255,0.1)",
+                          border: "1px solid " + (calcState.voiceListening ? "rgba(255,82,82,0.5)" : "rgba(0,212,255,0.3)"),
+                          color: calcState.voiceListening ? C.danger : C.accent,
+                          fontSize: 16,
+                          cursor: "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          animation: calcState.voiceListening ? "fadeIn 0.5s ease-in-out infinite alternate" : "none"
                         }
-                        if(k === "*" || k === "x" || k === "X"){ e.preventDefault(); doOperator("×"); return; }
-                        if(k === "/"){ e.preventDefault(); doOperator("÷"); return; }
-                        if(k === "%"){ e.preventDefault(); doPercent(); return; }
-                        if(k === "Escape"){ e.preventDefault(); doClear(); return; }
-                      },
-                      style: {width:"100%",fontSize:42,fontWeight:800,color:C.text,textAlign:"right",letterSpacing:-0.5,fontVariantNumeric:"tabular-nums",background:"transparent",border:"none",outline:"none",padding:0,fontFamily:"inherit",WebkitAppearance:"none"}
-                    })
+                      }, "🎤")
+                  )
                 )
                 // Memory buttons row
-                , React.createElement('div', {style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr 1fr",gap:6,marginBottom:8}}
-                  , btn("MC", doMemClear, {background:C.bg4,color:C.text3,fontSize:13,padding:"10px 0",fontWeight:700})
-                  , btn("MR", doMemRecall, {background:(calcState.memory&&calcState.memory!==0)?"rgba(255,215,0,0.1)":C.bg4,color:(calcState.memory&&calcState.memory!==0)?C.gold:C.text3,fontSize:13,padding:"10px 0",fontWeight:700,border:"1px solid "+((calcState.memory&&calcState.memory!==0)?"rgba(255,215,0,0.3)":C.border)})
-                  , btn("MS", doMemStore, {background:C.bg4,color:C.text3,fontSize:13,padding:"10px 0",fontWeight:700})
-                  , btn("M+", doMemPlus, {background:"rgba(0,230,118,0.08)",color:C.success,fontSize:13,padding:"10px 0",fontWeight:700,border:"1px solid rgba(0,230,118,0.25)"})
-                  , btn("M−", doMemMinus, {background:"rgba(255,82,82,0.08)",color:C.danger,fontSize:13,padding:"10px 0",fontWeight:700,border:"1px solid rgba(255,82,82,0.25)"})
+                , React.createElement('div', {style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr 1fr",gap:5,marginBottom:6}}
+                  , btn("MC", doMemClear, {background:C.bg4,color:C.text3,fontSize:11,padding:"7px 0",fontWeight:700,borderRadius:8})
+                  , btn("MR", doMemRecall, {background:(calcState.memory&&calcState.memory!==0)?"rgba(255,215,0,0.1)":C.bg4,color:(calcState.memory&&calcState.memory!==0)?C.gold:C.text3,fontSize:11,padding:"7px 0",fontWeight:700,border:"1px solid "+((calcState.memory&&calcState.memory!==0)?"rgba(255,215,0,0.3)":C.border),borderRadius:8})
+                  , btn("MS", doMemStore, {background:C.bg4,color:C.text3,fontSize:11,padding:"7px 0",fontWeight:700,borderRadius:8})
+                  , btn("M+", doMemPlus, {background:"rgba(0,230,118,0.08)",color:C.success,fontSize:11,padding:"7px 0",fontWeight:700,border:"1px solid rgba(0,230,118,0.25)",borderRadius:8})
+                  , btn("M−", doMemMinus, {background:"rgba(255,82,82,0.08)",color:C.danger,fontSize:11,padding:"7px 0",fontWeight:700,border:"1px solid rgba(255,82,82,0.25)",borderRadius:8})
                 )
-                // Operator row — large, easy-to-tap. Numbers come from system keyboard on mobile.
-                , React.createElement('div', {style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:8,marginBottom:8}}
-                  , btn("÷", function(){doOperator("÷");}, Object.assign({},opStyle,{fontSize:24,padding:"14px 0"}))
-                  , btn("×", function(){doOperator("×");}, Object.assign({},opStyle,{fontSize:24,padding:"14px 0"}))
-                  , btn("−", function(){doOperator("−");}, Object.assign({},opStyle,{fontSize:24,padding:"14px 0"}))
-                  , btn("+", function(){doOperator("+");}, Object.assign({},opStyle,{fontSize:24,padding:"14px 0"}))
+                // Operator row
+                , React.createElement('div', {style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:6,marginBottom:6}}
+                  , btn("÷", function(){doOperator("÷");}, Object.assign({},opStyle,{fontSize:18,padding:"10px 0",borderRadius:8}))
+                  , btn("×", function(){doOperator("×");}, Object.assign({},opStyle,{fontSize:18,padding:"10px 0",borderRadius:8}))
+                  , btn("−", function(){doOperator("−");}, Object.assign({},opStyle,{fontSize:18,padding:"10px 0",borderRadius:8}))
+                  , btn("+", function(){doOperator("+");}, Object.assign({},opStyle,{fontSize:18,padding:"10px 0",borderRadius:8}))
                 )
                 // Function row — AC, ±, %, =
-                , React.createElement('div', {style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 2fr",gap:8}}
-                  , btn("AC", doClear, Object.assign({},fnStyle,{fontSize:16,padding:"14px 0"}))
-                  , btn("±", doToggleSign, Object.assign({},fnStyle,{fontSize:16,padding:"14px 0"}))
-                  , btn("%", doPercent, Object.assign({},fnStyle,{fontSize:16,padding:"14px 0"}))
-                  , btn("=", doEquals, Object.assign({},equalStyle,{fontSize:24,padding:"14px 0"}))
+                , React.createElement('div', {style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 2fr",gap:6}}
+                  , btn("AC", doClear, Object.assign({},fnStyle,{fontSize:13,padding:"10px 0",borderRadius:8}))
+                  , btn("±", doToggleSign, Object.assign({},fnStyle,{fontSize:13,padding:"10px 0",borderRadius:8}))
+                  , btn("%", doPercent, Object.assign({},fnStyle,{fontSize:13,padding:"10px 0",borderRadius:8}))
+                  , btn("=", doEquals, Object.assign({},equalStyle,{fontSize:18,padding:"10px 0",borderRadius:8}))
                 )
                 // Hint text
-                , React.createElement('div', {style:{fontSize:11,color:C.text3,marginTop:10,textAlign:"center",lineHeight:1.5}}
+                , React.createElement('div', {style:{fontSize:10,color:C.text3,marginTop:8,textAlign:"center",lineHeight:1.4}}
                   , lang==="en"?
-                      "Type numbers with your keyboard. Press Enter for =, Esc to clear. +−×÷ keys also work.":
-                      "用键盘打数字。Enter = 等于、Esc = 清空、+ − × ÷ 键直接用。"
+                      "Type · 🎤 voice · Enter = · Esc clear · drag header to move":
+                      "打字 · 🎤 语音 · Enter 等于 · Esc 清空 · 拖动顶部移动"
                 )
                 // History
-                , (calcState.history && calcState.history.length>0) ? React.createElement('div', {style:{marginTop:24,padding:"14px 16px",background:C.bg2,border:"1px solid "+C.border,borderRadius:RADIUS.md}}
+                , (calcState.history && calcState.history.length>0 && !isFloat) ? React.createElement('div', {style:{marginTop:24,padding:"14px 16px",background:C.bg2,border:"1px solid "+C.border,borderRadius:RADIUS.md}}
                   , React.createElement('div', {style:{fontSize:11,color:C.text3,letterSpacing:0.5,textTransform:"uppercase",fontWeight:600,marginBottom:8}}, lang==="en"?"History":"历史记录")
                   , calcState.history.slice(0,10).map(function(h,i){
                       return React.createElement('div', {
@@ -9321,6 +9610,37 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
           }));
         })()
       )
+      // === FLOATING CALCULATOR — minimized chip (small button in corner) ===
+      , (calcFloat.mode==="minimized") ? React.createElement('button', {
+          onClick: function(){setCalcFloat(Object.assign({},calcFloat,{mode:"floating"}));},
+          style: {
+            position:"fixed",
+            bottom:80,
+            right:14,
+            zIndex:540,
+            background:"linear-gradient(135deg, rgba(0,212,255,0.95), rgba(0,85,255,0.92))",
+            border:"none",
+            color:"#fff",
+            borderRadius:24,
+            padding:"10px 14px",
+            display:"flex",
+            alignItems:"center",
+            gap:8,
+            fontSize:13,
+            fontWeight:700,
+            boxShadow:"0 6px 20px rgba(0,212,255,0.4), 0 0 24px rgba(0,212,255,0.2)",
+            cursor:"pointer",
+            fontVariantNumeric:"tabular-nums",
+            letterSpacing:0.2,
+            animation:"fadeIn 0.2s"
+          },
+          title: lang==="en"?"Tap to expand calculator":"点击展开计算器"
+        }
+          , React.createElement('span', {style:{fontSize:16}}, "🧮")
+          , React.createElement('span', null, calcState.display || "0")
+          , (calcState.memory && calcState.memory !== 0) ? React.createElement('span', {style:{fontSize:10,opacity:0.85,marginLeft:2}}, "M ", calcState.memory.toFixed(0)) : null
+        ) : null
+
       , showDP ? React.createElement(DatePicker, { value: ef.date, lang: lang, onChange: function(v){setEf(Object.assign({},ef,{date:v}));}, onClose: function(){setShowDP(false);} }) : null
       , showTP ? React.createElement(TimePicker, { value: ef.time, lang: lang, onChange: function(v){setEf(Object.assign({},ef,{time:v}));}, onClose: function(){setShowTP(false);} }) : null
       , mpState ? React.createElement(MonthPicker, { value: mpState.value, lang: lang, onChange: mpState.onChange, onClose: function(){setMpState(null);} }) : null
