@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-var APP_VERSION = "v3.10.18";  // ← single source of truth: bump this once per release
+var APP_VERSION = "v3.10.20";  // ← single source of truth: bump this once per release
 console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
@@ -12,7 +12,7 @@ console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-
       window.Sentry.init({
         dsn:window.SENTRY_DSN,
         environment:(location.hostname==="localhost"||location.hostname==="127.0.0.1")?"development":"production",
-        release:"nyc-driver-tracker@1.1.5",
+        release:"nyc-driver-tracker@1.1.6",
         tracesSampleRate:0.1,
         // Don't send events from local dev
         beforeSend:function(event){
@@ -2987,23 +2987,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                         })
                     );
                   }())
-                // === Recent Bank Payout Card ===
-                , (function(){
-                    if(driverType==="taxi") return null;
-                    var paid=wl.filter(function(w){return w.payoutAmount&&+w.payoutAmount>0;}).sort(function(a,b){
-                      return (b.payoutDate||b.weekStart||"").localeCompare(a.payoutDate||a.weekStart||"");
-                    });
-                    if(!paid.length) return null;
-                    var latest=paid[0];
-                    return React.createElement(Card, {style:{marginBottom:8,padding:"12px 14px",background:"#0A2030",border:"1px solid #2A5080"}}
-                      , React.createElement('div', {style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}
-                        , React.createElement('div', {style:{fontSize:12,color:"#7AC0E8",letterSpacing:0.3}}, "\ud83c\udfe6 " , lang==="en"?"LATEST BANK PAYOUT":"\u6700\u8fd1\u94f6\u884c\u5165\u8d26")
-                        , React.createElement('div', {style:{fontSize:12,color:C.text3}}, latest.payoutDate || (lang==="en"?"date unknown":"\u65e5\u671f\u672a\u77e5"))
-                      )
-                      , React.createElement('div', {style:{fontSize:22,fontWeight:800,color:"#5AACFF"}}, "$" , (+latest.payoutAmount).toFixed(2))
-                      , React.createElement('div', {style:{fontSize:12,color:C.text3,marginTop:4}}, latest.platform , " \u00b7 " , lang==="en"?"work week ":"\u5de5\u4f5c\u5468 " , latest.weekStart)
-                    );
-                  }())
+                // (Removed: "Recent Bank Payout Card" — replaced by the new dual big-number card "📱 平台到账")
 
                 // === #11: Multi-line trend chart (income/expense/net) — year view only ===
                 , (function(){
