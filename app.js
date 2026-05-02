@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-var APP_VERSION = "v3.10.52";  // ← single source of truth: bump this once per release
+var APP_VERSION = "v3.10.53";  // ← single source of truth: bump this once per release
 console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
@@ -12,7 +12,7 @@ console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-
       window.Sentry.init({
         dsn:window.SENTRY_DSN,
         environment:(location.hostname==="localhost"||location.hostname==="127.0.0.1")?"development":"production",
-        release:"nyc-driver-tracker@1.3.5",
+        release:"nyc-driver-tracker@1.3.6",
         tracesSampleRate:0.1,
         // Don't send events from local dev
         beforeSend:function(event){
@@ -105,7 +105,7 @@ var C={
   // Backgrounds (3 layers for depth)
   bg:    "#0A0E1A",    // deepest — page background, almost pure black with hint of blue
   bg2:   "#121826",    // mid — card surface
-  bg3:   "#101828",    // mid-deep — for inset cards, secondary surfaces (was #1A2235, now darker for better depth)
+  bg3:   "#101828",    // mid-deep — for inset cards, secondary surfaces
   bg4:   "#0F1420",    // sunken — input fields, code blocks
   // Borders (subtle, almost invisible by default)
   border:"#1E2A3F",    // default subtle border
@@ -115,16 +115,16 @@ var C={
   text2: "#A0B0C8",    // secondary, labels
   text3: "#5A6B85",    // tertiary, hints
   // Brand accents (Tesla-inspired neon)
-  accent:    C.accent, // primary cyan-blue (data, links, focus)
-  accent2:   C.accent2, // softer blue (icons, decorative)
+  accent:    "#00D4FF", // primary cyan-blue (data, links, focus)
+  accent2:   "#5AACFF", // softer blue (icons, decorative)
   // Semantic colors (status)
-  success:   C.success, // income, positive
+  success:   "#00E676", // income, positive
   successDim:"#0A4020", // success bg
   warn:      "#FFB347", // warning amber
   warnDim:   "#1A1400",
-  danger:    C.danger, // expense, negative
+  danger:    "#FF5252", // expense, negative
   dangerDim: "#1A0808",
-  gold:      C.gold  // highlights, premium feel
+  gold:      "#FFD700"  // highlights, premium feel
 };
 // Design tokens — use these for spacing, radii, shadows
 var SPACE={xs:4, sm:8, md:12, lg:16, xl:24, xxl:32};
