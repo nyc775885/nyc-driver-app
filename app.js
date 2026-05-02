@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-var APP_VERSION = "v3.10.7";  // ← single source of truth: bump this once per release
+var APP_VERSION = "v3.10.8";  // ← single source of truth: bump this once per release
 console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
@@ -12,7 +12,7 @@ console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-
       window.Sentry.init({
         dsn:window.SENTRY_DSN,
         environment:(location.hostname==="localhost"||location.hostname==="127.0.0.1")?"development":"production",
-        release:"nyc-driver-tracker@1.0.93",
+        release:"nyc-driver-tracker@1.0.95",
         tracesSampleRate:0.1,
         // Don't send events from local dev
         beforeSend:function(event){
@@ -1454,7 +1454,7 @@ function App() {
   //   - rideshare entry: grossFare + tips + bonus + tollReimbursed
   var mDailyInc=mDailies.reduce(function(s,d){
     if(d.mode==="rideshare"){
-      return s + (+d.grossFare||0) + (+d.tips||0) + (+d.bonus||0) + (+d.tollReimbursed||0);
+      return s + (+d.grossFare||0) + (+d.tips||0) + (+d.bonus||0);
     }
     return s + (+d.cash||0) + (+d.card||0) + (+d.tips||0);
   },0);
@@ -1463,7 +1463,10 @@ function App() {
   var mDlPlatformFee=mDailies.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.platformFee||0):0);},0);
   // Total revenue: gross + tips + bonus + other. Toll reimbursement is NOT included
   // (it's pass-through money: rider pays toll → platform forwards to driver → driver pays toll booth).
-  var tInc=mStmts.reduce(function(s,x){return s+(+x.grossFare||0)+(+x.tips||0)+(+x.bonus||0)+(+x.tollReimbursed||0)+(+x.otherIncome||0);},0)+mDailyInc;
+  // tInc = "营业额" (revenue, no toll). 
+  // To get "总营业额" (gross with toll) use tInc+tToll. 
+  // Toll is pass-through; we expose it but don't double-count it.
+  var tInc=mStmts.reduce(function(s,x){return s+(+x.grossFare||0)+(+x.tips||0)+(+x.bonus||0)+(+x.otherIncome||0);},0)+mDailyInc;
   // For taxi mode: cash+card maps to grossFare; tips maps to tips
   var mDlCash=mDailies.reduce(function(s,d){return s+(d.mode==="rideshare"?0:(+d.cash||0));},0);
   var mDlCard=mDailies.reduce(function(s,d){return s+(d.mode==="rideshare"?0:(+d.card||0));},0);
@@ -1484,7 +1487,7 @@ function App() {
   // tollReimbursed: platform refunds toll money to driver, but driver also paid it at the toll booth.
   // Net effect = $0. We do NOT track actual toll-paid expense (driver would never record manually),
   // so we subtract tollReimbursed from net profit to keep the math truthful.
-  var tExp=feAll.reduce(function(s,e){return s+(+e.amount||0);},0)+mDailyLease,tFix=fixMo.reduce(function(s,e){return s+(+e.amount||0);},0),net=tInc-tExp-tPlatformFee-tToll;
+  var tExp=feAll.reduce(function(s,e){return s+(+e.amount||0);},0)+mDailyLease,tFix=fixMo.reduce(function(s,e){return s+(+e.amount||0);},0),net=tInc-tExp-tPlatformFee;
   var tTrips=mWeeks.reduce(function(s,w){return s+(+w.trips||0);},0)+mDailies.reduce(function(s,d){return s+(+d.trips||0);},0);
   var tHours=mWeeks.reduce(function(s,w){return s+(+w.hours||0);},0)+mDailies.reduce(function(s,d){return s+(+d.hours||0);},0);
   var tOnl=mWeeks.reduce(function(s,w){return s+(+w.onlineHours||0);},0),tMiles=mWeeks.reduce(function(s,w){return s+(+w.miles||0);},0)+mDailies.reduce(function(s,d){return s+(+d.miles||0);},0);
@@ -1495,19 +1498,19 @@ function App() {
   var yDailies=dl.filter(function(d){return d.date&&d.date.slice(0,4)===yr;});
   var yDailyInc=yDailies.reduce(function(s,d){
     if(d.mode==="rideshare"){
-      return s + (+d.grossFare||0) + (+d.tips||0) + (+d.bonus||0) + (+d.tollReimbursed||0);
+      return s + (+d.grossFare||0) + (+d.tips||0) + (+d.bonus||0);
     }
     return s + (+d.cash||0) + (+d.card||0) + (+d.tips||0);
   },0);
   var yDailyLease=yDailies.reduce(function(s,d){return s+(+d.lease||0);},0);
-  var yInc=yStmts.reduce(function(s,x){return s+(+x.grossFare||0)+(+x.tips||0)+(+x.bonus||0)+(+x.tollReimbursed||0)+(+x.otherIncome||0);},0)+yDailyInc;
+  var yInc=yStmts.reduce(function(s,x){return s+(+x.grossFare||0)+(+x.tips||0)+(+x.bonus||0)+(+x.otherIncome||0);},0)+yDailyInc;
   var yToll=yStmts.reduce(function(s,x){return s+(+x.tollReimbursed||0);},0)+yDailies.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.tollReimbursed||0):0);},0);
   var yPlatformFee=yStmts.reduce(function(s,x){return s+(+x.platformFee||0);},0)+yDailies.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.platformFee||0):0);},0);
-  var yExp=yExps.reduce(function(s,e){return s+(+e.amount||0);},0)+yFixT+yDailyLease,yNet=yInc-yExp-yPlatformFee-yToll;
+  var yExp=yExps.reduce(function(s,e){return s+(+e.amount||0);},0)+yFixT+yDailyLease,yNet=yInc-yExp-yPlatformFee;
   var yTrips=wl.filter(function(w){return w.weekStart.slice(0,4)===yr;}).reduce(function(s,w){return s+(+w.trips||0);},0)+yDailies.reduce(function(s,d){return s+(+d.trips||0);},0);
   var yHours=wl.filter(function(w){return w.weekStart.slice(0,4)===yr;}).reduce(function(s,w){return s+(+w.hours||0);},0)+yDailies.reduce(function(s,d){return s+(+d.hours||0);},0);
   var yMiles=wl.filter(function(w){return w.weekStart.slice(0,4)===yr;}).reduce(function(s,w){return s+(+w.miles||0);},0)+yDailies.reduce(function(s,d){return s+(+d.miles||0);},0);  var yStmtTrips=yStmts.reduce(function(s,x){return s+(+x.trips||0);},0),yStmtHours=yStmts.reduce(function(s,x){return s+(+x.onlineHours||0);},0),yStmtMiles=yStmts.reduce(function(s,x){return s+(+x.miles||0);},0);
-  var mData=yMons.map(function(m){var ms=sl.filter(function(x){return x.month===m;}),me=el.filter(function(e){return e.date.slice(0,7)===m;}),md=dl.filter(function(d){return d.date&&d.date.slice(0,7)===m;}),mf=genFixed(fl,m).reduce(function(s,e){return s+(+e.amount||0);},0),inc=ms.reduce(function(s,x){return s+(+x.grossFare||0)+(+x.tips||0)+(+x.bonus||0)+(+x.tollReimbursed||0)+(+x.otherIncome||0);},0)+md.reduce(function(s,d){if(d.mode==="rideshare")return s+(+d.grossFare||0)+(+d.tips||0)+(+d.bonus||0)+(+d.tollReimbursed||0);return s+(+d.cash||0)+(+d.card||0)+(+d.tips||0);},0),exp=me.reduce(function(s,e){return s+(+e.amount||0);},0)+mf+md.reduce(function(s,d){return s+(+d.lease||0);},0),mToll=ms.reduce(function(s,x){return s+(+x.tollReimbursed||0);},0)+md.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.tollReimbursed||0):0);},0),mPlat=ms.reduce(function(s,x){return s+(+x.platformFee||0);},0)+md.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.platformFee||0):0);},0);return {m:m,inc:inc,exp:exp,net:inc-exp-mPlat-mToll,label:m.slice(5)+"月"};});
+  var mData=yMons.map(function(m){var ms=sl.filter(function(x){return x.month===m;}),me=el.filter(function(e){return e.date.slice(0,7)===m;}),md=dl.filter(function(d){return d.date&&d.date.slice(0,7)===m;}),mf=genFixed(fl,m).reduce(function(s,e){return s+(+e.amount||0);},0),inc=ms.reduce(function(s,x){return s+(+x.grossFare||0)+(+x.tips||0)+(+x.bonus||0)+(+x.otherIncome||0);},0)+md.reduce(function(s,d){if(d.mode==="rideshare")return s+(+d.grossFare||0)+(+d.tips||0)+(+d.bonus||0);return s+(+d.cash||0)+(+d.card||0)+(+d.tips||0);},0),exp=me.reduce(function(s,e){return s+(+e.amount||0);},0)+mf+md.reduce(function(s,d){return s+(+d.lease||0);},0),mToll=ms.reduce(function(s,x){return s+(+x.tollReimbursed||0);},0)+md.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.tollReimbursed||0):0);},0),mPlat=ms.reduce(function(s,x){return s+(+x.platformFee||0);},0)+md.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.platformFee||0):0);},0);return {m:m,inc:inc,exp:exp,net:inc-exp-mPlat,label:m.slice(5)+"月"};});
   var insW=null;if(veh.lastInsp){var ip=veh.lastInsp.split("-"),baseY=+ip[0],baseM=+ip[1]-1;var isTlc=!!(veh.tlcPlate&&veh.tlcPlate.trim());var addMonths=isTlc?4:12;
     // TLC counts by month, not by day. So "Jan inspection + 4 months" means valid through end of April.
     // The due date is the LAST day of (lastInspMonth + addMonths - 1).
@@ -1518,35 +1521,35 @@ function App() {
     insW={next:tY+"-"+p2(tM+1)+"-"+p2(tD),diff:Math.round((idEnd-todayMidnight)/86400000),isTlc:isTlc};}
   var insExpDiff=veh.insExpiry?daysFromToday(veh.insExpiry):null; var expiring=ll.filter(function(l){if(!l.expiryDate)return false;var d=daysFromToday(l.expiryDate);var rd=+(l.reminderDays||60);return d!==null&&d>=0&&d<=rd;});
   var expired=ll.filter(function(l){if(!l.expiryDate)return false;var d=daysFromToday(l.expiryDate);return d!==null&&d<0;}); var totalFix=fl.filter(function(f){return f.active&&f.amount;}).reduce(function(s,f){return s+(f.cycle==="annual"?Math.round(+f.amount/12*100)/100:+f.amount);},0); var bldRep=function(p){var isM=p==="month",ri=isM?tInc:yInc,rg=isM?tGross:yStmts.reduce(function(s,x){return s+(+x.grossFare||0);},0),rt=isM?tTips:yStmts.reduce(function(s,x){return s+(+x.tips||0);},0),rb=isM?tBonus:yStmts.reduce(function(s,x){return s+(+x.bonus||0);},0),rtr=isM?tToll:yStmts.reduce(function(s,x){return s+(+x.tollReimbursed||0);},0),rTot=isM?tExp:yExp,rn=ri-rTot,rT=isM?tTrips:yTrips,rH=isM?tHours:yHours,rM=isM?tMiles:yMiles;return {ri:ri,rg:rg,rt:rt,rb:rb,rtr:rtr,rTot:rTot,rn:rn,rTrips:rT,rHours:rH,rMiles:rM};};
-  var yAllExps=function(){return yExps.concat(yMons.reduce(function(acc,m){return acc.concat(genFixed(fl,m));},[]));}; var hourlyRate=tHours>0?Math.round(tInc/tHours*100)/100:0,lastMo=prevMo(mo),lmStmts=sl.filter(function(x){return x.month===lastMo;}),lmWeeks=wl.filter(function(w){return w.weekStart.slice(0,7)===lastMo;}),lmFixMo=genFixed(fl,lastMo),lmDailies=dl.filter(function(d){return d.date&&d.date.slice(0,7)===lastMo;}),lmDlInc=lmDailies.reduce(function(s,d){if(d.mode==="rideshare")return s+(+d.grossFare||0)+(+d.tips||0)+(+d.bonus||0)+(+d.tollReimbursed||0);return s+(+d.cash||0)+(+d.card||0)+(+d.tips||0);},0),lmDlLease=lmDailies.reduce(function(s,d){return s+(+d.lease||0);},0),lmDlHours=lmDailies.reduce(function(s,d){return s+(+d.hours||0);},0),lmFeAll=el.filter(function(e){var c=allC[e.category];if(c&&c.mo)return (e.statementMonth||e.date.slice(0,7))===lastMo;return e.date.slice(0,7)===lastMo;}).concat(lmFixMo),lmInc=lmStmts.reduce(function(s,x){return s+(+x.grossFare||0)+(+x.tips||0)+(+x.bonus||0)+(+x.tollReimbursed||0)+(+x.otherIncome||0);},0)+lmDlInc,lmExp=lmFeAll.reduce(function(s,e){return s+(+e.amount||0);},0)+lmDlLease,lmToll=lmStmts.reduce(function(s,x){return s+(+x.tollReimbursed||0);},0)+lmDailies.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.tollReimbursed||0):0);},0),lmPlatformFee=lmStmts.reduce(function(s,x){return s+(+x.platformFee||0);},0)+lmDailies.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.platformFee||0):0);},0),lmNet=lmInc-lmExp-lmPlatformFee-lmToll,lmHours=lmWeeks.reduce(function(s,w){return s+(+w.hours||0);},0)+lmDlHours,lmHourly=lmHours>0?Math.round(lmInc/lmHours*100)/100:0,nextExpiry=ll.filter(function(l){return l.expiryDate;}).sort(function(a,b){return a.expiryDate.localeCompare(b.expiryDate);})[0]
+  var yAllExps=function(){return yExps.concat(yMons.reduce(function(acc,m){return acc.concat(genFixed(fl,m));},[]));}; var hourlyRate=tHours>0?Math.round(tInc/tHours*100)/100:0,lastMo=prevMo(mo),lmStmts=sl.filter(function(x){return x.month===lastMo;}),lmWeeks=wl.filter(function(w){return w.weekStart.slice(0,7)===lastMo;}),lmFixMo=genFixed(fl,lastMo),lmDailies=dl.filter(function(d){return d.date&&d.date.slice(0,7)===lastMo;}),lmDlInc=lmDailies.reduce(function(s,d){if(d.mode==="rideshare")return s+(+d.grossFare||0)+(+d.tips||0)+(+d.bonus||0);return s+(+d.cash||0)+(+d.card||0)+(+d.tips||0);},0),lmDlLease=lmDailies.reduce(function(s,d){return s+(+d.lease||0);},0),lmDlHours=lmDailies.reduce(function(s,d){return s+(+d.hours||0);},0),lmFeAll=el.filter(function(e){var c=allC[e.category];if(c&&c.mo)return (e.statementMonth||e.date.slice(0,7))===lastMo;return e.date.slice(0,7)===lastMo;}).concat(lmFixMo),lmInc=lmStmts.reduce(function(s,x){return s+(+x.grossFare||0)+(+x.tips||0)+(+x.bonus||0)+(+x.otherIncome||0);},0)+lmDlInc,lmExp=lmFeAll.reduce(function(s,e){return s+(+e.amount||0);},0)+lmDlLease,lmToll=lmStmts.reduce(function(s,x){return s+(+x.tollReimbursed||0);},0)+lmDailies.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.tollReimbursed||0):0);},0),lmPlatformFee=lmStmts.reduce(function(s,x){return s+(+x.platformFee||0);},0)+lmDailies.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.platformFee||0):0);},0),lmNet=lmInc-lmExp-lmPlatformFee,lmHours=lmWeeks.reduce(function(s,w){return s+(+w.hours||0);},0)+lmDlHours,lmHourly=lmHours>0?Math.round(lmInc/lmHours*100)/100:0,nextExpiry=ll.filter(function(l){return l.expiryDate;}).sort(function(a,b){return a.expiryDate.localeCompare(b.expiryDate);})[0]
     // YEAR-OVER-YEAR comparisons
     // (a) Same month last year — for month-view comparison
     , lyMo = (function(){var p=mo.split("-");return (+p[0]-1)+"-"+p[1];})()
     , lyMoStmts = sl.filter(function(x){return x.month===lyMo;})
     , lyMoFixMo = genFixed(fl,lyMo)
     , lyMoDailies = dl.filter(function(d){return d.date&&d.date.slice(0,7)===lyMo;})
-    , lyMoDlInc = lyMoDailies.reduce(function(s,d){if(d.mode==="rideshare")return s+(+d.grossFare||0)+(+d.tips||0)+(+d.bonus||0)+(+d.tollReimbursed||0);return s+(+d.cash||0)+(+d.card||0)+(+d.tips||0);},0)
+    , lyMoDlInc = lyMoDailies.reduce(function(s,d){if(d.mode==="rideshare")return s+(+d.grossFare||0)+(+d.tips||0)+(+d.bonus||0);return s+(+d.cash||0)+(+d.card||0)+(+d.tips||0);},0)
     , lyMoDlLease = lyMoDailies.reduce(function(s,d){return s+(+d.lease||0);},0)
     , lyMoFeAll = el.filter(function(e){var c=allC[e.category];if(c&&c.mo)return (e.statementMonth||e.date.slice(0,7))===lyMo;return e.date.slice(0,7)===lyMo;}).concat(lyMoFixMo)
-    , lyMoInc = lyMoStmts.reduce(function(s,x){return s+(+x.grossFare||0)+(+x.tips||0)+(+x.bonus||0)+(+x.tollReimbursed||0)+(+x.otherIncome||0);},0)+lyMoDlInc
+    , lyMoInc = lyMoStmts.reduce(function(s,x){return s+(+x.grossFare||0)+(+x.tips||0)+(+x.bonus||0)+(+x.otherIncome||0);},0)+lyMoDlInc
     , lyMoExp = lyMoFeAll.reduce(function(s,e){return s+(+e.amount||0);},0)+lyMoDlLease
     , lyMoToll = lyMoStmts.reduce(function(s,x){return s+(+x.tollReimbursed||0);},0)+lyMoDailies.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.tollReimbursed||0):0);},0)
     , lyMoPlatformFee = lyMoStmts.reduce(function(s,x){return s+(+x.platformFee||0);},0)+lyMoDailies.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.platformFee||0):0);},0)
-    , lyMoNet = lyMoInc-lyMoExp-lyMoPlatformFee-lyMoToll
+    , lyMoNet = lyMoInc-lyMoExp-lyMoPlatformFee
     // (b) Previous full year — for year-view comparison
     , prevYr = String(+yr-1)
     , prevYrMons = (function(){var arr=[];for(var i=1;i<=12;i++)arr.push(prevYr+"-"+(i<10?"0":"")+i);return arr;})()
     , pyStmts = sl.filter(function(x){return x.month && x.month.slice(0,4)===prevYr;})
     , pyExpsList = el.filter(function(e){return e.date && e.date.slice(0,4)===prevYr;})
     , pyDailies = dl.filter(function(d){return d.date && d.date.slice(0,4)===prevYr;})
-    , pyDlInc = pyDailies.reduce(function(s,d){if(d.mode==="rideshare")return s+(+d.grossFare||0)+(+d.tips||0)+(+d.bonus||0)+(+d.tollReimbursed||0);return s+(+d.cash||0)+(+d.card||0)+(+d.tips||0);},0)
+    , pyDlInc = pyDailies.reduce(function(s,d){if(d.mode==="rideshare")return s+(+d.grossFare||0)+(+d.tips||0)+(+d.bonus||0);return s+(+d.cash||0)+(+d.card||0)+(+d.tips||0);},0)
     , pyDlLease = pyDailies.reduce(function(s,d){return s+(+d.lease||0);},0)
     , pyFixT = prevYrMons.reduce(function(s,m){return s+genFixed(fl,m).reduce(function(a,e){return a+(+e.amount||0);},0);},0)
-    , pyInc = pyStmts.reduce(function(s,x){return s+(+x.grossFare||0)+(+x.tips||0)+(+x.bonus||0)+(+x.tollReimbursed||0)+(+x.otherIncome||0);},0)+pyDlInc
+    , pyInc = pyStmts.reduce(function(s,x){return s+(+x.grossFare||0)+(+x.tips||0)+(+x.bonus||0)+(+x.otherIncome||0);},0)+pyDlInc
     , pyExp = pyExpsList.reduce(function(s,e){return s+(+e.amount||0);},0)+pyFixT+pyDlLease
     , pyToll = pyStmts.reduce(function(s,x){return s+(+x.tollReimbursed||0);},0)+pyDailies.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.tollReimbursed||0):0);},0)
     , pyPlatformFee = pyStmts.reduce(function(s,x){return s+(+x.platformFee||0);},0)+pyDailies.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.platformFee||0):0);},0)
-    , pyNet = pyInc-pyExp-pyPlatformFee-pyToll
+    , pyNet = pyInc-pyExp-pyPlatformFee
     ; var achievements=[];if(tInc>=5000)achievements.push({icon:"🏆",text:lang==="en"?"Income > $5000":"本月收入破$5000",color:"#FFD700",bg:"#1A1400"});else if(tInc>=3000)achievements.push({icon:"⭐",text:lang==="en"?"Income > $3000":"本月收入破$3000",color:"#FFD700",bg:"#1A1400"});if(net>0&&tInc>0&&net>=tInc*0.5)achievements.push({icon:"💰",text:lang==="en"?"Profit > 50%":"净利润超50%",color:"#00E676",bg:"#0A1A0A"});if(tTrips>=200)achievements.push({icon:"🚗",text:lang==="en"?"200 trips this month":"本月200趟达成",color:"#00D4FF",bg:"#0A1428"});else if(tTrips>=100)achievements.push({icon:"🎯",text:lang==="en"?"100 trips this month":"本月100趟达成",color:"#00D4FF",bg:"#0A1428"});if(expiring.length===0&&expired.length===0&&ll.length>0)achievements.push({icon:"✅",text:lang==="en"?"All licenses valid":"证件全部有效",color:"#00E676",bg:"#0A1A0A"});if(yInc>=50000)achievements.push({icon:"👑",text:lang==="en"?"Annual income > $50000":"年收入破$50000",color:"#FFD700",bg:"#1A1400"}); var r40=useState(function(){return lsLoad("nyc_custGroups",[]);}),custGroups=r40[0],setCustGroups=r40[1]; var r41=useState(""),newGrpName=r41[0],setNewGrpName=r41[1]; var r42=useState("📁"),newGrpIcon=r42[0],setNewGrpIcon=r42[1]; var r43=useState("#A8D0E8"),newGrpColor=r43[0],setNewGrpColor=r43[1]; var r44=useState(new Date().getFullYear()+""),taxYr=r44[0],setTaxYr=r44[1]; var r45=useState(function(){return lsLoad("nyc_seRate",15.3);}),seRate=r45[0],_setSeRate=r45[1];function setSeRate(v){_setSeRate(v);try{localStorage.setItem("nyc_seRate",JSON.stringify(v));}catch(e){}} var r45b=useState(function(){return lsLoad("nyc_fedRate",12);}),fedRate=r45b[0],_setFedRate=r45b[1];function setFedRate(v){_setFedRate(v);try{localStorage.setItem("nyc_fedRate",JSON.stringify(v));}catch(e){}} var r45c=useState(function(){return lsLoad("nyc_stateRate",8.5);}),stateRate=r45c[0],_setStateRate=r45c[1];function setStateRate(v){_setStateRate(v);try{localStorage.setItem("nyc_stateRate",JSON.stringify(v));}catch(e){}} var r45d=useState(function(){return lsLoad("nyc_stdDed",14600);}),stdDed=r45d[0],_setStdDed=r45d[1];function setStdDed(v){_setStdDed(v);try{localStorage.setItem("nyc_stdDed",JSON.stringify(v));}catch(e){}} var r45e=useState(function(){return lsLoad("nyc_mtaRate",0.34);}),mtaRate=r45e[0],_setMtaRate=r45e[1];function setMtaRate(v){_setMtaRate(v);try{localStorage.setItem("nyc_mtaRate",JSON.stringify(v));}catch(e){}} var r45f=useState(function(){return lsLoad("nyc_mileageRate",0.70);}),mileageRate=r45f[0],_setMileageRate=r45f[1];function setMileageRate(v){_setMileageRate(v);try{localStorage.setItem("nyc_mileageRate",JSON.stringify(v));}catch(e){}} var rSV=useState(function(){return lsLoad("nyc_savedVehicles",[]);}),savedVehicles=rSV[0],_setSavedVehicles=rSV[1];function setSavedVehicles(v){_setSavedVehicles(v);try{localStorage.setItem("nyc_savedVehicles",JSON.stringify(v));}catch(e){}} var r46=useState(false),taxLoading=r46[0],setTaxLoading=r46[1]; var r47=useState(""),taxRateNote=r47[0],setTaxRateNote=r47[1]; var r48=useState(function(){return lsLoad("nyc_notes",[]);}),notes=r48[0],setNotes=r48[1];
   // Driver info (separate from vehicle so it survives vehicle switches)
   // Migration: if nyc_driver doesn't exist but veh.driver has data, copy it over.
@@ -2909,11 +2912,17 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                   }())
                 , (function(){
                     // === Two-column big number card: Platform Pay + Net Profit ===
-                    // platformPay = Uber actually paid you (gross - platformFee), includes toll reimbursement
-                    // realCarFare = platformPay - tollReimbursed (what's actually yours after paying toll booth)
-                    // net = revenue - all expenses - platformFee - toll(virtual expense)
-                    var platformPay = tInc - tPlatformFee; // includes toll
-                    var realCarFare = platformPay - tToll; // toll-stripped (truly your earnings)
+                    // 营业额 (revenue): tInc = grossFare + tips + bonus + other (NOT including toll)
+                    // 总营业额 (gross including toll): tInc + tToll
+                    // 平台收入 (Platform Pay) = 总营业额 - 平台抽成 = tInc + tToll - tPlatformFee
+                    //                          (Uber 实际打到银行的钱, 含 toll reimbursement)
+                    // 实赚 (Real Earnings) = 平台收入 - tToll = tInc - tPlatformFee
+                    //                       (扣掉付给收费站的过桥钱)
+                    // 净收入 (Net Profit) = tInc - tExp - tPlatformFee
+                    //                      (营业额 - 其他支出 - 平台抽成, toll 进出抵消)
+                    var grossWithToll = tInc + tToll;
+                    var platformPay = grossWithToll - tPlatformFee;
+                    var realEarnings = platformPay - tToll;  // = tInc - tPlatformFee
                     var bigNumKey = "dash_bignum_"+mo;
                     var bigExp = __bucketExpanded[bigNumKey] === true;
                     return React.createElement('div', {style:{marginBottom:10}},
@@ -2927,7 +2936,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                           ),
                           React.createElement('div', {style:{fontSize:22,fontWeight:800,color:"#5AACFF",letterSpacing:-0.5,marginTop:4}}, fmt(platformPay)),
                           tToll>0 ? React.createElement('div', {style:{fontSize:10,color:C.text3,marginTop:3}}, "−", lang==="en"?"toll ":"过桥 ", fmt(tToll)) : null,
-                          tToll>0 ? React.createElement('div', {style:{fontSize:11,color:"#8ACCA8",fontWeight:600}}, lang==="en"?"actual ":"实收 ", fmt(realCarFare)) : null
+                          tToll>0 ? React.createElement('div', {style:{fontSize:11,color:"#8ACCA8",fontWeight:600}}, lang==="en"?"actual ":"实赚 ", fmt(realEarnings)) : null
                         ),
                         // Net Profit card
                         React.createElement(Card, {style:{padding:"12px 12px",cursor:"pointer"},onClick:function(){__bucketExpanded[bigNumKey]=!bigExp;forceRerender();}},
@@ -2939,16 +2948,16 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                           React.createElement('div', {style:{fontSize:10,color:C.text3,marginTop:3}}, lang==="en"?"after all expenses":"扣除所有开销")
                         )
                       ),
-                      // Expanded detail view
+                      // Expanded full breakdown (single card under both)
                       bigExp ? React.createElement(Card, {style:{padding:"12px 14px",background:"#0A1828",border:"1px solid "+C.border}},
                         React.createElement('div', {style:{fontSize:11,color:C.text3,marginBottom:8,letterSpacing:0.3}}, "📊 ", lang==="en"?"FULL BREAKDOWN":"完整明细"),
                         React.createElement('div', {style:{display:"flex",flexDirection:"column",gap:5,fontSize:13,lineHeight:1.5}},
-                          // Layer 1: Gross revenue
+                          // Layer 1: 营业额 = car fare + tips + bonus
                           React.createElement('div', {style:{display:"flex",justifyContent:"space-between"}},
-                            React.createElement('span', {style:{color:C.text2}}, "💰 ", lang==="en"?"Gross Revenue":"总营业额"),
+                            React.createElement('span', {style:{color:C.text2}}, lang==="en"?"Revenue":"营业额"),
                             React.createElement('b', {style:{color:"#5AACFF"}}, fmt(tInc))
                           ),
-                          // Sub-items of revenue
+                          // Sub-items
                           tGross>0 ? React.createElement('div', {style:{display:"flex",justifyContent:"space-between",fontSize:12,color:C.text3,paddingLeft:18}},
                             React.createElement('span', null, lang==="en"?"Trip earnings":"车费"),
                             React.createElement('span', null, fmt(tGross))
@@ -2961,31 +2970,41 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                             React.createElement('span', null, lang==="en"?"Bonus":"奖励"),
                             React.createElement('span', null, fmt(tBonus))
                           ) : null,
-                          tToll>0 ? React.createElement('div', {style:{display:"flex",justifyContent:"space-between",fontSize:12,color:C.text3,paddingLeft:18}},
-                            React.createElement('span', null, lang==="en"?"Toll reimbursed":"过桥退款"),
-                            React.createElement('span', null, fmt(tToll))
+                          // Layer 2: + toll = 总营业额
+                          tToll>0 ? React.createElement('div', {style:{display:"flex",justifyContent:"space-between"}},
+                            React.createElement('span', {style:{color:C.text3}}, "+ ", lang==="en"?"Toll reimbursed":"过桥退款"),
+                            React.createElement('span', {style:{color:"#5ADA7A"}}, "+", fmt(tToll))
                           ) : null,
-                          // Layer 2: Platform fee
+                          tToll>0 ? React.createElement('div', {style:{display:"flex",justifyContent:"space-between",paddingTop:5,borderTop:"1px dashed #1F3A5A"}},
+                            React.createElement('span', {style:{color:C.text2,fontWeight:600}}, lang==="en"?"Gross Revenue":"总营业额"),
+                            React.createElement('b', {style:{color:"#5AACFF"}}, fmt(grossWithToll))
+                          ) : null,
+                          // Layer 3: − platform fee
                           tPlatformFee>0 ? React.createElement('div', {style:{display:"flex",justifyContent:"space-between"}},
                             React.createElement('span', {style:{color:C.text3}}, "− ", lang==="en"?"Platform fee":"平台抽成"),
                             React.createElement('span', {style:{color:"#FF7060"}}, "−", fmt(tPlatformFee))
                           ) : null,
-                          // Subtotal: Platform pay
+                          // = Platform Pay (实银行入账)
                           React.createElement('div', {style:{display:"flex",justifyContent:"space-between",paddingTop:5,borderTop:"1px dashed #1F3A5A"}},
                             React.createElement('span', {style:{color:C.text2,fontWeight:600}}, "📱 ", lang==="en"?"Platform Pay":"平台收入"),
                             React.createElement('b', {style:{color:"#5AACFF"}}, fmt(platformPay))
                           ),
-                          // Layer 3: Toll paid (offset)
+                          // − Toll paid (booth)
                           tToll>0 ? React.createElement('div', {style:{display:"flex",justifyContent:"space-between"}},
-                            React.createElement('span', {style:{color:C.text3}}, "− ", lang==="en"?"Toll paid (booth)":"过桥费支出"),
+                            React.createElement('span', {style:{color:C.text3}}, "− ", lang==="en"?"Toll paid (booth)":"过桥支出"),
                             React.createElement('span', {style:{color:"#FF7060"}}, "−", fmt(tToll))
                           ) : null,
-                          // Layer 4: Other expenses
+                          // = Real earnings
+                          tToll>0 ? React.createElement('div', {style:{display:"flex",justifyContent:"space-between",paddingTop:5,borderTop:"1px dashed #1F3A5A"}},
+                            React.createElement('span', {style:{color:C.text2,fontWeight:600}}, lang==="en"?"Real Earnings":"实赚"),
+                            React.createElement('b', {style:{color:"#FFD700"}}, fmt(realEarnings))
+                          ) : null,
+                          // − Other expenses
                           tExp>0 ? React.createElement('div', {style:{display:"flex",justifyContent:"space-between"}},
                             React.createElement('span', {style:{color:C.text3}}, "− ", lang==="en"?"Other expenses":"其他支出"),
                             React.createElement('span', {style:{color:"#FF7060"}}, "−", fmt(tExp))
                           ) : null,
-                          // Final: Net profit
+                          // = Net profit
                           React.createElement('div', {style:{display:"flex",justifyContent:"space-between",paddingTop:5,borderTop:"1px solid "+C.border,marginTop:3}},
                             React.createElement('span', {style:{color:C.text,fontWeight:700}}, "💰 ", lang==="en"?"Net Profit":"净收入"),
                             React.createElement('b', {style:{color:net>=0?"#00E676":"#FF7060",fontSize:14}}, fmt(net))
