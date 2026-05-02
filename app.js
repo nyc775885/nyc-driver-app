@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-var APP_VERSION = "v3.10.69";  // ← single source of truth: bump this once per release
+var APP_VERSION = "v3.10.73";  // ← single source of truth: bump this once per release
 console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
@@ -12,7 +12,7 @@ console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-
       window.Sentry.init({
         dsn:window.SENTRY_DSN,
         environment:(location.hostname==="localhost"||location.hostname==="127.0.0.1")?"development":"production",
-        release:"nyc-driver-tracker@1.3.18",
+        release:"nyc-driver-tracker@1.3.20",
         tracesSampleRate:0.1,
         // Don't send events from local dev
         beforeSend:function(event){
@@ -328,8 +328,8 @@ function parseFuelioReport(text){
     [/^Tolls?\s*:?/i,                           "toll"],
     [/Congestion/i,                             "congestion"],
     [/Home Made Coffee|Home-?made Coffee/i,     "coffee"],
-    [/Uber Expenses,?\s*Fees?\s*&?\s*Tax/i,     "platformfee"],
-    [/Uber Fee|Uber Tax|Black Car Fund/i,       "platformfee"],
+    [/Uber Expenses,?\s*Fees?\s*&?\s*Tax/i,     "platform"],
+    [/Uber Fee|Uber Tax|Black Car Fund/i,       "platform"],
     [/^Parking for EV Charging/i,               "parking"],
     [/^Parking Meter/i,                         "parking"],
     [/^Parking Ticket|Parking Violation/i,      "ticket"],
@@ -2021,7 +2021,7 @@ function App() {
   var tNetPay=tInc-tPlatformFee; // What you actually receive in your bank from platforms
   // tExp excludes platformfee — that's separately accounted via tPlatformFee from monthly stmts.
   // Including it here would double-count when net = tInc - tExp - tPlatformFee.
-  var tExp=feAll.reduce(function(s,e){return e.category==="platformfee" ? s : s+(+e.amount||0);},0)+mDailyLease,tFix=fixMo.reduce(function(s,e){return s+(+e.amount||0);},0),net=tInc-tExp-tPlatformFee;
+  var tExp=feAll.reduce(function(s,e){return e.category==="platform" ? s : s+(+e.amount||0);},0)+mDailyLease,tFix=fixMo.reduce(function(s,e){return s+(+e.amount||0);},0),net=tInc-tExp-tPlatformFee;
   var tTrips=mWeeks.reduce(function(s,w){return s+(+w.trips||0);},0)+mDailies.reduce(function(s,d){return s+(+d.trips||0);},0);
   var tHours=mWeeks.reduce(function(s,w){return s+(+w.hours||0);},0)+mDailies.reduce(function(s,d){return s+(+d.hours||0);},0);
   var tOnl=mWeeks.reduce(function(s,w){return s+(+w.onlineHours||0);},0),tMiles=mWeeks.reduce(function(s,w){return s+(+w.miles||0);},0)+mDailies.reduce(function(s,d){return s+(+d.miles||0);},0);
@@ -2040,11 +2040,11 @@ function App() {
   var yInc=yStmts.reduce(function(s,x){return s+(+x.grossFare||0)+(+x.tips||0)+(+x.bonus||0)+(+x.otherIncome||0);},0)+yDailyInc;
   var yToll=yStmts.reduce(function(s,x){return s+(+x.tollReimbursed||0);},0)+yDailies.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.tollReimbursed||0):0);},0);
   var yPlatformFee=yStmts.reduce(function(s,x){return s+(+x.platformFee||0);},0)+yDailies.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.platformFee||0):0);},0);
-  var yExp=yExps.reduce(function(s,e){return e.category==="platformfee" ? s : s+(+e.amount||0);},0)+yFixT+yDailyLease,yNet=yInc-yExp-yPlatformFee;
+  var yExp=yExps.reduce(function(s,e){return e.category==="platform" ? s : s+(+e.amount||0);},0)+yFixT+yDailyLease,yNet=yInc-yExp-yPlatformFee;
   var yTrips=wl.filter(function(w){return w.weekStart.slice(0,4)===yr;}).reduce(function(s,w){return s+(+w.trips||0);},0)+yDailies.reduce(function(s,d){return s+(+d.trips||0);},0);
   var yHours=wl.filter(function(w){return w.weekStart.slice(0,4)===yr;}).reduce(function(s,w){return s+(+w.hours||0);},0)+yDailies.reduce(function(s,d){return s+(+d.hours||0);},0);
   var yMiles=wl.filter(function(w){return w.weekStart.slice(0,4)===yr;}).reduce(function(s,w){return s+(+w.miles||0);},0)+yDailies.reduce(function(s,d){return s+(+d.miles||0);},0);  var yStmtTrips=yStmts.reduce(function(s,x){return s+(+x.trips||0);},0),yStmtHours=yStmts.reduce(function(s,x){return s+(+x.onlineHours||0);},0),yStmtMiles=yStmts.reduce(function(s,x){return s+(+x.miles||0);},0);
-  var mData=yMons.map(function(m){var ms=sl.filter(function(x){return x.month===m;}),me=el.filter(function(e){return e.date.slice(0,7)===m;}),md=dl.filter(function(d){return d.date&&d.date.slice(0,7)===m;}),mf=genFixed(fl,m).reduce(function(s,e){return s+(+e.amount||0);},0),inc=ms.reduce(function(s,x){return s+(+x.grossFare||0)+(+x.tips||0)+(+x.bonus||0)+(+x.otherIncome||0);},0)+md.reduce(function(s,d){if(d.mode==="rideshare")return s+(+d.grossFare||0)+(+d.tips||0)+(+d.bonus||0);return s+(+d.cash||0)+(+d.card||0)+(+d.tips||0);},0),exp=me.reduce(function(s,e){return e.category==="platformfee" ? s : s+(+e.amount||0);},0)+mf+md.reduce(function(s,d){return s+(+d.lease||0);},0),mToll=ms.reduce(function(s,x){return s+(+x.tollReimbursed||0);},0)+md.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.tollReimbursed||0):0);},0),mPlat=ms.reduce(function(s,x){return s+(+x.platformFee||0);},0)+md.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.platformFee||0):0);},0);return {m:m,inc:inc,exp:exp,net:inc-exp-mPlat,label:m.slice(5)+"月"};});
+  var mData=yMons.map(function(m){var ms=sl.filter(function(x){return x.month===m;}),me=el.filter(function(e){return e.date.slice(0,7)===m;}),md=dl.filter(function(d){return d.date&&d.date.slice(0,7)===m;}),mf=genFixed(fl,m).reduce(function(s,e){return s+(+e.amount||0);},0),inc=ms.reduce(function(s,x){return s+(+x.grossFare||0)+(+x.tips||0)+(+x.bonus||0)+(+x.otherIncome||0);},0)+md.reduce(function(s,d){if(d.mode==="rideshare")return s+(+d.grossFare||0)+(+d.tips||0)+(+d.bonus||0);return s+(+d.cash||0)+(+d.card||0)+(+d.tips||0);},0),exp=me.reduce(function(s,e){return e.category==="platform" ? s : s+(+e.amount||0);},0)+mf+md.reduce(function(s,d){return s+(+d.lease||0);},0),mToll=ms.reduce(function(s,x){return s+(+x.tollReimbursed||0);},0)+md.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.tollReimbursed||0):0);},0),mPlat=ms.reduce(function(s,x){return s+(+x.platformFee||0);},0)+md.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.platformFee||0):0);},0);return {m:m,inc:inc,exp:exp,net:inc-exp-mPlat,label:m.slice(5)+"月"};});
   var insW=null;if(veh.lastInsp){var ip=veh.lastInsp.split("-"),baseY=+ip[0],baseM=+ip[1]-1;var isTlc=!!(veh.tlcPlate&&veh.tlcPlate.trim());var addMonths=isTlc?4:12;
     // TLC counts by month, not by day. So "Jan inspection + 4 months" means valid through end of April.
     // The due date is the LAST day of (lastInspMonth + addMonths - 1).
@@ -2055,7 +2055,7 @@ function App() {
     insW={next:tY+"-"+p2(tM+1)+"-"+p2(tD),diff:Math.round((idEnd-todayMidnight)/86400000),isTlc:isTlc};}
   var insExpDiff=veh.insExpiry?daysFromToday(veh.insExpiry):null; var expiring=ll.filter(function(l){if(!l.expiryDate)return false;var d=daysFromToday(l.expiryDate);var rd=+(l.reminderDays||60);return d!==null&&d>=0&&d<=rd;});
   var expired=ll.filter(function(l){if(!l.expiryDate)return false;var d=daysFromToday(l.expiryDate);return d!==null&&d<0;}); var totalFix=fl.filter(function(f){return f.active&&f.amount;}).reduce(function(s,f){return s+(f.cycle==="annual"?Math.round(+f.amount/12*100)/100:+f.amount);},0); var bldRep=function(p){var isM=p==="month",ri=isM?tInc:yInc,rg=isM?tGross:yStmts.reduce(function(s,x){return s+(+x.grossFare||0);},0),rt=isM?tTips:yStmts.reduce(function(s,x){return s+(+x.tips||0);},0),rb=isM?tBonus:yStmts.reduce(function(s,x){return s+(+x.bonus||0);},0),rtr=isM?tToll:yStmts.reduce(function(s,x){return s+(+x.tollReimbursed||0);},0),rTot=isM?tExp:yExp,rn=ri-rTot,rT=isM?tTrips:yTrips,rH=isM?tHours:yHours,rM=isM?tMiles:yMiles;return {ri:ri,rg:rg,rt:rt,rb:rb,rtr:rtr,rTot:rTot,rn:rn,rTrips:rT,rHours:rH,rMiles:rM};};
-  var yAllExps=function(){return yExps.concat(yMons.reduce(function(acc,m){return acc.concat(genFixed(fl,m));},[]));}; var hourlyRate=tHours>0?Math.round(tInc/tHours*100)/100:0,lastMo=prevMo(mo),lmStmts=sl.filter(function(x){return x.month===lastMo;}),lmWeeks=wl.filter(function(w){return w.weekStart.slice(0,7)===lastMo;}),lmFixMo=genFixed(fl,lastMo),lmDailies=dl.filter(function(d){return d.date&&d.date.slice(0,7)===lastMo;}),lmDlInc=lmDailies.reduce(function(s,d){if(d.mode==="rideshare")return s+(+d.grossFare||0)+(+d.tips||0)+(+d.bonus||0);return s+(+d.cash||0)+(+d.card||0)+(+d.tips||0);},0),lmDlLease=lmDailies.reduce(function(s,d){return s+(+d.lease||0);},0),lmDlHours=lmDailies.reduce(function(s,d){return s+(+d.hours||0);},0),lmFeAll=el.filter(function(e){var c=allC[e.category];if(c&&c.mo)return (e.statementMonth||e.date.slice(0,7))===lastMo;return e.date.slice(0,7)===lastMo;}).concat(lmFixMo),lmInc=lmStmts.reduce(function(s,x){return s+(+x.grossFare||0)+(+x.tips||0)+(+x.bonus||0)+(+x.otherIncome||0);},0)+lmDlInc,lmExp=lmFeAll.reduce(function(s,e){return e.category==="platformfee" ? s : s+(+e.amount||0);},0)+lmDlLease,lmToll=lmStmts.reduce(function(s,x){return s+(+x.tollReimbursed||0);},0)+lmDailies.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.tollReimbursed||0):0);},0),lmPlatformFee=lmStmts.reduce(function(s,x){return s+(+x.platformFee||0);},0)+lmDailies.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.platformFee||0):0);},0),lmNet=lmInc-lmExp-lmPlatformFee,lmHours=lmWeeks.reduce(function(s,w){return s+(+w.hours||0);},0)+lmDlHours,lmHourly=lmHours>0?Math.round(lmInc/lmHours*100)/100:0,nextExpiry=ll.filter(function(l){return l.expiryDate;}).sort(function(a,b){return a.expiryDate.localeCompare(b.expiryDate);})[0]
+  var yAllExps=function(){return yExps.concat(yMons.reduce(function(acc,m){return acc.concat(genFixed(fl,m));},[]));}; var hourlyRate=tHours>0?Math.round(tInc/tHours*100)/100:0,lastMo=prevMo(mo),lmStmts=sl.filter(function(x){return x.month===lastMo;}),lmWeeks=wl.filter(function(w){return w.weekStart.slice(0,7)===lastMo;}),lmFixMo=genFixed(fl,lastMo),lmDailies=dl.filter(function(d){return d.date&&d.date.slice(0,7)===lastMo;}),lmDlInc=lmDailies.reduce(function(s,d){if(d.mode==="rideshare")return s+(+d.grossFare||0)+(+d.tips||0)+(+d.bonus||0);return s+(+d.cash||0)+(+d.card||0)+(+d.tips||0);},0),lmDlLease=lmDailies.reduce(function(s,d){return s+(+d.lease||0);},0),lmDlHours=lmDailies.reduce(function(s,d){return s+(+d.hours||0);},0),lmFeAll=el.filter(function(e){var c=allC[e.category];if(c&&c.mo)return (e.statementMonth||e.date.slice(0,7))===lastMo;return e.date.slice(0,7)===lastMo;}).concat(lmFixMo),lmInc=lmStmts.reduce(function(s,x){return s+(+x.grossFare||0)+(+x.tips||0)+(+x.bonus||0)+(+x.otherIncome||0);},0)+lmDlInc,lmExp=lmFeAll.reduce(function(s,e){return e.category==="platform" ? s : s+(+e.amount||0);},0)+lmDlLease,lmToll=lmStmts.reduce(function(s,x){return s+(+x.tollReimbursed||0);},0)+lmDailies.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.tollReimbursed||0):0);},0),lmPlatformFee=lmStmts.reduce(function(s,x){return s+(+x.platformFee||0);},0)+lmDailies.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.platformFee||0):0);},0),lmNet=lmInc-lmExp-lmPlatformFee,lmHours=lmWeeks.reduce(function(s,w){return s+(+w.hours||0);},0)+lmDlHours,lmHourly=lmHours>0?Math.round(lmInc/lmHours*100)/100:0,nextExpiry=ll.filter(function(l){return l.expiryDate;}).sort(function(a,b){return a.expiryDate.localeCompare(b.expiryDate);})[0]
     // YEAR-OVER-YEAR comparisons
     // (a) Same month last year — for month-view comparison
     , lyMo = (function(){var p=mo.split("-");return (+p[0]-1)+"-"+p[1];})()
@@ -2066,7 +2066,7 @@ function App() {
     , lyMoDlLease = lyMoDailies.reduce(function(s,d){return s+(+d.lease||0);},0)
     , lyMoFeAll = el.filter(function(e){var c=allC[e.category];if(c&&c.mo)return (e.statementMonth||e.date.slice(0,7))===lyMo;return e.date.slice(0,7)===lyMo;}).concat(lyMoFixMo)
     , lyMoInc = lyMoStmts.reduce(function(s,x){return s+(+x.grossFare||0)+(+x.tips||0)+(+x.bonus||0)+(+x.otherIncome||0);},0)+lyMoDlInc
-    , lyMoExp = lyMoFeAll.reduce(function(s,e){return e.category==="platformfee" ? s : s+(+e.amount||0);},0)+lyMoDlLease
+    , lyMoExp = lyMoFeAll.reduce(function(s,e){return e.category==="platform" ? s : s+(+e.amount||0);},0)+lyMoDlLease
     , lyMoToll = lyMoStmts.reduce(function(s,x){return s+(+x.tollReimbursed||0);},0)+lyMoDailies.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.tollReimbursed||0):0);},0)
     , lyMoPlatformFee = lyMoStmts.reduce(function(s,x){return s+(+x.platformFee||0);},0)+lyMoDailies.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.platformFee||0):0);},0)
     , lyMoNet = lyMoInc-lyMoExp-lyMoPlatformFee
@@ -2080,7 +2080,7 @@ function App() {
     , pyDlLease = pyDailies.reduce(function(s,d){return s+(+d.lease||0);},0)
     , pyFixT = prevYrMons.reduce(function(s,m){return s+genFixed(fl,m).reduce(function(a,e){return a+(+e.amount||0);},0);},0)
     , pyInc = pyStmts.reduce(function(s,x){return s+(+x.grossFare||0)+(+x.tips||0)+(+x.bonus||0)+(+x.otherIncome||0);},0)+pyDlInc
-    , pyExp = pyExpsList.reduce(function(s,e){return e.category==="platformfee" ? s : s+(+e.amount||0);},0)+pyFixT+pyDlLease
+    , pyExp = pyExpsList.reduce(function(s,e){return e.category==="platform" ? s : s+(+e.amount||0);},0)+pyFixT+pyDlLease
     , pyToll = pyStmts.reduce(function(s,x){return s+(+x.tollReimbursed||0);},0)+pyDailies.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.tollReimbursed||0):0);},0)
     , pyPlatformFee = pyStmts.reduce(function(s,x){return s+(+x.platformFee||0);},0)+pyDailies.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.platformFee||0):0);},0)
     , pyNet = pyInc-pyExp-pyPlatformFee
@@ -3454,7 +3454,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                     // Get per-category total for cur month and avg of last 3
                     var curByCat = {}, prevByCat = {};
                     feAll.forEach(function(e){
-                      if(e.category==="platformfee") return;
+                      if(e.category==="platform") return;
                       curByCat[e.category] = (curByCat[e.category]||0) + (+e.amount||0);
                     });
                     cmpMonths.forEach(function(pm){
@@ -3463,7 +3463,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                         if(c&&c.mo) return (e.statementMonth||e.date.slice(0,7))===pm;
                         return e.date.slice(0,7)===pm;
                       }).forEach(function(e){
-                        if(e.category==="platformfee") return;
+                        if(e.category==="platform") return;
                         if(!prevByCat[e.category]) prevByCat[e.category]={tot:0,count:0};
                         prevByCat[e.category].tot += (+e.amount||0);
                       });
@@ -4713,6 +4713,48 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
               )
             )
 
+            // === BULK DELETE THIS PERIOD'S EXPENSES (for re-import) ===
+            , (function(){
+                var visibleCount = feAll.length;
+                if(visibleCount === 0) return null;
+                var periodLabel = expV==="year" ? yr : mo;
+                return React.createElement('button', {
+                  onClick: function(){
+                    var msg = lang==="en"?
+                      ("⚠️ Delete ALL "+visibleCount+" expenses for "+periodLabel+"?\n\nUseful for clean re-import. Daily logs / income / settings are NOT touched.\n\nThis can be undone with the Undo banner."):
+                      ("⚠️ 删除 "+periodLabel+" 的全部 "+visibleCount+" 笔支出？\n\n用于重新导入前清理。日记账/收入/设置不动。\n\n顶部撤销条可恢复。");
+                    if(!confirm(msg)) return;
+                    // Determine which entries to delete based on current view
+                    var prevEl = el.slice();
+                    var idsToDel = {};
+                    feAll.forEach(function(e){
+                      if(!e.isFixed && e.id){ idsToDel[e.id] = true; }
+                    });
+                    var newEl = el.filter(function(e){return !idsToDel[e.id];});
+                    var deletedCount = el.length - newEl.length;
+                    setEl(newEl);
+                    autoSave({el:newEl});
+                    showUndo(lang==="en"?("✓ Deleted "+deletedCount+" expenses"):("✓ 已删除 "+deletedCount+" 笔支出"), {prevEl:prevEl});
+                  },
+                  style: {
+                    width:"100%",
+                    background:"linear-gradient(135deg, rgba(255,82,82,0.1), rgba(40,8,8,0.4))",
+                    border:"1px solid rgba(255,82,82,0.3)",
+                    borderRadius: RADIUS.md,
+                    padding:"10px 14px",
+                    color:C.danger,
+                    fontSize:FS.md,
+                    fontWeight:600,
+                    cursor:"pointer",
+                    marginBottom:10,
+                    transition:"all 0.15s",
+                    letterSpacing:0.2
+                  }
+                }, "🗑️ ", lang==="en"?
+                  ("Clear all "+visibleCount+" expenses for "+periodLabel):
+                  ("清空 "+periodLabel+" 的全部支出（"+visibleCount+" 笔）"));
+              }())
+
             // === SEARCH + CATEGORY FILTER ===
             , (function(){
                 var hasSearch=expSearch&&expSearch.trim();
@@ -5864,7 +5906,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                       var existingFee = null;
                       if(wf.weekStart){
                         existingFee = el.find(function(e){
-                          if(e.category!=="platformfee") return false;
+                          if(e.category!=="platform") return false;
                           if(!e.date) return false;
                           if(e.date!==wf.weekStart) return false;
                           if(wf.platform && e.notes && e.notes.indexOf(wf.platform)<0) return false;
@@ -5910,7 +5952,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
               if(stf.platformFee && +stf.platformFee > 0){
                 var expDate=stf.month+"-15";
                 var existingMS=el.find(function(e){
-                  if(e.category!=="platformfee") return false;
+                  if(e.category!=="platform") return false;
                   if(!e.date || e.date.slice(0,7)!==stf.month) return false;
                   if(!e.notes || e.notes.indexOf(stf.platform)<0) return false;
                   return true;
@@ -5918,7 +5960,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                 if(existingMS){
                   setEl(el.map(function(e){return e.id===existingMS.id?Object.assign({},e,{amount:+stf.platformFee,notes:stf.platform+" platform fee · "+stf.month}):e;}));
                 } else {
-                  setEl([{id:Date.now()+1,date:expDate,category:"platformfee",amount:+stf.platformFee,notes:stf.platform+" platform fee · "+stf.month,isFixed:false,mode:"rideshare"}].concat(el));
+                  setEl([{id:Date.now()+1,date:expDate,category:"platform",amount:+stf.platformFee,notes:stf.platform+" platform fee · "+stf.month,isFixed:false,mode:"rideshare"}].concat(el));
                 }
               }
               setSf(null);}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 497}}
@@ -5935,7 +5977,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
               var existingFee = null;
               if(stf.month){
                 existingFee = el.find(function(e){
-                  if(e.category!=="platformfee") return false;
+                  if(e.category!=="platform") return false;
                   if(!e.date) return false;
                   if(e.date.slice(0,7)!==stf.month) return false;
                   if(stf.platform && e.notes && e.notes.indexOf(stf.platform)<0) return false;
@@ -7583,13 +7625,13 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                         if(r.uberServiceFee && +r.uberServiceFee > 0){
                           var expDate2 = r.weekStart;
                           var dup2 = el.some(function(e){
-                            return e.category==="platformfee" && e.date===expDate2 && Math.abs((+e.amount||0)-(+r.uberServiceFee))<0.01;
+                            return e.category==="platform" && e.date===expDate2 && Math.abs((+e.amount||0)-(+r.uberServiceFee))<0.01;
                           });
                           if(!dup2){
                             setEl([{
                               id:Date.now()+1,
                               date:expDate2,
-                              category:"platformfee",
+                              category:"platform",
                               amount:+r.uberServiceFee,
                               notes:"Uber Service Fee · "+r.weekStart+" – "+r.weekEnd,
                               isFixed:false,
@@ -7612,13 +7654,13 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                           var expDate = r.weekStart;
                           // Avoid duplicates: check if expense already exists for same week + amount
                           var dup = el.some(function(e){
-                            return e.category==="platformfee" && e.date===expDate && Math.abs((+e.amount||0)-(+r.uberServiceFee))<0.01;
+                            return e.category==="platform" && e.date===expDate && Math.abs((+e.amount||0)-(+r.uberServiceFee))<0.01;
                           });
                           if(!dup){
                             setEl([{
                               id:Date.now()+1,
                               date:expDate,
-                              category:"platformfee",
+                              category:"platform",
                               amount:+r.uberServiceFee,
                               notes:"Uber Service Fee · "+r.weekStart+" – "+r.weekEnd,
                               isFixed:false,
