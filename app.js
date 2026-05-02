@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-var APP_VERSION = "v3.10.81";  // ← single source of truth: bump this once per release
+var APP_VERSION = "v3.10.87";  // ← single source of truth: bump this once per release
 console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
@@ -12,7 +12,7 @@ console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-
       window.Sentry.init({
         dsn:window.SENTRY_DSN,
         environment:(location.hostname==="localhost"||location.hostname==="127.0.0.1")?"development":"production",
-        release:"nyc-driver-tracker@1.3.26",
+        release:"nyc-driver-tracker@1.3.29",
         tracesSampleRate:0.1,
         // Don't send events from local dev
         beforeSend:function(event){
@@ -98,6 +98,43 @@ var LICTYPES_ZH=["TLC 驾驶执照(2年·$252)","TLC 车辆执照FHV(1年)","DMV
 var LICTYPES_EN=["TLC Driver License (2yr·$252)","TLC FHV Vehicle License (1yr)","DMV Driver License","Commercial Insurance","Vehicle Registration","Vehicle Inspection (every 4 mo)","Drug Test","Fingerprint Background Check","TLC 24-hour Training","DDC Defensive Driving Course (every 3yr)","WAV Wheelchair Vehicle Training","Medical Exam","FS-6T Insurance Form","Other License"];
 var LICTYPES=LICTYPES_ZH;
 var CARBRANDS=["Acura","Audi","BMW","Buick","Cadillac","Chevrolet","Chrysler","Dodge","Ford","Genesis","GMC","Honda","Hyundai","Infiniti","Jaguar","Jeep","Kia","Land Rover","Lexus","Lincoln","Mazda","Mercedes-Benz","Mitsubishi","Nissan","Polestar","Porsche","Ram","Rivian","Subaru","Tesla","Toyota","Volkswagen","Volvo","Other"];
+
+// Brand → common models for NYC rideshare drivers
+var CARMODELS = {
+  "Tesla": ["Model 3","Model Y","Model S","Model X","Cybertruck"],
+  "Toyota": ["Camry","Corolla","Prius","Prius Prime","RAV4","Highlander","Sienna","Avalon","Venza"],
+  "Honda": ["Accord","Civic","CR-V","HR-V","Pilot","Odyssey","Insight"],
+  "Hyundai": ["Sonata","Elantra","Ioniq 5","Ioniq 6","Tucson","Santa Fe","Kona","Palisade"],
+  "Kia": ["K5","Forte","Niro","EV6","Sportage","Sorento","Telluride","Carnival"],
+  "Nissan": ["Altima","Sentra","Maxima","Leaf","Ariya","Rogue","Pathfinder","Murano"],
+  "Chevrolet": ["Malibu","Impala","Bolt EV","Bolt EUV","Equinox","Traverse","Tahoe","Suburban"],
+  "Ford": ["Fusion","Escape","Edge","Explorer","Mustang Mach-E","F-150 Lightning","Maverick"],
+  "Lexus": ["ES","ES Hybrid","RX","RX Hybrid","NX","NX Hybrid","UX","GX","LS"],
+  "BMW": ["3 Series","5 Series","7 Series","X3","X5","X7","i4","iX","i7"],
+  "Mercedes-Benz": ["C-Class","E-Class","S-Class","GLC","GLE","GLS","EQE","EQS"],
+  "Audi": ["A4","A6","A8","Q3","Q5","Q7","Q8","e-tron","Q4 e-tron"],
+  "Acura": ["TLX","ILX","RDX","MDX","Integra"],
+  "Infiniti": ["Q50","Q60","QX50","QX55","QX60","QX80"],
+  "Cadillac": ["CT4","CT5","XT4","XT5","XT6","Lyriq","Escalade"],
+  "Lincoln": ["Continental","MKZ","Nautilus","Aviator","Navigator"],
+  "Mazda": ["3","6","CX-30","CX-5","CX-50","CX-9","CX-90","MX-30"],
+  "Subaru": ["Impreza","Legacy","Outback","Forester","Ascent","Crosstrek","Solterra"],
+  "Volkswagen": ["Jetta","Passat","Arteon","Tiguan","Atlas","ID.4"],
+  "Volvo": ["S60","S90","XC40","XC60","XC90","C40 Recharge"],
+  "Jeep": ["Compass","Cherokee","Grand Cherokee","Wrangler","Wrangler 4xe","Grand Wagoneer"],
+  "Chrysler": ["300","Pacifica","Pacifica Hybrid","Voyager"],
+  "Dodge": ["Charger","Challenger","Durango","Hornet"],
+  "Buick": ["Encore","Encore GX","Envision","Enclave"],
+  "GMC": ["Terrain","Acadia","Yukon","Yukon XL","Hummer EV"],
+  "Genesis": ["G70","G80","G90","GV60","GV70","GV80"],
+  "Jaguar": ["XF","F-Pace","E-Pace","I-Pace"],
+  "Land Rover": ["Range Rover","Range Rover Sport","Range Rover Velar","Range Rover Evoque","Discovery","Defender"],
+  "Mitsubishi": ["Mirage","Outlander","Outlander PHEV","Eclipse Cross"],
+  "Polestar": ["Polestar 2","Polestar 3","Polestar 4"],
+  "Porsche": ["911","Panamera","Macan","Cayenne","Taycan"],
+  "Ram": ["1500","1500 Classic","2500","ProMaster"],
+  "Rivian": ["R1T","R1S"]
+};
 var ICONS=["💼","🚗","⛽","💰","🔧","📱","🏠","🍔","☕","💊","🔑","💡","🎓","🏥","🛒","⚙","🔄","🛠","🛡","🏷","📶","⭐","🧾","🧮"];
 // Global color theme — Tesla-inspired dark tech aesthetic
 // Layered backgrounds (deep → mid → elevated) + neon accents + semantic colors
@@ -1752,16 +1789,27 @@ function App() {
   // Prevents UI lag when user types in inputs that trigger setter chains.
   var __lsTimers = {};
   function lsSaveDebounced(k, v, ms){
-    if(__lsTimers[k]) clearTimeout(__lsTimers[k]);
-    __lsTimers[k] = setTimeout(function(){
+    // Cancel any pending write for this key
+    if(__lsTimers[k]){
+      var existing = __lsTimers[k];
+      clearTimeout(existing && existing.id ? existing.id : existing);
+    }
+    var entry = {k:k, v:v, id:null};
+    entry.id = setTimeout(function(){
       try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){}
       delete __lsTimers[k];
     }, ms||400);
+    __lsTimers[k] = entry;
   }
-  // Flush all pending writes (call this before unload to avoid losing data)
+  // Flush all pending writes IMMEDIATELY to localStorage (call before unload to avoid losing data)
   function lsFlushPending(){
     Object.keys(__lsTimers).forEach(function(k){
-      clearTimeout(__lsTimers[k]);
+      var info = __lsTimers[k];
+      clearTimeout(info && info.id ? info.id : info);
+      // If we have the pending value, write it now
+      if(info && info.k && typeof info.v !== "undefined"){
+        try{ localStorage.setItem(info.k, JSON.stringify(info.v)); }catch(e){}
+      }
       delete __lsTimers[k];
     });
   }
@@ -1769,14 +1817,15 @@ function App() {
   if(typeof window!=="undefined" && !window.__lsFlushBound){
     window.__lsFlushBound = true;
     window.addEventListener("beforeunload", function(){
-      // Note: synchronous setItem still works during beforeunload
-      Object.keys(__lsTimers).forEach(function(k){
-        clearTimeout(__lsTimers[k]);
-      });
+      lsFlushPending();
     });
     // Also flush on visibility change (mobile background)
     document.addEventListener("visibilitychange", function(){
       if(document.visibilityState==="hidden") lsFlushPending();
+    });
+    // Also flush on pagehide (better mobile coverage)
+    window.addEventListener("pagehide", function(){
+      lsFlushPending();
     });
   }
 
@@ -3013,7 +3062,10 @@ function App() {
 
 
   // Save to localStorage when data changes (load is handled by lazy useState initializers)
-  function lsSave(k,v){lsSaveDebounced(k,v,400);}
+  function lsSave(k,v){
+    // Save immediately AND keep debounced for safety (immediate is most reliable)
+    try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){}
+  }
   // IRS standard rates by year. Std deduction is single-filer; fed rate is the bracket
   // most NYC drivers (net $30-60k after SE deduction) actually fall into. State rate
   // combines NY State (~5.5%) + NYC City tax (~3%) for NYC residents.
@@ -5035,7 +5087,30 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                 , React.createElement(Field, { label: T.plate, value: veh.plate, onChange: function(v){setVeh(Object.assign({},veh,{plate:v.toUpperCase()}));}, placeholder: "ABC1234", __self: this, __source: {fileName: _jsxFileName, lineNumber: 399}} )
                 , React.createElement(Field, { label: "TLC Plate" , value: veh.tlcPlate||"", onChange: function(v){setVeh(Object.assign({},veh,{tlcPlate:v.toUpperCase()}));}, placeholder: "TLC", __self: this, __source: {fileName: _jsxFileName, lineNumber: 400}} )
                 , React.createElement(Field, { label: T.brand, value: veh.brand||"", onChange: function(v){if(v==="__new__"){inputAction({title:lang==="en"?"New brand name":"新品牌名称",placeholder:lang==="en"?"e.g. Tesla":"如 特斯拉",onSubmit:function(n){if(n&&n.trim()){var nm=n.trim();setCustBrands(custBrands.concat([nm]));setVeh(Object.assign({},veh,{brand:nm}));}}});return;}setVeh(Object.assign({},veh,{brand:v}));}, options: [["",T.selectBrand]].concat(CARBRANDS.slice(0,-1).map(function(b){return [b,b];})).concat(custBrands.map(function(b){return [b,b];})).concat([[lang==="en"?"Other":"其他",lang==="en"?"Other":"其他"],["__new__",lang==="en"?"+ Add new brand...":"+ 添加新品牌..."]]), __self: this, __source: {fileName: _jsxFileName, lineNumber: 401}} )
-                , React.createElement(Field, { label: lang==="en"?"Model":"车型", value: veh.model||"", onChange: function(v){setVeh(Object.assign({},veh,{model:v}));}, placeholder: lang==="en"?"e.g. Model Y":"如 Model Y", __self: this, __source: {fileName: _jsxFileName, lineNumber: 401}} )
+                , (function(){
+                    // Build car model dropdown options based on currently-selected brand
+                    var brandModels = CARMODELS[veh.brand] || [];
+                    var hasModelsForBrand = brandModels.length > 0;
+                    if(!hasModelsForBrand){
+                      // Brand without preset models (or no brand selected) → show free text input
+                      return React.createElement(Field, { label: lang==="en"?"Model":"车型", value: veh.model||"", onChange: function(v){setVeh(Object.assign({},veh,{model:v}));}, placeholder: veh.brand?(lang==="en"?"Type model":"输入车型"):(lang==="en"?"Pick brand first":"请先选品牌") } );
+                    }
+                    // Has preset models → show dropdown with custom option
+                    var modelOpts = [["",lang==="en"?"Select model":"选择车型"]]
+                      .concat(brandModels.map(function(m){return [m,m];}))
+                      .concat([["__custom__",lang==="en"?"+ Custom model...":"+ 自定义车型..."]]);
+                    var isCustom = veh.model && brandModels.indexOf(veh.model) === -1;
+                    return React.createElement(React.Fragment, null
+                      , React.createElement(Field, { label: lang==="en"?"Model":"车型", value: isCustom ? "__custom__" : (veh.model||""), onChange: function(v){
+                          if(v === "__custom__"){
+                            inputAction({title:lang==="en"?"Custom model":"自定义车型",placeholder:lang==="en"?"e.g. New EV":"如 新款车",onSubmit:function(n){if(n&&n.trim()){setVeh(Object.assign({},veh,{model:n.trim()}));}}});
+                            return;
+                          }
+                          setVeh(Object.assign({},veh,{model:v}));
+                        }, options: modelOpts } )
+                      , isCustom ? React.createElement('div',{style:{fontSize:11,color:C.text3,marginTop:-6,marginBottom:8}}, lang==="en"?("Custom: "+veh.model):("自定义："+veh.model)) : null
+                    );
+                  }())
                 , React.createElement(Field, { label: lang==="en"?"Year":"年份", type:"number", value: veh.year||"", onChange: function(v){setVeh(Object.assign({},veh,{year:v}));}, placeholder: "2023", __self: this, __source: {fileName: _jsxFileName, lineNumber: 401}} )
                 , React.createElement(Field, { label: lang==="en"?"Color":"车身颜色", value: veh.color||"", onChange: function(v){setVeh(Object.assign({},veh,{color:v}));}, placeholder: lang==="en"?"e.g. White":"如 白色", __self: this, __source: {fileName: _jsxFileName, lineNumber: 401}} )
               )
@@ -8001,6 +8076,28 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
               , React.createElement('div', { style: {fontSize:15,fontWeight:700,color:"#FFB300",marginBottom:3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 802}}, lang==="en"?"🧹 Clear Placeholder Times":"🧹 清除占位时间")
               , React.createElement('div', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 803}}, lang==="en"?"Remove imported placeholder times (12:00 / 08:00 / 23:59)":"清除导入的占位时间（12:00 / 08:00 / 23:59）")
             );}())
+            // === Fix orphaned expenses (no vehicleId) ===
+            , (function(){
+                var orphans = el.filter(function(e){return !e.vehicleId;}).length;
+                if(orphans === 0 || !veh.vehicleId) return null;
+                return React.createElement('button', { onClick: function(){
+                  if(!confirm(lang==="en"?
+                    ("Link "+orphans+" expense entries (currently with no vehicle) to your current vehicle ("+(veh.brand||"")+" "+(veh.model||"")+" "+(veh.plate||"")+")?"):
+                    ("将 "+orphans+" 笔无车辆的支出关联到当前车辆（"+(veh.brand||"")+" "+(veh.model||"")+" "+(veh.plate||"")+"）？"))) return;
+                  var prevEl = el.slice();
+                  var nel = el.map(function(e){
+                    return e.vehicleId ? e : Object.assign({},e,{vehicleId:veh.vehicleId});
+                  });
+                  setEl(nel);
+                  autoSave({el:nel});
+                  showUndo(lang==="en"?("✓ Linked "+orphans+" entries"):("✓ 已关联 "+orphans+" 条"), {prevEl:prevEl});
+                }, style: {width:"100%",background:"linear-gradient(135deg, rgba(0,212,255,0.15), rgba(0,85,255,0.05))",border:"1px solid rgba(0,212,255,0.4)",borderRadius:12,padding:14,marginBottom:10,textAlign:"left",cursor:"pointer"} }
+                  , React.createElement('div', { style: {fontSize:15,fontWeight:700,color:"#00D4FF",marginBottom:3} }, "🔗 ", lang==="en"?("Link "+orphans+" Orphaned Expenses"):("关联 "+orphans+" 笔无车辆支出"))
+                  , React.createElement('div', { style: {fontSize:12,color:C.text3} }, lang==="en"?
+                      "These were imported when no vehicle existed. Link them to current vehicle.":
+                      "这些是无车辆时导入的。关联到当前车辆。")
+                );
+              }())
             , React.createElement('button', { onClick: function(){if(!confirm(lang==="en"?"Download a JSON backup file to your device?":"下载 JSON 备份文件到此设备？"))return;setSyncStatus(lang==="en"?"⏳ Exporting...":"⏳ 导出中...");setTimeout(function(){try{var data={wl:wl,sl:sl,el:el,fl:fl,ll:ll,veh:veh,cc:cc,custGroups:custGroups,reminders:reminders,custPlat:custPlat,custBrands:custBrands,custLicTypes:custLicTypes,custLoanTypes:custLoanTypes,favNotes:favNotes,favExpenses:favExpenses,notes:notes,incGoals:incGoals,seRate:seRate,fedRate:fedRate,stateRate:stateRate,stdDed:stdDed,mtaRate:mtaRate,savedVehicles:savedVehicles,dl:dl,driverType:driverType,driver:driver,exported:new Date().toISOString()};var blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});var url=URL.createObjectURL(blob);var a=document.createElement("a");a.href=url;a.download="nyc-driver-backup-"+today()+".json";a.click();URL.revokeObjectURL(url);setSyncStatus(lang==="en"?"✓ Exported":"✓ 导出成功");setTimeout(function(){setSyncStatus("");},2500);}catch(err){setSyncStatus(lang==="en"?"✗ Export failed":"✗ 导出失败");setTimeout(function(){setSyncStatus("");},2500);}},100);}, style: {width:"100%",background:C.bg3,border:"1px solid "+C.border,borderRadius:12,padding:14,marginBottom:10,textAlign:"left",cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 801}}
               , React.createElement('div', { style: {fontSize:15,fontWeight:700,color:C.text2,marginBottom:3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 802}}, lang==="en"?"📤 Export JSON Backup":"📤 导出JSON备份")
               , React.createElement('div', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 803}}, lang==="en"?"Download all data as JSON":"下载所有数据为JSON文件")
