@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-var APP_VERSION = "v3.10.56";  // ← single source of truth: bump this once per release
+var APP_VERSION = "v3.10.57";  // ← single source of truth: bump this once per release
 console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
@@ -12,7 +12,7 @@ console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-
       window.Sentry.init({
         dsn:window.SENTRY_DSN,
         environment:(location.hostname==="localhost"||location.hostname==="127.0.0.1")?"development":"production",
-        release:"nyc-driver-tracker@1.3.8",
+        release:"nyc-driver-tracker@1.3.9",
         tracesSampleRate:0.1,
         // Don't send events from local dev
         beforeSend:function(event){
@@ -8201,11 +8201,43 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                           keysToRemove.forEach(function(k){ try{ localStorage.removeItem(k); }catch(e){} });
                           // Also clear non-nyc keys we might have set
                           ["lastBackup","backupReminderDismissed"].forEach(function(k){ try{ localStorage.removeItem(k); }catch(e){} });
+                          // Nuclear option: clear all of localStorage (in case I missed any keys)
+                          try{ localStorage.clear(); }catch(e){}
+                          // Also clear sessionStorage
+                          try{ sessionStorage.clear(); }catch(e){}
+                          // Try to clear IndexedDB databases
+                          if(window.indexedDB && indexedDB.databases){
+                            try{
+                              indexedDB.databases().then(function(dbs){
+                                dbs.forEach(function(db){
+                                  try{ indexedDB.deleteDatabase(db.name); }catch(e){}
+                                });
+                              }).catch(function(){});
+                            }catch(e){}
+                          }
+                          // Unregister service workers so the next load gets a fresh start
+                          if(navigator.serviceWorker && navigator.serviceWorker.getRegistrations){
+                            try{
+                              navigator.serviceWorker.getRegistrations().then(function(regs){
+                                regs.forEach(function(reg){ try{ reg.unregister(); }catch(e){} });
+                              }).catch(function(){});
+                            }catch(e){}
+                          }
+                          // Clear caches API
+                          if(window.caches && caches.keys){
+                            try{
+                              caches.keys().then(function(names){
+                                names.forEach(function(n){ try{ caches.delete(n); }catch(e){} });
+                              }).catch(function(){});
+                            }catch(e){}
+                          }
                         }catch(e){}
-                        // 3) Force reload to start fresh
+                        // 3) Hard reload after a delay (give async cleanup time)
                         setTimeout(function(){
-                          window.location.reload();
-                        }, 500);
+                          // Use replace + ?v=timestamp to force fresh load (bypass cache)
+                          var url = window.location.pathname + "?reset=" + Date.now();
+                          window.location.replace(url);
+                        }, 800);
                       });
                     },
                     style:{width:"100%",background:"linear-gradient(135deg,#5A1010,#2A0808)",border:"1px solid #8A2020",color:"#FF8866",fontSize:14,fontWeight:800,padding:"12px",borderRadius:10,cursor:"pointer"}
