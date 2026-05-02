@@ -1,13 +1,46 @@
 {
-  "name": "NYC Rideshare Driver Tracker",
+  "name": "NYC Driver Tracker",
   "short_name": "NYC Driver",
-  "description": "纽约网约车司机财务管理",
+  "description": "纽约网约车司机财务管理 / NYC Rideshare Driver Finance Tracker",
   "start_url": "./",
+  "scope": "./",
   "display": "standalone",
-  "background_color": "#1F1B26",
-  "theme_color": "#1F1B26",
   "orientation": "portrait",
+  "background_color": "#0A0E1A",
+  "theme_color": "#0A0E1A",
+  "lang": "zh",
+  "categories": ["finance", "productivity", "business"],
   "icons": [
+    {
+      "src": "icon-48.png",
+      "sizes": "48x48",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-72.png",
+      "sizes": "72x72",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-96.png",
+      "sizes": "96x96",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-128.png",
+      "sizes": "128x128",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-144.png",
+      "sizes": "144x144",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-152.png",
+      "sizes": "152x152",
+      "type": "image/png"
+    },
     {
       "src": "icon-192.png",
       "sizes": "192x192",
@@ -20,6 +53,5 @@
       "type": "image/png",
       "purpose": "any maskable"
     }
-  ],
-  "scope": "./"
+  ]
 }

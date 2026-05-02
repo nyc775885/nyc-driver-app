@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-var APP_VERSION = "v3.10.61";  // ← single source of truth: bump this once per release
+var APP_VERSION = "v3.10.65";  // ← single source of truth: bump this once per release
 console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
@@ -12,7 +12,7 @@ console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-
       window.Sentry.init({
         dsn:window.SENTRY_DSN,
         environment:(location.hostname==="localhost"||location.hostname==="127.0.0.1")?"development":"production",
-        release:"nyc-driver-tracker@1.3.12",
+        release:"nyc-driver-tracker@1.3.16",
         tracesSampleRate:0.1,
         // Don't send events from local dev
         beforeSend:function(event){
@@ -2988,7 +2988,7 @@ function App() {
 
   if(!gUser) return (
 React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:24}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 204}}
-          , React.createElement('div', { style: {fontSize:64,marginBottom:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 205}}, "🚖")
+          , React.createElement('img', { src: "icon-192.png", alt: "NYC Driver Tracker", style: {width:96,height:96,marginBottom:20,borderRadius:22,boxShadow:"0 8px 24px rgba(85,56,238,0.4)"} })
           , React.createElement('div', { style: {fontSize:22,fontWeight:900,color:C.text,marginBottom:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 206}}, "NYC Driver Tracker"  )
           , React.createElement('div', { style: {fontSize:14,color:C.text3,marginBottom:40,textAlign:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 207}}, "纽约网约车司机财务管理")
           , React.createElement('div', { id: "g_id_signin", style: {marginBottom:20}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 208}})
@@ -5892,33 +5892,57 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
           var todayStr=today();
           var todayDl=dl.find(function(d){return d.date===todayStr;});
           var lastTip=dl.filter(function(d){return +d.tips>0;}).sort(function(a,b){return (b.date||"").localeCompare(a.date||"");})[0];
+          // Last platform used for cash tips (default Uber)
+          var lastPlat = lastTip && lastTip.tipPlatform ? lastTip.tipPlatform : "Uber";
+          if(!quickF.platform) quickF.platform = lastPlat;
           return React.createElement(Modal, {title:lang==="en"?"💵 Cash Tip":"💵 现金小费", onClose:function(){setSf(null);setQuickF({});}, onSave:function(){
             if(!quickF.amount){showToast(lang==="en"?"Enter amount":"请输入金额");return;}
             var amt=+quickF.amount;
+            var plat=quickF.platform||"Uber";
+            var platTag = "["+plat+"]";
             if(todayDl){
-              // Add to existing today's daily log
+              // Add to existing today's daily log — append platform tag to notes
               var ndl=dl.map(function(d){
                 if(d.date===todayStr){
-                  return Object.assign({},d,{tips:((+d.tips||0)+amt).toFixed(2), notes:(d.notes||"")+(quickF.notes?" · "+quickF.notes:"")});
+                  var newNote = (d.notes||"").trim();
+                  // Prefix with platform tag if not already there
+                  var addPart = platTag + " +$"+amt.toFixed(2)+(quickF.notes?" "+quickF.notes:"");
+                  newNote = newNote ? newNote+" · "+addPart : addPart;
+                  return Object.assign({},d,{tips:((+d.tips||0)+amt).toFixed(2), notes:newNote, tipPlatform:plat});
                 }
                 return d;
               });
               setDl(ndl);autoSave({dl:ndl});
-              showToast(lang==="en"?("✓ Added $"+amt.toFixed(2)+" to today's tips"):("✓ 加入今日小费 $"+amt.toFixed(2)));
+              showToast(lang==="en"?("✓ Added $"+amt.toFixed(2)+" to today's tips ["+plat+"]"):("✓ 加入今日小费 $"+amt.toFixed(2)+" ["+plat+"]"));
             } else {
               // Create new daily log entry for today, rideshare mode, only tips field filled
-              var newDl={id:Date.now(),date:todayStr,mode:"rideshare",tips:amt.toFixed(2),grossFare:"",bonus:"",tollReimbursed:"",cash:"",card:"",lease:"",hours:"",miles:"",notes:quickF.notes||(lang==="en"?"Cash tips":"现金小费"),vehicleId:veh.vehicleId};
+              var newDl={id:Date.now(),date:todayStr,mode:"rideshare",tips:amt.toFixed(2),tipPlatform:plat,grossFare:"",bonus:"",tollReimbursed:"",cash:"",card:"",lease:"",hours:"",miles:"",notes:platTag+(quickF.notes?" "+quickF.notes:" "+(lang==="en"?"Cash tip":"现金小费")),vehicleId:veh.vehicleId};
               var ndl=[newDl].concat(dl);
               setDl(ndl);autoSave({dl:ndl});
-              showToast(lang==="en"?("✓ $"+amt.toFixed(2)+" tip recorded for today"):("✓ 今日记入小费 $"+amt.toFixed(2)));
+              showToast(lang==="en"?("✓ $"+amt.toFixed(2)+" tip recorded for today ["+plat+"]"):("✓ 今日记入小费 $"+amt.toFixed(2)+" ["+plat+"]"));
             }
             setSf(null);setQuickF({});
           }}
             , React.createElement('div', {style:{fontSize:11,color:C.text3,marginBottom:8,padding:"8px 10px",background:C.bg3,borderRadius:8,lineHeight:1.5}}
               , todayDl ? (lang==="en"?"➕ Adds to today's daily log":"➕ 加入今天日记的小费") : (lang==="en"?"📝 Creates today's daily log entry":"📝 新建今日日记账")
-              , React.createElement('div', {style:{fontSize:10,color:C.text3,marginTop:3}}, lang==="en"?"Cash tips count toward income (not the same as Uber app tips)":"现金小费算收入（与 Uber app 内小费分开）")
+              , React.createElement('div', {style:{fontSize:10,color:C.text3,marginTop:3}}, lang==="en"?"Cash tips count toward income (not the same as in-app tips)":"现金小费算收入（与平台 app 内小费分开）")
             )
             , React.createElement(Field, {label:lang==="en"?"Tip Amount ($)":"小费金额 ($)", type:"number", value:quickF.amount||"", onChange:function(v){setQuickF(Object.assign({},quickF,{amount:v}));}, money:true, placeholder:lastTip?"last "+(+lastTip.tips).toFixed(2):"0.00"})
+            // Platform picker — chip-style buttons
+            , React.createElement('div', {style:{marginBottom:14}}
+              , React.createElement('div', {style:{fontSize:FS.sm+1,color:C.text2,fontWeight:600,letterSpacing:0.2,marginBottom:6}}, lang==="en"?"Platform":"平台")
+              , React.createElement('div', {style:{display:"flex",flexWrap:"wrap",gap:6}}
+                , allPlat.map(function(p){
+                    var sel = (quickF.platform||"Uber") === p;
+                    var label = (p==="其他" && lang==="en") ? "Other" : p;
+                    return React.createElement('button', {
+                      key: p,
+                      onClick: function(){setQuickF(Object.assign({},quickF,{platform:p}));},
+                      style: {flexShrink:0,background:sel?"linear-gradient(135deg, rgba(0,212,255,0.18), rgba(0,85,255,0.1))":C.bg3,border:"1px solid "+(sel?"rgba(0,212,255,0.4)":C.border),color:sel?C.accent:C.text2,fontSize:FS.md,padding:"8px 14px",borderRadius:18,cursor:"pointer",whiteSpace:"nowrap",fontWeight:sel?700:500,transition:"all 0.15s",boxShadow:sel?"0 0 12px rgba(0,212,255,0.15)":"none",letterSpacing:0.2}
+                    }, label);
+                  })
+              )
+            )
             , React.createElement(Field, {label:T.notes, value:quickF.notes||"", onChange:function(v){setQuickF(Object.assign({},quickF,{notes:v}));}, placeholder:T.optional})
           );
         }()) : null
