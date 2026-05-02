@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-var APP_VERSION = "v3.11.12";  // ← single source of truth: bump this once per release
+var APP_VERSION = "v3.11.17";  // ← single source of truth: bump this once per release
 console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
@@ -12,7 +12,7 @@ console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-
       window.Sentry.init({
         dsn:window.SENTRY_DSN,
         environment:(location.hostname==="localhost"||location.hostname==="127.0.0.1")?"development":"production",
-        release:"nyc-driver-tracker@1.5.12",
+        release:"nyc-driver-tracker@1.5.17",
         tracesSampleRate:0.1,
         // Don't send events from local dev
         beforeSend:function(event){
@@ -1955,6 +1955,8 @@ function App() {
   var r25g=useState(function(){return lsLoad("nyc_favStations",{charging:[],fuel:[]});}),favStations=r25g[0],_setFavStations=r25g[1];function setFavStations(v){_setFavStations(v);try{localStorage.setItem("nyc_favStations",JSON.stringify(v));}catch(e){}}
   // Calculator state
   var rCalc=useState({display:"0",prevValue:null,operator:null,waitingForOperand:false,history:[]}),calcState=rCalc[0],setCalcState=rCalc[1];
+  // FAB confirm state — first tap shows confirm button, second tap on confirm opens form
+  var rPlusC=useState(false),plusConfirm=rPlusC[0],setPlusConfirm=rPlusC[1];
   // favExpenses: [{id, label, category, amount, notes, icon}] - quick expense templates
   var r25f=useState(function(){return lsLoad("nyc_favExpenses",[]);}),favExpenses=r25f[0],_setFavExpenses=r25f[1];function setFavExpenses(v){_setFavExpenses(v);try{localStorage.setItem("nyc_favExpenses",JSON.stringify(v));}catch(e){}}
   var r25d=useState(function(){return lsLoad("nyc_custLoanTypes",[]);}),custLoanTypes=r25d[0],_setCustLoanTypes=r25d[1];function setCustLoanTypes(v){_setCustLoanTypes(v);try{localStorage.setItem("nyc_custLoanTypes",JSON.stringify(v));}catch(e){}}
@@ -6825,10 +6827,46 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                 )
               );
             }())
-          , !sf.startsWith("exp_edit_") ? React.createElement('div', { onClick: function(){setEf(Object.assign({},ef,{isRecurring:!ef.isRecurring}));}, style: {display:"flex",alignItems:"center",gap:12,background:C.bg2,border:"1px solid "+C.border,borderRadius:10,padding:"12px 14px",cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 544}}
-            , React.createElement('div', { style: {width:24,height:24,borderRadius:6,background:C.border,border:"2px solid #2A4A6A",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,flexShrink:0}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 545}}, ef.isRecurring?"✓":"")
-            , React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 546}}, React.createElement('div', { style: {fontSize:14,fontWeight:600,color:C.text}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 546}}, T.fixedMonthly), React.createElement('div', { style: {fontSize:12,color:C.text3,marginTop:2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 546}}, T.fixedMonthlyDesc))
-          ) : null
+          , !sf.startsWith("exp_edit_") ? (function(){
+              // Compact pill that toggles via confirm dialog (rarely used, prevent accidents in both directions)
+              var toggleRecurring = function(){
+                if(ef.isRecurring){
+                  // Currently ON → confirm before turning OFF
+                  confirmAction(
+                    lang==="en"?"Cancel fixed monthly?":"取消固定月费？",
+                    lang==="en"?"This expense will only be recorded once (not repeated each month).":"这笔支出只会记录一次（不会每月重复出现）。",
+                    function(){setEf(Object.assign({},ef,{isRecurring:false}));showToast(lang==="en"?"✓ One-time expense":"✓ 一次性支出","success");},
+                    {confirmLabel: lang==="en"?"Yes, one-time only":"确定，只记一次", danger:false}
+                  );
+                } else {
+                  // Currently OFF → confirm before turning ON (the dangerous direction)
+                  confirmAction(
+                    lang==="en"?"Make this a fixed monthly expense?":"设为固定月费？",
+                    lang==="en"?"This expense will AUTO-APPEAR every month from now on. Use only for true recurring fees (insurance, loan, lease).":"这笔支出从现在起每个月都会自动出现。只在真正的循环支出上使用（保险、贷款、租车等）。",
+                    function(){setEf(Object.assign({},ef,{isRecurring:true}));showToast(lang==="en"?"✓ Now a fixed monthly":"✓ 已设为固定月费","success");},
+                    {confirmLabel: lang==="en"?"Yes, every month":"确定，每月生成", danger:true}
+                  );
+                }
+              };
+              return React.createElement('div', {style:{display:"flex",justifyContent:"flex-end",marginTop:6}}
+                , React.createElement('button', {
+                    onClick: toggleRecurring,
+                    style: {
+                      background: ef.isRecurring ? "linear-gradient(135deg, rgba(255,179,71,0.15), rgba(255,140,66,0.08))" : "transparent",
+                      border: "1px solid " + (ef.isRecurring ? "rgba(255,179,71,0.5)" : C.border),
+                      color: ef.isRecurring ? "#FFB347" : C.text3,
+                      fontSize: 11,
+                      fontWeight: ef.isRecurring ? 700 : 500,
+                      padding: "5px 10px",
+                      borderRadius: 12,
+                      cursor: "pointer",
+                      letterSpacing: 0.2,
+                      whiteSpace: "nowrap",
+                      transition: "all 0.15s"
+                    }
+                  }, ef.isRecurring ? "🔁 " + (lang==="en"?"Recurring monthly":"已设为月费") : "🔁 " + (lang==="en"?"Make recurring":"设为月费"))
+              );
+            }()) : null
 
           , sf.startsWith("exp_edit_") ? React.createElement('button', { onClick: function(){confirmAction(lang==="en"?"Delete expense?":"删除支出？", lang==="en"?"This expense will be removed (with undo).":"此支出将被移除（可撤销）。", function(){var eid=+sf.replace("exp_edit_","");var prev=el.slice();setEl(el.filter(function(x){return x.id!==eid;}));setSf(null);showUndo((lang==="en"?"✓ Expense deleted":"✓ 支出已删除"), {prevEl:prev});});}, style: {width:"100%",background:"#2A1010",border:"1px solid #5A2020",color:C.danger,fontSize:14,fontWeight:700,padding:"12px",borderRadius:10,cursor:"pointer",marginTop:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 547}}, "🗑 " , lang==="en"?"Delete":"删除") : null
         )
