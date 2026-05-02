@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-var APP_VERSION = "v3.11.0";  // ← single source of truth: bump this once per release
+var APP_VERSION = "v3.11.2";  // ← single source of truth: bump this once per release
 console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
@@ -12,7 +12,7 @@ console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-
       window.Sentry.init({
         dsn:window.SENTRY_DSN,
         environment:(location.hostname==="localhost"||location.hostname==="127.0.0.1")?"development":"production",
-        release:"nyc-driver-tracker@1.5.0",
+        release:"nyc-driver-tracker@1.5.2",
         tracesSampleRate:0.1,
         // Don't send events from local dev
         beforeSend:function(event){
@@ -2370,7 +2370,11 @@ function App() {
     };
   }, [hasPIN, pinTimeout, locked]);
 
-  useEffect(function(){var s=document.createElement("script");s.src="https://accounts.google.com/gsi/client";s.async=true;s.defer=true;document.body.appendChild(s);},[]); var r55=useState(""),syncStatus=r55[0],setSyncStatus=r55[1]; var r56=useState(false),syncing=r56[0],setSyncing=r56[1]; var r57=useState(function(){return lsLoad("nyc_driveFileId",null);}),driveFileId=r57[0],_setDriveFileId=r57[1];function setDriveFileId(v){_setDriveFileId(v);try{if(v)localStorage.setItem("nyc_driveFileId",JSON.stringify(v));else localStorage.removeItem("nyc_driveFileId");}catch(e){}} var r58=useState(null),accessToken=r58[0],setAccessToken=r58[1];
+  useEffect(function(){
+    // One-time cleanup: remove old debug data from localStorage
+    try{ localStorage.removeItem("nyc_debug_fuelio_pdf"); }catch(e){}
+    var s=document.createElement("script");s.src="https://accounts.google.com/gsi/client";s.async=true;s.defer=true;document.body.appendChild(s);
+  },[]); var r55=useState(""),syncStatus=r55[0],setSyncStatus=r55[1]; var r56=useState(false),syncing=r56[0],setSyncing=r56[1]; var r57=useState(function(){return lsLoad("nyc_driveFileId",null);}),driveFileId=r57[0],_setDriveFileId=r57[1];function setDriveFileId(v){_setDriveFileId(v);try{if(v)localStorage.setItem("nyc_driveFileId",JSON.stringify(v));else localStorage.removeItem("nyc_driveFileId");}catch(e){}} var r58=useState(null),accessToken=r58[0],setAccessToken=r58[1];
 
   // Google Drive sync functions
   // Files are stored inside a dedicated folder "NYC Driver Income Backup"
@@ -4663,8 +4667,6 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                       }
                       showToast(lang==="en"?"📄 Reading Fuelio PDF...":"📄 读取 Fuelio PDF 中...", "info");
                       extractPdfText(f).then(function(text){
-                        // DEBUG: store full text for inspection
-                        try{ localStorage.setItem("nyc_debug_fuelio_pdf", text.slice(0, 50000)); }catch(e){}
                         var r = parseFuelioReport(text);
                         if(r.error || !r.entries || r.entries.length === 0){
                           showToast(lang==="en"?"No entries found — may not be a Fuelio report":"没找到记录，可能不是 Fuelio 月报", "error");
@@ -4783,48 +4785,6 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                 , React.createElement('div', {style:{fontSize:10,marginTop:4,color:"#3AAA80"}}, lang==="en"?"All expenses, charging, all years — auto-dedup":"全部支出、充电、多年 — 自动去重")
               )
             )
-
-            // === BULK DELETE THIS PERIOD'S EXPENSES (for re-import) ===
-            , (function(){
-                var visibleCount = feAll.length;
-                if(visibleCount === 0) return null;
-                var periodLabel = expV==="year" ? yr : mo;
-                return React.createElement('button', {
-                  onClick: function(){
-                    var msg = lang==="en"?
-                      ("⚠️ Delete ALL "+visibleCount+" expenses for "+periodLabel+"?\n\nUseful for clean re-import. Daily logs / income / settings are NOT touched.\n\nThis can be undone with the Undo banner."):
-                      ("⚠️ 删除 "+periodLabel+" 的全部 "+visibleCount+" 笔支出？\n\n用于重新导入前清理。日记账/收入/设置不动。\n\n顶部撤销条可恢复。");
-                    if(!confirm(msg)) return;
-                    // Determine which entries to delete based on current view
-                    var prevEl = el.slice();
-                    var idsToDel = {};
-                    feAll.forEach(function(e){
-                      if(!e.isFixed && e.id){ idsToDel[e.id] = true; }
-                    });
-                    var newEl = el.filter(function(e){return !idsToDel[e.id];});
-                    var deletedCount = el.length - newEl.length;
-                    setEl(newEl);
-                    autoSave({el:newEl});
-                    showUndo(lang==="en"?("✓ Deleted "+deletedCount+" expenses"):("✓ 已删除 "+deletedCount+" 笔支出"), {prevEl:prevEl});
-                  },
-                  style: {
-                    width:"100%",
-                    background:"linear-gradient(135deg, rgba(255,82,82,0.1), rgba(40,8,8,0.4))",
-                    border:"1px solid rgba(255,82,82,0.3)",
-                    borderRadius: RADIUS.md,
-                    padding:"10px 14px",
-                    color:C.danger,
-                    fontSize:FS.md,
-                    fontWeight:600,
-                    cursor:"pointer",
-                    marginBottom:10,
-                    transition:"all 0.15s",
-                    letterSpacing:0.2
-                  }
-                }, "🗑️ ", lang==="en"?
-                  ("Clear all "+visibleCount+" expenses for "+periodLabel):
-                  ("清空 "+periodLabel+" 的全部支出（"+visibleCount+" 笔）"));
-              }())
 
             // === SEARCH + CATEGORY FILTER ===
             , (function(){
@@ -8203,25 +8163,6 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
               , React.createElement('div', { style: {fontSize:15,fontWeight:700,color:C.text2,marginBottom:3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 802}}, lang==="en"?"📤 Export JSON Backup":"📤 导出JSON备份")
               , React.createElement('div', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 803}}, lang==="en"?"Download all data as JSON":"下载所有数据为JSON文件")
             )
-            // === DEBUG: Export Fuelio PDF text ===
-            , (function(){
-                var dbgText = "";
-                try{ dbgText = localStorage.getItem("nyc_debug_fuelio_pdf") || ""; }catch(e){}
-                if(!dbgText) return null;
-                return React.createElement('button', { onClick: function(){
-                  var blob = new Blob([dbgText], {type:"text/plain"});
-                  var url = URL.createObjectURL(blob);
-                  var a = document.createElement("a");
-                  a.href = url;
-                  a.download = "fuelio-pdf-debug-"+today()+".txt";
-                  a.click();
-                  URL.revokeObjectURL(url);
-                  showToast(lang==="en"?"✓ Debug text downloaded":"✓ 调试文本已下载","success");
-                }, style: {width:"100%",background:"#1A0F00",border:"1px solid #5A3F00",borderRadius:12,padding:14,marginBottom:10,textAlign:"left",cursor:"pointer"} }
-                  , React.createElement('div', { style: {fontSize:15,fontWeight:700,color:"#FFB300",marginBottom:3} }, "🐛 ", lang==="en"?"Debug: Last Fuelio PDF Text":"🐛 调试：最后一次 Fuelio PDF 文本")
-                  , React.createElement('div', { style: {fontSize:12,color:C.text3} }, lang==="en"?"Download the raw text extracted from the PDF":"下载从 PDF 提取的原始文本")
-                );
-              }())
             // === Export Excel button ===
             , React.createElement('button', { onClick: function(){
                 if(!window.XLSX){ showToast(lang==="en"?"Excel library not ready, refresh app":"Excel 库未就绪，请刷新", "error"); return; }
