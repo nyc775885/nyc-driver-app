@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-var APP_VERSION = "v3.11.2";  // ← single source of truth: bump this once per release
+var APP_VERSION = "v3.11.6";  // ← single source of truth: bump this once per release
 console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
@@ -12,7 +12,7 @@ console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-
       window.Sentry.init({
         dsn:window.SENTRY_DSN,
         environment:(location.hostname==="localhost"||location.hostname==="127.0.0.1")?"development":"production",
-        release:"nyc-driver-tracker@1.5.2",
+        release:"nyc-driver-tracker@1.5.6",
         tracesSampleRate:0.1,
         // Don't send events from local dev
         beforeSend:function(event){
@@ -1947,6 +1947,8 @@ function App() {
   var r25b=useState(function(){return lsLoad("nyc_custBrands",[]);}),custBrands=r25b[0],_setCustBrands=r25b[1];function setCustBrands(v){_setCustBrands(v);try{localStorage.setItem("nyc_custBrands",JSON.stringify(v));}catch(e){}}
   var r25c=useState(function(){return lsLoad("nyc_custLicTypes",[]);}),custLicTypes=r25c[0],_setCustLicTypes=r25c[1];function setCustLicTypes(v){_setCustLicTypes(v);try{localStorage.setItem("nyc_custLicTypes",JSON.stringify(v));}catch(e){}}
   var r25e=useState(function(){return lsLoad("nyc_favNotes",{});}),favNotes=r25e[0],_setFavNotes=r25e[1];function setFavNotes(v){_setFavNotes(v);try{localStorage.setItem("nyc_favNotes",JSON.stringify(v));}catch(e){}}
+  // favStations: {charging:[name1,name2,...], fuel:[name1,name2,...]} — favorited charging/fuel stations
+  var r25g=useState(function(){return lsLoad("nyc_favStations",{charging:[],fuel:[]});}),favStations=r25g[0],_setFavStations=r25g[1];function setFavStations(v){_setFavStations(v);try{localStorage.setItem("nyc_favStations",JSON.stringify(v));}catch(e){}}
   // favExpenses: [{id, label, category, amount, notes, icon}] - quick expense templates
   var r25f=useState(function(){return lsLoad("nyc_favExpenses",[]);}),favExpenses=r25f[0],_setFavExpenses=r25f[1];function setFavExpenses(v){_setFavExpenses(v);try{localStorage.setItem("nyc_favExpenses",JSON.stringify(v));}catch(e){}}
   var r25d=useState(function(){return lsLoad("nyc_custLoanTypes",[]);}),custLoanTypes=r25d[0],_setCustLoanTypes=r25d[1];function setCustLoanTypes(v){_setCustLoanTypes(v);try{localStorage.setItem("nyc_custLoanTypes",JSON.stringify(v));}catch(e){}}
@@ -2570,7 +2572,7 @@ function App() {
         if(data.cc)setCc(data.cc);
         if(data.custGroups)setCustGroups(data.custGroups);
         if(data.reminders)setReminders(data.reminders);
-        if(data.custPlat)setCustPlat(data.custPlat);if(data.custBrands)setCustBrands(data.custBrands);if(data.custLicTypes)setCustLicTypes(data.custLicTypes);if(data.custLoanTypes)setCustLoanTypes(data.custLoanTypes);if(data.favNotes)setFavNotes(data.favNotes);
+        if(data.custPlat)setCustPlat(data.custPlat);if(data.custBrands)setCustBrands(data.custBrands);if(data.custLicTypes)setCustLicTypes(data.custLicTypes);if(data.custLoanTypes)setCustLoanTypes(data.custLoanTypes);if(data.favNotes)setFavNotes(data.favNotes);if(data.favStations)setFavStations(data.favStations);
         if(data.notes)setNotes(data.notes);
         if(data.incGoals && typeof data.incGoals === "object") setIncGoals(data.incGoals);
         else if(typeof data.incGoal!=="undefined" && data.incGoal!=="") {
@@ -2808,7 +2810,7 @@ function App() {
         custGroups:custGroups,reminders:reminders,
         custPlat:custPlat,custBrands:custBrands,
         custLicTypes:custLicTypes,custLoanTypes:custLoanTypes,
-        favNotes:favNotes,favExpenses:favExpenses,notes:notes,
+        favNotes:favNotes,favStations:favStations,favExpenses:favExpenses,notes:notes,
         incGoals:incGoals,seRate:seRate,fedRate:fedRate,
         stateRate:stateRate,stdDed:stdDed,mtaRate:mtaRate,
         savedVehicles:savedVehicles,dl:dl,driverType:driverType,driver:driver,
@@ -2853,7 +2855,7 @@ function App() {
     // Save current to local pre-restore backup first
     try {
       var snapshot = {timestamp:new Date().toISOString(),label:lang==="en"?"Pre-Drive-snapshot-restore":"Drive 快照恢复前",
-        data:{wl:wl,sl:sl,el:el,fl:fl,ll:ll,veh:veh,cc:cc,custGroups:custGroups,reminders:reminders,custPlat:custPlat,custBrands:custBrands,custLicTypes:custLicTypes,custLoanTypes:custLoanTypes,favNotes:favNotes,favExpenses:favExpenses,notes:notes,incGoals:incGoals,seRate:seRate,fedRate:fedRate,stateRate:stateRate,stdDed:stdDed,mtaRate:mtaRate,savedVehicles:savedVehicles,dl:dl,driverType:driverType,driver:driver}};
+        data:{wl:wl,sl:sl,el:el,fl:fl,ll:ll,veh:veh,cc:cc,custGroups:custGroups,reminders:reminders,custPlat:custPlat,custBrands:custBrands,custLicTypes:custLicTypes,custLoanTypes:custLoanTypes,favNotes:favNotes,favStations:favStations,favExpenses:favExpenses,notes:notes,incGoals:incGoals,seRate:seRate,fedRate:fedRate,stateRate:stateRate,stdDed:stdDed,mtaRate:mtaRate,savedVehicles:savedVehicles,dl:dl,driverType:driverType,driver:driver}};
       localStorage.setItem("nyc_pre_restore_backup", JSON.stringify(snapshot));
     } catch(e){}
     setSyncStatus(lang==="en"?"⏳ Restoring...":"⏳ 恢复中...");
@@ -2864,7 +2866,7 @@ function App() {
       if(data.custGroups)setCustGroups(data.custGroups); if(data.reminders)setReminders(data.reminders);
       if(data.custPlat)setCustPlat(data.custPlat); if(data.custBrands)setCustBrands(data.custBrands);
       if(data.custLicTypes)setCustLicTypes(data.custLicTypes); if(data.custLoanTypes)setCustLoanTypes(data.custLoanTypes);
-      if(data.favNotes)setFavNotes(data.favNotes); if(Array.isArray(data.favExpenses))setFavExpenses(data.favExpenses); if(data.notes)setNotes(data.notes);
+      if(data.favNotes)setFavNotes(data.favNotes);if(data.favStations)setFavStations(data.favStations); if(Array.isArray(data.favExpenses))setFavExpenses(data.favExpenses); if(data.notes)setNotes(data.notes);
       if(data.incGoals && typeof data.incGoals === "object") setIncGoals(data.incGoals);
         else if(typeof data.incGoal!=="undefined" && data.incGoal!=="") {
           var d=new Date(),cm=d.getFullYear()+"-"+(d.getMonth()+1<10?"0":"")+(d.getMonth()+1);
@@ -2992,7 +2994,7 @@ function App() {
       if(!fileId){
         // No cloud file → upload our local data (first-time sync)
         if(localModTime){
-          var data={wl:wl,sl:sl,el:el,fl:fl,ll:ll,veh:veh,cc:cc,custGroups:custGroups,reminders:reminders,custPlat:custPlat,custBrands:custBrands,custLicTypes:custLicTypes,custLoanTypes:custLoanTypes,favNotes:favNotes,favExpenses:favExpenses,notes:notes,incGoals:incGoals,seRate:seRate,fedRate:fedRate,stateRate:stateRate,stdDed:stdDed,mtaRate:mtaRate,savedVehicles:savedVehicles,dl:dl,driverType:driverType,driver:driver,localModTime:localModTime};
+          var data={wl:wl,sl:sl,el:el,fl:fl,ll:ll,veh:veh,cc:cc,custGroups:custGroups,reminders:reminders,custPlat:custPlat,custBrands:custBrands,custLicTypes:custLicTypes,custLoanTypes:custLoanTypes,favNotes:favNotes,favStations:favStations,favExpenses:favExpenses,notes:notes,incGoals:incGoals,seRate:seRate,fedRate:fedRate,stateRate:stateRate,stdDed:stdDed,mtaRate:mtaRate,savedVehicles:savedVehicles,dl:dl,driverType:driverType,driver:driver,localModTime:localModTime};
           saveToDrive(accessToken,null,data);
         }
         return;
@@ -3037,7 +3039,7 @@ function App() {
           setTimeout(function(){setSyncStatus("");},2000);
         } else if(localModTime > cloudModTime){
           // Local is newer — upload
-          var data={wl:wl,sl:sl,el:el,fl:fl,ll:ll,veh:veh,cc:cc,custGroups:custGroups,reminders:reminders,custPlat:custPlat,custBrands:custBrands,custLicTypes:custLicTypes,custLoanTypes:custLoanTypes,favNotes:favNotes,favExpenses:favExpenses,notes:notes,incGoals:incGoals,seRate:seRate,fedRate:fedRate,stateRate:stateRate,stdDed:stdDed,mtaRate:mtaRate,savedVehicles:savedVehicles,dl:dl,driverType:driverType,driver:driver,localModTime:localModTime};
+          var data={wl:wl,sl:sl,el:el,fl:fl,ll:ll,veh:veh,cc:cc,custGroups:custGroups,reminders:reminders,custPlat:custPlat,custBrands:custBrands,custLicTypes:custLicTypes,custLoanTypes:custLoanTypes,favNotes:favNotes,favStations:favStations,favExpenses:favExpenses,notes:notes,incGoals:incGoals,seRate:seRate,fedRate:fedRate,stateRate:stateRate,stdDed:stdDed,mtaRate:mtaRate,savedVehicles:savedVehicles,dl:dl,driverType:driverType,driver:driver,localModTime:localModTime};
           saveToDrive(accessToken,fileId,data);
         }
         // else: timestamps equal — already synced, do nothing
@@ -3359,7 +3361,9 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
             , (function(){
                 var hasCharging=el.some(function(e){return e.category==="charging"&&e.qty&&+e.qty>0;});
                 var hasFuel=el.some(function(e){return e.category==="fuel"&&e.qty&&+e.qty>0;});
-                var isEv=veh.type==="electric"||(hasCharging&&!hasFuel);
+                // EV detection: vehicle type is electric, OR history shows only charging,
+                // OR hybrid driver who's mostly charging
+                var isEv = veh.type === "electric" || (hasCharging && !hasFuel) || (veh.type === "hybrid" && hasCharging);
                 var fuelCat=isEv?"charging":"fuel";
                 var fuelIcon=isEv?"⚡":"⛽";
                 var fuelLabel=lang==="en"?(isEv?"Charge":"Gas"):(isEv?"充电":"加油");
@@ -6074,85 +6078,202 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
       , sf==="quick_fuel" ? (function(){
           var hasCharging=el.some(function(e){return e.category==="charging"&&e.qty&&+e.qty>0;});
           var hasFuel=el.some(function(e){return e.category==="fuel"&&e.qty&&+e.qty>0;});
-          var isEv=veh.type==="electric"||(hasCharging&&!hasFuel);
+          // EV detection: vehicle type is electric, OR history shows only charging (no fuel)
+          // Also covers hybrid drivers who mostly charge: if hasCharging > hasFuel, default to charging
+          var isEv = veh.type === "electric" || (hasCharging && !hasFuel) || (veh.type === "hybrid" && hasCharging);
           var fuelCat=isEv?"charging":"fuel";
           var unitLabel=isEv?(lang==="en"?"kWh":"度数"):(lang==="en"?"Gallons":"加仑");
+          var unitShort=isEv?"kWh":(lang==="en"?"gal":"加仑");
           var titleStr=isEv?(lang==="en"?"⚡ Quick Charge":"⚡ 快速充电"):(lang==="en"?"⛽ Quick Fuel":"⛽ 快速加油");
+          var locLabel=isEv?(lang==="en"?"Charging Station":"充电站"):(lang==="en"?"Gas Station":"加油站");
+          var locPlaceholder=isEv?(lang==="en"?"e.g. Tesla Supercharger - Bay Parkway":"如 Tesla Supercharger - Bay Parkway"):(lang==="en"?"e.g. Shell, Sunoco":"如 壳牌、Sunoco");
           // Last entry of this type, used for hints
           var lastEntry=el.filter(function(e){return e.category===fuelCat;}).sort(function(a,b){return (b.date||"").localeCompare(a.date||"");})[0];
           var lastOdo=el.filter(function(e){return e.odometer&&+e.odometer>0;}).sort(function(a,b){var c=(b.date||"").localeCompare(a.date||"");return c!==0?c:(+b.odometer||0)-(+a.odometer||0);})[0];
           var lastOdoVal = lastOdo ? +lastOdo.odometer : 0;
+          // Default date/time to today/now if not set yet
+          if(!quickF.date) quickF.date = today();
+          if(!quickF.time) quickF.time = nowTime();
+          // Unit price calculation (live)
+          var unitPrice = "";
+          if(quickF.amount && quickF.qty && +quickF.qty>0){
+            unitPrice = (+quickF.amount / +quickF.qty).toFixed(3);
+          }
+          // Last unit price (for hint)
+          var lastUnitPrice = "";
+          if(lastEntry && lastEntry.qty && +lastEntry.qty>0){
+            lastUnitPrice = (+lastEntry.amount / +lastEntry.qty).toFixed(3);
+          }
+          // Efficiency: if we have last odometer + this odometer + qty
+          var efficiency = "";
+          if(quickF.odometer && lastOdoVal>0 && +quickF.odometer>lastOdoVal && quickF.qty && +quickF.qty>0){
+            var milesDriven = +quickF.odometer - lastOdoVal;
+            efficiency = (milesDriven / +quickF.qty).toFixed(2);
+          }
           return React.createElement(Modal, {title:titleStr, onClose:function(){setSf(null);setQuickF({});}, onSave:function(){
             if(!quickF.amount){showToast(lang==="en"?"Enter amount":"请输入金额");return;}
-            var newEntry={id:Date.now(),date:today(),time:nowTime(),category:fuelCat,amount:+quickF.amount,qty:+quickF.qty||0,odometer:+quickF.odometer||0,notes:quickF.notes||"",vehicleId:veh.vehicleId};
+            // Build notes: include location prefix + user notes
+            var combinedNotes = "";
+            if(quickF.location){ combinedNotes = quickF.location; }
+            if(quickF.notes){ combinedNotes = combinedNotes ? combinedNotes+" · "+quickF.notes : quickF.notes; }
+            var newEntry={id:Date.now(),date:quickF.date||today(),time:quickF.time||nowTime(),category:fuelCat,amount:+quickF.amount,qty:+quickF.qty||0,odometer:+quickF.odometer||0,notes:combinedNotes,vehicleId:veh.vehicleId};
             var nel=[newEntry].concat(el);
             setEl(nel);autoSave({el:nel});
             setSf(null);setQuickF({});
             showToast(lang==="en"?"✓ Saved":"✓ 已保存");
           }}
-            , React.createElement(Field, {label:lang==="en"?"Amount ($)":"金额 ($)", type:"number", value:quickF.amount||"", onChange:function(v){setQuickF(Object.assign({},quickF,{amount:v}));}, money:true, placeholder:lastEntry?"last "+(+lastEntry.amount).toFixed(2):"0.00"})
-            , React.createElement(Field, {label:unitLabel, type:"number", value:quickF.qty||"", onChange:function(v){setQuickF(Object.assign({},quickF,{qty:v}));}, placeholder:lastEntry&&lastEntry.qty?"last "+lastEntry.qty:"0"})
+            // Vehicle type indicator (small hint at top)
+            , React.createElement('div', {style:{fontSize:11,color:C.text3,marginBottom:8,padding:"6px 10px",background:C.bg3,borderRadius:8,lineHeight:1.4}}
+              , isEv ? "⚡ " : "⛽ "
+              , lang==="en"?
+                ("Vehicle type: "+(veh.type==="electric"?"Electric":(veh.type==="hybrid"?"Hybrid":(veh.type==="petrol"?"Petrol":"Auto-detected")))+(isEv?" → charging":" → fuel")):
+                ("车辆类型："+(veh.type==="electric"?"电动":(veh.type==="hybrid"?"混合动力":(veh.type==="petrol"?"燃油":"自动识别")))+(isEv?" → 充电":" → 加油"))
+            )
+            , React.createElement('div', {style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}
+              , React.createElement(Field, {label:lang==="en"?"Amount ($)":"金额 ($)", type:"number", value:quickF.amount||"", onChange:function(v){setQuickF(Object.assign({},quickF,{amount:v}));}, money:true, placeholder:lastEntry?"last "+(+lastEntry.amount).toFixed(2):"0.00"})
+              , React.createElement(Field, {label:unitLabel, type:"number", value:quickF.qty||"", onChange:function(v){setQuickF(Object.assign({},quickF,{qty:v}));}, placeholder:lastEntry&&lastEntry.qty?"last "+lastEntry.qty:"0"})
+            )
+            // Live unit price + efficiency calc display
+            , (unitPrice || lastUnitPrice) ? React.createElement('div', {style:{fontSize:11,color:C.text3,marginTop:-4,marginBottom:8,padding:"6px 10px",background:C.bg3,borderRadius:6,display:"flex",justifyContent:"space-between",flexWrap:"wrap",gap:8}}
+              , unitPrice ? React.createElement('span', null, lang==="en"?"Unit price: ":"单价：", React.createElement('b',{style:{color:C.accent}}, "$"+unitPrice+"/"+unitShort)) : null
+              , (lastUnitPrice && !unitPrice) ? React.createElement('span', {style:{color:C.text3}}, lang==="en"?"Last unit: ":"上次单价：", "$"+lastUnitPrice+"/"+unitShort) : null
+              , efficiency ? React.createElement('span', null, lang==="en"?"Efficiency: ":"效率：", React.createElement('b',{style:{color:C.success}}, efficiency+" mi/"+unitShort)) : null
+            ) : null
             , React.createElement(Field, {label:lang==="en"?"Odometer (mi) — optional":"当前里程 (mi) — 选填", type:"number", value:quickF.odometer||"", onChange:function(v){setQuickF(Object.assign({},quickF,{odometer:v}));}, placeholder:lastOdoVal>0?"last "+lastOdoVal.toLocaleString():"0"})
+            // Charging/fuel station with favorites
+            , (function(){
+                var favs = (favStations && favStations[fuelCat]) ? favStations[fuelCat] : [];
+                var currentLoc = (quickF.location||"").trim();
+                var isFavd = currentLoc && favs.indexOf(currentLoc) !== -1;
+                return React.createElement('div', {style:{marginBottom:14}}
+                  // Label row + star button
+                  , React.createElement('div', {style:{display:"flex",alignItems:"center",gap:6,marginBottom:6}}
+                    , React.createElement('div', {style:{fontSize:FS.sm+1,color:C.text2,fontWeight:600,letterSpacing:0.2,flex:1}}, locLabel, " — ", T.optional)
+                    // Star toggle button (only if location is filled)
+                    , currentLoc ? React.createElement('button', {
+                        onClick: function(){
+                          var newFavs = favs.slice();
+                          if(isFavd){
+                            // Unfavorite
+                            newFavs = newFavs.filter(function(x){return x !== currentLoc;});
+                            showToast(lang==="en"?"☆ Removed from favorites":"☆ 已取消收藏","info");
+                          } else {
+                            // Favorite
+                            newFavs.unshift(currentLoc);
+                            if(newFavs.length > 20) newFavs = newFavs.slice(0,20); // cap at 20
+                            showToast(lang==="en"?"⭐ Added to favorites":"⭐ 已添加到收藏","success");
+                          }
+                          var nfs = Object.assign({},favStations||{});
+                          nfs[fuelCat] = newFavs;
+                          setFavStations(nfs);
+                        },
+                        style: {background:isFavd?"rgba(255,215,0,0.15)":"transparent",border:"1px solid "+(isFavd?C.gold:C.border),color:isFavd?C.gold:C.text3,fontSize:13,padding:"3px 9px",borderRadius:6,cursor:"pointer",whiteSpace:"nowrap"}
+                      }, isFavd ? "⭐ "+(lang==="en"?"Favorited":"已收藏") : "☆ "+(lang==="en"?"Save":"收藏")) : null
+                  )
+                  // Input field
+                  , React.createElement('input', {
+                      type: "text",
+                      value: quickF.location||"",
+                      onChange: function(e){setQuickF(Object.assign({},quickF,{location:e.target.value}));},
+                      placeholder: locPlaceholder,
+                      style: IS
+                    })
+                  // Favorite chips
+                  , favs.length > 0 ? React.createElement('div', {style:{display:"flex",flexWrap:"wrap",gap:6,marginTop:8}}
+                      , React.createElement('div', {style:{fontSize:11,color:C.text3,letterSpacing:0.3,marginRight:4,alignSelf:"center"}}, "⭐ ")
+                      , favs.slice(0,8).map(function(stn){
+                          var sel = currentLoc === stn;
+                          return React.createElement('button', {
+                            key: stn,
+                            onClick: function(){setQuickF(Object.assign({},quickF,{location:stn}));},
+                            style: {flexShrink:0,background:sel?"rgba(0,212,255,0.15)":C.bg3,border:"1px solid "+(sel?"rgba(0,212,255,0.4)":C.border),color:sel?C.accent:C.text2,fontSize:12,padding:"5px 10px",borderRadius:14,cursor:"pointer",whiteSpace:"nowrap",fontWeight:sel?700:500,maxWidth:200,overflow:"hidden",textOverflow:"ellipsis"}
+                          }, stn);
+                        })
+                    ) : null
+                );
+              }())
+            , React.createElement('div', {style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}
+              , React.createElement(Field, {label:T.date, type:"date", value:quickF.date||today(), onChange:function(v){setQuickF(Object.assign({},quickF,{date:v}));}})
+              , React.createElement(Field, {label:T.time, type:"time", value:quickF.time||nowTime(), onChange:function(v){setQuickF(Object.assign({},quickF,{time:v}));}})
+            )
             , React.createElement(Field, {label:T.notes, value:quickF.notes||"", onChange:function(v){setQuickF(Object.assign({},quickF,{notes:v}));}, placeholder:T.optional})
           );
         }()) : null
 
       , sf==="quick_coffee" ? (function(){
           var lastEntry=el.filter(function(e){return e.category==="coffee";}).sort(function(a,b){return (b.date||"").localeCompare(a.date||"");})[0];
+          if(!quickF.date) quickF.date = today();
+          if(!quickF.time) quickF.time = nowTime();
           return React.createElement(Modal, {title:lang==="en"?"☕ Quick Coffee":"☕ 快速咖啡", onClose:function(){setSf(null);setQuickF({});}, onSave:function(){
             if(!quickF.amount){showToast(lang==="en"?"Enter amount":"请输入金额");return;}
-            var newEntry={id:Date.now(),date:today(),time:nowTime(),category:"coffee",amount:+quickF.amount,notes:quickF.notes||"",vehicleId:veh.vehicleId};
+            var newEntry={id:Date.now(),date:quickF.date||today(),time:quickF.time||nowTime(),category:"coffee",amount:+quickF.amount,notes:quickF.notes||"",vehicleId:veh.vehicleId};
             var nel=[newEntry].concat(el);
             setEl(nel);autoSave({el:nel});
             setSf(null);setQuickF({});
             showToast(lang==="en"?"✓ Saved":"✓ 已保存");
           }}
             , React.createElement(Field, {label:lang==="en"?"Amount ($)":"金额 ($)", type:"number", value:quickF.amount||"", onChange:function(v){setQuickF(Object.assign({},quickF,{amount:v}));}, money:true, placeholder:lastEntry?"last "+(+lastEntry.amount).toFixed(2):"0.00"})
+            , React.createElement('div', {style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}
+              , React.createElement(Field, {label:T.date, type:"date", value:quickF.date||today(), onChange:function(v){setQuickF(Object.assign({},quickF,{date:v}));}})
+              , React.createElement(Field, {label:T.time, type:"time", value:quickF.time||nowTime(), onChange:function(v){setQuickF(Object.assign({},quickF,{time:v}));}})
+            )
             , React.createElement(Field, {label:T.notes, value:quickF.notes||"", onChange:function(v){setQuickF(Object.assign({},quickF,{notes:v}));}, placeholder:T.optional})
           );
         }()) : null
 
       , sf==="quick_tip" ? (function(){
-          // Cash tip from passenger — adds to today's daily log (or creates new dl entry)
-          var todayStr=today();
-          var todayDl=dl.find(function(d){return d.date===todayStr;});
+          // Cash tip from passenger — adds to a daily log (today by default)
           var lastTip=dl.filter(function(d){return +d.tips>0;}).sort(function(a,b){return (b.date||"").localeCompare(a.date||"");})[0];
           // Last platform used for cash tips (default Uber)
           var lastPlat = lastTip && lastTip.tipPlatform ? lastTip.tipPlatform : "Uber";
           if(!quickF.platform) quickF.platform = lastPlat;
+          if(!quickF.date) quickF.date = today();
+          if(!quickF.time) quickF.time = nowTime();
+          // Look for daily log on the chosen date (live, updates as user changes date)
+          var targetDate = quickF.date || today();
+          var targetDl = dl.find(function(d){return d.date===targetDate;});
           return React.createElement(Modal, {title:lang==="en"?"💵 Cash Tip":"💵 现金小费", onClose:function(){setSf(null);setQuickF({});}, onSave:function(){
             if(!quickF.amount){showToast(lang==="en"?"Enter amount":"请输入金额");return;}
             var amt=+quickF.amount;
             var plat=quickF.platform||"Uber";
             var platTag = "["+plat+"]";
-            if(todayDl){
-              // Add to existing today's daily log — append platform tag to notes
+            var theDate = quickF.date || today();
+            var theTime = quickF.time || nowTime();
+            var theNotes = quickF.notes || "";
+            var existingDl = dl.find(function(d){return d.date===theDate;});
+            if(existingDl){
+              // Add to existing daily log on that date — append platform tag to notes
               var ndl=dl.map(function(d){
-                if(d.date===todayStr){
+                if(d.date===theDate){
                   var newNote = (d.notes||"").trim();
-                  // Prefix with platform tag if not already there
-                  var addPart = platTag + " +$"+amt.toFixed(2)+(quickF.notes?" "+quickF.notes:"");
+                  var timePart = theTime ? " ("+theTime+")" : "";
+                  var addPart = platTag + " +$"+amt.toFixed(2)+timePart+(theNotes?" "+theNotes:"");
                   newNote = newNote ? newNote+" · "+addPart : addPart;
                   return Object.assign({},d,{tips:((+d.tips||0)+amt).toFixed(2), notes:newNote, tipPlatform:plat});
                 }
                 return d;
               });
               setDl(ndl);autoSave({dl:ndl});
-              showToast(lang==="en"?("✓ Added $"+amt.toFixed(2)+" to today's tips ["+plat+"]"):("✓ 加入今日小费 $"+amt.toFixed(2)+" ["+plat+"]"));
+              showToast(lang==="en"?("✓ Added $"+amt.toFixed(2)+" tip ["+plat+"] on "+theDate):("✓ "+theDate+" 加入小费 $"+amt.toFixed(2)+" ["+plat+"]"));
             } else {
-              // Create new daily log entry for today, rideshare mode, only tips field filled
-              var newDl={id:Date.now(),date:todayStr,mode:"rideshare",tips:amt.toFixed(2),tipPlatform:plat,grossFare:"",bonus:"",tollReimbursed:"",cash:"",card:"",lease:"",hours:"",miles:"",notes:platTag+(quickF.notes?" "+quickF.notes:" "+(lang==="en"?"Cash tip":"现金小费")),vehicleId:veh.vehicleId};
+              // Create new daily log entry for that date, rideshare mode, only tips field filled
+              var timePart2 = theTime ? " ("+theTime+")" : "";
+              var newDl={id:Date.now(),date:theDate,mode:"rideshare",tips:amt.toFixed(2),tipPlatform:plat,grossFare:"",bonus:"",tollReimbursed:"",cash:"",card:"",lease:"",hours:"",miles:"",notes:platTag+timePart2+(theNotes?" "+theNotes:" "+(lang==="en"?"Cash tip":"现金小费")),vehicleId:veh.vehicleId};
               var ndl=[newDl].concat(dl);
               setDl(ndl);autoSave({dl:ndl});
-              showToast(lang==="en"?("✓ $"+amt.toFixed(2)+" tip recorded for today ["+plat+"]"):("✓ 今日记入小费 $"+amt.toFixed(2)+" ["+plat+"]"));
+              showToast(lang==="en"?("✓ $"+amt.toFixed(2)+" tip ["+plat+"] recorded on "+theDate):("✓ "+theDate+" 记入小费 $"+amt.toFixed(2)+" ["+plat+"]"));
             }
             setSf(null);setQuickF({});
           }}
             , React.createElement('div', {style:{fontSize:11,color:C.text3,marginBottom:8,padding:"8px 10px",background:C.bg3,borderRadius:8,lineHeight:1.5}}
-              , todayDl ? (lang==="en"?"➕ Adds to today's daily log":"➕ 加入今天日记的小费") : (lang==="en"?"📝 Creates today's daily log entry":"📝 新建今日日记账")
-              , React.createElement('div', {style:{fontSize:10,color:C.text3,marginTop:3}}, lang==="en"?"Cash tips count toward income (not the same as in-app tips)":"现金小费算收入（与平台 app 内小费分开）")
+              , targetDl ? (lang==="en"?("➕ Adds to "+targetDate+" daily log"):("➕ 加入 "+targetDate+" 的日记账小费")) : (lang==="en"?("📝 Creates "+targetDate+" daily log"):("📝 新建 "+targetDate+" 日记账"))
+              , React.createElement('div', {style:{fontSize:10,color:C.text3,marginTop:3}}, lang==="en"?"Cash tips count toward income (separate from in-app tips)":"现金小费算收入（与平台 app 内小费分开）")
             )
             , React.createElement(Field, {label:lang==="en"?"Tip Amount ($)":"小费金额 ($)", type:"number", value:quickF.amount||"", onChange:function(v){setQuickF(Object.assign({},quickF,{amount:v}));}, money:true, placeholder:lastTip?"last "+(+lastTip.tips).toFixed(2):"0.00"})
+            , React.createElement('div', {style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}
+              , React.createElement(Field, {label:T.date, type:"date", value:quickF.date||today(), onChange:function(v){setQuickF(Object.assign({},quickF,{date:v}));}})
+              , React.createElement(Field, {label:T.time, type:"time", value:quickF.time||nowTime(), onChange:function(v){setQuickF(Object.assign({},quickF,{time:v}));}})
+            )
             // Platform picker — chip-style buttons
             , React.createElement('div', {style:{marginBottom:14}}
               , React.createElement('div', {style:{fontSize:FS.sm+1,color:C.text2,fontWeight:600,letterSpacing:0.2,marginBottom:6}}, lang==="en"?"Platform":"平台")
@@ -8089,7 +8210,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
               , gUser&&accessToken ? React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 793}}
                 , React.createElement('div', { style: {fontSize:13,color:C.success,marginBottom:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 794}}, "✓ " , gUser.email)
                 , React.createElement('div', { style: {fontSize:12,color:C.text3,marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 795}}, lang==="en"?"Auto-saves after every change":"每次修改自动保存")
-                , React.createElement('button', { onClick: function(){if(!confirm(lang==="en"?"Upload current data to Google Drive? This will overwrite the cloud backup.":"上传当前数据到 Google Drive？这会覆盖云端备份。"))return;var data={wl:wl,sl:sl,el:el,fl:fl,ll:ll,veh:veh,cc:cc,custGroups:custGroups,reminders:reminders,custPlat:custPlat,custBrands:custBrands,custLicTypes:custLicTypes,custLoanTypes:custLoanTypes,favNotes:favNotes,favExpenses:favExpenses,notes:notes,incGoals:incGoals,seRate:seRate,fedRate:fedRate,stateRate:stateRate,stdDed:stdDed,mtaRate:mtaRate,savedVehicles:savedVehicles,dl:dl,driverType:driverType,driver:driver};saveToDrive(accessToken,driveFileId,data);}, style: {width:"100%",background:"#0A4020",border:"1px solid #2A8050",borderRadius:10,padding:12,color:C.success,fontSize:14,fontWeight:700,cursor:"pointer",marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 796}}, syncing?(lang==="en"?"Saving...":"保存中..."):(lang==="en"?"💾 Save Now":"💾 立即保存"))
+                , React.createElement('button', { onClick: function(){if(!confirm(lang==="en"?"Upload current data to Google Drive? This will overwrite the cloud backup.":"上传当前数据到 Google Drive？这会覆盖云端备份。"))return;var data={wl:wl,sl:sl,el:el,fl:fl,ll:ll,veh:veh,cc:cc,custGroups:custGroups,reminders:reminders,custPlat:custPlat,custBrands:custBrands,custLicTypes:custLicTypes,custLoanTypes:custLoanTypes,favNotes:favNotes,favStations:favStations,favExpenses:favExpenses,notes:notes,incGoals:incGoals,seRate:seRate,fedRate:fedRate,stateRate:stateRate,stdDed:stdDed,mtaRate:mtaRate,savedVehicles:savedVehicles,dl:dl,driverType:driverType,driver:driver};saveToDrive(accessToken,driveFileId,data);}, style: {width:"100%",background:"#0A4020",border:"1px solid #2A8050",borderRadius:10,padding:12,color:C.success,fontSize:14,fontWeight:700,cursor:"pointer",marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 796}}, syncing?(lang==="en"?"Saving...":"保存中..."):(lang==="en"?"💾 Save Now":"💾 立即保存"))
                 , React.createElement('button', { onClick: function(){requireDangerConfirm("restoreDrive", lang==="en"?"Restore from Drive":"从 Drive 恢复", lang==="en"?"This will OVERWRITE all your current local data with the cloud backup. This cannot be undone.":"此操作会用云端备份覆盖当前所有本地数据，无法撤销。", function(){loadFromDrive(accessToken);});}, style: {width:"100%",background:"#0A2040",border:"1px solid #1A5080",borderRadius:10,padding:12,color:C.accent,fontSize:14,fontWeight:700,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 797}}, lang==="en"?"📥 Restore from Drive":"📥 从Drive恢复")
                 , React.createElement('button', {
                     onClick: function(){
@@ -8159,7 +8280,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                       "这些是无车辆时导入的。关联到当前车辆。")
                 );
               }())
-            , React.createElement('button', { onClick: function(){if(!confirm(lang==="en"?"Download a JSON backup file to your device?":"下载 JSON 备份文件到此设备？"))return;setSyncStatus(lang==="en"?"⏳ Exporting...":"⏳ 导出中...");setTimeout(function(){try{var data={wl:wl,sl:sl,el:el,fl:fl,ll:ll,veh:veh,cc:cc,custGroups:custGroups,reminders:reminders,custPlat:custPlat,custBrands:custBrands,custLicTypes:custLicTypes,custLoanTypes:custLoanTypes,favNotes:favNotes,favExpenses:favExpenses,notes:notes,incGoals:incGoals,seRate:seRate,fedRate:fedRate,stateRate:stateRate,stdDed:stdDed,mtaRate:mtaRate,savedVehicles:savedVehicles,dl:dl,driverType:driverType,driver:driver,exported:new Date().toISOString()};var blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});var url=URL.createObjectURL(blob);var a=document.createElement("a");a.href=url;a.download="nyc-driver-backup-"+today()+".json";a.click();URL.revokeObjectURL(url);setSyncStatus(lang==="en"?"✓ Exported":"✓ 导出成功");setTimeout(function(){setSyncStatus("");},2500);}catch(err){setSyncStatus(lang==="en"?"✗ Export failed":"✗ 导出失败");setTimeout(function(){setSyncStatus("");},2500);}},100);}, style: {width:"100%",background:C.bg3,border:"1px solid "+C.border,borderRadius:12,padding:14,marginBottom:10,textAlign:"left",cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 801}}
+            , React.createElement('button', { onClick: function(){if(!confirm(lang==="en"?"Download a JSON backup file to your device?":"下载 JSON 备份文件到此设备？"))return;setSyncStatus(lang==="en"?"⏳ Exporting...":"⏳ 导出中...");setTimeout(function(){try{var data={wl:wl,sl:sl,el:el,fl:fl,ll:ll,veh:veh,cc:cc,custGroups:custGroups,reminders:reminders,custPlat:custPlat,custBrands:custBrands,custLicTypes:custLicTypes,custLoanTypes:custLoanTypes,favNotes:favNotes,favStations:favStations,favExpenses:favExpenses,notes:notes,incGoals:incGoals,seRate:seRate,fedRate:fedRate,stateRate:stateRate,stdDed:stdDed,mtaRate:mtaRate,savedVehicles:savedVehicles,dl:dl,driverType:driverType,driver:driver,exported:new Date().toISOString()};var blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});var url=URL.createObjectURL(blob);var a=document.createElement("a");a.href=url;a.download="nyc-driver-backup-"+today()+".json";a.click();URL.revokeObjectURL(url);setSyncStatus(lang==="en"?"✓ Exported":"✓ 导出成功");setTimeout(function(){setSyncStatus("");},2500);}catch(err){setSyncStatus(lang==="en"?"✗ Export failed":"✗ 导出失败");setTimeout(function(){setSyncStatus("");},2500);}},100);}, style: {width:"100%",background:C.bg3,border:"1px solid "+C.border,borderRadius:12,padding:14,marginBottom:10,textAlign:"left",cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 801}}
               , React.createElement('div', { style: {fontSize:15,fontWeight:700,color:C.text2,marginBottom:3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 802}}, lang==="en"?"📤 Export JSON Backup":"📤 导出JSON备份")
               , React.createElement('div', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 803}}, lang==="en"?"Download all data as JSON":"下载所有数据为JSON文件")
             )
@@ -8414,7 +8535,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                     };
                     localStorage.setItem("nyc_pre_restore_backup", JSON.stringify(snapshot));
                   } catch(e) {}
-                  var data=JSON.parse(fileText);if(data.wl)setWl(data.wl);if(data.sl)setSl(data.sl);if(data.el)setEl(data.el);if(data.fl)setFl(data.fl);if(data.ll)setLl(data.ll);if(data.veh)setVeh(data.veh);if(data.driver)setDriver(data.driver);if(data.cc)setCc(data.cc);if(data.custGroups)setCustGroups(data.custGroups);if(data.reminders)setReminders(data.reminders);if(data.custPlat)setCustPlat(data.custPlat);if(data.custBrands)setCustBrands(data.custBrands);if(data.custLicTypes)setCustLicTypes(data.custLicTypes);if(data.custLoanTypes)setCustLoanTypes(data.custLoanTypes);if(data.favNotes)setFavNotes(data.favNotes);if(data.notes)setNotes(data.notes);if(data.incGoals && typeof data.incGoals === "object") setIncGoals(data.incGoals);
+                  var data=JSON.parse(fileText);if(data.wl)setWl(data.wl);if(data.sl)setSl(data.sl);if(data.el)setEl(data.el);if(data.fl)setFl(data.fl);if(data.ll)setLl(data.ll);if(data.veh)setVeh(data.veh);if(data.driver)setDriver(data.driver);if(data.cc)setCc(data.cc);if(data.custGroups)setCustGroups(data.custGroups);if(data.reminders)setReminders(data.reminders);if(data.custPlat)setCustPlat(data.custPlat);if(data.custBrands)setCustBrands(data.custBrands);if(data.custLicTypes)setCustLicTypes(data.custLicTypes);if(data.custLoanTypes)setCustLoanTypes(data.custLoanTypes);if(data.favNotes)setFavNotes(data.favNotes);if(data.favStations)setFavStations(data.favStations);if(data.notes)setNotes(data.notes);if(data.incGoals && typeof data.incGoals === "object") setIncGoals(data.incGoals);
         else if(typeof data.incGoal!=="undefined" && data.incGoal!=="") {
           var d=new Date(),cm=d.getFullYear()+"-"+(d.getMonth()+1<10?"0":"")+(d.getMonth()+1);
           var g={}; g[cm]=String(data.incGoal); setIncGoals(g);
