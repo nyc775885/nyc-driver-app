@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-var APP_VERSION = "v3.10.15";  // ← single source of truth: bump this once per release
+var APP_VERSION = "v3.10.16";  // ← single source of truth: bump this once per release
 console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
@@ -12,7 +12,7 @@ console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-
       window.Sentry.init({
         dsn:window.SENTRY_DSN,
         environment:(location.hostname==="localhost"||location.hostname==="127.0.0.1")?"development":"production",
-        release:"nyc-driver-tracker@1.1.1",
+        release:"nyc-driver-tracker@1.1.2",
         tracesSampleRate:0.1,
         // Don't send events from local dev
         beforeSend:function(event){
@@ -1639,6 +1639,9 @@ function App() {
     setIncGoals(nx);
   }
   function setIncGoal(v){_setIncGoal(v);try{localStorage.setItem("nyc_incGoal",JSON.stringify(v));}catch(e){}} var r52=useState(false),showGoal=r52[0],setShowGoal=r52[1]; var r52b=useState(false),showDP=r52b[0],setShowDP=r52b[1]; var r52c=useState(false),showTP=r52c[0],setShowTP=r52c[1]; var r52d=useState(null),mpState=r52d[0],setMpState=r52d[1]; var r52d2=useState(null),ypState=r52d2[0],setYpState=r52d2[1]; var r52z=useState(false),trendOpen=r52z[0],setTrendOpen=r52z[1]; var r52y=useState(0),_forceCount=r52y[0],_setForceCount=r52y[1]; var forceRerender=function(){_setForceCount(function(x){return x+1;});};
+  // Collapsible state for advanced cards (default collapsed)
+  var rColl=useState({energy:false,fuelchart:false,pie:false,expDet:false,expRatio:false}),collOpen=rColl[0],setCollOpen=rColl[1];
+  var toggleColl=function(k){setCollOpen(Object.assign({},collOpen,{[k]:!collOpen[k]}));};
 
   // Last time local data was modified (ISO string). Used by smart sync.
   // Bumped whenever any persisted state changes. Stored in localStorage so it survives reloads.
@@ -3125,6 +3128,17 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                   );
                 }())
                 , (function(){
+                  // Collapsible — show header only when collapsed
+                  if(!collOpen.fuelchart){
+                    var hasFuelData = el.some(function(e){return (e.category==="charging"||e.category==="fuel")&&e.qty&&+e.qty>0&&e.date&&e.date.slice(0,7)===mo;});
+                    if(!hasFuelData) return null;
+                    return React.createElement(Card, {style:{marginBottom:8,padding:"10px 14px",cursor:"pointer"}, onClick:function(){toggleColl("fuelchart");}}
+                      , React.createElement('div', {style:{display:"flex",justifyContent:"space-between",alignItems:"center"}}
+                        , React.createElement('div', {style:{fontSize:13,fontWeight:700,color:"#FFD700"}}, "⛽ ", lang==="en"?"Fuel/Charge price chart":"加油/充电价格趋势")
+                        , React.createElement('span', {style:{fontSize:12,color:C.text3}}, "▼")
+                      )
+                    );
+                  }
                   var hasCharging=el.some(function(e){return e.category==="charging"&&e.qty&&+e.qty>0;});
                   var hasFuel=el.some(function(e){return e.category==="fuel"&&e.qty&&+e.qty>0;});
                   var isEv=veh.type==="electric"||(hasCharging&&!hasFuel);
@@ -3146,10 +3160,10 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                   var sy=function(p){return maxP===minP?H/2:H-padY-(p-minP)/(maxP-minP)*(H-2*padY);};
                   var pathD=pts.map(function(p,i){return (i===0?"M":"L")+sx(i).toFixed(1)+","+sy(p.price).toFixed(1);}).join(" ");
                   // Date label X positions: first, max, min, last (deduplicated)
-                  return React.createElement(Card, { style: {marginBottom:8,padding:"12px 14px",cursor:"pointer"}, onClick: function(){setTrendOpen(!trendOpen);}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}
-                    , React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}
+                  return React.createElement(Card, { style: {marginBottom:8,padding:"12px 14px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}
+                    , React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10,cursor:"pointer"}, onClick: function(){toggleColl("fuelchart");}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}
                       , React.createElement('div', { style: {fontSize:13,fontWeight:700,color:"#FFD700"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}, "⛽ " , lang==="en"?(isEv?"Charging · "+fi.length+" fills · avg $"+fmt2(avgP)+unit:"Gas · "+fi.length+" fills · avg $"+fmt2(avgP)+unit):(isEv?"充电 · "+fi.length+" 次 · 均价 $"+fmt2(avgP)+unit:"加油 · "+fi.length+" 次 · 均价 $"+fmt2(avgP)+unit))
-                      , React.createElement('span', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}, trendOpen?"▲":"▼")
+                      , React.createElement('span', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}, "▲")
                     )
                     // 3 key numbers
                     , React.createElement('div', { style: {display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}
@@ -3181,6 +3195,15 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                 // === #10: Expense Distribution Pie Chart (current month) ===
                 , (function(){
                     if(tExp<=0) return null;
+                    // Collapsible — show header only when collapsed
+                    if(!collOpen.pie){
+                      return React.createElement(Card, {style:{marginBottom:8,padding:"10px 14px",cursor:"pointer"}, onClick:function(){toggleColl("pie");}}
+                        , React.createElement('div', {style:{display:"flex",justifyContent:"space-between",alignItems:"center"}}
+                          , React.createElement('div', {style:{fontSize:13,fontWeight:700,color:C.text2}}, "🥧 ", lang==="en"?"Expense Distribution":"支出分布")
+                          , React.createElement('span', {style:{fontSize:12,color:C.text3}}, "▼")
+                        )
+                      );
+                    }
                     var groupTotals={"车辆":0,"牌照":0,"平台":0,"其他":0};
                     feAll.forEach(function(e){
                       var cat=allC[e.category];
@@ -3213,7 +3236,10 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                       startAngle=endAngle;
                     });
                     return React.createElement(Card, {style:{marginBottom:8,padding:"12px 14px"}}
-                      , React.createElement('div', {style:{fontSize:13,fontWeight:700,color:C.text2,marginBottom:10}}, "🥧 " , lang==="en"?"Expense Distribution":"支出分布")
+                      , React.createElement('div', {style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10,cursor:"pointer"}, onClick:function(){toggleColl("pie");}}
+                        , React.createElement('div', {style:{fontSize:13,fontWeight:700,color:C.text2}}, "🥧 " , lang==="en"?"Expense Distribution":"支出分布")
+                        , React.createElement('span', {style:{fontSize:12,color:C.text3}}, "▲")
+                      )
                       , React.createElement('div', {style:{display:"flex",alignItems:"center",gap:14}}
                         , React.createElement('svg', {viewBox:"0 0 120 120",width:110,height:110,style:{flexShrink:0}}
                           , slices.map(function(s,i){return React.createElement('path', {key:i,d:s.path,fill:s.color,stroke:C.bg2,strokeWidth:1.5});})
@@ -3233,14 +3259,27 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                     );
                   }())
                 , tExp > 0 ? (
+                  !collOpen.expDet ? (
+                    // Collapsed view — show header only
+                    React.createElement(Card, {style:{marginBottom:8,padding:"10px 14px",cursor:"pointer"}, onClick:function(){toggleColl("expDet");}}
+                      , React.createElement('div', {style:{display:"flex",justifyContent:"space-between",alignItems:"center"}}
+                        , React.createElement('div', {style:{fontSize:13,fontWeight:700,color:C.text2}}, "💸 ", T.expense, " · ", fmt(tExp))
+                        , React.createElement('span', {style:{fontSize:12,color:C.text3}}, "▼")
+                      )
+                    )
+                  ) : (
                   React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 286}}
-                    , React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 287}}
-                      , React.createElement('div', { style: {fontSize:14,fontWeight:700,color:C.text2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 288}}, T.expense)
-                      , React.createElement('button', { onClick: function(){setMExpDet(!mExpDet);}, style: {background:"none",border:"1px solid #2A4A6A",borderRadius:8,padding:"4px 10px",color:"#90B8D0",fontSize:12,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 289}}, mExpDet?(lang==="en"?"By Group":"按大类"):(lang==="en"?"By Item":"按小类"))
+                    , React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8,cursor:"pointer"}, onClick:function(){toggleColl("expDet");}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 287}}
+                      , React.createElement('div', { style: {fontSize:14,fontWeight:700,color:C.text2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 288}}, "💸 ", T.expense)
+                      , React.createElement('span', {style:{fontSize:12,color:C.text3}}, "▲")
+                    )
+                    , React.createElement('div', { style: {display:"flex",justifyContent:"flex-end",marginBottom:8}}
+                      , React.createElement('button', { onClick: function(e){e.stopPropagation();setMExpDet(!mExpDet);}, style: {background:"none",border:"1px solid #2A4A6A",borderRadius:8,padding:"4px 10px",color:"#90B8D0",fontSize:12,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 289}}, mExpDet?(lang==="en"?"By Group":"按大类"):(lang==="en"?"By Item":"按小类"))
                     )
                     , mExpDet ? React.createElement(Card, {__self: this, __source: {fileName: _jsxFileName, lineNumber: 291}}, React.createElement(CatDetail, { items: feAll, total: tExp, allC: allC, lang: lang, __self: this, __source: {fileName: _jsxFileName, lineNumber: 291}} )) : React.createElement(CatBreakdown, { items: feAll, total: tExp, allC: allC, lang: lang, scope: "dash_m", forceRerender: forceRerender, __self: this, __source: {fileName: _jsxFileName, lineNumber: 291}} )
                   
                     , tInc>0&&tExp>0 ? React.createElement('div', { style: {marginTop:8,background:C.bg3,borderRadius:10,padding:"10px 14px",border:"1px solid #151F30"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 293}}, React.createElement('div', { style: {display:"flex",justifyContent:"space-between",marginBottom:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 293}}, React.createElement('span', { style: {fontSize:12,color:"#7AB8A8"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 293}}, lang==="en"?"Expense Ratio":"支出占比"), React.createElement('span', { style: Object.assign({fontSize:13,fontWeight:700},{color:tExp/tInc>0.8?"#FF5252":tExp/tInc>0.5?"#FFB300":"#00E676"}), __self: this, __source: {fileName: _jsxFileName, lineNumber: 293}}, Math.round(tExp/tInc*100), "%")), React.createElement('div', { style: {height:8,borderRadius:4,background:"#1A2A40",overflow:"hidden"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 293}}, React.createElement('div', { style: {height:8,borderRadius:4,width:Math.min(100,Math.round(tExp/tInc*100))+"%",background:tExp/tInc>0.8?"linear-gradient(90deg,#FF5252,#FF8855)":tExp/tInc>0.5?"linear-gradient(90deg,#FFB300,#FFD700)":"linear-gradient(90deg,#00E676,#00D4FF)"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 293}}))) : null
+                  )
                   )
                 ) : null
               )
