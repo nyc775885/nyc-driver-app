@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-var APP_VERSION = "v3.11.17";  // ← single source of truth: bump this once per release
+var APP_VERSION = "v3.11.19";  // ← single source of truth: bump this once per release
 console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
@@ -12,7 +12,7 @@ console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-
       window.Sentry.init({
         dsn:window.SENTRY_DSN,
         environment:(location.hostname==="localhost"||location.hostname==="127.0.0.1")?"development":"production",
-        release:"nyc-driver-tracker@1.5.17",
+        release:"nyc-driver-tracker@1.5.19",
         tracesSampleRate:0.1,
         // Don't send events from local dev
         beforeSend:function(event){
@@ -1954,7 +1954,7 @@ function App() {
   // favStations: {charging:[name1,name2,...], fuel:[name1,name2,...]} — favorited charging/fuel stations
   var r25g=useState(function(){return lsLoad("nyc_favStations",{charging:[],fuel:[]});}),favStations=r25g[0],_setFavStations=r25g[1];function setFavStations(v){_setFavStations(v);try{localStorage.setItem("nyc_favStations",JSON.stringify(v));}catch(e){}}
   // Calculator state
-  var rCalc=useState({display:"0",prevValue:null,operator:null,waitingForOperand:false,history:[]}),calcState=rCalc[0],setCalcState=rCalc[1];
+  var rCalc=useState({display:"0",prevValue:null,operator:null,waitingForOperand:false,history:[],memory:0}),calcState=rCalc[0],setCalcState=rCalc[1];
   // FAB confirm state — first tap shows confirm button, second tap on confirm opens form
   var rPlusC=useState(false),plusConfirm=rPlusC[0],setPlusConfirm=rPlusC[1];
   // favExpenses: [{id, label, category, amount, notes, icon}] - quick expense templates
@@ -7049,7 +7049,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
             }
           };
           var doClear = function(){
-            setCalcState({display:"0",prevValue:null,operator:null,waitingForOperand:false,history:calcState.history||[]});
+            setCalcState({display:"0",prevValue:null,operator:null,waitingForOperand:false,history:calcState.history||[],memory:calcState.memory||0});
           };
           var doToggleSign = function(){
             var v = parseFloat(calcState.display);
@@ -7084,7 +7084,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
               var newHist = (calcState.history||[]).slice();
               newHist.unshift(calcState.prevValue+" "+calcState.operator+" "+curr+" = "+result);
               if(newHist.length>20) newHist = newHist.slice(0,20);
-              setCalcState({display:String(result),prevValue:result,operator:op,waitingForOperand:true,history:newHist});
+              setCalcState({display:String(result),prevValue:result,operator:op,waitingForOperand:true,history:newHist,memory:calcState.memory});
             }
           };
           var doEquals = function(){
@@ -7094,8 +7094,35 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
               var newHist = (calcState.history||[]).slice();
               newHist.unshift(calcState.prevValue+" "+calcState.operator+" "+curr+" = "+result);
               if(newHist.length>20) newHist = newHist.slice(0,20);
-              setCalcState({display:String(result),prevValue:null,operator:null,waitingForOperand:true,history:newHist});
+              setCalcState({display:String(result),prevValue:null,operator:null,waitingForOperand:true,history:newHist,memory:calcState.memory});
             }
+          };
+          // Memory functions
+          var doMemPlus = function(){
+            var v = parseFloat(calcState.display) || 0;
+            var newMem = (calcState.memory||0) + v;
+            setCalcState(Object.assign({},calcState,{memory:newMem,waitingForOperand:true}));
+            showToast(lang==="en"?("M+ "+v.toFixed(2)+" → M="+newMem.toFixed(2)):("M+ "+v.toFixed(2)+" → 记忆="+newMem.toFixed(2)),"success");
+          };
+          var doMemMinus = function(){
+            var v = parseFloat(calcState.display) || 0;
+            var newMem = (calcState.memory||0) - v;
+            setCalcState(Object.assign({},calcState,{memory:newMem,waitingForOperand:true}));
+            showToast(lang==="en"?("M− "+v.toFixed(2)+" → M="+newMem.toFixed(2)):("M− "+v.toFixed(2)+" → 记忆="+newMem.toFixed(2)),"success");
+          };
+          var doMemRecall = function(){
+            var m = calcState.memory||0;
+            setCalcState(Object.assign({},calcState,{display:String(m),waitingForOperand:false}));
+            showToast(lang==="en"?("MR → "+m.toFixed(2)):("MR → 读出 "+m.toFixed(2)),"info");
+          };
+          var doMemClear = function(){
+            setCalcState(Object.assign({},calcState,{memory:0}));
+            showToast(lang==="en"?"MC → memory cleared":"MC → 记忆已清空","info");
+          };
+          var doMemStore = function(){
+            var v = parseFloat(calcState.display) || 0;
+            setCalcState(Object.assign({},calcState,{memory:v,waitingForOperand:true}));
+            showToast(lang==="en"?("MS → memory = "+v.toFixed(2)):("MS → 存入记忆 "+v.toFixed(2)),"success");
           };
           var btn = function(label, onClick, style){
             return React.createElement('button', {
@@ -7123,45 +7150,84 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
               , React.createElement('div', {style:{background:C.bg2,padding:"16px 18px",borderBottom:"1px solid "+C.border,display:"flex",justifyContent:"space-between",alignItems:"center",position:"sticky",top:0,zIndex:10}}
                 , React.createElement('button', {onClick:function(){setSf(null);}, style:{background:"#1E3050",border:"none",color:"#8ABCD0",fontSize:16,cursor:"pointer",width:34,height:34,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center"}}, "✕")
                 , React.createElement('div', {style:{fontSize:16,fontWeight:800}}, "🧮 ", lang==="en"?"Calculator":"计算器")
-                , React.createElement('button', {onClick:function(){setCalcState({display:"0",prevValue:null,operator:null,waitingForOperand:false,history:[]});showToast(lang==="en"?"✓ History cleared":"✓ 历史已清空");}, style:{background:"none",border:"1px solid "+C.border,color:C.text3,fontSize:11,cursor:"pointer",padding:"6px 10px",borderRadius:8}}, lang==="en"?"Clear":"清空")
+                , React.createElement('button', {onClick:function(){setCalcState({display:"0",prevValue:null,operator:null,waitingForOperand:false,history:[],memory:0});showToast(lang==="en"?"✓ All cleared":"✓ 已全部清空");}, style:{background:"none",border:"1px solid "+C.border,color:C.text3,fontSize:11,cursor:"pointer",padding:"6px 10px",borderRadius:8}}, lang==="en"?"Clear":"清空")
               )
               , React.createElement('div', {style:{padding:"18px"}}
                 // Display
-                , React.createElement('div', {style:{background:C.bg3,border:"1px solid "+C.border,borderRadius:RADIUS.lg,padding:"24px 20px",marginBottom:14,minHeight:90,display:"flex",flexDirection:"column",justifyContent:"flex-end",boxShadow:SHADOW.sm}}
+                , React.createElement('div', {style:{background:C.bg3,border:"1px solid "+C.border,borderRadius:RADIUS.lg,padding:"24px 20px",marginBottom:14,minHeight:90,display:"flex",flexDirection:"column",justifyContent:"flex-end",boxShadow:SHADOW.sm,position:"relative"}}
+                  // Memory indicator (top-left of display)
+                  , (calcState.memory && calcState.memory !== 0) ? React.createElement('div', {style:{position:"absolute",top:8,left:14,fontSize:11,color:C.gold,fontWeight:700,letterSpacing:0.5,fontVariantNumeric:"tabular-nums"}}, "M ", calcState.memory.toFixed(2)) : null
                   , (calcState.prevValue!==null && calcState.operator) ? React.createElement('div', {style:{fontSize:14,color:C.text3,textAlign:"right",marginBottom:6,fontVariantNumeric:"tabular-nums"}}, calcState.prevValue+" "+calcState.operator) : null
-                  , React.createElement('div', {style:{fontSize:42,fontWeight:800,color:C.text,textAlign:"right",letterSpacing:-0.5,fontVariantNumeric:"tabular-nums",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}, calcState.display)
+                  // Editable input — uses system keyboard on mobile, physical keyboard on desktop
+                  , React.createElement('input', {
+                      type: "text",
+                      inputMode: "decimal",
+                      autoFocus: true,
+                      value: calcState.display,
+                      onChange: function(e){
+                        var v = e.target.value;
+                        // Sanitize: keep only digits, dot, minus
+                        v = v.replace(/[^0-9.\-]/g, "");
+                        // Only allow one minus, only at the beginning
+                        if(v.indexOf("-") > 0) v = v.replace(/-/g, "");
+                        // Only allow one dot
+                        var dots = v.split(".").length - 1;
+                        if(dots > 1){
+                          var firstDot = v.indexOf(".");
+                          v = v.slice(0,firstDot+1) + v.slice(firstDot+1).replace(/\./g, "");
+                        }
+                        if(v === "" || v === "-") v = v;
+                        setCalcState(Object.assign({},calcState,{display:v||"0",waitingForOperand:false}));
+                      },
+                      onKeyDown: function(e){
+                        // Physical keyboard shortcuts (desktop)
+                        var k = e.key;
+                        if(k === "Enter" || k === "="){ e.preventDefault(); doEquals(); return; }
+                        if(k === "+"){ e.preventDefault(); doOperator("+"); return; }
+                        if(k === "-"){
+                          // Allow minus at start of empty/zero display (negative input)
+                          if(calcState.display === "0" || calcState.display === "" || calcState.waitingForOperand){
+                            e.preventDefault(); doOperator("−"); return;
+                          }
+                          // Otherwise treat as operator
+                          e.preventDefault(); doOperator("−"); return;
+                        }
+                        if(k === "*" || k === "x" || k === "X"){ e.preventDefault(); doOperator("×"); return; }
+                        if(k === "/"){ e.preventDefault(); doOperator("÷"); return; }
+                        if(k === "%"){ e.preventDefault(); doPercent(); return; }
+                        if(k === "Escape"){ e.preventDefault(); doClear(); return; }
+                      },
+                      style: {width:"100%",fontSize:42,fontWeight:800,color:C.text,textAlign:"right",letterSpacing:-0.5,fontVariantNumeric:"tabular-nums",background:"transparent",border:"none",outline:"none",padding:0,fontFamily:"inherit",WebkitAppearance:"none"}
+                    })
                 )
-                // Buttons grid
-                , React.createElement('div', {style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:8}}
-                  , btn("AC", doClear, fnStyle)
-                  , btn("±", doToggleSign, fnStyle)
-                  , btn("%", doPercent, fnStyle)
-                  , btn("÷", function(){doOperator("÷");}, opStyle)
-
-                  , btn("7", function(){doInputDigit(7);})
-                  , btn("8", function(){doInputDigit(8);})
-                  , btn("9", function(){doInputDigit(9);})
-                  , btn("×", function(){doOperator("×");}, opStyle)
-
-                  , btn("4", function(){doInputDigit(4);})
-                  , btn("5", function(){doInputDigit(5);})
-                  , btn("6", function(){doInputDigit(6);})
-                  , btn("−", function(){doOperator("−");}, opStyle)
-
-                  , btn("1", function(){doInputDigit(1);})
-                  , btn("2", function(){doInputDigit(2);})
-                  , btn("3", function(){doInputDigit(3);})
-                  , btn("+", function(){doOperator("+");}, opStyle)
-
-                  , btn("0", function(){doInputDigit(0);}, {gridColumn:"span 2"})
-                  , btn(".", doInputDot)
-                  , btn("=", doEquals, equalStyle)
+                // Memory buttons row
+                , React.createElement('div', {style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr 1fr",gap:6,marginBottom:8}}
+                  , btn("MC", doMemClear, {background:C.bg4,color:C.text3,fontSize:13,padding:"10px 0",fontWeight:700})
+                  , btn("MR", doMemRecall, {background:(calcState.memory&&calcState.memory!==0)?"rgba(255,215,0,0.1)":C.bg4,color:(calcState.memory&&calcState.memory!==0)?C.gold:C.text3,fontSize:13,padding:"10px 0",fontWeight:700,border:"1px solid "+((calcState.memory&&calcState.memory!==0)?"rgba(255,215,0,0.3)":C.border)})
+                  , btn("MS", doMemStore, {background:C.bg4,color:C.text3,fontSize:13,padding:"10px 0",fontWeight:700})
+                  , btn("M+", doMemPlus, {background:"rgba(0,230,118,0.08)",color:C.success,fontSize:13,padding:"10px 0",fontWeight:700,border:"1px solid rgba(0,230,118,0.25)"})
+                  , btn("M−", doMemMinus, {background:"rgba(255,82,82,0.08)",color:C.danger,fontSize:13,padding:"10px 0",fontWeight:700,border:"1px solid rgba(255,82,82,0.25)"})
                 )
-                // Backspace as a small extra row
-                , React.createElement('button', {
-                    onClick: doBackspace,
-                    style: {width:"100%",marginTop:10,background:C.bg4,border:"1px solid "+C.border,color:C.text2,fontSize:14,padding:"10px",borderRadius:10,cursor:"pointer"}
-                  }, "⌫ ", lang==="en"?"Backspace":"退格")
+                // Operator row — large, easy-to-tap. Numbers come from system keyboard on mobile.
+                , React.createElement('div', {style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:8,marginBottom:8}}
+                  , btn("÷", function(){doOperator("÷");}, Object.assign({},opStyle,{fontSize:24,padding:"14px 0"}))
+                  , btn("×", function(){doOperator("×");}, Object.assign({},opStyle,{fontSize:24,padding:"14px 0"}))
+                  , btn("−", function(){doOperator("−");}, Object.assign({},opStyle,{fontSize:24,padding:"14px 0"}))
+                  , btn("+", function(){doOperator("+");}, Object.assign({},opStyle,{fontSize:24,padding:"14px 0"}))
+                )
+                // Function row — AC, ±, %, =
+                , React.createElement('div', {style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 2fr",gap:8}}
+                  , btn("AC", doClear, Object.assign({},fnStyle,{fontSize:16,padding:"14px 0"}))
+                  , btn("±", doToggleSign, Object.assign({},fnStyle,{fontSize:16,padding:"14px 0"}))
+                  , btn("%", doPercent, Object.assign({},fnStyle,{fontSize:16,padding:"14px 0"}))
+                  , btn("=", doEquals, Object.assign({},equalStyle,{fontSize:24,padding:"14px 0"}))
+                )
+                // Hint text
+                , React.createElement('div', {style:{fontSize:11,color:C.text3,marginTop:10,textAlign:"center",lineHeight:1.5}}
+                  , lang==="en"?
+                      "Type numbers with your keyboard. Press Enter for =, Esc to clear. +−×÷ keys also work.":
+                      "用键盘打数字。Enter = 等于、Esc = 清空、+ − × ÷ 键直接用。"
+                )
                 // History
                 , (calcState.history && calcState.history.length>0) ? React.createElement('div', {style:{marginTop:24,padding:"14px 16px",background:C.bg2,border:"1px solid "+C.border,borderRadius:RADIUS.md}}
                   , React.createElement('div', {style:{fontSize:11,color:C.text3,letterSpacing:0.5,textTransform:"uppercase",fontWeight:600,marginBottom:8}}, lang==="en"?"History":"历史记录")
