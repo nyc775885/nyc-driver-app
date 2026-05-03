@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-var APP_VERSION = "v3.11.39";  // ← single source of truth: bump this once per release
+var APP_VERSION = "v3.11.53";  // ← single source of truth: bump this once per release
 console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
@@ -12,7 +12,7 @@ console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-
       window.Sentry.init({
         dsn:window.SENTRY_DSN,
         environment:(location.hostname==="localhost"||location.hostname==="127.0.0.1")?"development":"production",
-        release:"nyc-driver-tracker@1.5.39",
+        release:"nyc-driver-tracker@1.5.50",
         tracesSampleRate:0.1,
         // Don't send events from local dev
         beforeSend:function(event){
@@ -233,6 +233,12 @@ function parseUberTaxSummary(text){
   if(!necTotal){
     var nec1=text.match(/Nonemployee compensation\s*\$?([\d,]+\.\d{2})/);
     if(nec1) necTotal=num(nec1[1]);
+  }
+  if(!necTotal){
+    // Monthly Summary format (page 1): "Total Additional Earnings** + $363.37"
+    // and Table 2 (page 2): "TOTAL ADDITIONAL EARNINGS $363.37" — case-insensitive catches both
+    var nec2=text.match(/Total Additional Earnings\*{0,2}\s*\+?\s*\$([\d,]+\.\d{2})/i);
+    if(nec2) necTotal=num(nec2[1]);
   }
 
   var tollM=text.match(/Tolls,?\s+(?:airport|Airport)\s+fees.*?\$([\d,]+\.\d{2})/);
@@ -1983,6 +1989,8 @@ function App() {
   var rFI=useState(false),showFuelioImport=rFI[0],setShowFuelioImport=rFI[1];
   var rFIR=useState(null),fuelioImportResult=rFIR[0],setFuelioImportResult=rFIR[1];
   var rFIS=useState({}),fuelioSelected=rFIS[0],setFuelioSelected=rFIS[1]; // {entryIdx: true/false}
+  // Expense diagnostic modal — quick scan of all el entries to find missing imports etc.
+  var rELD=useState(false),showElDiag=rELD[0],setShowElDiag=rELD[1];
   // Completion modal state (for ✓ Done on mile-type reminders)
   var rCmp=useState(null),cmpRem=rCmp[0],setCmpRem=rCmp[1];
   var rCmpf=useState({currentMile:"",intervalMile:""}),cmpf=rCmpf[0],setCmpf=rCmpf[1];
@@ -4589,7 +4597,10 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                           var r=parseUberTaxSummary(text);
                           setPasteUberTaxResult(r);
                           setShowPasteUberTax(true);
-                          showToast(lang==="en"?"✓ Tax summary detected":"✓ 识别为税务汇总", "success");
+                          var toastMsg = r && r.isMonthly
+                            ? (lang==="en"?"✓ Monthly summary detected":"✓ 识别为月度账单")
+                            : (lang==="en"?"✓ Tax summary detected":"✓ 识别为税务汇总");
+                          showToast(toastMsg, "success");
                         } else if(isWeekly){
                           setPasteUberText(text);
                           var r2=parseUberStatement(text);
@@ -4838,6 +4849,12 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                 , React.createElement('div', {style:{fontSize:10,marginTop:4,color:"#3AAA80"}}, lang==="en"?"All expenses, charging, all years — auto-dedup":"全部支出、充电、多年 — 自动去重")
               )
             )
+
+            // === Diagnostic: scan all el entries (helps locate missing imports) ===
+            , React.createElement('button', {
+                onClick: function(){ setShowElDiag(true); },
+                style: {display:"block",width:"100%",background:"linear-gradient(135deg, rgba(255,179,0,0.06), rgba(40,28,0,0.5))",border:"1px dashed rgba(255,179,0,0.35)",borderRadius:RADIUS.md,padding:"10px 14px",cursor:"pointer",fontSize:FS.sm,fontWeight:700,color:"#FFB300",textAlign:"center",marginBottom:10}
+              }, "🔍 ", lang==="en"?("Scan all expenses ("+el.length+")"):("扫描全部支出（"+el.length+" 条）"))
 
             // === SEARCH + CATEGORY FILTER ===
             , (function(){
@@ -8658,6 +8675,86 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
         )
       ) : null
 
+      // === Diagnostic: scan all el entries — list every expense with date/category/amount/notes/vehicleId ===
+      // Helps locate "where did my Fuelio import go" by showing entries across ALL months/vehicles.
+      , showElDiag ? (
+        React.createElement('div', { style: {position:"fixed",inset:0,background:"rgba(2,4,12,0.95)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:400,padding:"16px"} }
+          , React.createElement('div', { style: {background:C.bg2,borderRadius:16,width:"100%",maxWidth:620,border:"1px solid "+C.border,maxHeight:"92vh",display:"flex",flexDirection:"column",overflow:"hidden"} }
+            , React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 18px",borderBottom:"1px solid #1A2A44",flexShrink:0} }
+              , React.createElement('button', { onClick: function(){setShowElDiag(false);}, style: {background:"#1E3050",border:"none",color:"#8ABCD0",fontSize:16,cursor:"pointer",width:34,height:34,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center"} }, "✕")
+              , React.createElement('div', { style: {fontSize:16,fontWeight:800} }, "🔍 ", lang==="en"?"All Expenses (Diagnostic)":"全部支出（诊断）")
+              , React.createElement('div', { style: {width:34} })
+            )
+            , React.createElement('div', { style: {padding:"14px 16px",overflowY:"auto",flex:1} }
+              // === Summary by month ===
+              , (function(){
+                  var total = el.reduce(function(s,e){return s+(+e.amount||0);},0);
+                  var byMo = {};
+                  var vidSet = {};
+                  el.forEach(function(e){
+                    var moK = (e.date||"").slice(0,7) || "(no-date)";
+                    if(!byMo[moK]) byMo[moK] = {count:0, total:0, fuelio:0};
+                    byMo[moK].count++;
+                    byMo[moK].total += +e.amount||0;
+                    if(e.notes && /fuelio/i.test(e.notes)) byMo[moK].fuelio++;
+                    if(e.vehicleId) vidSet[e.vehicleId] = (vidSet[e.vehicleId]||0)+1;
+                  });
+                  var moEntries = Object.entries(byMo).sort(function(a,b){return b[0].localeCompare(a[0]);});
+                  var vidCount = Object.keys(vidSet).length;
+                  var fuelioTotal = el.filter(function(e){return e.notes && /fuelio/i.test(e.notes);}).length;
+                  return React.createElement('div', {style:{marginBottom:12}}
+                    , React.createElement('div', {style:{fontSize:13,marginBottom:8,padding:"10px 12px",background:C.bg3,border:"1px solid "+C.border,borderRadius:8}}
+                      , React.createElement('div', {style:{fontWeight:700,color:C.text2,marginBottom:4}}
+                        , lang==="en"?"el array: ":"el 数组：", React.createElement('b',{style:{color:C.gold}}, el.length+(lang==="en"?" entries · $":" 条 · $")+total.toFixed(2)))
+                      , React.createElement('div', {style:{fontSize:11,color:C.text3}}
+                        , lang==="en"?"Vehicles tagged: ":"车辆标签数：", React.createElement('b',{style:{color:C.text2}}, vidCount)
+                        , " · ", lang==="en"?"Fuelio entries: ":"Fuelio 条目：", React.createElement('b',{style:{color:fuelioTotal>0?"#5ADA7A":C.text3}}, fuelioTotal)
+                      )
+                    )
+                    , React.createElement('div', {style:{fontSize:11,color:C.text3,marginBottom:4,fontWeight:700}}, lang==="en"?"By month (newest first):":"按月份（最新在上）：")
+                    , React.createElement('div', {style:{background:C.bg3,border:"1px solid "+C.border,borderRadius:8,padding:"6px 10px",fontSize:11,fontFamily:"monospace",maxHeight:120,overflowY:"auto"}}
+                      , moEntries.length === 0
+                        ? React.createElement('div', {style:{color:C.text3,fontStyle:"italic",padding:"6px 0"}}, lang==="en"?"(empty)":"（空）")
+                        : moEntries.map(function(en){
+                            var hasFuelio = en[1].fuelio > 0;
+                            return React.createElement('div', {key:en[0], style:{display:"flex",justifyContent:"space-between",padding:"2px 0",color:hasFuelio?"#5ADA7A":C.text2}}
+                              , React.createElement('span', null, en[0], hasFuelio?" 🟢":"")
+                              , React.createElement('span', {style:{color:C.text3}}, en[1].count+(lang==="en"?" · $":" · $")+en[1].total.toFixed(2)+(hasFuelio?" ("+en[1].fuelio+" Fuelio)":""))
+                            );
+                          })
+                    )
+                  );
+                })()
+              // === Full entry list ===
+              , React.createElement('div', {style:{fontSize:11,color:C.text3,marginBottom:6,fontWeight:700}}, lang==="en"?"All entries (date desc):":"所有条目（按日期倒序）：")
+              , React.createElement('div', {style:{background:C.bg3,border:"1px solid "+C.border,borderRadius:8,padding:"6px 10px",fontSize:11,fontFamily:"monospace"}}
+                , (function(){
+                    var sorted = el.slice().sort(function(a,b){return (b.date||"").localeCompare(a.date||"");});
+                    if(sorted.length === 0){
+                      return React.createElement('div', {style:{color:C.text3,fontStyle:"italic",textAlign:"center",padding:"20px 0"}}, lang==="en"?"(no expenses found in el array)":"（el 数组为空）");
+                    }
+                    return sorted.map(function(e,i){
+                      var c = allC[e.category];
+                      var lbl = c ? (c.icon+" "+c.label) : ("? "+e.category);
+                      var notesShort = e.notes ? (" · "+(e.notes.length>40 ? e.notes.slice(0,40)+"…" : e.notes)) : "";
+                      var isFuelio = e.notes && /fuelio/i.test(e.notes);
+                      return React.createElement('div', {key:e.id||i, style:{padding:"4px 0",borderBottom:i<sorted.length-1?"1px solid #1A2A44":"none",display:"flex",justifyContent:"space-between",gap:6,alignItems:"flex-start"}}
+                        , React.createElement('div', {style:{flex:1,minWidth:0}}
+                          , React.createElement('div', {style:{color:isFuelio?"#5ADA7A":C.text2}}, e.date || "??", " ", lbl, isFuelio?" 🟢":"")
+                          , notesShort ? React.createElement('div', {style:{color:C.text3,fontSize:10,marginTop:1,wordBreak:"break-word"}}, notesShort.slice(3)) : null
+                        )
+                        , React.createElement('span', {style:{color:C.gold,minWidth:60,textAlign:"right",flexShrink:0}}, "$"+(+e.amount||0).toFixed(2))
+                      );
+                    });
+                  })()
+              )
+              , React.createElement('div', {style:{fontSize:10,color:C.text3,marginTop:10,padding:"8px 10px",background:C.bg3,border:"1px solid "+C.border,borderRadius:8,lineHeight:1.5}}
+                , "💡 ", lang==="en"?"Entries with 'Fuelio' in notes are highlighted green. If you don't see green entries here, the import never saved. If you see them but they don't appear in the expense list, switch to the matching month — main views filter by month, NOT by vehicle.":"备注里含 'Fuelio' 的条目高亮为绿色。如果这里没绿色条目 → 导入根本没存上；如果有但其他地方看不到 → 切到对应月份，主视图按月份筛选，不会因车辆而隐藏。")
+            )
+          )
+        )
+      ) : null
+
       , showPasteUberTax ? (
         React.createElement('div', { style: {position:"fixed",inset:0,background:"rgba(2,4,12,0.95)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:400,padding:"16px"} }
           , React.createElement('div', { style: {background:C.bg2,borderRadius:16,width:"100%",maxWidth:600,border:"1px solid "+C.border,maxHeight:"92vh",display:"flex",flexDirection:"column",overflow:"hidden"} }
@@ -8667,22 +8764,65 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
               , React.createElement('div', { style: {width:34} })
             )
             , React.createElement('div', { style: {padding:"16px 18px",overflowY:"auto",flex:1} }
-              , React.createElement('div', { style: {background:"#1A1000",border:"1px solid #3A2800",borderRadius:10,padding:"12px 14px",fontSize:12,color:C.text2,lineHeight:1.6,marginBottom:14} }
-                , React.createElement('div', {style:{fontWeight:700,marginBottom:6,color:"#FFB300"}}, lang==="en"?"How to use:":"使用方法：")
-                , React.createElement('div', {}, lang==="en"?"1. Uber Driver App → Account → Tax Information":"1. Uber Driver App → 账户 → Tax Information")
-                , React.createElement('div', {}, lang==="en"?"2. Download Tax Summary, 1099-K, and 1099-NEC PDFs":"2. 下载 Tax Summary、1099-K、1099-NEC 三份 PDF")
-                , React.createElement('div', {}, lang==="en"?"3. Open each, select all, copy, paste here ALL TOGETHER":"3. 每份打开 → 全选 → 复制 → 全部粘贴到下方")
-                , React.createElement('div', {style:{marginTop:6,color:"#FFB300"}}, lang==="en"?"⚡ This creates 12 monthly statements at once":"⚡ 一次性生成 12 个月度账单")
+              // === Quick PDF upload — accepts multiple files ===
+              , React.createElement('label', {style:{display:"block",background:"linear-gradient(135deg, rgba(255,179,0,0.12), rgba(58,40,0,0.7))",border:"2px dashed rgba(255,179,0,0.5)",borderRadius:RADIUS.md,padding:"16px 14px",cursor:"pointer",fontSize:14,fontWeight:800,color:"#FFB300",textAlign:"center",marginBottom:12,transition:"all 0.15s"}}
+                , React.createElement('input', {
+                    type:"file",
+                    accept:"application/pdf,.pdf",
+                    multiple: true,
+                    style:{display:"none"},
+                    onChange: function(e){
+                      var files = Array.prototype.slice.call(e.target.files || []);
+                      if(!files.length) return;
+                      e.target.value = "";
+                      if(!window.pdfjsLib){
+                        showToast(lang==="en"?"PDF library not ready, try refresh":"PDF 库未就绪，请刷新", "error");
+                        return;
+                      }
+                      showToast(lang==="en"?("📄 Reading "+files.length+" PDF(s)..."):("📄 读取 "+files.length+" 份 PDF 中..."), "info");
+                      Promise.all(files.map(function(f){return extractPdfText(f);}))
+                        .then(function(texts){
+                          var combined = texts.join("\n\n=== PDF SEPARATOR ===\n\n");
+                          if(!combined || combined.length < 50){
+                            showToast(lang==="en"?"PDFs appear empty":"PDF 看起来是空的", "error");
+                            return;
+                          }
+                          setPasteUberTaxText(combined);
+                          var r = parseUberTaxSummary(combined);
+                          if(r){
+                            setPasteUberTaxResult(r);
+                            showToast(lang==="en"?"✓ Parsed successfully":"✓ 解析成功", "success");
+                          } else {
+                            showToast(lang==="en"?"Couldn't parse — try paste manually":"PDF 解析失败，可手动粘贴", "warn");
+                          }
+                        })
+                        .catch(function(err){
+                          showToast(lang==="en"?"PDF read failed: "+err.message:"PDF 读取失败: "+err.message, "error");
+                        });
+                    }
+                  })
+                , React.createElement('div', {style:{fontSize:18,marginBottom:4}}, "📥")
+                , React.createElement('div', null, lang==="en"?"Tap to pick Uber Tax Summary PDF(s)":"点击选择 Uber 税务 PDF")
+                , React.createElement('div', {style:{fontSize:11,color:C.text3,fontWeight:500,marginTop:4}}, lang==="en"?"Annual: pick all 3 · Monthly: pick 1":"年度：3 份 · 月度：1 份")
               )
-              , React.createElement('textarea', {
-                  value: pasteUberTaxText,
-                  onChange: function(e){setPasteUberTaxText(e.target.value);setPasteUberTaxResult(null);},
-                  placeholder: lang==="en"?"Paste all 3 tax PDF text here...":"在这里粘贴 3 份税务 PDF 的文字...",
-                  style: {width:"100%",minHeight:160,maxHeight:240,padding:"10px 12px",borderRadius:10,border:"1px solid "+C.border,background:C.bg3,color:C.text,fontSize:12,fontFamily:"monospace",resize:"vertical",boxSizing:"border-box"}
-                })
+              // === Or: paste text fallback ===
+              , React.createElement('details', { style: {marginBottom:14} }
+                , React.createElement('summary', {style:{cursor:"pointer",fontSize:12,color:C.text3,padding:"6px 4px",userSelect:"none"}}, lang==="en"?"▸ Or paste text manually":"▸ 或手动粘贴文字（备选方式）")
+                , React.createElement('div', { style: {background:"#1A1000",border:"1px solid #3A2800",borderRadius:10,padding:"10px 12px",fontSize:11,color:C.text3,lineHeight:1.6,marginTop:8,marginBottom:8} }
+                  , React.createElement('div', {}, lang==="en"?"1. Uber Driver App → Account → Tax Information":"1. Uber Driver App → 账户 → Tax Information")
+                  , React.createElement('div', {}, lang==="en"?"2. Open the PDF(s), select all, copy":"2. 打开 PDF → 全选 → 复制")
+                  , React.createElement('div', {}, lang==="en"?"3. Annual: paste all 3 together · Monthly: paste 1":"3. 年度：3 份合并粘贴 · 月度：粘 1 份即可")
+                )
+                , React.createElement('textarea', {
+                    value: pasteUberTaxText,
+                    onChange: function(e){setPasteUberTaxText(e.target.value);setPasteUberTaxResult(null);},
+                    placeholder: lang==="en"?"Paste tax PDF text here (annual: 3 PDFs combined; monthly: 1 PDF)":"在这里粘贴税务 PDF 文字（年度：3 份合并；月度：1 份）",
+                    style: {width:"100%",minHeight:120,maxHeight:240,padding:"10px 12px",borderRadius:10,border:"1px solid "+C.border,background:C.bg3,color:C.text,fontSize:12,fontFamily:"monospace",resize:"vertical",boxSizing:"border-box"}
+                  })
+              )
               , React.createElement('button', { onClick: function(){
                     var r=parseUberTaxSummary(pasteUberTaxText);
-                    if(!r){alert(lang==="en"?"Could not find a tax year. Make sure you copied the Annual Tax Summary text including the title.":"找不到税务年度。请确认复制了 Annual Tax Summary（含标题）。");return;}
+                    if(!r){alert(lang==="en"?"Could not find a tax year/month. Make sure you copied the Tax Summary text including the title (annual or monthly).":"找不到税务年/月。请确认复制了 Tax Summary（含标题，年度或月度均可）。");return;}
                     setPasteUberTaxResult(r);
                   }, style: {width:"100%",background:"linear-gradient(135deg,#3A2800,#5A3A00)",border:"none",borderRadius:10,padding:"12px",color:"#FFB300",fontSize:14,fontWeight:800,cursor:"pointer",marginTop:12} }, "🔍 " , lang==="en"?"Parse":"解析")
               , pasteUberTaxResult ? React.createElement('div', { style: {marginTop:14} }
@@ -8697,7 +8837,9 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                       , React.createElement('div', {}, "🛣 " , T.miles , ": ", pasteUberTaxResult.totalMiles>0 ? React.createElement('b', null, pasteUberTaxResult.totalMiles.toLocaleString()) : React.createElement('span',{style:{color:C.text3,fontStyle:"italic"}}, lang==="en"?"none":"无"))
                     )
                   )
-                  , (pasteUberTaxResult.hasMonthly && pasteUberTaxResult.hasTrips) ? React.createElement('div', { style: {marginBottom:12} }
+                  , pasteUberTaxResult.isMonthly
+                    ? null  // monthly PDF is a single-month file by design — no breakdown grid, no "missing data" warning
+                    : (pasteUberTaxResult.hasMonthly && pasteUberTaxResult.hasTrips) ? React.createElement('div', { style: {marginBottom:12} }
                       , React.createElement('div', { style: {fontSize:13,fontWeight:700,color:C.text2,marginBottom:6} }, lang==="en"?"Monthly Breakdown:":"月度明细：")
                       , React.createElement('div', { style: {background:C.bg3,border:"1px solid "+C.border,borderRadius:8,padding:"8px 12px",fontSize:12,fontFamily:"monospace"} }
                         , (function(){
@@ -8760,18 +8902,37 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                         if(choice === "2"){ deleteOverlap = true; }
                         // Otherwise (default "1") keep both
                       }
-                      // Delete existing overlapping entries if user chose option 2
-                      if(deleteOverlap && relatedExp.length > 0){
-                        var keepIds = {};
-                        relatedExp.forEach(function(e){keepIds[e.id]=true;});
-                        var prevElForUndo = el.slice();
-                        var nelAfterDel = el.filter(function(e){return !keepIds[e.id];});
-                        setEl(nelAfterDel);
-                        // Note: undo is just for the sl save below; user's choice applied
-                      }
+                      // Check existing sl FIRST so a cancel here doesn't leave el modified
                       var existing=sl.find(function(x){return x.platform==="Uber"&&x.month===monthStr;});
                       if(existing){
                         if(!confirm(lang==="en"?"A statement for "+monthStr+" Uber already exists. Overwrite (operations fields like trips/miles will be preserved)?":monthStr+" Uber 已有记录。覆盖（趟数/里程等字段会保留）？"))return;
+                      }
+                      // Compute el-after-deletion if user chose option 2 (do NOT setEl yet — combine with platform-create below)
+                      var elBase = el;
+                      if(deleteOverlap && relatedExp.length > 0){
+                        var keepIds = {};
+                        relatedExp.forEach(function(e){keepIds[e.id]=true;});
+                        elBase = el.filter(function(e){return !keepIds[e.id];});
+                      }
+                      // Auto-create/update platform expense (refOnly) — matches manual stmt-form behavior at line ~6066
+                      // tExp filters out category==="platform" so this never double-counts; it's for display in the expense list.
+                      var elFinal = elBase;
+                      if(r.feesTotal && +r.feesTotal > 0){
+                        var existingPlatExp = elBase.find(function(e){
+                          if(e.category!=="platform") return false;
+                          if(!e.date || e.date.slice(0,7)!==monthStr) return false;
+                          if(!e.notes || e.notes.indexOf("Uber")<0) return false;
+                          return true;
+                        });
+                        var platExpDate = monthStr+"-15";
+                        if(existingPlatExp){
+                          elFinal = elBase.map(function(e){return e.id===existingPlatExp.id?Object.assign({},e,{amount:+r.feesTotal,notes:"Uber platform fee · "+monthStr}):e;});
+                        } else {
+                          elFinal = [{id:Date.now()+2,date:platExpDate,category:"platform",amount:+r.feesTotal,notes:"Uber platform fee · "+monthStr,isFixed:false,mode:"rideshare"}].concat(elBase);
+                        }
+                      }
+                      if(elFinal !== el) setEl(elFinal);
+                      if(existing){
                         setSl(sl.map(function(x){
                           if(x.id!==existing.id) return x;
                           return Object.assign({},x,{
@@ -8802,7 +8963,8 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                           notes:"Imported from Uber "+monthStr+" Monthly Summary"
                         }].concat(sl));
                       }
-                      // NOTE: Monthly statement is INCOME ONLY (sl array).
+                      // NOTE: Monthly statement saves INCOME (sl) + auto-creates a refOnly platform expense (el)
+                      // for display in the expense list. tExp filters out category==="platform" so no double-count.
                       setShowPasteUberTax(false);setPasteUberTaxText("");setPasteUberTaxResult(null);
                       var msgDone = lang==="en"?"✓ Saved monthly statement":"✓ 月度账单已保存";
                       if(deleteOverlap){
@@ -8866,19 +9028,58 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
               , React.createElement('div', { style: {width:34} })
             )
             , React.createElement('div', { style: {padding:"16px 18px",overflowY:"auto",flex:1} }
-              , React.createElement('div', { style: {background:C.bg3,border:"1px solid "+C.border2,borderRadius:10,padding:"12px 14px",fontSize:12,color:C.text2,lineHeight:1.6,marginBottom:14} }
-                , React.createElement('div', {style:{fontWeight:700,marginBottom:6,color:C.accent2}}, lang==="en"?"How to use:":"使用方法：")
-                , React.createElement('div', {}, lang==="en"?"1. Open Uber Driver App → Earnings → Statements":"1. 打开 Uber Driver App → 收入 → Statements")
-                , React.createElement('div', {}, lang==="en"?"2. Pick a full week, download the PDF":"2. 选一整周，下载 PDF")
-                , React.createElement('div', {}, lang==="en"?"3. Open the PDF, select all, copy":"3. 打开 PDF, 长按全选, 复制")
-                , React.createElement('div', {}, lang==="en"?"4. Paste below and tap Parse":"4. 粘贴到下方, 点解析")
+              // === Quick PDF upload (recommended path) ===
+              , React.createElement('label', {style:{display:"block",background:"linear-gradient(135deg, rgba(0,212,255,0.12), rgba(10,30,55,0.7))",border:"2px dashed rgba(0,212,255,0.5)",borderRadius:RADIUS.md,padding:"16px 14px",cursor:"pointer",fontSize:14,fontWeight:800,color:C.accent,textAlign:"center",marginBottom:12,transition:"all 0.15s"}}
+                , React.createElement('input', {
+                    type:"file",
+                    accept:"application/pdf,.pdf",
+                    style:{display:"none"},
+                    onChange: function(e){
+                      var f = e.target.files && e.target.files[0];
+                      if(!f) return;
+                      e.target.value = "";
+                      if(!window.pdfjsLib){
+                        showToast(lang==="en"?"PDF library not ready, try refresh":"PDF 库未就绪，请刷新", "error");
+                        return;
+                      }
+                      showToast(lang==="en"?"📄 Reading PDF...":"📄 读取 PDF 中...", "info");
+                      extractPdfText(f).then(function(text){
+                        if(!text || text.length < 50){
+                          showToast(lang==="en"?"PDF appears empty":"PDF 看起来是空的", "error");
+                          return;
+                        }
+                        setPasteUberText(text);
+                        var r2 = parseUberStatement(text);
+                        if(r2 && !r2.error){
+                          setPasteUberResult(r2);
+                          showToast(lang==="en"?"✓ Parsed successfully":"✓ 解析成功", "success");
+                        } else {
+                          showToast(lang==="en"?"Couldn't parse PDF — try paste instead":"PDF 解析失败，可以试试粘贴方式", "warn");
+                        }
+                      }).catch(function(err){
+                        showToast(lang==="en"?"PDF read failed: "+err.message:"PDF 读取失败: "+err.message, "error");
+                      });
+                    }
+                  })
+                , React.createElement('div', {style:{fontSize:18,marginBottom:4}}, "📥")
+                , React.createElement('div', null, lang==="en"?"Tap to pick Uber PDF":"点击选择 Uber PDF 文件")
+                , React.createElement('div', {style:{fontSize:11,color:C.text3,fontWeight:500,marginTop:4}}, lang==="en"?"Recommended — auto parses everything":"推荐方式 — 自动解析所有数据")
               )
-              , React.createElement('textarea', {
-                  value: pasteUberText,
-                  onChange: function(e){setPasteUberText(e.target.value);setPasteUberResult(null);},
-                  placeholder: lang==="en"?"Paste statement text here...":"在这里粘贴周报文字...",
-                  style: {width:"100%",minHeight:140,maxHeight:200,padding:"10px 12px",borderRadius:10,border:"1px solid "+C.border,background:C.bg3,color:C.text,fontSize:13,fontFamily:"monospace",resize:"vertical",boxSizing:"border-box"}
-                })
+              // === Or: paste text fallback ===
+              , React.createElement('details', { style: {marginBottom:14} }
+                , React.createElement('summary', {style:{cursor:"pointer",fontSize:12,color:C.text3,padding:"6px 4px",userSelect:"none"}}, lang==="en"?"▸ Or paste text manually":"▸ 或手动粘贴文字（备选方式）")
+                , React.createElement('div', { style: {background:C.bg3,border:"1px solid "+C.border2,borderRadius:10,padding:"10px 12px",fontSize:11,color:C.text3,lineHeight:1.6,marginTop:8,marginBottom:8} }
+                  , React.createElement('div', {}, lang==="en"?"1. Uber Driver App → Earnings → Statements":"1. Uber Driver App → 收入 → Statements")
+                  , React.createElement('div', {}, lang==="en"?"2. Open PDF, select all, copy":"2. 打开 PDF, 长按全选, 复制")
+                  , React.createElement('div', {}, lang==="en"?"3. Paste below, tap Parse":"3. 粘贴到下方, 点解析")
+                )
+                , React.createElement('textarea', {
+                    value: pasteUberText,
+                    onChange: function(e){setPasteUberText(e.target.value);setPasteUberResult(null);},
+                    placeholder: lang==="en"?"Paste statement text here...":"在这里粘贴周报文字...",
+                    style: {width:"100%",minHeight:100,maxHeight:200,padding:"10px 12px",borderRadius:10,border:"1px solid "+C.border,background:C.bg3,color:C.text,fontSize:13,fontFamily:"monospace",resize:"vertical",boxSizing:"border-box"}
+                  })
+              )
               , React.createElement('button', { onClick: function(){
                     var r=parseUberStatement(pasteUberText);
                     if(!r){alert(lang==="en"?"Could not parse. Make sure you copied the full statement text including the date range header.":"无法解析。请确认复制了完整周报文字（包含日期范围那一行）。");return;}
