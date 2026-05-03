@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-var APP_VERSION = "v3.12.9";  // ← single source of truth: bump this once per release
+var APP_VERSION = "v3.13.0";  // ← single source of truth: bump this once per release
 console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
@@ -2395,7 +2395,7 @@ function App() {
     , pyToll = pyStmts.reduce(function(s,x){return s+(+x.tollReimbursed||0);},0)+pyDailies.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.tollReimbursed||0):0);},0)
     , pyPlatformFee = pyStmts.reduce(function(s,x){return s+(+x.platformFee||0);},0)+pyDailies.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.platformFee||0):0);},0)
     , pyNet = pyInc-pyExp-pyPlatformFee
-    ; var achievements=[];if(tInc>=5000)achievements.push({icon:"🏆",text:lang==="en"?"Income > $5000":"本月收入破$5000",color:C.gold,bg:"#1A1400"});else if(tInc>=3000)achievements.push({icon:"⭐",text:lang==="en"?"Income > $3000":"本月收入破$3000",color:C.gold,bg:"#1A1400"});if(net>0&&tInc>0&&net>=tInc*0.5)achievements.push({icon:"💰",text:lang==="en"?"Profit > 50%":"净利润超50%",color:C.success,bg:"#0A1A0A"});if(tTrips>=200)achievements.push({icon:"🚗",text:lang==="en"?"200 trips this month":"本月200趟达成",color:C.accent,bg:"#0A1428"});else if(tTrips>=100)achievements.push({icon:"🎯",text:lang==="en"?"100 trips this month":"本月100趟达成",color:C.accent,bg:"#0A1428"});if(expiring.length===0&&expired.length===0&&ll.length>0)achievements.push({icon:"✅",text:lang==="en"?"All licenses valid":"证件全部有效",color:C.success,bg:"#0A1A0A"});if(yInc>=50000)achievements.push({icon:"👑",text:lang==="en"?"Annual income > $50000":"年收入破$50000",color:C.gold,bg:"#1A1400"}); var r40=useState(function(){return lsLoad("nyc_custGroups",[]);}),custGroups=r40[0],setCustGroups=r40[1]; var r41=useState(""),newGrpName=r41[0],setNewGrpName=r41[1]; var r42=useState("📁"),newGrpIcon=r42[0],setNewGrpIcon=r42[1]; var r43=useState("#A8D0E8"),newGrpColor=r43[0],setNewGrpColor=r43[1]; var r44=useState(new Date().getFullYear()+""),taxYr=r44[0],setTaxYr=r44[1]; var r45=useState(function(){return lsLoad("nyc_seRate",15.3);}),seRate=r45[0],_setSeRate=r45[1];function setSeRate(v){_setSeRate(v);try{localStorage.setItem("nyc_seRate",JSON.stringify(v));}catch(e){}} var r45b=useState(function(){return lsLoad("nyc_fedRate",12);}),fedRate=r45b[0],_setFedRate=r45b[1];function setFedRate(v){_setFedRate(v);try{localStorage.setItem("nyc_fedRate",JSON.stringify(v));}catch(e){}} var r45c=useState(function(){return lsLoad("nyc_stateRate",8.5);}),stateRate=r45c[0],_setStateRate=r45c[1];function setStateRate(v){_setStateRate(v);try{localStorage.setItem("nyc_stateRate",JSON.stringify(v));}catch(e){}} var r45d=useState(function(){return lsLoad("nyc_stdDed",14600);}),stdDed=r45d[0],_setStdDed=r45d[1];function setStdDed(v){_setStdDed(v);try{localStorage.setItem("nyc_stdDed",JSON.stringify(v));}catch(e){}} var r45e=useState(function(){return lsLoad("nyc_mtaRate",0.34);}),mtaRate=r45e[0],_setMtaRate=r45e[1];function setMtaRate(v){_setMtaRate(v);try{localStorage.setItem("nyc_mtaRate",JSON.stringify(v));}catch(e){}} var r45f=useState(function(){return lsLoad("nyc_mileageRate",0.70);}),mileageRate=r45f[0],_setMileageRate=r45f[1];function setMileageRate(v){_setMileageRate(v);try{localStorage.setItem("nyc_mileageRate",JSON.stringify(v));}catch(e){}} var rSV=useState(function(){return lsLoad("nyc_savedVehicles",[]);}),savedVehicles=rSV[0],_setSavedVehicles=rSV[1];function setSavedVehicles(v){_setSavedVehicles(v);try{localStorage.setItem("nyc_savedVehicles",JSON.stringify(v));}catch(e){}} var rShVD=useState(false),showVehDetail=rShVD[0],setShowVehDetail=rShVD[1]; var r46=useState(false),taxLoading=r46[0],setTaxLoading=r46[1]; var r47=useState(""),taxRateNote=r47[0],setTaxRateNote=r47[1]; var r48=useState(function(){return lsLoad("nyc_notes",[]);}),notes=r48[0],setNotes=r48[1];
+    ; var achievements=[];if(tInc>=5000)achievements.push({icon:"🏆",text:lang==="en"?"Income > $5000":"本月收入破$5000",color:C.gold,bg:"#1A1400"});else if(tInc>=3000)achievements.push({icon:"⭐",text:lang==="en"?"Income > $3000":"本月收入破$3000",color:C.gold,bg:"#1A1400"});if(net>0&&tInc>0&&net>=tInc*0.5)achievements.push({icon:"💰",text:lang==="en"?"Profit > 50%":"净利润超50%",color:C.success,bg:"#0A1A0A"});if(tTrips>=200)achievements.push({icon:"🚗",text:lang==="en"?"200 trips this month":"本月200趟达成",color:C.accent,bg:"#0A1428"});else if(tTrips>=100)achievements.push({icon:"🎯",text:lang==="en"?"100 trips this month":"本月100趟达成",color:C.accent,bg:"#0A1428"});if(expiring.length===0&&expired.length===0&&ll.length>0)achievements.push({icon:"✅",text:lang==="en"?"All licenses valid":"证件全部有效",color:C.success,bg:"#0A1A0A"});if(yInc>=50000)achievements.push({icon:"👑",text:lang==="en"?"Annual income > $50000":"年收入破$50000",color:C.gold,bg:"#1A1400"}); var r40=useState(function(){return lsLoad("nyc_custGroups",[]);}),custGroups=r40[0],setCustGroups=r40[1]; var r41=useState(""),newGrpName=r41[0],setNewGrpName=r41[1]; var r42=useState("📁"),newGrpIcon=r42[0],setNewGrpIcon=r42[1]; var r43=useState("#A8D0E8"),newGrpColor=r43[0],setNewGrpColor=r43[1]; var r44=useState(new Date().getFullYear()+""),taxYr=r44[0],setTaxYr=r44[1]; var r45=useState(function(){return lsLoad("nyc_seRate",15.3);}),seRate=r45[0],_setSeRate=r45[1];function setSeRate(v){_setSeRate(v);try{localStorage.setItem("nyc_seRate",JSON.stringify(v));}catch(e){}} var r45b=useState(function(){return lsLoad("nyc_fedRate",12);}),fedRate=r45b[0],_setFedRate=r45b[1];function setFedRate(v){_setFedRate(v);try{localStorage.setItem("nyc_fedRate",JSON.stringify(v));}catch(e){}} var r45c=useState(function(){return lsLoad("nyc_stateRate",8.5);}),stateRate=r45c[0],_setStateRate=r45c[1];function setStateRate(v){_setStateRate(v);try{localStorage.setItem("nyc_stateRate",JSON.stringify(v));}catch(e){}} var r45d=useState(function(){return lsLoad("nyc_stdDed",14600);}),stdDed=r45d[0],_setStdDed=r45d[1];function setStdDed(v){_setStdDed(v);try{localStorage.setItem("nyc_stdDed",JSON.stringify(v));}catch(e){}} var r45e=useState(function(){return lsLoad("nyc_mtaRate",0.34);}),mtaRate=r45e[0],_setMtaRate=r45e[1];function setMtaRate(v){_setMtaRate(v);try{localStorage.setItem("nyc_mtaRate",JSON.stringify(v));}catch(e){}} var r45f=useState(function(){return lsLoad("nyc_mileageRate",0.70);}),mileageRate=r45f[0],_setMileageRate=r45f[1];function setMileageRate(v){_setMileageRate(v);try{localStorage.setItem("nyc_mileageRate",JSON.stringify(v));}catch(e){}} var rSV=useState(function(){return lsLoad("nyc_savedVehicles",[]);}),savedVehicles=rSV[0],_setSavedVehicles=rSV[1];function setSavedVehicles(v){_setSavedVehicles(v);try{localStorage.setItem("nyc_savedVehicles",JSON.stringify(v));}catch(e){}} var rShVD=useState(false),showVehDetail=rShVD[0],setShowVehDetail=rShVD[1]; var rNV=useState(null),newVehDraft=rNV[0],setNewVehDraft=rNV[1]; var r46=useState(false),taxLoading=r46[0],setTaxLoading=r46[1]; var r47=useState(""),taxRateNote=r47[0],setTaxRateNote=r47[1]; var r48=useState(function(){return lsLoad("nyc_notes",[]);}),notes=r48[0],setNotes=r48[1];
   // Driver info (separate from vehicle so it survives vehicle switches)
   // Migration: if nyc_driver doesn't exist but veh.driver has data, copy it over.
   var rDrv = useState(function(){
@@ -5587,6 +5587,106 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
               , React.createElement('button', { onClick: function(){setSf(null);}, style: {background:"linear-gradient(135deg,#00CFFF,#0044EE)",border:"none",color:"#fff",fontSize:20,cursor:"pointer",width:34,height:34,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 10px rgba(0,207,255,0.3)"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 393}}, "✓")
             )
             , React.createElement('div', { style: {padding:"16px 14px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 395}}
+              // === Add Vehicle Modal — single form, dropdowns auto-populated from existing data ===
+              , newVehDraft ? React.createElement('div', {
+                  onClick: function(e){if(e.target===e.currentTarget)setNewVehDraft(null);},
+                  style:{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",zIndex:500,display:"flex",alignItems:"flex-start",justifyContent:"center",padding:"40px 16px",overflowY:"auto"}
+                }
+                , React.createElement('div', {style:{background:C.bg2,border:"1px solid "+C.border,borderRadius:14,padding:"18px 16px",maxWidth:480,width:"100%",boxShadow:"0 10px 40px rgba(0,0,0,0.5)"}}
+                  , React.createElement('div', {style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}
+                    , React.createElement('div', {style:{fontSize:16,fontWeight:800,color:C.text}}, "➕ ", lang==="en"?"Add Vehicle":"添加车辆")
+                    , React.createElement('button', {onClick:function(){setNewVehDraft(null);}, style:{background:"none",border:"none",color:C.text3,fontSize:18,cursor:"pointer",width:30,height:30}}, "✕")
+                  )
+                  // Type
+                  , React.createElement(Field, {label: T.carType, value: newVehDraft.type, onChange: function(v){setNewVehDraft(Object.assign({},newVehDraft,{type:v}));}, options: [["petrol",T.petrol],["electric",T.electric],["hybrid",T.hybrid]] })
+                  // Brand — dropdown from CARBRANDS + custom
+                  , React.createElement(Field, {
+                      label: T.brand,
+                      value: newVehDraft.brand,
+                      onChange: function(v){
+                        if(v==="__new__"){
+                          inputAction({title:lang==="en"?"New brand name":"新品牌名称",placeholder:lang==="en"?"e.g. Tesla":"如 特斯拉",onSubmit:function(n){if(n&&n.trim()){var nm=n.trim();setCustBrands(custBrands.concat([nm]));setNewVehDraft(Object.assign({},newVehDraft,{brand:nm}));}}});
+                          return;
+                        }
+                        setNewVehDraft(Object.assign({},newVehDraft,{brand:v,model:""}));
+                      },
+                      options: [["",T.selectBrand]].concat(CARBRANDS.slice(0,-1).map(function(b){return [b,b];})).concat(custBrands.map(function(b){return [b,b];})).concat([["Other",lang==="en"?"Other":"其他"],["__new__",lang==="en"?"+ Add new brand…":"+ 添加新品牌…"]])
+                    })
+                  // Model — dropdown from CARMODELS[brand], or text input if no preset
+                  , (function(){
+                      var brandModels = CARMODELS[newVehDraft.brand] || [];
+                      if(brandModels.length > 0){
+                        return React.createElement(Field, {
+                          label: lang==="en"?"Model":"车型",
+                          value: newVehDraft.model,
+                          onChange: function(v){
+                            if(v==="__new__"){
+                              inputAction({title:lang==="en"?"Custom model":"自定义车型",placeholder:lang==="en"?"e.g. New EV":"如 新款车",onSubmit:function(n){if(n&&n.trim()){setNewVehDraft(Object.assign({},newVehDraft,{model:n.trim()}));}}});
+                              return;
+                            }
+                            setNewVehDraft(Object.assign({},newVehDraft,{model:v}));
+                          },
+                          options: [["",lang==="en"?"Select model":"选择车型"]].concat(brandModels.map(function(m){return [m,m];})).concat([["__new__",lang==="en"?"+ Custom model…":"+ 自定义车型…"]])
+                        });
+                      }
+                      return React.createElement(Field, {
+                        label: lang==="en"?"Model":"车型",
+                        value: newVehDraft.model,
+                        onChange: function(v){setNewVehDraft(Object.assign({},newVehDraft,{model:v}));},
+                        placeholder: newVehDraft.brand?(lang==="en"?"Type model":"输入车型"):(lang==="en"?"Pick brand first":"请先选品牌")
+                      });
+                    }())
+                  // Year — dropdown from current year going back 30 years
+                  , React.createElement(Field, {
+                      label: lang==="en"?"Year":"年份",
+                      value: newVehDraft.year,
+                      onChange: function(v){setNewVehDraft(Object.assign({},newVehDraft,{year:v}));},
+                      options: [["",lang==="en"?"Select year":"选择年份"]].concat((function(){
+                        var arr=[]; var thisYear=new Date().getFullYear();
+                        for(var y=thisYear+1;y>=thisYear-30;y--){arr.push([y+"",y+""]);}
+                        return arr;
+                      }()))
+                    })
+                  , React.createElement('div', {style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}
+                    , React.createElement(Field, {label: T.plate, value: newVehDraft.plate, onChange: function(v){setNewVehDraft(Object.assign({},newVehDraft,{plate:v.toUpperCase()}));}, placeholder: "ABC1234"})
+                    , React.createElement(Field, {label: "TLC Plate", value: newVehDraft.tlcPlate, onChange: function(v){setNewVehDraft(Object.assign({},newVehDraft,{tlcPlate:v.toUpperCase()}));}, placeholder: lang==="en"?"Optional":"可选"})
+                  )
+                  // Action buttons
+                  , React.createElement('div', {style:{display:"flex",gap:10,marginTop:14}}
+                    , React.createElement('button', {
+                        onClick: function(){setNewVehDraft(null);},
+                        style:{flex:1,background:"#252830",border:"1px solid #3A3F48",color:C.text2,fontSize:13,fontWeight:700,padding:"10px",borderRadius:8,cursor:"pointer"}
+                      }, T.cancel)
+                    , React.createElement('button', {
+                        onClick: function(){
+                          if(!newVehDraft.brand && !newVehDraft.model){
+                            alert(lang==="en"?"Brand or Model required":"品牌或车型至少填一个");
+                            return;
+                          }
+                          var newId = "v_"+Date.now()+"_"+Math.random().toString(36).slice(2,8);
+                          var nameParts = [newVehDraft.year, newVehDraft.brand, newVehDraft.model].filter(Boolean);
+                          var autoName = nameParts.join(" ") || (lang==="en"?"Vehicle":"车辆");
+                          var profile = {
+                            vehicleId: newId,
+                            type: newVehDraft.type || "petrol",
+                            brand: newVehDraft.brand || "",
+                            model: newVehDraft.model || "",
+                            year: newVehDraft.year || "",
+                            plate: newVehDraft.plate || "",
+                            tlcPlate: newVehDraft.tlcPlate || newVehDraft.plate || "",
+                            _savedName: autoName,
+                            _savedAt: new Date().toISOString(),
+                            _savedOdometer: 0
+                          };
+                          setSavedVehicles((savedVehicles||[]).concat([profile]));
+                          setNewVehDraft(null);
+                          showToast(lang==="en"?("✓ Added "+autoName):("✓ 已添加「"+autoName+"」"));
+                        },
+                        style:{flex:2,background:"linear-gradient(135deg,#0A4080,#0066CC)",border:"1px solid #2A6AB0",color:"#fff",fontSize:13,fontWeight:800,padding:"10px",borderRadius:8,cursor:"pointer"}
+                      }, "✓ ", lang==="en"?"Save":"保存")
+                  )
+                )
+              ) : null
 // === Vehicle Profiles section ===
               , (function(){
                   var hasProfiles = savedVehicles && savedVehicles.length > 0;
@@ -5722,59 +5822,8 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                       , React.createElement('div', { style: {fontSize:13,fontWeight:700,color:"#90EAF8"} }, "🚗 " , lang==="en"?"Switch Vehicle":"切换车辆")
                       , React.createElement('button', {
                           onClick: function(){
-                            // Sequential prompts to build a new profile without touching veh
-                            inputAction({
-                              title: lang==="en"?"Add Another Vehicle":"添加另一辆车",
-                              message: lang==="en"?"Profile name (e.g. \"Ford Explorer 2017\"):":"车辆名称（例如「2017 Ford Explorer」）：",
-                              placeholder: lang==="en"?"Vehicle name":"车辆名称",
-                              onSubmit: function(name){
-                                if(!name||!name.trim()) return;
-                                inputAction({
-                                  title: lang==="en"?"Brand":"品牌",
-                                  message: lang==="en"?"e.g. Ford, Toyota, Tesla":"如 Ford、Toyota、Tesla",
-                                  placeholder: "",
-                                  onSubmit: function(brand){
-                                    if(!brand) brand="";
-                                    inputAction({
-                                      title: lang==="en"?"Model":"车型",
-                                      message: lang==="en"?"e.g. Explorer, Camry, Model Y":"如 Explorer、Camry、Model Y",
-                                      placeholder: "",
-                                      onSubmit: function(model){
-                                        if(!model) model="";
-                                        inputAction({
-                                          title: lang==="en"?"Year":"年份",
-                                          message: "",
-                                          placeholder: "2020",
-                                          onSubmit: function(year){
-                                            inputAction({
-                                              title: lang==="en"?"License plate":"车牌号",
-                                              message: lang==="en"?"Or TLC plate":"或 TLC 车牌",
-                                              placeholder: "ABC1234",
-                                              onSubmit: function(plate){
-                                                var newId = "v_"+Date.now()+"_"+Math.random().toString(36).slice(2,8);
-                                                var profile = {
-                                                  vehicleId: newId,
-                                                  brand: brand.trim(),
-                                                  model: model.trim(),
-                                                  year: (year||"").trim(),
-                                                  plate: (plate||"").toUpperCase().trim(),
-                                                  tlcPlate: (plate||"").toUpperCase().trim(),
-                                                  type: "petrol",
-                                                  _savedName: name.trim(),
-                                                  _savedAt: new Date().toISOString(),
-                                                  _savedOdometer: 0
-                                                };
-                                                setSavedVehicles((savedVehicles||[]).concat([profile]));
-                                                showToast(lang==="en"?("✓ Added "+name.trim()+" — tap Switch to use it"):("✓ 已添加「"+name.trim()+"」— 点切换即可使用"));
-                                              }
-                                            });
-                                          }
-                                        });
-                                      }
-                                    });
-                                  }
-                                });
-                              }
+                            setNewVehDraft({
+                              type:"petrol", brand:"", model:"", year:"", plate:"", tlcPlate:""
                             });
                           },
                           style:{background:"#0A2840",border:"1px solid #2A6080",color:"#7AC5FF",fontSize:11,fontWeight:700,padding:"5px 10px",borderRadius:6,cursor:"pointer"}
