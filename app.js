@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-var APP_VERSION = "v3.11.75";  // ← single source of truth: bump this once per release
+var APP_VERSION = "v3.11.77";  // ← single source of truth: bump this once per release
 console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
@@ -2215,7 +2215,7 @@ function App() {
   var yTrips=wl.filter(function(w){return w.weekStart.slice(0,4)===yr;}).reduce(function(s,w){return s+(+w.trips||0);},0)+yDailies.reduce(function(s,d){return s+(+d.trips||0);},0)+yStmts.reduce(function(s,x){return s+(+x.trips||0);},0);
   var yHours=wl.filter(function(w){return w.weekStart.slice(0,4)===yr;}).reduce(function(s,w){return s+(+w.hours||0);},0)+yDailies.reduce(function(s,d){return s+(+d.hours||0);},0)+yStmts.reduce(function(s,x){return s+(+x.onlineHours||0);},0);
   var yMiles=wl.filter(function(w){return w.weekStart.slice(0,4)===yr;}).reduce(function(s,w){return s+(+w.miles||0);},0)+yDailies.reduce(function(s,d){return s+(+d.miles||0);},0)+yStmts.reduce(function(s,x){return s+(+x.miles||0);},0);  var yStmtTrips=yStmts.reduce(function(s,x){return s+(+x.trips||0);},0),yStmtHours=yStmts.reduce(function(s,x){return s+(+x.onlineHours||0);},0),yStmtMiles=yStmts.reduce(function(s,x){return s+(+x.miles||0);},0);
-  var mData=yMons.map(function(m){var ms=sl.filter(function(x){return x.month===m;}),me=el.filter(function(e){return e.date.slice(0,7)===m;}),md=dl.filter(function(d){return d.date&&d.date.slice(0,7)===m;}),mf=genFixed(fl,m).reduce(function(s,e){return s+(+e.amount||0);},0),inc=ms.reduce(function(s,x){return s+(+x.grossFare||0)+(+x.tips||0)+(+x.bonus||0)+(+x.otherIncome||0);},0)+md.reduce(function(s,d){if(isCashTip(d))return s;if(d.mode==="rideshare")return s+(+d.grossFare||0)+(+d.tips||0)+(+d.bonus||0);return s+(+d.cash||0)+(+d.card||0)+(+d.tips||0);},0),exp=me.reduce(function(s,e){return e.category==="platform" ? s : s+(+e.amount||0);},0)+mf+md.reduce(function(s,d){return s+(+d.lease||0);},0),mToll=ms.reduce(function(s,x){return s+(+x.tollReimbursed||0);},0)+md.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.tollReimbursed||0):0);},0),mPlat=ms.reduce(function(s,x){return s+(+x.platformFee||0);},0)+md.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.platformFee||0):0);},0);return {m:m,inc:inc,exp:exp,net:inc-exp-mPlat,label:m.slice(5)+"月"};});
+  var mData=yMons.map(function(m){var ms=sl.filter(function(x){return x.month===m;}),me=el.filter(function(e){return e.date.slice(0,7)===m;}),md=dl.filter(function(d){return d.date&&d.date.slice(0,7)===m;}),mf=genFixed(fl,m).reduce(function(s,e){return s+(+e.amount||0);},0),inc=ms.reduce(function(s,x){return s+(+x.grossFare||0)+(+x.tips||0)+(+x.bonus||0)+(+x.otherIncome||0);},0)+md.reduce(function(s,d){if(isCashTip(d))return s;if(d.mode==="rideshare")return s+(+d.grossFare||0)+(+d.tips||0)+(+d.bonus||0);return s+(+d.cash||0)+(+d.card||0)+(+d.tips||0);},0),exp=me.reduce(function(s,e){return e.category==="platform" ? s : s+(+e.amount||0);},0)+mf+md.reduce(function(s,d){return s+(+d.lease||0);},0),mToll=ms.reduce(function(s,x){return s+(+x.tollReimbursed||0);},0)+md.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.tollReimbursed||0):0);},0),mPlat=ms.reduce(function(s,x){return s+(+x.platformFee||0);},0)+md.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.platformFee||0):0);},0),mTrips=ms.reduce(function(s,x){return s+(+x.trips||0);},0)+md.reduce(function(s,d){return s+(+d.trips||0);},0),mHours=ms.reduce(function(s,x){return s+(+x.onlineHours||0);},0)+md.reduce(function(s,d){return s+(+d.hours||0);},0),mMiles=ms.reduce(function(s,x){return s+(+x.miles||0);},0)+md.reduce(function(s,d){return s+(+d.miles||0);},0);return {m:m,inc:inc,exp:exp,net:inc-exp-mPlat,toll:mToll,platformFee:mPlat,trips:mTrips,hours:mHours,miles:mMiles,label:m.slice(5)+"月"};});
   var insW=null;if(veh.lastInsp){var ip=veh.lastInsp.split("-"),baseY=+ip[0],baseM=+ip[1]-1;var isTlc=!!(veh.tlcPlate&&veh.tlcPlate.trim());var addMonths=isTlc?4:12;
     // TLC counts by month, not by day. So "Jan inspection + 4 months" means valid through end of April.
     // The due date is the LAST day of (lastInspMonth + addMonths - 1).
@@ -4193,65 +4193,70 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                   );
                 }())
                 , (function(){
-                  // Collapsible — show header only when collapsed
+                  // Trend chart: if entries have qty (kWh/Gal), show price-per-unit trend.
+                  // If no qty (Fuelio data without kWh field), fall back to amount-per-fill trend.
                   if(!collOpen.fuelchart){
-                    var hasFuelData = el.some(function(e){return (e.category==="charging"||e.category==="fuel")&&e.qty&&+e.qty>0&&e.date&&e.date.slice(0,7)===mo;});
+                    var hasFuelData = el.some(function(e){return (e.category==="charging"||e.category==="fuel")&&e.date&&e.date.slice(0,7)===mo&&((e.qty&&+e.qty>0)||(+e.amount>0));});
                     if(!hasFuelData) return null;
                     return React.createElement(Card, {style:{marginBottom:8,padding:"10px 14px",cursor:"pointer"}, onClick:function(){toggleColl("fuelchart");}}
                       , React.createElement('div', {style:{display:"flex",justifyContent:"space-between",alignItems:"center"}}
-                        , React.createElement('div', {style:{fontSize:13,fontWeight:700,color:C.gold}}, "⛽ ", lang==="en"?"Fuel/Charge price chart":"加油/充电价格趋势")
+                        , React.createElement('div', {style:{fontSize:13,fontWeight:700,color:C.gold}}, "⛽ ", lang==="en"?"Fuel/Charge trend":"加油/充电趋势")
                         , React.createElement('span', {style:{fontSize:12,color:C.text3}}, "▼")
                       )
                     );
                   }
-                  var hasCharging=el.some(function(e){return e.category==="charging"&&e.qty&&+e.qty>0;});
-                  var hasFuel=el.some(function(e){return e.category==="fuel"&&e.qty&&+e.qty>0;});
+                  var hasCharging=el.some(function(e){return e.category==="charging"&&+e.amount>0;});
+                  var hasFuel=el.some(function(e){return e.category==="fuel"&&+e.amount>0;});
                   var isEv=veh.type==="electric"||(hasCharging&&!hasFuel);
                   var fuelCat=isEv?"charging":"fuel";var unit=isEv?"/kWh":"/Gal";var unitName=isEv?"kWh":"Gal";
-                  // Get last 30 fills (not last 30 days — more useful for sparse data)
-                  // Filter by current selected month (mo) so the chart follows month navigation
-                  var fiAll=el.filter(function(e){return e.category===fuelCat&&e.qty&&+e.qty>0&&e.date&&e.date.slice(0,7)===mo;}).sort(function(a,b){return a.date.localeCompare(b.date);});
+                  // Filter to current month, sorted by date
+                  var fiAll=el.filter(function(e){return e.category===fuelCat&&+e.amount>0&&e.date&&e.date.slice(0,7)===mo;}).sort(function(a,b){return a.date.localeCompare(b.date);});
                   var fi=fiAll.slice(-30);
                   if(fi.length<2)return null;
-                  var pts=fi.map(function(e){return {date:e.date,price:Math.round(+e.amount/+e.qty*100)/100,qty:+e.qty,amount:+e.amount,notes:e.notes||""};});
-                  var prices=pts.map(function(x){return x.price;});
-                  var minP=Math.min.apply(null,prices),maxP=Math.max.apply(null,prices);
-                  var avgP=prices.reduce(function(a,b){return a+b;},0)/prices.length;
-                  var maxIdx=prices.indexOf(maxP),minIdx=prices.indexOf(minP);
+                  // Determine trend mode: use price ($/unit) if all have qty; otherwise use amount per fill
+                  var allHaveQty = fi.every(function(e){return e.qty&&+e.qty>0;});
+                  var trendMode = allHaveQty ? "price" : "amount";
+                  var pts=fi.map(function(e){
+                    var v = trendMode==="price" ? Math.round(+e.amount/+e.qty*100)/100 : (+e.amount);
+                    return {date:e.date,v:v,qty:+e.qty||0,amount:+e.amount,notes:e.notes||""};
+                  });
+                  var vals=pts.map(function(x){return x.v;});
+                  var minV=Math.min.apply(null,vals),maxV=Math.max.apply(null,vals);
+                  var avgV=vals.reduce(function(a,b){return a+b;},0)/vals.length;
+                  var maxIdx=vals.indexOf(maxV),minIdx=vals.indexOf(minV);
                   var latest=pts[pts.length-1];
-                  // Build SVG line path
+                  var titleStr = trendMode==="price"
+                    ? (lang==="en"?(isEv?"Charging · "+fi.length+" fills · avg $"+fmt2(avgV)+unit:"Gas · "+fi.length+" fills · avg $"+fmt2(avgV)+unit):(isEv?"充电 · "+fi.length+" 次 · 均价 $"+fmt2(avgV)+unit:"加油 · "+fi.length+" 次 · 均价 $"+fmt2(avgV)+unit))
+                    : (lang==="en"?(isEv?"Charging · "+fi.length+" fills · avg $"+fmt2(avgV)+"/fill":"Gas · "+fi.length+" fills · avg $"+fmt2(avgV)+"/fill"):(isEv?"充电 · "+fi.length+" 次 · 均 $"+fmt2(avgV)+"/次":"加油 · "+fi.length+" 次 · 均 $"+fmt2(avgV)+"/次"));
                   var W=300,H=50,padY=4;
                   var sx=function(i){return pts.length>1?(i/(pts.length-1))*W:W/2;};
-                  var sy=function(p){return maxP===minP?H/2:H-padY-(p-minP)/(maxP-minP)*(H-2*padY);};
-                  var pathD=pts.map(function(p,i){return (i===0?"M":"L")+sx(i).toFixed(1)+","+sy(p.price).toFixed(1);}).join(" ");
-                  // Date label X positions: first, max, min, last (deduplicated)
-                  return React.createElement(Card, { style: {marginBottom:8,padding:"12px 14px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}
-                    , React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10,cursor:"pointer"}, onClick: function(){toggleColl("fuelchart");}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}
-                      , React.createElement('div', { style: {fontSize:13,fontWeight:700,color:C.gold}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}, "⛽ " , lang==="en"?(isEv?"Charging · "+fi.length+" fills · avg $"+fmt2(avgP)+unit:"Gas · "+fi.length+" fills · avg $"+fmt2(avgP)+unit):(isEv?"充电 · "+fi.length+" 次 · 均价 $"+fmt2(avgP)+unit:"加油 · "+fi.length+" 次 · 均价 $"+fmt2(avgP)+unit))
-                      , React.createElement('span', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}, "▲")
+                  var sy=function(p){return maxV===minV?H/2:H-padY-(p-minV)/(maxV-minV)*(H-2*padY);};
+                  var pathD=pts.map(function(p,i){return (i===0?"M":"L")+sx(i).toFixed(1)+","+sy(p.v).toFixed(1);}).join(" ");
+                  return React.createElement(Card, { style: {marginBottom:8,padding:"12px 14px"}}
+                    , React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10,cursor:"pointer"}, onClick: function(){toggleColl("fuelchart");}}
+                      , React.createElement('div', { style: {fontSize:13,fontWeight:700,color:C.gold}}, "⛽ " , titleStr)
+                      , React.createElement('span', { style: {fontSize:12,color:C.text3}}, "▲")
                     )
-                    // 3 key numbers
-                    , React.createElement('div', { style: {display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}
-                      , React.createElement('div', { style: {textAlign:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}, React.createElement('div', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}, lang==="en"?"Highest":"最贵"), React.createElement('div', { style: {fontSize:15,fontWeight:800,color:C.danger}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}, "$"+fmt2(maxP)), React.createElement('div', { style: {fontSize:10,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}, fmtDate(pts[maxIdx].date)))
-                      , React.createElement('div', { style: {textAlign:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}, React.createElement('div', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}, lang==="en"?"Lowest":"最便宜"), React.createElement('div', { style: {fontSize:15,fontWeight:800,color:C.success}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}, "$"+fmt2(minP)), React.createElement('div', { style: {fontSize:10,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}, fmtDate(pts[minIdx].date)))
-                      , React.createElement('div', { style: {textAlign:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}, React.createElement('div', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}, lang==="en"?"Latest":"最近"), React.createElement('div', { style: {fontSize:15,fontWeight:800,color:C.gold}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}, "$"+fmt2(latest.price)), React.createElement('div', { style: {fontSize:10,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}, fmtDate(latest.date)))
+                    , React.createElement('div', { style: {display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:10}}
+                      , React.createElement('div', { style: {textAlign:"center"}}, React.createElement('div', { style: {fontSize:12,color:C.text3}}, lang==="en"?"Highest":"最贵"), React.createElement('div', { style: {fontSize:15,fontWeight:800,color:C.danger}}, "$"+fmt2(maxV)), React.createElement('div', { style: {fontSize:10,color:C.text3}}, fmtDate(pts[maxIdx].date)))
+                      , React.createElement('div', { style: {textAlign:"center"}}, React.createElement('div', { style: {fontSize:12,color:C.text3}}, lang==="en"?"Lowest":"最便宜"), React.createElement('div', { style: {fontSize:15,fontWeight:800,color:C.success}}, "$"+fmt2(minV)), React.createElement('div', { style: {fontSize:10,color:C.text3}}, fmtDate(pts[minIdx].date)))
+                      , React.createElement('div', { style: {textAlign:"center"}}, React.createElement('div', { style: {fontSize:12,color:C.text3}}, lang==="en"?"Latest":"最近"), React.createElement('div', { style: {fontSize:15,fontWeight:800,color:C.gold}}, "$"+fmt2(latest.v)), React.createElement('div', { style: {fontSize:10,color:C.text3}}, fmtDate(latest.date)))
                     )
-                    // SVG line chart
-                    , React.createElement('div', { style: {marginBottom:6,height:H+18,position:"relative"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}
-                      , React.createElement('svg', { width:"100%", height:H, viewBox:"0 0 "+W+" "+H, preserveAspectRatio:"none", style:{display:"block"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}
-                        , React.createElement('path', { d: pathD, fill: "none", stroke: C.gold, strokeWidth: 1.5, vectorEffect:"non-scaling-stroke", __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}})
-                        , pts.map(function(p,i){var isMax=i===maxIdx,isMin=i===minIdx,isLast=i===pts.length-1;var col=isMax?C.danger:isMin?C.success:isLast?C.gold:"#5A6A80";var rad=isMax||isMin||isLast?2.5:1.5;return React.createElement('circle', { key: i, cx: sx(i), cy: sy(p.price), r: rad, fill: col, vectorEffect:"non-scaling-stroke", __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}});})
+                    , React.createElement('div', { style: {marginBottom:6,height:H+18,position:"relative"}}
+                      , React.createElement('svg', { width:"100%", height:H, viewBox:"0 0 "+W+" "+H, preserveAspectRatio:"none", style:{display:"block"}}
+                        , React.createElement('path', { d: pathD, fill: "none", stroke: C.gold, strokeWidth: 1.5, vectorEffect:"non-scaling-stroke"})
+                        , pts.map(function(p,i){var isMax=i===maxIdx,isMin=i===minIdx,isLast=i===pts.length-1;var col=isMax?C.danger:isMin?C.success:isLast?C.gold:"#5A6A80";var rad=isMax||isMin||isLast?2.5:1.5;return React.createElement('circle', { key: i, cx: sx(i), cy: sy(p.v), r: rad, fill: col, vectorEffect:"non-scaling-stroke"});})
                       )
-                      , React.createElement('div', { style: {display:"flex",justifyContent:"space-between",fontSize:10,color:C.text3,marginTop:2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}, React.createElement('span', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}, fmtDate(pts[0].date)), React.createElement('span', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}, fmtDate(pts[pts.length-1].date)))
+                      , React.createElement('div', { style: {display:"flex",justifyContent:"space-between",fontSize:10,color:C.text3,marginTop:2}}, React.createElement('span', null, fmtDate(pts[0].date)), React.createElement('span', null, fmtDate(pts[pts.length-1].date)))
                     )
-                    // Expanded detail list
-                    , trendOpen ? React.createElement('div', { style: {marginTop:12,paddingTop:10,borderTop:"1px solid "+C.border}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}
-                      , React.createElement('div', { style: {fontSize:12,color:C.text3,marginBottom:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}, lang==="en"?"All "+fi.length+" fills this month":"本月 "+fi.length+" 次充电详情")
-                      , pts.slice().reverse().map(function(p,i){var isMax=p.price===maxP,isMin=p.price===minP;var col=isMax?C.danger:isMin?C.success:C.text;return React.createElement('div', { key: i, style: {display:"flex",justifyContent:"space-between",padding:"6px 0",borderBottom:i<pts.length-1?"1px solid "+C.border:"none",fontSize:13}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}
-                        , React.createElement('span', { style: {color:C.text2,fontSize:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}, fmtDate(p.date))
-                        , React.createElement('span', { style: {color:C.text2,fontSize:12,flex:1,marginLeft:8,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}, p.notes)
-                        , React.createElement('span', { style: {color:C.text3,fontSize:12,marginRight:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}, fmt2(p.qty), unitName)
-                        , React.createElement('span', { style: {color:col,fontWeight:700}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}, "$"+fmt2(p.price))
+                    , trendMode==="amount" ? React.createElement('div', {style:{fontSize:10,color:C.text3,fontStyle:"italic",textAlign:"center",marginTop:4}}, "ⓘ ", lang==="en"?"Showing $/fill (no kWh data on entries)":"显示每次金额（记录里无 kWh 数据）") : null
+                    , trendOpen ? React.createElement('div', { style: {marginTop:12,paddingTop:10,borderTop:"1px solid "+C.border}}
+                      , React.createElement('div', { style: {fontSize:12,color:C.text3,marginBottom:6}}, lang==="en"?"All "+fi.length+" fills this month":"本月 "+fi.length+" 次详情")
+                      , pts.slice().reverse().map(function(p,i){var isMax=p.v===maxV,isMin=p.v===minV;var col=isMax?C.danger:isMin?C.success:C.text;return React.createElement('div', { key: i, style: {display:"flex",justifyContent:"space-between",padding:"6px 0",borderBottom:i<pts.length-1?"1px solid "+C.border:"none",fontSize:13}}
+                        , React.createElement('span', { style: {color:C.text2,fontSize:12}}, fmtDate(p.date))
+                        , React.createElement('span', { style: {color:C.text2,fontSize:12,flex:1,marginLeft:8,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}, p.notes)
+                        , p.qty>0 ? React.createElement('span', { style: {color:C.text3,fontSize:12,marginRight:8}}, fmt2(p.qty), unitName) : null
+                        , React.createElement('span', { style: {color:col,fontWeight:700}}, "$"+fmt2(p.amount))
                       );})
                     ) : null
                   );
@@ -4671,7 +4676,10 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                 , React.createElement('span', {style:{color:"#9A7A40",fontSize:14}}, "→")
               )
               , React.createElement('button', { onClick: function(){setPasteUberText("");setPasteUberResult(null);setShowPasteUber(true);}, style: {background:"linear-gradient(135deg, rgba(90,172,255,0.08), rgba(10,30,60,0.6))",border:"1px solid rgba(90,172,255,0.3)",borderRadius:RADIUS.md,padding:"10px 12px",color:C.accent2,fontSize:FS.md,fontWeight:600,cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center",transition:"all 0.15s"} }
-                , React.createElement('span', null, "📄 " , lang==="en"?"Paste weekly":"粘贴周报")
+                , React.createElement('div', {style:{display:"flex",flexDirection:"column",alignItems:"flex-start",gap:2}}
+                  , React.createElement('span', null, "📄 " , lang==="en"?"Paste weekly":"粘贴周报")
+                  , React.createElement('span', {style:{fontSize:10,color:"#7090B0",fontWeight:500,letterSpacing:0.3}}, lang==="en"?"ref only · not counted":"仅记录 · 不计入收入")
+                )
                 , React.createElement('span', {style:{color:"#3A6080",fontSize:14}}, "→")
               )
             )
@@ -4796,6 +4804,55 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                     , React.createElement('span', { style: {color:C.text2} }, T.tips, " " , React.createElement('b',{style:{color:C.success}},fmt(vTips)))
                     , vBonus>0 ? React.createElement('span', { style: {color:C.text2} }, T.bonus, " " , React.createElement('b',{style:{color:C.gold}},fmt(vBonus))) : null
                   )
+                // === Chained breakdown: Gross → Net Payout → Real Earnings (month view only) ===
+                , (function(){
+                    if(!isMonth) return null;
+                    var vPlatformFee = mStmts.reduce(function(s,x){return s+(+x.platformFee||0);},0)
+                      + mDailies.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.platformFee||0):0);},0);
+                    if(vPlatformFee<=0 && vToll<=0) return null;  // nothing to show
+                    var grossWithToll = vInc + vToll;  // for display: Uber's bank deposit basis
+                    var netPayout = grossWithToll - vPlatformFee;
+                    var realEarnings = netPayout - vToll;
+                    return React.createElement('div', { style: {marginTop:10,padding:"12px 14px",background:C.bg3,border:"1px solid "+C.border,borderRadius:RADIUS.md,position:"relative"} }
+                      , React.createElement('div', { style: {fontSize:11,color:C.text3,marginBottom:8,letterSpacing:0.8,textTransform:"uppercase",fontWeight:600} }, "💰 ", lang==="en"?"Money Flow":"收入明细")
+                      , React.createElement('div', { style: {display:"flex",flexDirection:"column",gap:5,fontSize:13,lineHeight:1.5} }
+                        // Gross Payment
+                        , React.createElement('div', { style: {display:"flex",justifyContent:"space-between"} }
+                          , React.createElement('span', { style: {color:C.text2,fontWeight:600} }, lang==="en"?"Gross Payment":"总营业额")
+                          , React.createElement('b', { style: {color:C.accent2,fontVariantNumeric:"tabular-nums"} }, fmt(vInc))
+                        )
+                        // + toll reimbursement (if any)
+                        , vToll>0 ? React.createElement('div', { style: {display:"flex",justifyContent:"space-between"} }
+                          , React.createElement('span', { style: {color:C.text3} }, "+ ", lang==="en"?"Toll reimbursed":"过桥退款")
+                          , React.createElement('span', { style: {color:"#5ADA7A",fontVariantNumeric:"tabular-nums"} }, "+", fmt(vToll))
+                        ) : null
+                        , vToll>0 ? React.createElement('div', { style: {display:"flex",justifyContent:"space-between",paddingTop:5,borderTop:"1px dashed #1F3A5A"} }
+                          , React.createElement('span', { style: {color:C.text2} }, lang==="en"?"Uber payout basis":"Uber 总打款")
+                          , React.createElement('span', { style: {color:C.text,fontVariantNumeric:"tabular-nums"} }, fmt(grossWithToll))
+                        ) : null
+                        // − Uber fees
+                        , vPlatformFee>0 ? React.createElement('div', { style: {display:"flex",justifyContent:"space-between"} }
+                          , React.createElement('span', { style: {color:C.text3} }, "− ", lang==="en"?"Uber fees":"Uber 抽成")
+                          , React.createElement('span', { style: {color:C.danger,fontVariantNumeric:"tabular-nums"} }, "−", fmt(vPlatformFee))
+                        ) : null
+                        // = Net Payout (bank deposit)
+                        , vPlatformFee>0 ? React.createElement('div', { style: {display:"flex",justifyContent:"space-between",paddingTop:5,borderTop:"1px solid "+C.border,marginTop:3} }
+                          , React.createElement('span', { style: {color:C.text,fontWeight:700} }, "🏦 ", lang==="en"?"Net Payout (bank)":"平台到账（实银行入账）")
+                          , React.createElement('b', { style: {color:C.accent2,fontSize:14,fontVariantNumeric:"tabular-nums"} }, fmt(netPayout))
+                        ) : null
+                        // − Toll paid out (booth)
+                        , vToll>0 ? React.createElement('div', { style: {display:"flex",justifyContent:"space-between"} }
+                          , React.createElement('span', { style: {color:C.text3} }, "− ", lang==="en"?"Toll paid (booth)":"过桥支出（付收费站）")
+                          , React.createElement('span', { style: {color:C.danger,fontVariantNumeric:"tabular-nums"} }, "−", fmt(vToll))
+                        ) : null
+                        // = Real Earnings
+                        , vToll>0 ? React.createElement('div', { style: {display:"flex",justifyContent:"space-between",paddingTop:5,borderTop:"1px solid "+C.border,marginTop:3} }
+                          , React.createElement('span', { style: {color:C.text,fontWeight:700} }, "💰 ", lang==="en"?"Real Earnings":"实收（真正属于你）")
+                          , React.createElement('b', { style: {color:C.gold,fontSize:14,fontVariantNumeric:"tabular-nums"} }, fmt(realEarnings))
+                        ) : null
+                      )
+                    );
+                  }())
                 // Data source counts (small dim text)
                 , React.createElement('div', { style: {fontSize:11,color:C.text3,letterSpacing:0.3} }
                     , (lang==="en"?"From: ":"数据：")
@@ -4807,8 +4864,175 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                   )
               );
             }())
+            // === YEAR VIEW EXTRAS — chained big nums, monthly compare table, tax zone, vs prior year ===
+            , incV==="year" ? (function(){
+                if(yInc<=0) return null;
+                var yGrossWithToll = yInc + yToll;
+                var yNetPayout = yGrossWithToll - yPlatformFee;
+                var yRealEarnings = yNetPayout - yToll;
+                return React.createElement('div', {style:{marginBottom:14}}
+                  // ─── Chained big numbers (4 cards 2x2 grid) ───
+                  , React.createElement('div', {style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:10}}
+                    , React.createElement('div', {style:{padding:"10px 12px",background:"linear-gradient(135deg, rgba(0,212,255,0.06),"+C.bg2+")",border:"1px solid "+C.border,borderRadius:RADIUS.md}}
+                      , React.createElement('div', {style:{fontSize:10,color:C.text3,letterSpacing:0.6,textTransform:"uppercase",fontWeight:600,marginBottom:3}}, lang==="en"?"Total Revenue":"总营业额")
+                      , React.createElement('div', {style:{fontSize:FS.lg+2,fontWeight:900,color:C.accent2,letterSpacing:-0.4,fontVariantNumeric:"tabular-nums"}}, fmt(yInc))
+                    )
+                    , yPlatformFee>0 ? React.createElement('div', {style:{padding:"10px 12px",background:"linear-gradient(135deg, rgba(0,212,255,0.06),"+C.bg2+")",border:"1px solid "+C.border,borderRadius:RADIUS.md}}
+                      , React.createElement('div', {style:{fontSize:10,color:C.text3,letterSpacing:0.6,textTransform:"uppercase",fontWeight:600,marginBottom:3}}, "🏦 ", lang==="en"?"Net Payout":"平台到账")
+                      , React.createElement('div', {style:{fontSize:FS.lg+2,fontWeight:900,color:C.accent2,letterSpacing:-0.4,fontVariantNumeric:"tabular-nums"}}, fmt(yNetPayout))
+                    ) : null
+                    , yToll>0 ? React.createElement('div', {style:{padding:"10px 12px",background:"linear-gradient(135deg, rgba(255,215,0,0.06),"+C.bg2+")",border:"1px solid "+C.border,borderRadius:RADIUS.md}}
+                      , React.createElement('div', {style:{fontSize:10,color:C.text3,letterSpacing:0.6,textTransform:"uppercase",fontWeight:600,marginBottom:3}}, "💰 ", lang==="en"?"Real Earnings":"实收")
+                      , React.createElement('div', {style:{fontSize:FS.lg+2,fontWeight:900,color:C.gold,letterSpacing:-0.4,fontVariantNumeric:"tabular-nums"}}, fmt(yRealEarnings))
+                    ) : null
+                    , React.createElement('div', {style:{padding:"10px 12px",background:"linear-gradient(135deg, "+(yNet>=0?"rgba(0,255,160,0.06)":"rgba(255,80,80,0.06)")+","+C.bg2+")",border:"1px solid "+(yNet>=0?"rgba(0,255,160,0.25)":"rgba(255,80,80,0.25)")+"",borderRadius:RADIUS.md}}
+                      , React.createElement('div', {style:{fontSize:10,color:C.text3,letterSpacing:0.6,textTransform:"uppercase",fontWeight:600,marginBottom:3}}, "📈 ", lang==="en"?"Net Profit":"净利润")
+                      , React.createElement('div', {style:{fontSize:FS.lg+2,fontWeight:900,color:yNet>=0?C.success:C.danger,letterSpacing:-0.4,fontVariantNumeric:"tabular-nums"}}, fmt(yNet))
+                    )
+                  )
+                  // ─── Monthly comparison table ───
+                  , (function(){
+                      var rowsWithData = mData.filter(function(m){return m.inc>0||m.exp>0||m.platformFee>0;});
+                      if(rowsWithData.length<2) return null;  // Need 2+ months to compare
+                      return React.createElement('div', {style:{padding:"12px 14px",background:C.bg2,border:"1px solid "+C.border,borderRadius:RADIUS.md,marginBottom:10,overflowX:"auto"}}
+                        , React.createElement('div', {style:{fontSize:FS.xs+1,color:C.text3,letterSpacing:1,textTransform:"uppercase",fontWeight:600,marginBottom:8}}, "📅 ", lang==="en"?"Monthly Comparison":"月度对比")
+                        , React.createElement('table', {style:{width:"100%",borderCollapse:"collapse",fontSize:12,fontVariantNumeric:"tabular-nums"}}
+                          , React.createElement('thead', null
+                            , React.createElement('tr', {style:{borderBottom:"1px solid "+C.border}}
+                              , React.createElement('th', {style:{textAlign:"left",padding:"6px 4px",color:C.text3,fontWeight:600}}, lang==="en"?"Month":"月")
+                              , React.createElement('th', {style:{textAlign:"right",padding:"6px 4px",color:C.text3,fontWeight:600}}, lang==="en"?"Revenue":"营业额")
+                              , React.createElement('th', {style:{textAlign:"right",padding:"6px 4px",color:C.text3,fontWeight:600}}, lang==="en"?"Net Pay":"实收")
+                              , React.createElement('th', {style:{textAlign:"right",padding:"6px 4px",color:C.text3,fontWeight:600}}, lang==="en"?"Profit":"净利润")
+                              , React.createElement('th', {style:{textAlign:"right",padding:"6px 4px",color:C.text3,fontWeight:600}}, "$/h")
+                            )
+                          )
+                          , React.createElement('tbody', null
+                            , rowsWithData.map(function(m){
+                                var realEarn = m.inc - m.platformFee;
+                                var hourly = m.hours>0 ? m.inc/m.hours : 0;
+                                var profitColor = m.net>=0?C.success:C.danger;
+                                return React.createElement('tr', {key:m.m,style:{borderBottom:"1px solid #142035"}}
+                                  , React.createElement('td', {style:{padding:"7px 4px",color:C.text2,fontWeight:600}}, m.label)
+                                  , React.createElement('td', {style:{padding:"7px 4px",textAlign:"right",color:C.accent2}}, fmt(m.inc))
+                                  , React.createElement('td', {style:{padding:"7px 4px",textAlign:"right",color:C.text}}, m.platformFee>0?fmt(realEarn):"—")
+                                  , React.createElement('td', {style:{padding:"7px 4px",textAlign:"right",color:profitColor,fontWeight:700}}, fmt(m.net))
+                                  , React.createElement('td', {style:{padding:"7px 4px",textAlign:"right",color:hourly>0?C.gold:C.text3}}, hourly>0?fmt(hourly):"—")
+                                );
+                              })
+                            // Totals row
+                            , React.createElement('tr', {style:{borderTop:"2px solid "+C.border,background:C.bg3}}
+                              , React.createElement('td', {style:{padding:"8px 4px",color:C.text,fontWeight:800}}, lang==="en"?"YTD":"累计")
+                              , React.createElement('td', {style:{padding:"8px 4px",textAlign:"right",color:C.accent2,fontWeight:800}}, fmt(yInc))
+                              , React.createElement('td', {style:{padding:"8px 4px",textAlign:"right",color:C.text,fontWeight:800}}, yPlatformFee>0?fmt(yNetPayout):"—")
+                              , React.createElement('td', {style:{padding:"8px 4px",textAlign:"right",color:yNet>=0?C.success:C.danger,fontWeight:800}}, fmt(yNet))
+                              , React.createElement('td', {style:{padding:"8px 4px",textAlign:"right",color:C.gold,fontWeight:800}}, yStmtHours>0?fmt(yInc/yStmtHours):"—")
+                            )
+                          )
+                        )
+                      );
+                    }())
+                  // ─── Tax estimation zone ───
+                  , (function(){
+                      var miles = yMiles || yStmtMiles;
+                      if(miles<=0 && yInc<=0) return null;
+                      var stdMileageDed = miles * (mileageRate || 0.70);
+                      var k1099 = yStmts.reduce(function(s,x){return s+(+x.grossFare||0)+(+x.tips||0)+(+x.tollReimbursed||0);},0);
+                      var nec1099 = yStmts.reduce(function(s,x){return s+(+x.bonus||0);},0);
+                      var grossSc = k1099 + nec1099;
+                      var nonVehExp = yExps.reduce(function(s,e){
+                        if(e.category==="platform") return s;
+                        var cat=allC[e.category];
+                        if(cat && cat.g==="车辆") return s;
+                        return s+(+e.amount||0);
+                      },0);
+                      var dedMileageMethod = stdMileageDed + nonVehExp + yPlatformFee;
+                      var dedActualMethod = yExp + yPlatformFee;
+                      var dedTotal = Math.max(dedMileageMethod, dedActualMethod);
+                      var bestMethod = dedMileageMethod > dedActualMethod ? (lang==="en"?"std mileage":"标准里程法") : (lang==="en"?"actual expenses":"实际开销法");
+                      var schedCNet = Math.max(0, grossSc - dedTotal);
+                      var seTax = schedCNet * 0.9235 * (seRate/100);
+                      var taxableIncome = Math.max(0, schedCNet - (seTax/2) - (stdDed||14600));
+                      var fedTax = taxableIncome * (fedRate/100);
+                      var stateTax = taxableIncome * (stateRate/100);
+                      var totalTax = seTax + fedTax + stateTax;
+                      var qPaid = yExps.filter(function(e){return e.category==="estTaxQ";}).reduce(function(s,e){return s+(+e.amount||0);},0);
+                      var qRemaining = totalTax - qPaid;
+                      return React.createElement('div', {style:{padding:"14px 16px",background:"linear-gradient(135deg, rgba(255,180,0,0.05),"+C.bg2+")",border:"1px solid rgba(255,180,0,0.2)",borderRadius:RADIUS.md,marginBottom:10}}
+                        , React.createElement('div', {style:{fontSize:FS.xs+1,color:"#FFB300",letterSpacing:1,textTransform:"uppercase",fontWeight:700,marginBottom:10}}, "🧾 ", lang==="en"?"Tax Estimation · " + yr:yr+" 年税务预估")
+                        , React.createElement('div', {style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:10}}
+                          , React.createElement('div', {style:{padding:"8px 10px",background:C.bg3,borderRadius:8,border:"1px solid "+C.border}}
+                            , React.createElement('div', {style:{fontSize:10,color:C.text3,marginBottom:2}}, "1099-K")
+                            , React.createElement('div', {style:{fontSize:14,fontWeight:800,color:C.accent2,fontVariantNumeric:"tabular-nums"}}, fmt(k1099))
+                          )
+                          , React.createElement('div', {style:{padding:"8px 10px",background:C.bg3,borderRadius:8,border:"1px solid "+C.border}}
+                            , React.createElement('div', {style:{fontSize:10,color:C.text3,marginBottom:2}}, "1099-NEC")
+                            , React.createElement('div', {style:{fontSize:14,fontWeight:800,color:C.gold,fontVariantNumeric:"tabular-nums"}}, fmt(nec1099))
+                          )
+                        )
+                        , miles>0 ? React.createElement('div', {style:{padding:"8px 10px",background:C.bg3,borderRadius:8,border:"1px solid "+C.border,marginBottom:10}}
+                          , React.createElement('div', {style:{display:"flex",justifyContent:"space-between",fontSize:12,color:C.text2,marginBottom:3}}
+                            , React.createElement('span', null, lang==="en"?"Total miles":"总里程")
+                            , React.createElement('span', {style:{fontWeight:700,color:C.text}}, miles.toLocaleString(), " mi")
+                          )
+                          , React.createElement('div', {style:{display:"flex",justifyContent:"space-between",fontSize:12,color:C.text2}}
+                            , React.createElement('span', null, lang==="en"?"Std mileage ded ($"+(mileageRate||0.70)+"/mi)":"标准里程抵扣 ($"+(mileageRate||0.70)+"/mi)")
+                            , React.createElement('span', {style:{fontWeight:700,color:C.success}}, fmt(stdMileageDed))
+                          )
+                        ) : null
+                        , React.createElement('div', {style:{fontSize:11,color:C.text3,marginBottom:8,fontStyle:"italic"}}, "ⓘ " , lang==="en"?("Using "+bestMethod+" — best for you"):("使用"+bestMethod+" — 对你最优"))
+                        , React.createElement('div', {style:{display:"flex",flexDirection:"column",gap:5,fontSize:13,padding:"10px 12px",background:C.bg3,borderRadius:8,border:"1px solid "+C.border}}
+                          , React.createElement('div', {style:{display:"flex",justifyContent:"space-between"}}
+                            , React.createElement('span', {style:{color:C.text2}}, lang==="en"?"Taxable income":"应纳税收入")
+                            , React.createElement('span', {style:{color:C.text,fontWeight:700,fontVariantNumeric:"tabular-nums"}}, fmt(taxableIncome))
+                          )
+                          , React.createElement('div', {style:{display:"flex",justifyContent:"space-between"}}
+                            , React.createElement('span', {style:{color:C.text3}}, "  ", lang==="en"?"Self-employment tax ("+seRate+"%)":"自雇税 ("+seRate+"%)")
+                            , React.createElement('span', {style:{color:"#FF9A65",fontVariantNumeric:"tabular-nums"}}, fmt(seTax))
+                          )
+                          , React.createElement('div', {style:{display:"flex",justifyContent:"space-between"}}
+                            , React.createElement('span', {style:{color:C.text3}}, "  ", lang==="en"?"Federal tax ("+fedRate+"%)":"联邦税 ("+fedRate+"%)")
+                            , React.createElement('span', {style:{color:"#FF9A65",fontVariantNumeric:"tabular-nums"}}, fmt(fedTax))
+                          )
+                          , React.createElement('div', {style:{display:"flex",justifyContent:"space-between"}}
+                            , React.createElement('span', {style:{color:C.text3}}, "  ", lang==="en"?"State + city tax ("+stateRate+"%)":"州+市税 ("+stateRate+"%)")
+                            , React.createElement('span', {style:{color:"#FF9A65",fontVariantNumeric:"tabular-nums"}}, fmt(stateTax))
+                          )
+                          , React.createElement('div', {style:{display:"flex",justifyContent:"space-between",paddingTop:6,borderTop:"1px solid "+C.border,marginTop:3}}
+                            , React.createElement('span', {style:{color:C.text,fontWeight:700}}, lang==="en"?"Estimated total tax":"预计总税额")
+                            , React.createElement('span', {style:{color:C.danger,fontWeight:800,fontSize:14,fontVariantNumeric:"tabular-nums"}}, fmt(totalTax))
+                          )
+                          , qPaid>0 ? React.createElement('div', {style:{display:"flex",justifyContent:"space-between"}}
+                            , React.createElement('span', {style:{color:C.text3}}, "  ", lang==="en"?"Quarterly paid":"已交季度税")
+                            , React.createElement('span', {style:{color:C.success,fontVariantNumeric:"tabular-nums"}}, "−", fmt(qPaid))
+                          ) : null
+                          , qPaid>0 ? React.createElement('div', {style:{display:"flex",justifyContent:"space-between",paddingTop:6,borderTop:"1px solid "+C.border,marginTop:3}}
+                            , React.createElement('span', {style:{color:C.text,fontWeight:700}}, lang==="en"?"Remaining":"还需补交")
+                            , React.createElement('span', {style:{color:qRemaining>0?C.danger:C.success,fontWeight:800,fontSize:14,fontVariantNumeric:"tabular-nums"}}, fmt(qRemaining))
+                          ) : null
+                        )
+                        , React.createElement('div', {style:{fontSize:10,color:C.text3,marginTop:8,fontStyle:"italic",lineHeight:1.4}}, "⚠ ", lang==="en"?"Estimate only. Consult a CPA for filing.":"仅供估算，正式报税请咨询会计师。")
+                      );
+                    }())
+                  // ─── vs prior year ───
+                  , (function(){
+                      var lastYr = String(+yr - 1);
+                      var lastYrInc = sl.filter(function(x){return x.month&&x.month.slice(0,4)===lastYr;}).reduce(function(s,x){return s+(+x.grossFare||0)+(+x.tips||0)+(+x.bonus||0)+(+x.otherIncome||0);},0)+dl.filter(function(d){return d.date&&d.date.slice(0,4)===lastYr;}).reduce(function(s,d){if(isCashTip(d))return s;if(d.mode==="rideshare")return s+(+d.grossFare||0)+(+d.tips||0)+(+d.bonus||0);return s+(+d.cash||0)+(+d.card||0)+(+d.tips||0);},0);
+                      if(lastYrInc<=0) return null;
+                      var pct = ((yInc-lastYrInc)/lastYrInc*100);
+                      var arrow = pct>=0 ? "▲" : "▼";
+                      var color = pct>=0 ? C.success : C.danger;
+                      return React.createElement('div', {style:{padding:"10px 14px",background:C.bg2,border:"1px solid "+C.border,borderRadius:RADIUS.md,marginBottom:10,display:"flex",justifyContent:"space-between",alignItems:"center"}}
+                        , React.createElement('div', null
+                          , React.createElement('div', {style:{fontSize:10,color:C.text3,letterSpacing:0.5,textTransform:"uppercase",fontWeight:600,marginBottom:2}}, lang==="en"?"vs "+lastYr:"对比 "+lastYr+" 年")
+                          , React.createElement('div', {style:{fontSize:13,color:C.text2}}, fmt(lastYrInc), " → ", React.createElement('b',{style:{color:C.accent2}},fmt(yInc)))
+                        )
+                        , React.createElement('div', {style:{fontSize:18,fontWeight:800,color:color}}, arrow, " ", Math.abs(pct).toFixed(1), "%")
+                      );
+                    }())
+                );
+              }()) : null
             , (function(){var vS=incV==="month"?mStmts:yStmts; return vS.length > 0 ? React.createElement('div', { style: {marginBottom:16} }, React.createElement('div', { style: {fontSize:FS.xs+1,color:C.text3,letterSpacing:1.2,marginBottom:10,textTransform:"uppercase",fontWeight:600} }, "💵 " , T.monthly), vS.slice().sort(function(a,b){return (b.month||"").localeCompare(a.month||"");}).map(function(s){var total=(+s.grossFare||0)+(+s.tips||0)+(+s.bonus||0)+(+s.otherIncome||0);return React.createElement('div', { key: s.id, style:{background:C.bg2,borderRadius:RADIUS.md,padding:"12px 14px",marginBottom:8,border:"1px solid "+C.border,boxShadow:SHADOW.sm,transition:"all 0.15s",cursor:"pointer"}, onClick: function(){setStf(Object.assign({trips:"",onlineHours:"",miles:"",notes:""},s));setSf("stmt");}}, React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"center"}}, React.createElement('div', {style:{flex:1,minWidth:0}}, React.createElement('div', { style: {fontSize:FS.lg,fontWeight:700,marginBottom:4,color:C.text}}, s.platform, " · "  , s.month), React.createElement('div', { style: {fontSize:FS.xl,color:C.success,fontWeight:800,letterSpacing:-0.3,fontVariantNumeric:"tabular-nums",marginBottom:6}}, fmt(total)), React.createElement('div', { style: {display:"flex",gap:6,flexWrap:"wrap"}}, s.trips?React.createElement('span', { style: {fontSize:FS.sm+1,background:C.bg4,border:"1px solid "+C.border,borderRadius:6,padding:"3px 9px",color:C.text2,fontWeight:600}}, s.trips, " " , T.trips):null, s.onlineHours?React.createElement('span', { style: {fontSize:FS.sm+1,background:C.bg4,border:"1px solid "+C.border,borderRadius:6,padding:"3px 9px",color:C.text2,fontWeight:600}}, s.onlineHours, "h"):null, s.miles?React.createElement('span', { style: {fontSize:FS.sm+1,background:C.bg4,border:"1px solid "+C.border,borderRadius:6,padding:"3px 9px",color:C.text2,fontWeight:600}}, s.miles, "mi"):null))));}), " " ) : null;}())
-            , (function(){var vW=incV==="month"?mWeeks:yWeeks; return vW.length > 0 ? React.createElement('div', {}, (function(){var tw=vW.reduce(function(s,w){return {trips:s.trips+(+w.trips||0),hours:s.hours+(+w.hours||0),miles:s.miles+(+w.miles||0)};},{trips:0,hours:0,miles:0});if(!tw.trips&&!tw.hours)return null;return React.createElement('div', { style: {background:"linear-gradient(135deg, "+C.bg3+", "+C.bg2+")",border:"1px solid "+C.border,borderRadius:RADIUS.md,marginBottom:10,padding:"14px 16px",boxShadow:SHADOW.sm}}, React.createElement('div', { style: {display:"flex",justifyContent:"space-around",alignItems:"center"}}, tw.trips?React.createElement('div', { style: {textAlign:"center"}}, React.createElement('div', { style: {fontSize:FS.xs+1,color:C.text3,marginBottom:3,letterSpacing:0.5,fontWeight:600,textTransform:"uppercase"}}, T.trips), React.createElement('div', { style: {fontSize:FS.xl,fontWeight:800,color:C.success,letterSpacing:-0.2}}, tw.trips)):null, tw.hours?React.createElement('div', { style: {textAlign:"center"}}, React.createElement('div', { style: {fontSize:FS.xs+1,color:C.text3,marginBottom:3,letterSpacing:0.5,fontWeight:600,textTransform:"uppercase"}}, lang==="en"?"Hours":"时长"), React.createElement('div', { style: {fontSize:FS.xl,fontWeight:800,color:C.accent,letterSpacing:-0.2}}, tw.hours, "h")):null, tw.miles?React.createElement('div', { style: {textAlign:"center"}}, React.createElement('div', { style: {fontSize:FS.xs+1,color:C.text3,marginBottom:3,letterSpacing:0.5,fontWeight:600,textTransform:"uppercase"}}, T.miles), React.createElement('div', { style: {fontSize:FS.xl,fontWeight:800,color:C.gold,letterSpacing:-0.2}}, tw.miles)):null, tw.hours>0&&tInc>0?React.createElement('div', { style: {textAlign:"center"}}, React.createElement('div', { style: {fontSize:FS.xs+1,color:C.text3,marginBottom:3,letterSpacing:0.5,fontWeight:600,textTransform:"uppercase"}}, T.hourlyRate), React.createElement('div', { style: {fontSize:FS.xl,fontWeight:800,color:"#FF9A65",letterSpacing:-0.2}}, fmt(Math.round(tInc/tw.hours*100)/100))):null));}()), " " , React.createElement('div', { style: {fontSize:FS.xs+1,color:C.text3,letterSpacing:1.2,marginBottom:10,textTransform:"uppercase",fontWeight:600}}, "📅 " , T.weekly), vW.slice().sort(function(a,b){return b.weekStart.localeCompare(a.weekStart);}).map(function(w){return React.createElement('div', { key: w.id, style:{background:C.bg2,borderRadius:RADIUS.md,padding:"12px 14px",marginBottom:8,border:"1px solid "+C.border,boxShadow:SHADOW.sm,cursor:"pointer",transition:"all 0.15s"}, onClick: function(){setWf(Object.assign({},w));setSf("week");}}, React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}, React.createElement('div', { style: {flex:1,minWidth:0}}, React.createElement('div', { style: {fontSize:FS.lg,fontWeight:700,color:C.success,marginBottom:4}}, wkLabel(w.weekStart)), React.createElement('div', { style: {fontSize:FS.md+1,color:C.text2,marginBottom:6,fontWeight:500}}, w.platform), (function(){var winc=(+w.grossFare||0)+(+w.tips||0)+(+w.bonus||0)+(+w.tollReimbursed||0);if(winc>0)return React.createElement('div', { style: {fontSize:FS.xl,fontWeight:800,color:C.accent,marginBottom:6,letterSpacing:-0.3,fontVariantNumeric:"tabular-nums"}}, "💵 " , fmt(winc));return null;}()), React.createElement('div', { style: {display:"flex",gap:6,flexWrap:"wrap"}}, w.trips?React.createElement('span', { style: {fontSize:FS.sm+1,background:C.bg4,border:"1px solid "+C.border,borderRadius:6,padding:"3px 9px",color:C.text2,fontWeight:600}}, w.trips, " " , T.trips):null, w.hours?React.createElement('span', { style: {fontSize:FS.sm+1,background:C.bg4,border:"1px solid "+C.border,borderRadius:6,padding:"3px 9px",color:C.text2,fontWeight:600}}, w.hours, "h"):null, w.miles?React.createElement('span', { style: {fontSize:FS.sm+1,background:C.bg4,border:"1px solid "+C.border,borderRadius:6,padding:"3px 9px",color:C.text2,fontWeight:600}}, w.miles, "mi"):null))));}), " " ) : null;}())
+            , (function(){var vW=incV==="month"?mWeeks:yWeeks; return vW.length > 0 ? React.createElement('div', {}, (function(){var tw=vW.reduce(function(s,w){return {trips:s.trips+(+w.trips||0),hours:s.hours+(+w.hours||0),miles:s.miles+(+w.miles||0)};},{trips:0,hours:0,miles:0});if(!tw.trips&&!tw.hours)return null;return React.createElement('div', { style: {background:"linear-gradient(135deg, "+C.bg3+", "+C.bg2+")",border:"1px solid "+C.border,borderRadius:RADIUS.md,marginBottom:10,padding:"14px 16px",boxShadow:SHADOW.sm}}, React.createElement('div', { style: {display:"flex",justifyContent:"space-around",alignItems:"center"}}, tw.trips?React.createElement('div', { style: {textAlign:"center"}}, React.createElement('div', { style: {fontSize:FS.xs+1,color:C.text3,marginBottom:3,letterSpacing:0.5,fontWeight:600,textTransform:"uppercase"}}, T.trips), React.createElement('div', { style: {fontSize:FS.xl,fontWeight:800,color:C.success,letterSpacing:-0.2}}, tw.trips)):null, tw.hours?React.createElement('div', { style: {textAlign:"center"}}, React.createElement('div', { style: {fontSize:FS.xs+1,color:C.text3,marginBottom:3,letterSpacing:0.5,fontWeight:600,textTransform:"uppercase"}}, lang==="en"?"Hours":"时长"), React.createElement('div', { style: {fontSize:FS.xl,fontWeight:800,color:C.accent,letterSpacing:-0.2}}, tw.hours, "h")):null, tw.miles?React.createElement('div', { style: {textAlign:"center"}}, React.createElement('div', { style: {fontSize:FS.xs+1,color:C.text3,marginBottom:3,letterSpacing:0.5,fontWeight:600,textTransform:"uppercase"}}, T.miles), React.createElement('div', { style: {fontSize:FS.xl,fontWeight:800,color:C.gold,letterSpacing:-0.2}}, tw.miles)):null, tw.hours>0&&tInc>0?React.createElement('div', { style: {textAlign:"center"}}, React.createElement('div', { style: {fontSize:FS.xs+1,color:C.text3,marginBottom:3,letterSpacing:0.5,fontWeight:600,textTransform:"uppercase"}}, T.hourlyRate), React.createElement('div', { style: {fontSize:FS.xl,fontWeight:800,color:"#FF9A65",letterSpacing:-0.2}}, fmt(Math.round(tInc/tw.hours*100)/100))):null));}()), " " , React.createElement('div', { style: {fontSize:FS.xs+1,color:C.text3,letterSpacing:1.2,marginBottom:10,textTransform:"uppercase",fontWeight:600}}, "📅 " , T.weekly, " ", React.createElement('span',{style:{color:"#7090B0",fontWeight:500,fontSize:9,letterSpacing:0.4}},lang==="en"?"· REF ONLY":"· 仅记录")), vW.slice().sort(function(a,b){return b.weekStart.localeCompare(a.weekStart);}).map(function(w){return React.createElement('div', { key: w.id, style:{background:C.bg2,borderRadius:RADIUS.md,padding:"12px 14px",marginBottom:8,border:"1px solid "+C.border,boxShadow:SHADOW.sm,cursor:"pointer",transition:"all 0.15s"}, onClick: function(){setWf(Object.assign({},w));setSf("week");}}, React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}, React.createElement('div', { style: {flex:1,minWidth:0}}, React.createElement('div', { style: {fontSize:FS.lg,fontWeight:700,color:C.success,marginBottom:4}}, wkLabel(w.weekStart)), React.createElement('div', { style: {fontSize:FS.md+1,color:C.text2,marginBottom:6,fontWeight:500}}, w.platform), (function(){var winc=(+w.grossFare||0)+(+w.tips||0)+(+w.bonus||0)+(+w.tollReimbursed||0);if(winc>0)return React.createElement('div', { style: {fontSize:FS.xl,fontWeight:800,color:C.accent,marginBottom:6,letterSpacing:-0.3,fontVariantNumeric:"tabular-nums"}}, "💵 " , fmt(winc));return null;}()), React.createElement('div', { style: {display:"flex",gap:6,flexWrap:"wrap"}}, w.trips?React.createElement('span', { style: {fontSize:FS.sm+1,background:C.bg4,border:"1px solid "+C.border,borderRadius:6,padding:"3px 9px",color:C.text2,fontWeight:600}}, w.trips, " " , T.trips):null, w.hours?React.createElement('span', { style: {fontSize:FS.sm+1,background:C.bg4,border:"1px solid "+C.border,borderRadius:6,padding:"3px 9px",color:C.text2,fontWeight:600}}, w.hours, "h"):null, w.miles?React.createElement('span', { style: {fontSize:FS.sm+1,background:C.bg4,border:"1px solid "+C.border,borderRadius:6,padding:"3px 9px",color:C.text2,fontWeight:600}}, w.miles, "mi"):null))));}), " " ) : null;}())
             , (function(){
                 var hasStmts = incV==="month" ? mStmts.length>0 : yStmts.length>0;
                 var hasWeeks = incV==="month" ? mWeeks.length>0 : yWeeks.length>0;
@@ -9235,6 +9459,13 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
               , React.createElement('div', { style: {width:34} })
             )
             , React.createElement('div', { style: {padding:"16px 18px",overflowY:"auto",flex:1} }
+              // === Banner: data is reference-only ===
+              , React.createElement('div', {style:{background:"rgba(255,180,0,0.08)",border:"1px solid rgba(255,180,0,0.3)",borderRadius:RADIUS.sm,padding:"10px 12px",marginBottom:12,fontSize:12,color:"#FFB300",lineHeight:1.45}}
+                , React.createElement('div', {style:{fontWeight:700,marginBottom:3}}, "ⓘ ", lang==="en"?"Reference only":"仅作记录")
+                , React.createElement('div', {style:{color:"#D4A050"}}, lang==="en"
+                    ? "Weekly data is for tracking trips/hours/miles only — it does NOT count toward your monthly income or profit. Use Monthly Summary PDF for income calculations."
+                    : "周报仅用于查看趟数/时长/里程，不计入月度收入或利润。要算收入请用月度账单 PDF。")
+              )
               // === Quick PDF upload (recommended path) ===
               , React.createElement('label', {style:{display:"block",background:"linear-gradient(135deg, rgba(0,212,255,0.12), rgba(10,30,55,0.7))",border:"2px dashed rgba(0,212,255,0.5)",borderRadius:RADIUS.md,padding:"16px 14px",cursor:"pointer",fontSize:14,fontWeight:800,color:C.accent,textAlign:"center",marginBottom:12,transition:"all 0.15s"}}
                 , React.createElement('input', {
