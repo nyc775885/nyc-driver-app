@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-var APP_VERSION = "v3.11.85";  // ← single source of truth: bump this once per release
+var APP_VERSION = "v3.11.87";  // ← single source of truth: bump this once per release
 console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
@@ -4829,17 +4829,34 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                           , React.createElement('b', {style:Object.assign({},numStyle,{color:C.text,fontSize:15})}, "+", fmt(extras))
                         ) : null
                       ) : null
-                      // === Bottom: Bank Deposit (the result) ===
-                      , React.createElement('div', {style:{padding:"12px 14px",background:"linear-gradient(135deg, rgba(255,215,0,0.10), "+C.bg2+" 70%)",border:"1px solid rgba(255,215,0,0.3)",borderRadius:RADIUS.sm,display:"flex",justifyContent:"space-between",alignItems:"center"}}
-                        , React.createElement('span', {style:{fontSize:14,fontWeight:700,color:C.text}}, "🏦 ", lang==="en"?"Bank Deposit":"平台到账")
-                        , React.createElement('b', {style:{color:C.gold,fontSize:20,fontVariantNumeric:"tabular-nums",letterSpacing:-0.4}}, fmt(bankDeposit))
-                      )
-                      // Toll pass-through footnote
-                      , vToll>0 ? React.createElement('div', {style:{marginTop:10,fontSize:10,color:C.text3,fontStyle:"italic",lineHeight:1.5,paddingLeft:2}}
-                        , lang==="en"
-                          ? "ⓘ Tolls pass through: Uber refunds +$"+fmt2(vToll)+", you pay −$"+fmt2(vToll)+" at booths (net = $0)."
-                          : "ⓘ 过桥是中转：Uber 退 +$"+fmt2(vToll)+"，付收费站 −$"+fmt2(vToll)+"（净 = $0）。"
+                      // === Section 3: Toll pass-through (visible but greyed to show net=$0) ===
+                      , vToll>0 ? React.createElement('div', {style:{marginBottom:14,padding:"10px 12px",background:"rgba(120,140,170,0.05)",border:"1px dashed rgba(120,140,170,0.25)",borderRadius:6}}
+                        , React.createElement('div', {style:Object.assign({},sectionLabel,{color:"#7A95B8"})}, "🛣 ", lang==="en"?"TOLLS (PASS-THROUGH)":"过桥退款（中转）")
+                        , React.createElement('div', {style:rowStyle}
+                          , React.createElement('span', {style:{color:"#9AB0CC"}}, "+ ", lang==="en"?"Refunded by Uber":"Uber 退款")
+                          , React.createElement('span', {style:Object.assign({},numStyle,{color:"#9AB0CC"})}, "+", fmt(vToll))
+                        )
+                        , React.createElement('div', {style:rowStyle}
+                          , React.createElement('span', {style:{color:"#9AB0CC"}}, "− ", lang==="en"?"Paid at booth":"付收费站")
+                          , React.createElement('span', {style:Object.assign({},numStyle,{color:"#9AB0CC"})}, "−", fmt(vToll))
+                        )
+                        , React.createElement('div', {style:Object.assign({},subTotalRow,{borderTopColor:"rgba(120,140,170,0.2)"})}
+                          , React.createElement('b', {style:{color:"#9AB0CC",fontSize:13}}, lang==="en"?"Net effect":"净影响")
+                          , React.createElement('b', {style:Object.assign({},numStyle,{color:"#9AB0CC",fontSize:14})}, "$0.00")
+                        )
                       ) : null
+                      // === Bottom: Bank Deposit (the result) ===
+                      , React.createElement('div', {style:{padding:"12px 14px",background:"linear-gradient(135deg, rgba(255,215,0,0.10), "+C.bg2+" 70%)",border:"1px solid rgba(255,215,0,0.3)",borderRadius:RADIUS.sm}}
+                        , React.createElement('div', {style:{display:"flex",justifyContent:"space-between",alignItems:"center"}}
+                          , React.createElement('span', {style:{fontSize:14,fontWeight:700,color:C.text}}, "🏦 ", lang==="en"?"Bank Deposit":"平台到账")
+                          , React.createElement('b', {style:{color:C.gold,fontSize:20,fontVariantNumeric:"tabular-nums",letterSpacing:-0.4}}, fmt(bankDeposit))
+                        )
+                        , vToll>0 ? React.createElement('div', {style:{fontSize:10,color:"#B8A060",marginTop:4,letterSpacing:0.2,fontWeight:500}}
+                          , lang==="en"
+                            ? "ⓘ Includes $"+fmt2(vToll)+" toll refund (you'll pay it back at booths)"
+                            : "ⓘ 包含过桥退款 $"+fmt2(vToll)+"（之后要付给收费站）"
+                        ) : null
+                      )
                     );
                   }())
                 // Data source counts (small dim text)
