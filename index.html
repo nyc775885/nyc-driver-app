@@ -27,8 +27,14 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     body {
-      background: #0A0E1A;
-      color: #F5F7FA;
+      /* Iced-coffee background — subtle radial gradient gives "depth" without distraction */
+      background: #1A140F;
+      background-image:
+        radial-gradient(ellipse 800px 600px at 15% 0%, rgba(80,55,35,0.35), transparent 60%),
+        radial-gradient(ellipse 600px 500px at 85% 100%, rgba(60,40,25,0.25), transparent 55%),
+        linear-gradient(180deg, #1A140F 0%, #15100C 100%);
+      background-attachment: fixed;
+      color: #F5E8D5;
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Noto Sans SC', 'Segoe UI', Roboto, sans-serif;
       font-variant-numeric: tabular-nums;
       font-feature-settings: "tnum", "ss01", "cv11";
@@ -44,27 +50,60 @@
       font-size: 16px;
       font-variant-numeric: tabular-nums;
     }
-    select { color: #F5F7FA !important; background: #0F1420 !important; }
-    select option { background: #1A2235 !important; color: #F5F7FA !important; }
-    input[type="date"], input[type="month"] { color-scheme: dark; color: #F5F7FA !important; }
-    /* Remove spinner arrows from number inputs */
+    select { color: #F5E8D5 !important; background: #1F1812 !important; }
+    select option { background: #2A2018 !important; color: #F5E8D5 !important; }
+    input[type="date"], input[type="month"] { color-scheme: dark; color: #F5E8D5 !important; }
     input[type="number"]::-webkit-outer-spin-button,
     input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
     input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
     .noscript-msg { padding: 40px 20px; text-align: center; line-height: 1.7; }
-    /* Smooth animations */
+
+    /* === ANIMATIONS === */
     @keyframes toastIn{from{opacity:0;transform:translateY(8px) scale(0.96);}to{opacity:1;transform:translateY(0) scale(1);}}
     @keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
     @keyframes slideUp{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
-    /* Button hover effects (subtle on touch devices) */
+    @keyframes cardPop{0%{opacity:0;transform:translateY(8px) scale(0.98);}60%{transform:translateY(-2px) scale(1.005);}100%{opacity:1;transform:translateY(0) scale(1);}}
+    @keyframes savePop{0%,100%{transform:scale(1);}30%{transform:scale(1.04);}60%{transform:scale(0.98);}}
+    @keyframes shimmer{0%{background-position:-200% 0;}100%{background-position:200% 0;}}
+    @keyframes softGlow{0%,100%{filter:drop-shadow(0 0 0 rgba(212,165,116,0));}50%{filter:drop-shadow(0 0 8px rgba(212,165,116,0.35));}}
+
+    /* Stagger card entrance — apply via inline style: animation: cardPop 0.45s cubic-bezier(0.4,0,0.2,1) backwards; animationDelay: 100ms etc */
+    .card-pop { animation: cardPop 0.45s cubic-bezier(0.4,0,0.2,1) backwards; }
+    .save-pop { animation: savePop 0.5s cubic-bezier(0.34,1.56,0.64,1); }
+
+    /* Button feedback — press, hover */
+    button { transition: transform 0.12s ease, filter 0.15s ease, box-shadow 0.2s ease; }
+    button:active:not(:disabled) { transform: scale(0.96); }
     @media (hover:hover){
-      button:hover{filter:brightness(1.1);}
+      button:hover:not(:disabled){ filter: brightness(1.10); }
     }
-    /* Scrollbar styling */
+
+    /* Big-number gradient text — caramel → honey */
+    .big-num-gradient {
+      background: linear-gradient(135deg, #F5D89A 0%, #E8B860 50%, #D4A574 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 1px 2px rgba(232,184,96,0.18));
+    }
+    .big-num-success {
+      background: linear-gradient(135deg, #B5D89A 0%, #8FB779 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .big-num-danger {
+      background: linear-gradient(135deg, #DC8870 0%, #C26B4F 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    /* Scrollbar — coffee tones */
     ::-webkit-scrollbar{width:6px;height:6px;}
     ::-webkit-scrollbar-track{background:transparent;}
-    ::-webkit-scrollbar-thumb{background:#1E2A3F;border-radius:3px;}
-    ::-webkit-scrollbar-thumb:hover{background:#2A3A55;}
+    ::-webkit-scrollbar-thumb{background:#3A2C1F;border-radius:3px;}
+    ::-webkit-scrollbar-thumb:hover{background:#5A3F2A;}
   </style>
 </head>
 <body>
@@ -103,7 +142,7 @@
   </script>
   <!-- SheetJS for Excel/CSV import & export -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" crossorigin="anonymous"></script>
-  <script src="app.js?v=699"></script>
+  <script src="app.js?v=708"></script>
   <script>
     // PWA service worker: aggressive auto-update strategy.
     // 1. Register on load
