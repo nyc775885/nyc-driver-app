@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-var APP_VERSION = "v3.12.0";  // ← single source of truth: bump this once per release
+var APP_VERSION = "v3.12.1";  // ← single source of truth: bump this once per release
 console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
@@ -280,6 +280,13 @@ function parseUberTaxSummary(text){
     if(tipsM) monthlyTips=num(tipsM[1]);
     var goM=text.match(/^Gross trip earnings\s+\$([\d,]+\.\d{2})/m);
     if(goM) monthlyGrossOnly=num(goM[1]);
+    // Fallback for older monthly PDFs that don't have the Table 3 detail rows:
+    // use "Gross Trip Earnings / 1099-K" (kTotal) as the gross fare (this bundles fare+tips,
+    // but at least the total is correct — better than $0 across the board).
+    if(monthlyGrossOnly === 0 && kTotal > 0){
+      monthlyGrossOnly = kTotal;
+      // monthlyTips stays 0 — we couldn't pull tips out separately, so they're folded into fare.
+    }
   }
   
   return {
