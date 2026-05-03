@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-var APP_VERSION = "v3.11.97";  // ← single source of truth: bump this once per release
+var APP_VERSION = "v3.11.98";  // ← single source of truth: bump this once per release
 console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
@@ -9131,6 +9131,65 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
               , React.createElement('div', { style: {width:34} })
             )
             , React.createElement('div', { style: {padding:"14px 16px",overflowY:"auto",flex:1} }
+              // === Toll expense backfill — for past Uber imports that didn't create matching toll expenses ===
+              , (function(){
+                  // Find sl entries with toll > 0 that don't have a matching toll expense in el
+                  var missingTollMonths = sl.filter(function(s){
+                    if(!s.tollReimbursed || +s.tollReimbursed<=0) return false;
+                    var hasTollExp = el.some(function(e){
+                      if(e.category!=="toll") return false;
+                      if(!e.notes || e.notes.indexOf("auto from monthly stmt")<0) return false;
+                      var m = (e.date||"").slice(0,7);
+                      return m === s.month;
+                    });
+                    return !hasTollExp;
+                  });
+                  if(missingTollMonths.length === 0) return null;
+                  var totalAmt = missingTollMonths.reduce(function(s,x){return s+(+x.tollReimbursed||0);},0);
+                  return React.createElement('div', {style:{marginBottom:14,padding:"12px 14px",background:"rgba(224,160,96,0.08)",border:"1px solid rgba(224,160,96,0.35)",borderRadius:8}}
+                    , React.createElement('div', {style:{fontSize:12,fontWeight:700,color:"#E0A060",marginBottom:6}}
+                      , "🛣 ", lang==="en"
+                        ? ("Missing toll expenses ("+missingTollMonths.length+" month"+(missingTollMonths.length>1?"s":"")+")")
+                        : ("⚠ 缺失过桥支出（"+missingTollMonths.length+" 个月）"))
+                    , React.createElement('div', {style:{fontSize:11,color:C.text3,marginBottom:8,lineHeight:1.5}}
+                      , lang==="en"
+                        ? "Uber's deposit included $"+totalAmt.toFixed(2)+" of toll refunds. To balance the books (you paid those tolls at booths), we need to record matching toll expenses."
+                        : "Uber 平台到账里包含 $"+totalAmt.toFixed(2)+" 过桥退款。为了账面平衡（你已实际付了那些过桥），需要补建对应的过桥支出。")
+                    , React.createElement('details', {style:{marginBottom:10}}
+                      , React.createElement('summary', {style:{fontSize:11,color:"#90B0CC",cursor:"pointer",padding:"4px 0"}}, lang==="en"?"View months":"查看月份")
+                      , React.createElement('pre', {style:{fontSize:10,color:C.text2,marginTop:6,padding:"8px 10px",background:C.bg3,border:"1px solid "+C.border,borderRadius:6,maxHeight:140,overflow:"auto",whiteSpace:"pre-wrap",fontFamily:"monospace"}}
+                        , missingTollMonths.map(function(s){return s.month+"  $"+(+s.tollReimbursed).toFixed(2);}).join("\n"))
+                    )
+                    , React.createElement('button', { onClick: function(){
+                        if(!confirm(lang==="en"
+                          ? ("Auto-create "+missingTollMonths.length+" toll expense entries totaling $"+totalAmt.toFixed(2)+"?")
+                          : ("自动创建 "+missingTollMonths.length+" 笔过桥支出，共 $"+totalAmt.toFixed(2)+"？"))) return;
+                        var prevEl = el.slice();
+                        var newExpenses = missingTollMonths.map(function(s,i){
+                          return {
+                            id: Date.now()+i+1000,
+                            date: s.month+"-15",
+                            category: "toll",
+                            amount: +s.tollReimbursed,
+                            notes: "Uber toll (auto from monthly stmt) · "+s.month,
+                            isFixed: false,
+                            mode: "rideshare",
+                            statementMonth: s.month,
+                            vehicleId: veh.vehicleId || ""
+                          };
+                        });
+                        var newEl = newExpenses.concat(el);
+                        setEl(newEl);
+                        autoSave({el:newEl});
+                        showUndo(lang==="en"
+                          ? ("✓ Created "+missingTollMonths.length+" toll expenses ($"+totalAmt.toFixed(2)+")")
+                          : ("✓ 已创建 "+missingTollMonths.length+" 笔过桥支出（$"+totalAmt.toFixed(2)+"）"), {prevEl:prevEl});
+                      }, style:{width:"100%",background:"#3A2810",border:"1px solid #6A4820",color:"#FFB890",fontSize:12,fontWeight:700,padding:"8px",borderRadius:6,cursor:"pointer"}}
+                      , "🔧 ", lang==="en"
+                          ? ("Auto-create "+missingTollMonths.length+" toll expenses")
+                          : ("自动补建 "+missingTollMonths.length+" 笔过桥支出"))
+                  );
+                }())
               // === Orphan vehicleId fixer (advanced — moved here from Backup page) ===
               , (function(){
                   var orphans = el.filter(function(e){return !e.vehicleId;});
@@ -9504,9 +9563,25 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                         });
                         var platExpDate = monthStr+"-15";
                         if(existingPlatExp){
-                          elFinal = elBase.map(function(e){return e.id===existingPlatExp.id?Object.assign({},e,{amount:+r.feesTotal,notes:"Uber platform fee · "+monthStr}):e;});
+                          elFinal = elFinal.map(function(e){return e.id===existingPlatExp.id?Object.assign({},e,{amount:+r.feesTotal,notes:"Uber platform fee · "+monthStr}):e;});
                         } else {
-                          elFinal = [{id:Date.now()+2,date:platExpDate,category:"platform",amount:+r.feesTotal,notes:"Uber platform fee · "+monthStr,isFixed:false,mode:"rideshare"}].concat(elBase);
+                          elFinal = [{id:Date.now()+2,date:platExpDate,category:"platform",amount:+r.feesTotal,notes:"Uber platform fee · "+monthStr,isFixed:false,mode:"rideshare",vehicleId:veh.vehicleId||""}].concat(elFinal);
+                        }
+                      }
+                      // Auto-create/update toll expense — Uber refunded toll in the bank deposit; driver pays toll booth separately.
+                      // Double-entry: deposit includes +toll refund, expense records −toll paid → net effect on profit = $0.
+                      if(r.tollTotal && +r.tollTotal > 0){
+                        var existingTollExp = elFinal.find(function(e){
+                          if(e.category!=="toll") return false;
+                          if(!e.date || e.date.slice(0,7)!==monthStr) return false;
+                          if(!e.notes || e.notes.indexOf("Uber")<0) return false;
+                          return true;
+                        });
+                        var tollExpDate = monthStr+"-15";
+                        if(existingTollExp){
+                          elFinal = elFinal.map(function(e){return e.id===existingTollExp.id?Object.assign({},e,{amount:+r.tollTotal,notes:"Uber toll (auto from monthly stmt) · "+monthStr}):e;});
+                        } else {
+                          elFinal = [{id:Date.now()+3,date:tollExpDate,category:"toll",amount:+r.tollTotal,notes:"Uber toll (auto from monthly stmt) · "+monthStr,isFixed:false,mode:"rideshare",statementMonth:monthStr,vehicleId:veh.vehicleId||""}].concat(elFinal);
                         }
                       }
                       if(elFinal !== el) setEl(elFinal);
