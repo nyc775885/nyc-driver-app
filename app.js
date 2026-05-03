@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-var APP_VERSION = "v3.11.72";  // ← single source of truth: bump this once per release
+var APP_VERSION = "v3.11.75";  // ← single source of truth: bump this once per release
 console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
@@ -1202,7 +1202,13 @@ function BucketList(p){
       byCat[k].items.push(it);
       byCat[k].total+=(+it.amount||0);
     });
-    var catKeys=Object.keys(byCat).sort(function(a,b){return byCat[b].total-byCat[a].total;});
+    // Sort: multi-entry categories first (by amount desc), then single-entry at bottom (by amount desc)
+    var catKeys=Object.keys(byCat).sort(function(a,b){
+      var aMulti = byCat[a].items.length >= 2;
+      var bMulti = byCat[b].items.length >= 2;
+      if(aMulti !== bMulti) return aMulti ? -1 : 1;  // multi first
+      return byCat[b].total - byCat[a].total;        // within group, by amount
+    });
     return React.createElement('div', { key: bk, style: {marginBottom:18}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 49}}
       , React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8,paddingBottom:6,borderBottom:"2px solid #182540"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 49}}
         , React.createElement('span', { style: Object.assign({fontSize:15,fontWeight:700},{color:bcl}), __self: this, __source: {fileName: _jsxFileName, lineNumber: 49}}, bkt.label)
@@ -1281,14 +1287,19 @@ function BucketList(p){
     );
   }), 
   // === Flat "其他" categories — each becomes a top-level row (no parent group label) ===
-  Object.values(otherFlat).sort(function(a,b){return b.total-a.total;}).map(function(cat){
+  // Sort: multi-entry first (by amount), then single-entry at bottom (by amount)
+  Object.values(otherFlat).sort(function(a,b){
+    var aMulti = a.items.length >= 2;
+    var bMulti = b.items.length >= 2;
+    if(aMulti !== bMulti) return aMulti ? -1 : 1;
+    return b.total - a.total;
+  }).map(function(cat){
     var ck = cat._catKey;
     var groupKey = "other_flat|"+ck;
     var isExp = __bucketExpanded[groupKey]===true;
-    var hasMultiple = cat.items.length >= 2;
     var otherCol = "#A8C0D8";  // 其他 group color — pale slate (matches dashboard breakdown)
     return React.createElement('div', { key: ck, style: {marginBottom:10}}
-      , React.createElement('button', { onClick: function(){if(hasMultiple)toggle(groupKey);}, style: {width:"100%",background:C.bg2,border:"1px solid "+C.border,borderRadius:10,padding:"10px 14px",display:"flex",justifyContent:"space-between",alignItems:"center",cursor:hasMultiple?"pointer":"default",marginBottom:isExp?8:0}}
+      , React.createElement('button', { onClick: function(){toggle(groupKey);}, style: {width:"100%",background:C.bg2,border:"1px solid "+C.border,borderRadius:10,padding:"10px 14px",display:"flex",justifyContent:"space-between",alignItems:"center",cursor:"pointer",marginBottom:isExp?8:0}}
         , React.createElement('div', { style: {display:"flex",alignItems:"center",gap:10}}
           , React.createElement('span', { style: {fontSize:18}}, cat.icon)
           , React.createElement('div', { style: {textAlign:"left"}}
@@ -1298,12 +1309,10 @@ function BucketList(p){
         )
         , React.createElement('div', { style: {display:"flex",alignItems:"center",gap:8}}
           , React.createElement('span', { style: {fontSize:14,fontWeight:600,color:otherCol}}, fmt(cat.total))
-          , hasMultiple ? React.createElement('span', { style: {fontSize:13,color:C.text3,minWidth:14}}, isExp?"▲":"▼") : null
+          , React.createElement('span', { style: {fontSize:13,color:C.text3,minWidth:14}}, isExp?"▲":"▼")
         )
       )
-      , (isExp || !hasMultiple) ? React.createElement('div', { style: {paddingLeft:8}},
-          // For single-entry categories: show inline directly (no header click needed)
-          // For multi-entry: show only when expanded
+      , isExp ? React.createElement('div', { style: {paddingLeft:8}},
           p.groupByMonth ? (function(){
             var byMo={};
             cat.items.forEach(function(it){
@@ -2677,11 +2686,28 @@ function App() {
           }, 500);
           return;
         }
-        if(data.wl)setWl(data.wl);
-        if(data.sl)setSl(data.sl);
-        if(data.el)setEl(data.el);
-        if(data.fl)setFl(data.fl);
-        if(data.ll)setLl(data.ll);
+        // === DEFENSIVE: never silently wipe local data with empty cloud arrays ===
+        var localSl=lsLoad("nyc_sl",[]),localEl=lsLoad("nyc_el",[]),localWl=lsLoad("nyc_wl",[]),localDl=lsLoad("nyc_dl",[]);
+        var cloudHasLessData = (
+          (Array.isArray(data.sl) && data.sl.length===0 && localSl.length>0) ||
+          (Array.isArray(data.el) && data.el.length===0 && localEl.length>0) ||
+          (Array.isArray(data.wl) && data.wl.length===0 && localWl.length>0) ||
+          (Array.isArray(data.dl) && data.dl.length===0 && localDl.length>0)
+        );
+        if(cloudHasLessData){
+          console.warn("[sync-onSignIn] Cloud has empty arrays where local has data. Refusing to overwrite. Re-uploading local.");
+          setSyncStatus(lang==="en"?"⚠ Cloud was empty — kept local data":"⚠ 云端为空 · 已保留本地数据");
+          setTimeout(function(){setSyncStatus("");},3500);
+          // Re-upload local data to cloud so this device "wins"
+          var safeData={wl:localWl,sl:localSl,el:localEl,fl:lsLoad("nyc_fl",[]),ll:lsLoad("nyc_ll",[]),veh:lsLoad("nyc_veh",{}),cc:lsLoad("nyc_cc",[]),custGroups:lsLoad("nyc_custGroups",{}),reminders:lsLoad("nyc_reminders",[]),custPlat:lsLoad("nyc_custPlat",[]),dl:localDl,localModTime:new Date().toISOString()};
+          saveToDrive(tok,fileId,safeData);
+          return;
+        }
+        if(Array.isArray(data.wl) && data.wl.length>0)setWl(data.wl);
+        if(Array.isArray(data.sl) && data.sl.length>0)setSl(data.sl);
+        if(Array.isArray(data.el) && data.el.length>0)setEl(data.el);
+        if(Array.isArray(data.fl) && data.fl.length>0)setFl(data.fl);
+        if(Array.isArray(data.ll) && data.ll.length>0)setLl(data.ll);
         if(data.veh)setVeh(data.veh);if(data.driver)setDriver(data.driver);
         if(data.cc)setCc(data.cc);
         if(data.custGroups)setCustGroups(data.custGroups);
@@ -2696,7 +2722,7 @@ function App() {
         if(typeof data.seRate==="number")setSeRate(data.seRate);
         if(typeof data.fedRate==="number")setFedRate(data.fedRate);
         if(typeof data.stateRate==="number")setStateRate(data.stateRate);
-        if(typeof data.stdDed==="number")setStdDed(data.stdDed);if(typeof data.mtaRate==="number")setMtaRate(data.mtaRate);if(Array.isArray(data.savedVehicles))setSavedVehicles(data.savedVehicles);if(Array.isArray(data.dl))setDl(data.dl);if(data.driverType==="rideshare"||data.driverType==="taxi")setDriverType(data.driverType);
+        if(typeof data.stdDed==="number")setStdDed(data.stdDed);if(typeof data.mtaRate==="number")setMtaRate(data.mtaRate);if(Array.isArray(data.savedVehicles))setSavedVehicles(data.savedVehicles);if(Array.isArray(data.dl) && data.dl.length>0)setDl(data.dl);if(data.driverType==="rideshare"||data.driverType==="taxi")setDriverType(data.driverType);
         setSyncStatus(lang==="en"?"✓ Data loaded":"✓ 数据已加载");
         setTimeout(function(){setSyncStatus("");},3000);
       }).catch(function(err){reportError(err,{op:"loadFromDrive"});setSyncStatus(lang==="en"?"Load failed":"加载失败");});
@@ -3121,14 +3147,34 @@ function App() {
       .then(function(cloudData){
         setDriveFileId(fileId);
         var cloudModTime = cloudData.localModTime || "";
+        // === DEFENSIVE: never let cloud silently delete data ===
+        // If cloud has empty arrays for sl/el/wl/dl but local has data, the user almost
+        // certainly does NOT want to lose that data. Could be: stale cloud from a fresh
+        // device, sync race condition, or token-expired-then-restored scenario.
+        // Rule: when arrays are empty on cloud but populated locally, keep local data
+        // and re-upload it. Do this BEFORE the timestamp comparison so it's never bypassed.
+        var cloudHasLessData = (
+          (Array.isArray(cloudData.sl) && cloudData.sl.length===0 && sl.length>0) ||
+          (Array.isArray(cloudData.el) && cloudData.el.length===0 && el.length>0) ||
+          (Array.isArray(cloudData.wl) && cloudData.wl.length===0 && wl.length>0) ||
+          (Array.isArray(cloudData.dl) && cloudData.dl.length===0 && dl.length>0)
+        );
+        if(cloudHasLessData){
+          console.warn("[sync] Refusing to overwrite local data with empty cloud arrays. Re-uploading local.");
+          var safeData={wl:wl,sl:sl,el:el,fl:fl,ll:ll,veh:veh,cc:cc,custGroups:custGroups,reminders:reminders,custPlat:custPlat,custBrands:custBrands,custLicTypes:custLicTypes,custLoanTypes:custLoanTypes,favNotes:favNotes,favStations:favStations,favExpenses:favExpenses,notes:notes,incGoals:incGoals,seRate:seRate,fedRate:fedRate,stateRate:stateRate,stdDed:stdDed,mtaRate:mtaRate,savedVehicles:savedVehicles,dl:dl,driverType:driverType,driver:driver,localModTime:new Date().toISOString()};
+          saveToDrive(accessToken,fileId,safeData);
+          setSyncStatus(lang==="en"?"⚠ Cloud was empty — kept local data":"⚠ 云端为空 · 已保留本地数据");
+          setTimeout(function(){setSyncStatus("");},3500);
+          return;
+        }
         // Compare timestamps as ISO strings (lexicographic compare works for ISO 8601)
         if(cloudModTime > localModTime){
-          // Cloud is newer — download
-          if(cloudData.wl)setWl(cloudData.wl);
-          if(cloudData.sl)setSl(cloudData.sl);
-          if(cloudData.el)setEl(cloudData.el);
-          if(cloudData.fl)setFl(cloudData.fl);
-          if(cloudData.ll)setLl(cloudData.ll);
+          // Cloud is newer — download. But still guard each array: only overwrite if cloud has data.
+          if(Array.isArray(cloudData.wl) && cloudData.wl.length>0)setWl(cloudData.wl);
+          if(Array.isArray(cloudData.sl) && cloudData.sl.length>0)setSl(cloudData.sl);
+          if(Array.isArray(cloudData.el) && cloudData.el.length>0)setEl(cloudData.el);
+          if(Array.isArray(cloudData.fl) && cloudData.fl.length>0)setFl(cloudData.fl);
+          if(Array.isArray(cloudData.ll) && cloudData.ll.length>0)setLl(cloudData.ll);
           if(cloudData.veh)setVeh(cloudData.veh);if(cloudData.driver)setDriver(cloudData.driver);
           if(cloudData.cc)setCc(cloudData.cc);
           if(cloudData.custGroups)setCustGroups(cloudData.custGroups);
@@ -3144,7 +3190,7 @@ function App() {
           if(typeof cloudData.fedRate==="number")setFedRate(cloudData.fedRate);
           if(typeof cloudData.stateRate==="number")setStateRate(cloudData.stateRate);
           if(typeof cloudData.stdDed==="number")setStdDed(cloudData.stdDed);if(typeof cloudData.mtaRate==="number")setMtaRate(cloudData.mtaRate);if(Array.isArray(cloudData.savedVehicles))setSavedVehicles(cloudData.savedVehicles);
-          if(Array.isArray(cloudData.dl))setDl(cloudData.dl);
+          if(Array.isArray(cloudData.dl) && cloudData.dl.length>0)setDl(cloudData.dl);
           if(cloudData.driverType==="rideshare"||cloudData.driverType==="taxi")setDriverType(cloudData.driverType);
           // Adopt cloud's timestamp (without bumping it, to avoid triggering the dirty effect)
           firstRenderRef.first = true;
@@ -4058,11 +4104,12 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                 ) : null
                 , (function(){
                   // Collapsible — show header only when collapsed
+                  // Display condition: at least 2 entries with odometer (qty optional — many users don't track kWh)
                   if(!collOpen.energy){
-                    var hasFuelData = el.some(function(e){return (e.category==="charging"||e.category==="fuel")&&e.qty&&+e.qty>0&&e.odometer&&+e.odometer>0;});
+                    var hasFuelData = el.some(function(e){return (e.category==="charging"||e.category==="fuel")&&e.odometer&&+e.odometer>0;});
                     if(!hasFuelData) return null;
-                    var hasChargingPeek=el.some(function(e){return e.category==="charging"&&e.qty&&+e.qty>0;});
-                    var hasFuelPeek=el.some(function(e){return e.category==="fuel"&&e.qty&&+e.qty>0;});
+                    var hasChargingPeek=el.some(function(e){return e.category==="charging"&&e.odometer&&+e.odometer>0;});
+                    var hasFuelPeek=el.some(function(e){return e.category==="fuel"&&e.odometer&&+e.odometer>0;});
                     var isEvPeek=veh.type==="electric"||(hasChargingPeek&&!hasFuelPeek);
                     var titleStrPeek=lang==="en"?(isEvPeek?"⚡ Energy Efficiency":"⛽ Fuel Efficiency"):(isEvPeek?"⚡ 能耗统计":"⛽ 油耗统计");
                     return React.createElement(Card, {style:{marginBottom:8,padding:"10px 14px",cursor:"pointer"}, onClick:function(){toggleColl("energy");}}
@@ -4073,13 +4120,13 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                     );
                   }
                   // Auto-detect from data (don't rely solely on veh.type which might be empty after reset)
-                  var hasCharging=el.some(function(e){return e.category==="charging"&&e.qty&&+e.qty>0;});
-                  var hasFuel=el.some(function(e){return e.category==="fuel"&&e.qty&&+e.qty>0;});
+                  var hasCharging=el.some(function(e){return e.category==="charging"&&e.odometer&&+e.odometer>0;});
+                  var hasFuel=el.some(function(e){return e.category==="fuel"&&e.odometer&&+e.odometer>0;});
                   var isEv=veh.type==="electric"||(hasCharging&&!hasFuel);
                   var fuelCat=isEv?"charging":"fuel";var unitName=isEv?"kWh":"Gal";var effLabel=isEv?"mi/kWh":"MPG";
-                  // Get all fuel/charging entries with both qty AND odometer, sorted by date+odometer.
-                  // Need at least 2 fills with odometer to compute mi/unit between them.
-                  var allFi=el.filter(function(e){return e.category===fuelCat&&e.qty&&+e.qty>0&&e.odometer&&+e.odometer>0;}).sort(function(a,b){var c=a.date.localeCompare(b.date);return c!==0?c:(+a.odometer)-(+b.odometer);});
+                  // Get all fuel/charging entries with odometer (qty optional), sorted by date+odometer.
+                  // Need at least 2 fills with odometer to compute mi between them.
+                  var allFi=el.filter(function(e){return e.category===fuelCat&&e.odometer&&+e.odometer>0;}).sort(function(a,b){var c=a.date.localeCompare(b.date);return c!==0?c:(+a.odometer)-(+b.odometer);});
                   if(allFi.length<2)return null;
                   // For each pair, compute miles driven and units used since previous fill
                   var monthSegs=[]; // segments where the END date is in current month
@@ -4115,22 +4162,26 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                     )
                     , mStats?React.createElement('div', { style: {marginBottom:yStats?10:0}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 282}}
                       , React.createElement('div', { style: {fontSize:12,color:C.text3,marginBottom:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 282}}, lang==="en"?"This Month":"本月")
-                      , React.createElement('div', { style: {display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 282}}
+                      , React.createElement('div', { style: {display:"grid",gridTemplateColumns: mStats.eff>0 ? "1fr 1fr 1fr" : "1fr 1fr",gap:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 282}}
                         , React.createElement('div', { style: {textAlign:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 282}}, React.createElement('div', { style: {fontSize:16,fontWeight:800,color:C.accent}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 282}}, mStats.mi.toLocaleString(), " mi"), React.createElement('div', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 282}}, lang==="en"?"Distance":"行驶里程"))
-                        , React.createElement('div', { style: {textAlign:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 282}}, React.createElement('div', { style: {fontSize:16,fontWeight:800,color:C.gold}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 282}}, fmt2(mStats.eff), " ", effLabel), React.createElement('div', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 282}}, lang==="en"?"Efficiency":"能效"))
+                        , mStats.eff>0 ? React.createElement('div', { style: {textAlign:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 282}}, React.createElement('div', { style: {fontSize:16,fontWeight:800,color:C.gold}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 282}}, fmt2(mStats.eff), " ", effLabel), React.createElement('div', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 282}}, lang==="en"?"Efficiency":"能效")) : null
                         , React.createElement('div', { style: {textAlign:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 282}}, React.createElement('div', { style: {fontSize:16,fontWeight:800,color:"#FF9A65"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 282}}, "$", fmt2(mStats.cpm), "/mi"), React.createElement('div', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 282}}, lang==="en"?"Cost/Mile":"每英里成本"))
                       )
                       , per10(mStats.eff)?React.createElement('div',{style:{fontSize:12,color:"#90C8DC",marginTop:6,textAlign:"center",fontStyle:"italic"}},
                           lang==="en"
                             ? "≈ "+per10(mStats.eff)+" "+unitName+" per 10 mi · $"+(mStats.cpm*10).toFixed(2)+"/10 mi"
                             : "≈ 每 10 mi 用 "+per10(mStats.eff)+" "+unitName+" · $"+(mStats.cpm*10).toFixed(2)+"/10 mi"
-                        ):null
+                        ):(mStats.cpm>0?React.createElement('div',{style:{fontSize:12,color:"#90C8DC",marginTop:6,textAlign:"center",fontStyle:"italic"}},
+                          lang==="en"
+                            ? "≈ $"+(mStats.cpm*10).toFixed(2)+"/10 mi"
+                            : "≈ $"+(mStats.cpm*10).toFixed(2)+"/10 mi"
+                        ):null)
                     ):null
                     , yStats?React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 282}}
                       , React.createElement('div', { style: {fontSize:12,color:C.text3,marginBottom:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 282}}, lang==="en"?"Year to Date":"年累计")
-                      , React.createElement('div', { style: {display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 282}}
+                      , React.createElement('div', { style: {display:"grid",gridTemplateColumns: yStats.eff>0 ? "1fr 1fr 1fr" : "1fr 1fr",gap:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 282}}
                         , React.createElement('div', { style: {textAlign:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 282}}, React.createElement('div', { style: {fontSize:14,fontWeight:700,color:C.accent}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 282}}, yStats.mi.toLocaleString(), " mi"))
-                        , React.createElement('div', { style: {textAlign:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 282}}, React.createElement('div', { style: {fontSize:14,fontWeight:700,color:C.gold}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 282}}, fmt2(yStats.eff), " ", effLabel))
+                        , yStats.eff>0 ? React.createElement('div', { style: {textAlign:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 282}}, React.createElement('div', { style: {fontSize:14,fontWeight:700,color:C.gold}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 282}}, fmt2(yStats.eff), " ", effLabel)) : null
                         , React.createElement('div', { style: {textAlign:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 282}}, React.createElement('div', { style: {fontSize:14,fontWeight:700,color:"#FF9A65"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 282}}, "$", fmt2(yStats.cpm), "/mi"))
                       )
                       , per10(yStats.eff)?React.createElement('div',{style:{fontSize:12,color:"#90C8DC",marginTop:6,textAlign:"center",fontStyle:"italic"}},
@@ -4206,72 +4257,6 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                   );
                 }())
 
-                // === #10: Expense Distribution Pie Chart (current month) ===
-                , (function(){
-                    if(tExp<=0) return null;
-                    // Collapsible — show header only when collapsed
-                    if(!collOpen.pie){
-                      return React.createElement(Card, {style:{marginBottom:8,padding:"10px 14px",cursor:"pointer"}, onClick:function(){toggleColl("pie");}}
-                        , React.createElement('div', {style:{display:"flex",justifyContent:"space-between",alignItems:"center"}}
-                          , React.createElement('div', {style:{fontSize:13,fontWeight:700,color:C.text2}}, "🥧 ", lang==="en"?"Expense Distribution":"支出分布")
-                          , React.createElement('span', {style:{fontSize:12,color:C.text3}}, "▼")
-                        )
-                      );
-                    }
-                    var groupTotals={"车辆":0,"牌照":0,"平台":0,"其他":0};
-                    feAll.forEach(function(e){
-                      var cat=allC[e.category];
-                      var g=cat?(cat.g||"其他"):"其他";
-                      if(groupTotals[g]===undefined) g="其他";
-                      groupTotals[g]+=(+e.amount||0);
-                    });
-                    var total=Object.values(groupTotals).reduce(function(a,b){return a+b;},0);
-                    if(total<=0) return null;
-                    var colors={"车辆":C.accent,"牌照":C.gold,"平台":"#CC88FF","其他":"#A8D0E8"};
-                    var labels=lang==="en"?{"车辆":"Vehicle","牌照":"License","平台":"Platform","其他":"Other"}:{"车辆":"车辆","牌照":"牌照","平台":"平台","其他":"其他"};
-                    var cx=60, cy=60, r=50;
-                    var startAngle=-Math.PI/2;
-                    var slices=[];
-                    ["车辆","牌照","平台","其他"].forEach(function(g){
-                      if(!groupTotals[g]) return;
-                      var pct=groupTotals[g]/total;
-                      var endAngle=startAngle+pct*2*Math.PI;
-                      var x1=cx+r*Math.cos(startAngle), y1=cy+r*Math.sin(startAngle);
-                      var x2=cx+r*Math.cos(endAngle), y2=cy+r*Math.sin(endAngle);
-                      var largeArc=pct>0.5?1:0;
-                      // Special case: if exactly one slice (100%), draw full circle
-                      var path;
-                      if(pct>=0.999){
-                        path="M"+(cx-r)+","+cy+" A"+r+","+r+" 0 1,1 "+(cx+r)+","+cy+" A"+r+","+r+" 0 1,1 "+(cx-r)+","+cy+" Z";
-                      }else{
-                        path="M"+cx.toFixed(2)+","+cy.toFixed(2)+" L"+x1.toFixed(2)+","+y1.toFixed(2)+" A"+r+","+r+" 0 "+largeArc+",1 "+x2.toFixed(2)+","+y2.toFixed(2)+" Z";
-                      }
-                      slices.push({path:path,color:colors[g],label:labels[g],amount:groupTotals[g],pct:pct});
-                      startAngle=endAngle;
-                    });
-                    return React.createElement(Card, {style:{marginBottom:8,padding:"12px 14px"}}
-                      , React.createElement('div', {style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10,cursor:"pointer"}, onClick:function(){toggleColl("pie");}}
-                        , React.createElement('div', {style:{fontSize:13,fontWeight:700,color:C.text2}}, "🥧 " , lang==="en"?"Expense Distribution":"支出分布")
-                        , React.createElement('span', {style:{fontSize:12,color:C.text3}}, "▲")
-                      )
-                      , React.createElement('div', {style:{display:"flex",alignItems:"center",gap:14}}
-                        , React.createElement('svg', {viewBox:"0 0 120 120",width:110,height:110,style:{flexShrink:0}}
-                          , slices.map(function(s,i){return React.createElement('path', {key:i,d:s.path,fill:s.color,stroke:C.bg2,strokeWidth:1.5});})
-                          , React.createElement('circle', {cx:60,cy:60,r:24,fill:C.bg})
-                          , React.createElement('text', {x:60,y:58,textAnchor:"middle",fill:C.text2,fontSize:10}, lang==="en"?"Total":"总计")
-                          , React.createElement('text', {x:60,y:70,textAnchor:"middle",fill:C.danger,fontSize:12,fontWeight:700}, fmt(total))
-                        )
-                        , React.createElement('div', {style:{flex:1,display:"flex",flexDirection:"column",gap:5}}
-                          , slices.map(function(s,i){return React.createElement('div', {key:i,style:{display:"flex",alignItems:"center",gap:6,fontSize:12}}
-                            , React.createElement('div', {style:{width:10,height:10,borderRadius:2,background:s.color,flexShrink:0}})
-                            , React.createElement('span', {style:{flex:1,color:C.text2}}, s.label)
-                            , React.createElement('span', {style:{color:C.text3}}, Math.round(s.pct*100), "%")
-                            , React.createElement('span', {style:{color:C.text,fontWeight:600,minWidth:48,textAlign:"right"}}, fmt(s.amount))
-                          );})
-                        )
-                      )
-                    );
-                  }())
                 , (tExp > 0 || tPlatformFee > 0) ? (
                   !collOpen.expDet ? (
                     // Collapsed view — show summary header with platform fee inline
