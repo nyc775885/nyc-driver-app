@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-var APP_VERSION = "v3.11.87";  // ← single source of truth: bump this once per release
+var APP_VERSION = "v3.11.95";  // ← single source of truth: bump this once per release
 console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
@@ -510,6 +510,11 @@ function parseFuelioReport(text){
           var odo = odoM ? parseInt(odoM[1].replace(/,/g,""), 10) : 0;
           // Strip trailing punctuation from notes
           notes = notes.replace(/[.,;:]+$/,'').trim();
+          // Extract qty (kWh or gallons) from notes if present.
+          // Fuelio format: "$0.599 · 41.02 kWh · 1.66 mi/kWh" or "$3.49 · 12.5 gal · 25 MPG"
+          var qty = 0;
+          var qtyM = notes.match(/(\d+(?:\.\d+)?)\s*(kWh|gal|gallon|liter)/i);
+          if(qtyM) qty = parseFloat(qtyM[1]);
           if(currentCategory && amount > 0){
             // Skip if this is income (negative amount marker, or category looks like income)
             if(currentCategory === "income" || /^_ignore_/.test(currentCategory) || /UBER INCOME|Uber Paid/i.test(currentCategoryLabel + " " + notes)){
@@ -525,6 +530,7 @@ function parseFuelioReport(text){
               category: currentCategory,
               categoryLabel: currentCategoryLabel,
               amount: amount,
+              qty: qty,
               odometer: odo,
               notes: noteText
             });
@@ -600,11 +606,16 @@ function parseFuelioReport(text){
         if(isUnrecognized2 && currentCategoryLabel){
           noteText = "[" + currentCategoryLabel + "]" + (noteText ? " · "+noteText : "");
         }
+        // Extract qty (kWh or gallons) from notes if present
+        var qtyA = 0;
+        var qtyMA = noteText.match(/(\d+(?:\.\d+)?)\s*(kWh|gal|gallon|liter)/i);
+        if(qtyMA) qtyA = parseFloat(qtyMA[1]);
         result.entries.push({
           date: dateStr,
           category: currentCategory,
           categoryLabel: currentCategoryLabel,
           amount: amount,
+          qty: qtyA,
           odometer: odo,
           notes: noteText
         });
@@ -4782,76 +4793,65 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                     var vPlatformFee = mStmts.reduce(function(s,x){return s+(+x.platformFee||0);},0)
                       + mDailies.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.platformFee||0):0);},0);
                     if(vPlatformFee<=0 && vToll<=0) return null;
-                    // Logical chain — Uber fees apply to FARE only (not tips/bonus):
-                    //   Section 1 "跑车赚的" (Driving income):
-                    //     Gross Fare − Uber Fees = Fare Net
-                    //   Section 2 "额外收入" (Extras): Tips + Bonus = Extras Total
-                    //   Bottom: Bank Deposit = Fare Net + Extras
-                    var fareNet = vGross - vPlatformFee;
-                    var extras = vTips + vBonus;
-                    var bankDeposit = fareNet + extras;
+                    // Match Uber PDF's true logic:
+                    //   Gross Payment (车费+小费+奖励) − Uber Fees = Net Earnings (劳动净所得)
+                    //   Net Earnings + Toll Refund = Net Payout (实银行入账)
+                    var grossPayment = vGross + vTips + vBonus;  // = $4,725.34 in user's case
+                    var netEarnings = grossPayment - vPlatformFee;  // Uber's "Net Earnings" = $2,727.31
+                    var bankDeposit = netEarnings + vToll;  // Uber's "Net Payout" = $2,895.76
+                    // Color groups (per user spec):
+                    var COL_FLOW = C.accent2;      // 总营业额 / Uber 抽成 / 平台到账 — same color (Uber-side flow nodes)
+                    var COL_NET  = C.success;      // 净到账 — green (your real earnings)
+                    var COL_EXTRA = C.gold;        // 小费 / 奖励 — same color (extra income)
+                    var COL_TOLL = "#E0A060";      // 过桥退款 — its own warm color
                     // Reusable styles
                     var sectionLabel = {fontSize:11,color:"#9AB0CC",fontWeight:700,letterSpacing:0.3,marginBottom:6,paddingLeft:2};
-                    var rowStyle = {display:"flex",justifyContent:"space-between",alignItems:"baseline",fontSize:13,padding:"3px 6px"};
-                    var subTotalRow = {display:"flex",justifyContent:"space-between",alignItems:"baseline",fontSize:13,padding:"6px 6px 4px",borderTop:"1px solid "+C.border,marginTop:4};
+                    var rowStyle = {display:"flex",justifyContent:"space-between",alignItems:"baseline",fontSize:13,padding:"4px 6px"};
+                    var bigRowStyle = {display:"flex",justifyContent:"space-between",alignItems:"baseline",fontSize:14,padding:"6px 6px",fontWeight:700};
                     var numStyle = {fontVariantNumeric:"tabular-nums",fontWeight:600};
                     return React.createElement('div', { style: {marginTop:10,padding:"14px 16px",background:C.bg3,border:"1px solid "+C.border,borderRadius:RADIUS.md} }
                       , React.createElement('div', { style: {fontSize:11,color:C.text3,marginBottom:12,letterSpacing:0.8,textTransform:"uppercase",fontWeight:600} }, "💰 ", lang==="en"?"Money Flow":"收入明细")
-                      // === Section 1: Earned from driving (fare − fees) ===
-                      , React.createElement('div', {style:{marginBottom:14}}
-                        , React.createElement('div', {style:sectionLabel}, "🚗 ", lang==="en"?"EARNED FROM DRIVING":"跑车赚的")
-                        , React.createElement('div', {style:rowStyle}
-                          , React.createElement('span', {style:{color:C.text2}}, lang==="en"?"Gross fare":"总车费")
-                          , React.createElement('span', {style:Object.assign({},numStyle,{color:C.text})}, fmt(vGross))
+                      // === Block 1: Gross Payment (with breakdown) ===
+                      , React.createElement('div', {style:{marginBottom:10}}
+                        , React.createElement('div', {style:Object.assign({},bigRowStyle,{borderBottom:"1px solid "+C.border,paddingBottom:8,marginBottom:6})}
+                          , React.createElement('span', {style:{color:COL_FLOW}}, "💵 ", lang==="en"?"Gross Payment":"总营业额")
+                          , React.createElement('b', {style:Object.assign({},numStyle,{color:COL_FLOW,fontSize:16})}, fmt(grossPayment))
                         )
-                        , vPlatformFee>0 ? React.createElement('div', {style:rowStyle}
-                          , React.createElement('span', {style:{color:C.text3}}, "− ", lang==="en"?"Uber fees":"Uber 抽成")
-                          , React.createElement('span', {style:Object.assign({},numStyle,{color:C.danger})}, "−", fmt(vPlatformFee))
-                        ) : null
-                        , vPlatformFee>0 ? React.createElement('div', {style:subTotalRow}
-                          , React.createElement('b', {style:{color:C.text,fontSize:14}}, lang==="en"?"Fare net":"净到账")
-                          , React.createElement('b', {style:Object.assign({},numStyle,{color:C.accent2,fontSize:15})}, fmt(fareNet))
-                        ) : null
-                      )
-                      // === Section 2: Extras (tips + bonus) ===
-                      , extras>0 ? React.createElement('div', {style:{marginBottom:14}}
-                        , React.createElement('div', {style:sectionLabel}, "🎁 ", lang==="en"?"EXTRAS":"额外收入")
+                        , React.createElement('div', {style:rowStyle}
+                          , React.createElement('span', {style:{color:C.text3,paddingLeft:14}}, lang==="en"?"Gross fare":"总车费")
+                          , React.createElement('span', {style:Object.assign({},numStyle,{color:C.text2})}, fmt(vGross))
+                        )
                         , vTips>0 ? React.createElement('div', {style:rowStyle}
-                          , React.createElement('span', {style:{color:C.text2}}, "+ ", lang==="en"?"Tips":"小费")
-                          , React.createElement('span', {style:Object.assign({},numStyle,{color:C.success})}, "+", fmt(vTips))
+                          , React.createElement('span', {style:{color:C.text3,paddingLeft:14}}, "+ ", lang==="en"?"Tips":"小费")
+                          , React.createElement('span', {style:Object.assign({},numStyle,{color:COL_EXTRA})}, "+", fmt(vTips))
                         ) : null
                         , vBonus>0 ? React.createElement('div', {style:rowStyle}
-                          , React.createElement('span', {style:{color:C.text2}}, "+ ", lang==="en"?"Bonus":"奖励")
-                          , React.createElement('span', {style:Object.assign({},numStyle,{color:C.gold})}, "+", fmt(vBonus))
+                          , React.createElement('span', {style:{color:C.text3,paddingLeft:14}}, "+ ", lang==="en"?"Bonus":"奖励")
+                          , React.createElement('span', {style:Object.assign({},numStyle,{color:COL_EXTRA})}, "+", fmt(vBonus))
                         ) : null
-                        , (vTips>0 && vBonus>0) ? React.createElement('div', {style:subTotalRow}
-                          , React.createElement('b', {style:{color:C.text,fontSize:14}}, lang==="en"?"Extras subtotal":"小计")
-                          , React.createElement('b', {style:Object.assign({},numStyle,{color:C.text,fontSize:15})}, "+", fmt(extras))
-                        ) : null
+                      )
+                      // === Block 2: Uber Fees ===
+                      , vPlatformFee>0 ? React.createElement('div', {style:Object.assign({},bigRowStyle,{marginBottom:6})}
+                        , React.createElement('span', {style:{color:COL_FLOW}}, "📋 ", lang==="en"?"Uber fees":"Uber 抽成")
+                        , React.createElement('b', {style:Object.assign({},numStyle,{color:COL_FLOW,fontSize:16})}, "−", fmt(vPlatformFee))
                       ) : null
-                      // === Section 3: Toll pass-through (visible but greyed to show net=$0) ===
-                      , vToll>0 ? React.createElement('div', {style:{marginBottom:14,padding:"10px 12px",background:"rgba(120,140,170,0.05)",border:"1px dashed rgba(120,140,170,0.25)",borderRadius:6}}
-                        , React.createElement('div', {style:Object.assign({},sectionLabel,{color:"#7A95B8"})}, "🛣 ", lang==="en"?"TOLLS (PASS-THROUGH)":"过桥退款（中转）")
-                        , React.createElement('div', {style:rowStyle}
-                          , React.createElement('span', {style:{color:"#9AB0CC"}}, "+ ", lang==="en"?"Refunded by Uber":"Uber 退款")
-                          , React.createElement('span', {style:Object.assign({},numStyle,{color:"#9AB0CC"})}, "+", fmt(vToll))
-                        )
-                        , React.createElement('div', {style:rowStyle}
-                          , React.createElement('span', {style:{color:"#9AB0CC"}}, "− ", lang==="en"?"Paid at booth":"付收费站")
-                          , React.createElement('span', {style:Object.assign({},numStyle,{color:"#9AB0CC"})}, "−", fmt(vToll))
-                        )
-                        , React.createElement('div', {style:Object.assign({},subTotalRow,{borderTopColor:"rgba(120,140,170,0.2)"})}
-                          , React.createElement('b', {style:{color:"#9AB0CC",fontSize:13}}, lang==="en"?"Net effect":"净影响")
-                          , React.createElement('b', {style:Object.assign({},numStyle,{color:"#9AB0CC",fontSize:14})}, "$0.00")
-                        )
+                      // === Block 3: Net Earnings (subtotal) — green ===
+                      , vPlatformFee>0 ? React.createElement('div', {style:{padding:"10px 12px",background:"rgba(0,255,160,0.06)",border:"1px solid rgba(0,255,160,0.2)",borderRadius:6,marginBottom:10,display:"flex",justifyContent:"space-between",alignItems:"center"}}
+                        , React.createElement('span', {style:{fontSize:14,fontWeight:700,color:COL_NET}}, "✓ ", lang==="en"?"Net earnings":"净到账")
+                        , React.createElement('b', {style:Object.assign({},numStyle,{color:COL_NET,fontSize:16})}, fmt(netEarnings))
                       ) : null
-                      // === Bottom: Bank Deposit (the result) ===
-                      , React.createElement('div', {style:{padding:"12px 14px",background:"linear-gradient(135deg, rgba(255,215,0,0.10), "+C.bg2+" 70%)",border:"1px solid rgba(255,215,0,0.3)",borderRadius:RADIUS.sm}}
+                      // === Block 4: Toll refund (its own color, separate line) ===
+                      , vToll>0 ? React.createElement('div', {style:Object.assign({},bigRowStyle,{marginBottom:10,padding:"6px 12px",background:"rgba(224,160,96,0.06)",borderRadius:6})}
+                        , React.createElement('span', {style:{color:COL_TOLL,fontSize:13}}, "🛣 ", lang==="en"?"+ Toll refund":"+ 过桥退款")
+                        , React.createElement('b', {style:Object.assign({},numStyle,{color:COL_TOLL,fontSize:15})}, "+", fmt(vToll))
+                      ) : null
+                      // === Block 5: Bank Deposit (final result) — same color as Gross/Fees ===
+                      , React.createElement('div', {style:{padding:"12px 14px",background:"linear-gradient(135deg, rgba(0,212,255,0.12), "+C.bg2+" 70%)",border:"1px solid rgba(0,212,255,0.35)",borderRadius:RADIUS.sm}}
                         , React.createElement('div', {style:{display:"flex",justifyContent:"space-between",alignItems:"center"}}
-                          , React.createElement('span', {style:{fontSize:14,fontWeight:700,color:C.text}}, "🏦 ", lang==="en"?"Bank Deposit":"平台到账")
-                          , React.createElement('b', {style:{color:C.gold,fontSize:20,fontVariantNumeric:"tabular-nums",letterSpacing:-0.4}}, fmt(bankDeposit))
+                          , React.createElement('span', {style:{fontSize:15,fontWeight:800,color:COL_FLOW}}, "🏦 ", lang==="en"?"Bank Deposit":"平台到账")
+                          , React.createElement('b', {style:{color:COL_FLOW,fontSize:22,fontVariantNumeric:"tabular-nums",letterSpacing:-0.4}}, fmt(bankDeposit))
                         )
-                        , vToll>0 ? React.createElement('div', {style:{fontSize:10,color:"#B8A060",marginTop:4,letterSpacing:0.2,fontWeight:500}}
+                        , vToll>0 ? React.createElement('div', {style:{fontSize:10,color:"#7090A8",marginTop:4,letterSpacing:0.2,fontWeight:500}}
                           , lang==="en"
                             ? "ⓘ Includes $"+fmt2(vToll)+" toll refund (you'll pay it back at booths)"
                             : "ⓘ 包含过桥退款 $"+fmt2(vToll)+"（之后要付给收费站）"
@@ -5037,7 +5037,47 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                     }())
                 );
               }()) : null
-            , (function(){var vS=incV==="month"?mStmts:yStmts; return vS.length > 0 ? React.createElement('div', { style: {marginBottom:16} }, React.createElement('div', { style: {fontSize:FS.xs+1,color:C.text3,letterSpacing:1.2,marginBottom:10,textTransform:"uppercase",fontWeight:600} }, "💵 " , T.monthly), vS.slice().sort(function(a,b){return (b.month||"").localeCompare(a.month||"");}).map(function(s){var total=(+s.grossFare||0)+(+s.tips||0)+(+s.bonus||0)+(+s.otherIncome||0);return React.createElement('div', { key: s.id, style:{background:C.bg2,borderRadius:RADIUS.md,padding:"12px 14px",marginBottom:8,border:"1px solid "+C.border,boxShadow:SHADOW.sm,transition:"all 0.15s",cursor:"pointer"}, onClick: function(){setStf(Object.assign({trips:"",onlineHours:"",miles:"",notes:""},s));setSf("stmt");}}, React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"center"}}, React.createElement('div', {style:{flex:1,minWidth:0}}, React.createElement('div', { style: {fontSize:FS.lg,fontWeight:700,marginBottom:4,color:C.text}}, s.platform, " · "  , s.month), React.createElement('div', { style: {fontSize:FS.xl,color:C.success,fontWeight:800,letterSpacing:-0.3,fontVariantNumeric:"tabular-nums",marginBottom:6}}, fmt(total)), React.createElement('div', { style: {display:"flex",gap:6,flexWrap:"wrap"}}, s.trips?React.createElement('span', { style: {fontSize:FS.sm+1,background:C.bg4,border:"1px solid "+C.border,borderRadius:6,padding:"3px 9px",color:C.text2,fontWeight:600}}, s.trips, " " , T.trips):null, s.onlineHours?React.createElement('span', { style: {fontSize:FS.sm+1,background:C.bg4,border:"1px solid "+C.border,borderRadius:6,padding:"3px 9px",color:C.text2,fontWeight:600}}, s.onlineHours, "h"):null, s.miles?React.createElement('span', { style: {fontSize:FS.sm+1,background:C.bg4,border:"1px solid "+C.border,borderRadius:6,padding:"3px 9px",color:C.text2,fontWeight:600}}, s.miles, "mi"):null))));}), " " ) : null;}())
+            , (function(){
+                var vS = incV==="month"?mStmts:yStmts;
+                if(vS.length === 0) return null;
+                return React.createElement('div', { style: {marginBottom:16} }
+                  , React.createElement('div', { style: {fontSize:FS.xs+1,color:C.text3,letterSpacing:1.2,marginBottom:10,textTransform:"uppercase",fontWeight:600} }, "💵 ", T.monthly)
+                  , vS.slice().sort(function(a,b){return (b.month||"").localeCompare(a.month||"");}).map(function(s){
+                      var grossPayment = (+s.grossFare||0)+(+s.tips||0)+(+s.bonus||0)+(+s.otherIncome||0);
+                      var feeS = +s.platformFee||0;
+                      var tollS = +s.tollReimbursed||0;
+                      var bankDeposit = grossPayment - feeS + tollS;  // = Uber's "Net Payout"
+                      var netEarnings = grossPayment - feeS;          // = Uber's "Net Earnings" (toll washed out)
+                      return React.createElement('div', { key: s.id, style:{background:C.bg2,borderRadius:RADIUS.md,padding:"14px 16px",marginBottom:8,border:"1px solid "+C.border,boxShadow:SHADOW.sm,cursor:"pointer"}, onClick: function(){setStf(Object.assign({trips:"",onlineHours:"",miles:"",notes:""},s));setSf("stmt");} }
+                        // Header — platform · month
+                        , React.createElement('div', { style: {fontSize:FS.lg,fontWeight:700,marginBottom:8,color:C.text} }, s.platform, " · ", s.month)
+                        // Two big numbers side by side: Bank Deposit (light) and Net Earnings (highlight)
+                        , React.createElement('div', { style: {display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:8} }
+                          , React.createElement('div', null
+                            , React.createElement('div', {style:{fontSize:10,color:C.text3,letterSpacing:0.5,textTransform:"uppercase",fontWeight:600,marginBottom:2}}, "🏦 ", lang==="en"?"Bank Deposit":"平台到账")
+                            , React.createElement('div', {style:{fontSize:FS.lg+2,color:C.accent2,fontWeight:800,letterSpacing:-0.3,fontVariantNumeric:"tabular-nums"}}, fmt(bankDeposit))
+                          )
+                          , feeS>0 ? React.createElement('div', null
+                            , React.createElement('div', {style:{fontSize:10,color:C.text3,letterSpacing:0.5,textTransform:"uppercase",fontWeight:600,marginBottom:2}}, "💰 ", lang==="en"?"Net Earnings":"实收")
+                            , React.createElement('div', {style:{fontSize:FS.lg+2,color:C.gold,fontWeight:800,letterSpacing:-0.3,fontVariantNumeric:"tabular-nums"}}, fmt(netEarnings))
+                          ) : null
+                        )
+                        // Toll reminder if present
+                        , tollS>0 ? React.createElement('div', {style:{fontSize:10,color:C.text3,fontStyle:"italic",marginBottom:6}}
+                          , "ⓘ ", lang==="en"
+                            ? "Bank includes $"+fmt2(tollS)+" toll refund (you paid it back)"
+                            : "平台到账含 $"+fmt2(tollS)+" 过桥退款（你已付收费站）"
+                        ) : null
+                        // Operations chips
+                        , React.createElement('div', { style: {display:"flex",gap:6,flexWrap:"wrap"} }
+                          , s.trips ? React.createElement('span', { style: {fontSize:FS.sm+1,background:C.bg4,border:"1px solid "+C.border,borderRadius:6,padding:"3px 9px",color:C.text2,fontWeight:600} }, s.trips, " ", T.trips) : null
+                          , s.onlineHours ? React.createElement('span', { style: {fontSize:FS.sm+1,background:C.bg4,border:"1px solid "+C.border,borderRadius:6,padding:"3px 9px",color:C.text2,fontWeight:600} }, s.onlineHours, "h") : null
+                          , s.miles ? React.createElement('span', { style: {fontSize:FS.sm+1,background:C.bg4,border:"1px solid "+C.border,borderRadius:6,padding:"3px 9px",color:C.text2,fontWeight:600} }, s.miles, "mi") : null
+                        )
+                      );
+                    })
+                );
+              }())
             , (function(){var vW=incV==="month"?mWeeks:yWeeks; return vW.length > 0 ? React.createElement('div', {}, (function(){var tw=vW.reduce(function(s,w){return {trips:s.trips+(+w.trips||0),hours:s.hours+(+w.hours||0),miles:s.miles+(+w.miles||0)};},{trips:0,hours:0,miles:0});if(!tw.trips&&!tw.hours)return null;return React.createElement('div', { style: {background:"linear-gradient(135deg, "+C.bg3+", "+C.bg2+")",border:"1px solid "+C.border,borderRadius:RADIUS.md,marginBottom:10,padding:"14px 16px",boxShadow:SHADOW.sm}}, React.createElement('div', { style: {display:"flex",justifyContent:"space-around",alignItems:"center"}}, tw.trips?React.createElement('div', { style: {textAlign:"center"}}, React.createElement('div', { style: {fontSize:FS.xs+1,color:C.text3,marginBottom:3,letterSpacing:0.5,fontWeight:600,textTransform:"uppercase"}}, T.trips), React.createElement('div', { style: {fontSize:FS.xl,fontWeight:800,color:C.success,letterSpacing:-0.2}}, tw.trips)):null, tw.hours?React.createElement('div', { style: {textAlign:"center"}}, React.createElement('div', { style: {fontSize:FS.xs+1,color:C.text3,marginBottom:3,letterSpacing:0.5,fontWeight:600,textTransform:"uppercase"}}, lang==="en"?"Hours":"时长"), React.createElement('div', { style: {fontSize:FS.xl,fontWeight:800,color:C.accent,letterSpacing:-0.2}}, tw.hours, "h")):null, tw.miles?React.createElement('div', { style: {textAlign:"center"}}, React.createElement('div', { style: {fontSize:FS.xs+1,color:C.text3,marginBottom:3,letterSpacing:0.5,fontWeight:600,textTransform:"uppercase"}}, T.miles), React.createElement('div', { style: {fontSize:FS.xl,fontWeight:800,color:C.gold,letterSpacing:-0.2}}, tw.miles)):null, tw.hours>0&&tInc>0?React.createElement('div', { style: {textAlign:"center"}}, React.createElement('div', { style: {fontSize:FS.xs+1,color:C.text3,marginBottom:3,letterSpacing:0.5,fontWeight:600,textTransform:"uppercase"}}, T.hourlyRate), React.createElement('div', { style: {fontSize:FS.xl,fontWeight:800,color:"#FF9A65",letterSpacing:-0.2}}, fmt(Math.round(tInc/tw.hours*100)/100))):null));}()), " " , React.createElement('div', { style: {fontSize:FS.xs+1,color:C.text3,letterSpacing:1.2,marginBottom:10,textTransform:"uppercase",fontWeight:600}}, "📅 " , T.weekly, " ", React.createElement('span',{style:{color:"#7090B0",fontWeight:500,fontSize:9,letterSpacing:0.4}},lang==="en"?"· REF ONLY":"· 仅记录")), vW.slice().sort(function(a,b){return b.weekStart.localeCompare(a.weekStart);}).map(function(w){return React.createElement('div', { key: w.id, style:{background:C.bg2,borderRadius:RADIUS.md,padding:"12px 14px",marginBottom:8,border:"1px solid "+C.border,boxShadow:SHADOW.sm,cursor:"pointer",transition:"all 0.15s"}, onClick: function(){setWf(Object.assign({},w));setSf("week");}}, React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}, React.createElement('div', { style: {flex:1,minWidth:0}}, React.createElement('div', { style: {fontSize:FS.lg,fontWeight:700,color:C.success,marginBottom:4}}, wkLabel(w.weekStart)), React.createElement('div', { style: {fontSize:FS.md+1,color:C.text2,marginBottom:6,fontWeight:500}}, w.platform), (function(){var winc=(+w.grossFare||0)+(+w.tips||0)+(+w.bonus||0)+(+w.tollReimbursed||0);if(winc>0)return React.createElement('div', { style: {fontSize:FS.xl,fontWeight:800,color:C.accent,marginBottom:6,letterSpacing:-0.3,fontVariantNumeric:"tabular-nums"}}, "💵 " , fmt(winc));return null;}()), React.createElement('div', { style: {display:"flex",gap:6,flexWrap:"wrap"}}, w.trips?React.createElement('span', { style: {fontSize:FS.sm+1,background:C.bg4,border:"1px solid "+C.border,borderRadius:6,padding:"3px 9px",color:C.text2,fontWeight:600}}, w.trips, " " , T.trips):null, w.hours?React.createElement('span', { style: {fontSize:FS.sm+1,background:C.bg4,border:"1px solid "+C.border,borderRadius:6,padding:"3px 9px",color:C.text2,fontWeight:600}}, w.hours, "h"):null, w.miles?React.createElement('span', { style: {fontSize:FS.sm+1,background:C.bg4,border:"1px solid "+C.border,borderRadius:6,padding:"3px 9px",color:C.text2,fontWeight:600}}, w.miles, "mi"):null))));}), " " ) : null;}())
             , (function(){
                 var hasStmts = incV==="month" ? mStmts.length>0 : yStmts.length>0;
@@ -5227,11 +5267,40 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
               )
             )
 
-            // === Diagnostic: scan all el entries (helps locate missing imports) ===
-            , React.createElement('button', {
-                onClick: function(){ setShowElDiag(true); },
-                style: {display:"block",width:"100%",background:"linear-gradient(135deg, rgba(255,179,0,0.06), rgba(40,28,0,0.5))",border:"1px dashed rgba(255,179,0,0.35)",borderRadius:RADIUS.md,padding:"10px 14px",cursor:"pointer",fontSize:FS.sm,fontWeight:700,color:"#FFB300",textAlign:"center",marginBottom:10}
-              }, "🔍 ", lang==="en"?("Scan all expenses ("+el.length+")"):("扫描全部支出（"+el.length+" 条）"))
+            // (Diagnostic moved to drawer menu — not needed daily)
+            // === Backfill kWh/gal from notes for legacy entries (data was lost in early imports) ===
+            , (function(){
+                var needsBackfill = el.filter(function(e){
+                  if(e.category!=="charging" && e.category!=="fuel") return false;
+                  if(e.qty && +e.qty>0) return false;
+                  return e.notes && /\d+(?:\.\d+)?\s*(kWh|gal|gallon|liter)/i.test(e.notes);
+                });
+                if(needsBackfill.length===0) return null;
+                return React.createElement('button', {
+                  onClick: function(){
+                    if(!confirm(lang==="en"
+                      ? "Backfill kWh/gal from notes for "+needsBackfill.length+" entries?"
+                      : "从备注中回填 "+needsBackfill.length+" 条记录的 kWh/加仑数？")) return;
+                    var backfilled = 0;
+                    var newEl = el.map(function(e){
+                      if(e.category!=="charging" && e.category!=="fuel") return e;
+                      if(e.qty && +e.qty>0) return e;
+                      if(!e.notes) return e;
+                      var m = e.notes.match(/(\d+(?:\.\d+)?)\s*(kWh|gal|gallon|liter)/i);
+                      if(!m) return e;
+                      backfilled++;
+                      return Object.assign({},e,{qty:parseFloat(m[1])});
+                    });
+                    setEl(newEl); autoSave({el:newEl});
+                    showToast(lang==="en"
+                      ? ("✓ Backfilled "+backfilled+" entries with kWh/gal data")
+                      : ("✓ 已回填 "+backfilled+" 条记录的 kWh/加仑数据"));
+                  },
+                  style: {display:"block",width:"100%",background:"linear-gradient(135deg, rgba(0,200,150,0.08), rgba(0,40,30,0.6))",border:"1px dashed rgba(0,200,150,0.4)",borderRadius:RADIUS.md,padding:"10px 14px",cursor:"pointer",fontSize:FS.sm,fontWeight:700,color:"#5ADAB0",textAlign:"center",marginBottom:10}
+                }, "⚡ ", lang==="en"
+                  ? ("Backfill kWh from notes ("+needsBackfill.length+" entries)")
+                  : ("从备注回填 kWh 数据（"+needsBackfill.length+" 条）"));
+              }())
 
             // === SEARCH + CATEGORY FILTER ===
             , (function(){
@@ -6503,7 +6572,6 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
               );
             }())
           , React.createElement(Field, { label: T.otherIncome+" ($)", type: "number", value: stf.otherIncome, onChange: function(v){setStf(Object.assign({},stf,{otherIncome:v}));}, money: true, placeholder: "0.00", __self: this, __source: {fileName: _jsxFileName, lineNumber: 506}} )
-          , React.createElement(Field, { label: (lang==="en"?"Platform Service Fee":"平台抽成 / Uber 服务费")+" ($)", type: "number", value: stf.platformFee||"", onChange: function(v){setStf(Object.assign({},stf,{platformFee:v}));}, money: true, placeholder: "0.00" } )
           , React.createElement('div', { style: {borderTop:"1px solid #1A2A40",paddingTop:14}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 507}}
             , React.createElement('div', { style: {fontSize:13,color:C.text3,marginBottom:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 508}}, lang==="en"?"Operations (optional)":"运营数据（可选）")
             , React.createElement('div', { style: {display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 509}}
@@ -7480,7 +7548,8 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                   {icon:"🗂",label:lang==="en"?"Categories":"支出类别",action:function(){setShowDrawer(false);setSf("manage_cats");}},
                   {icon:"&#128203;",label:T.license,action:function(){setShowDrawer(false);setSf("drawer_lic");}},
                   {icon:"🏥",label:lang==="en"?"Health Check":"数据健康检查",action:function(){setShowDrawer(false);setSf("health_check");}},
-                  {icon:"🔒",label:lang==="en"?"PIN Lock":"PIN 锁屏",action:function(){setShowDrawer(false);setSf("pin_settings");}}
+                  {icon:"🔒",label:lang==="en"?"PIN Lock":"PIN 锁屏",action:function(){setShowDrawer(false);setSf("pin_settings");}},
+                  {icon:"🔍",label:lang==="en"?("Diagnostic ("+el.length+" expenses)"):("诊断（"+el.length+" 条支出）"),action:function(){setShowDrawer(false);setShowElDiag(true);},color:"#FFB300"}
                 ];
                 var signOut = {icon:"🚪",label:lang==="en"?"Sign Out":"退出登录",action:function(){confirmAction(lang==="en"?"Sign out of Google?":"退出 Google 登录？", lang==="en"?"You will be signed out from Drive sync.":"将退出 Drive 同步。", function(){setGUser(null);try{localStorage.removeItem("nyc_user");localStorage.removeItem("nyc_tab");}catch(e){}setTab(0);setSf(null);setShowDrawer(false);setShowBackup(false);setShowPlatMgr(false);setShowRemMgr(false);showToast(lang==="en"?"✓ Signed out":"✓ 已退出");}, {danger:false, confirmLabel:lang==="en"?"Sign Out":"退出"});},color:C.danger};
                 
@@ -9057,6 +9126,73 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
               , React.createElement('div', { style: {width:34} })
             )
             , React.createElement('div', { style: {padding:"14px 16px",overflowY:"auto",flex:1} }
+              // === Orphan vehicleId fixer (advanced — moved here from Backup page) ===
+              , (function(){
+                  var orphans = el.filter(function(e){return !e.vehicleId;});
+                  if(orphans.length === 0 || !veh.vehicleId) return null;
+                  var multipleVehicles = (savedVehicles||[]).length > 1;
+                  var labelOf = function(v){return (v.year||"")+" "+(v.brand||"")+" "+(v.model||"").trim()+(v.plate?" "+v.plate:"");};
+                  // Show first 5 orphans as preview so user sees what they're about to act on
+                  var preview = orphans.slice(0,5).map(function(e){
+                    return (e.date||"?")+" · "+(e.category||"?")+" · $"+((+e.amount||0).toFixed(2))+(e.notes?" — "+(e.notes.length>40?e.notes.slice(0,40)+"…":e.notes):"");
+                  }).join("\n");
+                  if(orphans.length > 5) preview += "\n… "+(lang==="en"?("and "+(orphans.length-5)+" more"):("及其余 "+(orphans.length-5)+" 笔"));
+                  return React.createElement('div', {style:{marginBottom:14,padding:"12px 14px",background:"rgba(255,140,80,0.06)",border:"1px solid rgba(255,140,80,0.3)",borderRadius:8}}
+                    , React.createElement('div', {style:{fontSize:12,fontWeight:700,color:"#FF9A65",marginBottom:6}}
+                      , "⚠ ", lang==="en"
+                        ? (orphans.length+" orphan expense"+(orphans.length>1?"s":"")+" (no vehicle)")
+                        : ("⚠ "+orphans.length+" 笔孤儿支出（无车辆）"))
+                    , React.createElement('div', {style:{fontSize:11,color:C.text3,marginBottom:8,lineHeight:1.5}}
+                      , lang==="en"
+                        ? "These were imported when no vehicle existed. They show in totals but won't filter when you scope by vehicle."
+                        : "这些条目导入时还没建立车辆。会出现在总数里，但用车辆筛选时会被排除。")
+                    , React.createElement('details', {style:{marginBottom:10}}
+                      , React.createElement('summary', {style:{fontSize:11,color:"#90B0CC",cursor:"pointer",padding:"4px 0"}}, lang==="en"?"View first "+Math.min(5,orphans.length)+" orphan entries":("查看前 "+Math.min(5,orphans.length)+" 笔"))
+                      , React.createElement('pre', {style:{fontSize:10,color:C.text2,marginTop:6,padding:"8px 10px",background:C.bg3,border:"1px solid "+C.border,borderRadius:6,maxHeight:140,overflow:"auto",whiteSpace:"pre-wrap",wordBreak:"break-word",fontFamily:"monospace"}}, preview)
+                    )
+                    , React.createElement('button', { onClick: function(){
+                        if(multipleVehicles){
+                          var lines = (lang==="en"
+                            ? "Link "+orphans.length+" orphan expenses to which vehicle?\n\n"
+                            : "将 "+orphans.length+" 笔孤儿支出关联到哪辆车？\n\n");
+                          savedVehicles.forEach(function(v,i){
+                            var marker = (v.vehicleId===veh.vehicleId) ? " ← " + (lang==="en"?"current":"当前") : "";
+                            lines += (i+1)+" = "+labelOf(v)+marker+"\n";
+                          });
+                          lines += (savedVehicles.length+1)+" = "+(lang==="en"?"Cancel (leave them as-is)":"取消（保留为孤儿）")+"\n\n";
+                          lines += (lang==="en"?"Enter number:":"输入数字：");
+                          var choice = prompt(lines);
+                          if(!choice) return;
+                          var n = parseInt(choice,10);
+                          if(isNaN(n) || n<1 || n>savedVehicles.length) return;
+                          var targetVeh = savedVehicles[n-1];
+                          var prevEl = el.slice();
+                          var nel = el.map(function(e){
+                            return e.vehicleId ? e : Object.assign({},e,{vehicleId:targetVeh.vehicleId});
+                          });
+                          setEl(nel);
+                          autoSave({el:nel});
+                          showUndo(lang==="en"
+                            ? ("✓ Linked "+orphans.length+" entries to "+labelOf(targetVeh))
+                            : ("✓ 已关联 "+orphans.length+" 条到 "+labelOf(targetVeh)), {prevEl:prevEl});
+                        } else {
+                          if(!confirm(lang==="en"
+                            ? ("Link all "+orphans.length+" orphan expenses to "+labelOf(veh)+"?\n\n⚠ If they're from an OLDER vehicle you used to drive, CANCEL and add that vehicle first in 车辆信息. This action affects all "+orphans.length+" entries at once.")
+                            : ("将全部 "+orphans.length+" 笔孤儿支出关联到 "+labelOf(veh)+"？\n\n⚠ 如果是以前另一辆车的历史数据，请点取消，先在「车辆信息」里添加那辆车。本操作会一次性修改全部 "+orphans.length+" 条。"))) return;
+                          var prevEl2 = el.slice();
+                          var nel2 = el.map(function(e){
+                            return e.vehicleId ? e : Object.assign({},e,{vehicleId:veh.vehicleId});
+                          });
+                          setEl(nel2);
+                          autoSave({el:nel2});
+                          showUndo(lang==="en"?("✓ Linked "+orphans.length+" entries"):("✓ 已关联 "+orphans.length+" 条"), {prevEl:prevEl2});
+                        }
+                      }, style:{width:"100%",background:"#3A2810",border:"1px solid #6A4820",color:"#FFB890",fontSize:12,fontWeight:700,padding:"8px",borderRadius:6,cursor:"pointer"}}
+                      , "🔗 ", lang==="en"
+                          ? ("Link to "+(multipleVehicles?"a vehicle":labelOf(veh))+"…")
+                          : ("关联到"+(multipleVehicles?"某辆车":"当前车辆")+"…"))
+                  );
+                }())
               // === Last Fuelio import attempt (debug capture) ===
               , (function(){
                   var dbgRaw = "";
@@ -9931,28 +10067,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
               , React.createElement('div', { style: {fontSize:15,fontWeight:700,color:"#FFB300",marginBottom:3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 802}}, lang==="en"?"🧹 Clear Placeholder Times":"🧹 清除占位时间")
               , React.createElement('div', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 803}}, lang==="en"?"Remove imported placeholder times (12:00 / 08:00 / 23:59)":"清除导入的占位时间（12:00 / 08:00 / 23:59）")
             );}())
-            // === Fix orphaned expenses (no vehicleId) ===
-            , (function(){
-                var orphans = el.filter(function(e){return !e.vehicleId;}).length;
-                if(orphans === 0 || !veh.vehicleId) return null;
-                return React.createElement('button', { onClick: function(){
-                  if(!confirm(lang==="en"?
-                    ("Link "+orphans+" expense entries (currently with no vehicle) to your current vehicle ("+(veh.brand||"")+" "+(veh.model||"")+" "+(veh.plate||"")+")?"):
-                    ("将 "+orphans+" 笔无车辆的支出关联到当前车辆（"+(veh.brand||"")+" "+(veh.model||"")+" "+(veh.plate||"")+"）？"))) return;
-                  var prevEl = el.slice();
-                  var nel = el.map(function(e){
-                    return e.vehicleId ? e : Object.assign({},e,{vehicleId:veh.vehicleId});
-                  });
-                  setEl(nel);
-                  autoSave({el:nel});
-                  showUndo(lang==="en"?("✓ Linked "+orphans+" entries"):("✓ 已关联 "+orphans+" 条"), {prevEl:prevEl});
-                }, style: {width:"100%",background:"linear-gradient(135deg, rgba(0,212,255,0.15), rgba(0,85,255,0.05))",border:"1px solid rgba(0,212,255,0.4)",borderRadius:12,padding:14,marginBottom:10,textAlign:"left",cursor:"pointer"} }
-                  , React.createElement('div', { style: {fontSize:15,fontWeight:700,color:"#00D4FF",marginBottom:3} }, "🔗 ", lang==="en"?("Link "+orphans+" Orphaned Expenses"):("关联 "+orphans+" 笔无车辆支出"))
-                  , React.createElement('div', { style: {fontSize:12,color:C.text3} }, lang==="en"?
-                      "These were imported when no vehicle existed. Link them to current vehicle.":
-                      "这些是无车辆时导入的。关联到当前车辆。")
-                );
-              }())
+            // (Orphan-link button moved to diagnostic page — only shown there to prevent accidental clicks)
             , React.createElement('button', { onClick: function(){if(!confirm(lang==="en"?"Download a JSON backup file to your device?":"下载 JSON 备份文件到此设备？"))return;setSyncStatus(lang==="en"?"⏳ Exporting...":"⏳ 导出中...");setTimeout(function(){try{var data={wl:wl,sl:sl,el:el,fl:fl,ll:ll,veh:veh,cc:cc,custGroups:custGroups,reminders:reminders,custPlat:custPlat,custBrands:custBrands,custLicTypes:custLicTypes,custLoanTypes:custLoanTypes,favNotes:favNotes,favStations:favStations,favExpenses:favExpenses,notes:notes,incGoals:incGoals,seRate:seRate,fedRate:fedRate,stateRate:stateRate,stdDed:stdDed,mtaRate:mtaRate,savedVehicles:savedVehicles,dl:dl,driverType:driverType,driver:driver,exported:new Date().toISOString()};var blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});var url=URL.createObjectURL(blob);var a=document.createElement("a");a.href=url;a.download="nyc-driver-backup-"+today()+".json";a.click();URL.revokeObjectURL(url);setSyncStatus(lang==="en"?"✓ Exported":"✓ 导出成功");setTimeout(function(){setSyncStatus("");},2500);}catch(err){setSyncStatus(lang==="en"?"✗ Export failed":"✗ 导出失败");setTimeout(function(){setSyncStatus("");},2500);}},100);}, style: {width:"100%",background:C.bg3,border:"1px solid "+C.border,borderRadius:12,padding:14,marginBottom:10,textAlign:"left",cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 801}}
               , React.createElement('div', { style: {fontSize:15,fontWeight:700,color:C.text2,marginBottom:3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 802}}, lang==="en"?"📤 Export JSON Backup":"📤 导出JSON备份")
               , React.createElement('div', { style: {fontSize:12,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 803}}, lang==="en"?"Download all data as JSON":"下载所有数据为JSON文件")
