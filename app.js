@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-var APP_VERSION = "v3.15.6";  // ← single source of truth: bump this once per release
+var APP_VERSION = "v3.15.7";  // ← single source of truth: bump this once per release
 console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
@@ -8217,7 +8217,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                       {icon:"&#128190;",label:T.backup,action:function(){setShowDrawer(false);setShowBackup(true);}},
                       {icon:"🏥",label:lang==="en"?"Health Check":"数据健康检查",action:function(){setShowDrawer(false);setSf("health_check");}},
                       {icon:"🔒",label:lang==="en"?"PIN Lock":"PIN 锁屏",action:function(){setShowDrawer(false);setSf("pin_settings");}},
-                      {icon:"🔍",label:lang==="en"?("Diagnostic ("+el.length+")"):("诊断（"+el.length+"）"),action:function(){setShowDrawer(false);setShowElDiag(true);},color:C.warn}
+                      {icon:"🔍",label:lang==="en"?"Diagnostic":"诊断",action:function(){setShowDrawer(false);setShowElDiag(true);},color:C.warn}
                     ]
                   },
                   {
