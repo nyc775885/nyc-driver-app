@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-var APP_VERSION = "v3.15.2";  // ← single source of truth: bump this once per release
+var APP_VERSION = "v3.15.3";  // ← single source of truth: bump this once per release
 console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
@@ -194,6 +194,81 @@ function nowTime(){var d=new Date();return p2(d.getHours())+":"+p2(d.getMinutes(
 function curMo(){var d=new Date();return d.getFullYear()+"-"+p2(d.getMonth()+1);}
 function curYr(){return ""+new Date().getFullYear();}
 function fmt(n){var v=Number(n||0);var sign=v<0?"-":"";var abs=Math.abs(v);var s=abs.toFixed(2);var parts=s.split(".");parts[0]=parts[0].replace(/\B(?=(\d{3})+(?!\d))/g,",");return sign+"$"+parts.join(".");}
+
+// === Smooth count-up hook — animates from previous value to new value over `duration` ms ===
+// Uses requestAnimationFrame with easeOutCubic for a natural deceleration feel.
+function useCountUp(target, duration){
+  var d = duration || 800;
+  var ref = React.useRef(target);
+  var rafRef = React.useRef(null);
+  var rerender = React.useState(0)[1];
+  React.useEffect(function(){
+    var from = ref.current;
+    var to = target;
+    if(from === to) return;
+    // Skip animation for tiny changes (less than $0.50) — just snap
+    if(Math.abs(to - from) < 0.5){ ref.current = to; rerender(function(x){return x+1;}); return; }
+    var start = performance.now();
+    var step = function(now){
+      var elapsed = now - start;
+      var t = Math.min(1, elapsed / d);
+      // easeOutCubic: 1 - (1-t)^3 — fast start, gentle landing
+      var eased = 1 - Math.pow(1 - t, 3);
+      ref.current = from + (to - from) * eased;
+      rerender(function(x){return x+1;});
+      if(t < 1){
+        rafRef.current = requestAnimationFrame(step);
+      } else {
+        ref.current = to;
+      }
+    };
+    rafRef.current = requestAnimationFrame(step);
+    return function(){ if(rafRef.current) cancelAnimationFrame(rafRef.current); };
+  }, [target]);
+  return ref.current;
+}
+
+// Animated money display — drop-in for fmt(value) when you want smooth transitions
+function AnimatedMoney(props){
+  var v = useCountUp(Number(props.value)||0, props.duration);
+  return React.createElement('span', {style: props.style, className: props.className}, fmt(v));
+}
+
+// Soft tinted background + border + glow for each expense category.
+// Each row gets a subtle visual identity instead of being uniform grey.
+var CATEGORY_TINTS = {
+  fuel:       {bg:"linear-gradient(135deg,#3A2010,#2A1A0C)", bd:"#5A3318", glow:"#FFB070"},
+  charging:   {bg:"linear-gradient(135deg,#2A2A10,#1A2010)", bd:"#4A4A18", glow:"#E8D060"},
+  toll:       {bg:"linear-gradient(135deg,#3A1A28,#2A1018)", bd:"#5A2840", glow:"#E08AC0"},
+  congestion: {bg:"linear-gradient(135deg,#3A1A28,#2A1018)", bd:"#5A2840", glow:"#E08AC0"},
+  parking:    {bg:"linear-gradient(135deg,#1A2838,#101828)", bd:"#284058", glow:"#80B0E0"},
+  ticket:     {bg:"linear-gradient(135deg,#3A1814,#2A100C)", bd:"#5A2018", glow:"#E07060"},
+  carwash:    {bg:"linear-gradient(135deg,#1A2838,#101828)", bd:"#284058", glow:"#80B8F0"},
+  oil:        {bg:"linear-gradient(135deg,#2A2010,#1A180C)", bd:"#4A3818", glow:"#D8A848"},
+  tires:      {bg:"linear-gradient(135deg,#1A1A1A,#101010)", bd:"#3A3A3A", glow:"#A8A8A8"},
+  brakes:     {bg:"linear-gradient(135deg,#2A1A10,#1A100C)", bd:"#4A2818", glow:"#C88848"},
+  battery:    {bg:"linear-gradient(135deg,#2A2A10,#1A2010)", bd:"#4A4A18", glow:"#E8D060"},
+  ac:         {bg:"linear-gradient(135deg,#1A2838,#102028)", bd:"#284858", glow:"#80C0E8"},
+  maint:      {bg:"linear-gradient(135deg,#2A2010,#1A180C)", bd:"#4A3818", glow:"#D8A848"},
+  repair:     {bg:"linear-gradient(135deg,#3A1818,#2A1010)", bd:"#5A2828", glow:"#E07070"},
+  insurance:  {bg:"linear-gradient(135deg,#1A2820,#102018)", bd:"#284838", glow:"#80D098"},
+  carloan:    {bg:"linear-gradient(135deg,#28182A,#18101A)", bd:"#48284A", glow:"#C088E0"},
+  rentalcar:  {bg:"linear-gradient(135deg,#28182A,#18101A)", bd:"#48284A", glow:"#C088E0"},
+  tlc:        {bg:"linear-gradient(135deg,#3A2810,#2A1A08)", bd:"#5A3818", glow:"#E8B060"},
+  fhv:        {bg:"linear-gradient(135deg,#3A2810,#2A1A08)", bd:"#5A3818", glow:"#E8B060"},
+  dmv:        {bg:"linear-gradient(135deg,#3A2810,#2A1A08)", bd:"#5A3818", glow:"#E8B060"},
+  platform:   {bg:"linear-gradient(135deg,#28182A,#18101A)", bd:"#48284A", glow:"#C088E0"},
+  blackcar:   {bg:"linear-gradient(135deg,#1A1A1A,#101010)", bd:"#3A3A3A", glow:"#A8A8A8"},
+  uberpro:    {bg:"linear-gradient(135deg,#28182A,#18101A)", bd:"#48284A", glow:"#C088E0"},
+  phonebill:  {bg:"linear-gradient(135deg,#1A2838,#102028)", bd:"#284858", glow:"#80C0E8"},
+  coffee:     {bg:"linear-gradient(135deg,#3A2A18,#2A1A0C)", bd:"#5A3820", glow:"#D8A878"},
+  tax:        {bg:"linear-gradient(135deg,#3A1818,#2A1010)", bd:"#5A2828", glow:"#E07070"},
+  accountant: {bg:"linear-gradient(135deg,#28182A,#18101A)", bd:"#48284A", glow:"#C088E0"},
+  health:     {bg:"linear-gradient(135deg,#1A2820,#102018)", bd:"#284838", glow:"#80D098"},
+  meals:      {bg:"linear-gradient(135deg,#3A2010,#2A1A0C)", bd:"#5A3318", glow:"#FFB070"},
+  other:      {bg:"linear-gradient(135deg,#2A2018,#1A140F)", bd:"#3A2C1F", glow:"#D4A574"}
+};
+function categoryTint(catKey){ return CATEGORY_TINTS[catKey] || CATEGORY_TINTS.other; }
 // Format number with 2 decimals (no $ sign) for non-money values
 function fmt2(n){return Number(n||0).toFixed(2);}
 // Parse Uber Annual Tax Summary + 1099-K + 1099-NEC text (combined).
@@ -1208,7 +1283,9 @@ function ExpItem(p){var item=p.item,aC=p.allC,isEn=p.lang==="en",cat=aC[item.cat
 // Hide placeholder times from imported data ("12:00" charging, "08:00" coffee, "23:59" month-end)
 var hideTime=item.time==="12:00"||item.time==="08:00"||item.time==="23:59";
 var dateStr=isMo?moPrefix+(item.statementMonth||item.date.slice(0,7)):(item.time&&!hideTime?fmtDate(item.date)+" "+item.time:fmtDate(item.date));
-var L_FIXED=isEn?"Fixed":"固定";return React.createElement('div', {style:{cursor:"pointer",background:C.bg2,borderRadius:RADIUS.md,padding:"12px 14px",marginBottom:8,border:"1px solid "+C.border,boxShadow:SHADOW.sm,transition:"transform 0.1s, border-color 0.15s, background 0.15s"}, onClick: p.onEdit}, React.createElement('div', { style: {display:"flex",gap:12,alignItems:"flex-start"}}, React.createElement('div', {style:{width:40,height:40,borderRadius:RADIUS.sm,background:"linear-gradient(135deg, "+C.bg3+", "+C.bg4+")",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0,border:"1px solid "+C.border}}, icon), React.createElement('div', { style: {flex:1,minWidth:0}}, React.createElement('div', { style: {fontSize:FS.lg,fontWeight:700,marginBottom:3,color:C.text,letterSpacing:-0.1}}, label), React.createElement('div', { style: {fontSize:FS.md,color:C.text2,display:"flex",alignItems:"center",gap:6}}, dateStr ), item.notes?React.createElement('div', { style: {fontSize:FS.md-1,color:C.text3,marginTop:2,lineHeight:1.4}}, item.notes):null, item.odometer?React.createElement('div', { style: {fontSize:FS.sm+1,color:C.gold,marginTop:4,fontWeight:600}}, "🛣 " , (+item.odometer).toLocaleString(), " mi", p.distFromLast?" (+"+p.distFromLast+(isEn?" mi since last":" mi 距上次")+")":""):null, item.isFixed?React.createElement('span', { style: {fontSize:FS.xs+1,background:C.successDim,borderRadius:5,padding:"2px 8px",color:C.success,display:"inline-block",marginTop:5,fontWeight:600,letterSpacing:0.3}}, L_FIXED):null), React.createElement('div', { style: {textAlign:"right",flexShrink:0}}, React.createElement('div', { style: {fontSize:FS.xl,fontWeight:800,color:C.text,letterSpacing:-0.3,fontVariantNumeric:"tabular-nums"}}, "−", fmt(item.amount)))));}
+var L_FIXED=isEn?"Fixed":"固定";
+var tint = categoryTint(item.category);
+return React.createElement('div', {style:{cursor:"pointer",background:C.bg2,borderRadius:RADIUS.md,padding:"12px 14px",marginBottom:8,border:"1px solid "+C.border,boxShadow:SHADOW.sm,transition:"transform 0.1s, border-color 0.15s, background 0.15s"}, onClick: p.onEdit}, React.createElement('div', { style: {display:"flex",gap:12,alignItems:"flex-start"}}, React.createElement('div', {style:{width:40,height:40,borderRadius:RADIUS.sm,background:tint.bg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0,border:"1px solid "+tint.bd,boxShadow:"inset 0 1px 2px rgba(0,0,0,0.3), 0 0 8px "+tint.glow+"22"}}, icon), React.createElement('div', { style: {flex:1,minWidth:0}}, React.createElement('div', { style: {fontSize:FS.lg,fontWeight:700,marginBottom:3,color:C.text,letterSpacing:-0.1}}, label), React.createElement('div', { style: {fontSize:FS.md,color:C.text2,display:"flex",alignItems:"center",gap:6}}, dateStr ), item.notes?React.createElement('div', { style: {fontSize:FS.md-1,color:C.text3,marginTop:2,lineHeight:1.4}}, item.notes):null, item.odometer?React.createElement('div', { style: {fontSize:FS.sm+1,color:C.gold,marginTop:4,fontWeight:600}}, "🛣 " , (+item.odometer).toLocaleString(), " mi", p.distFromLast?" (+"+p.distFromLast+(isEn?" mi since last":" mi 距上次")+")":""):null, item.isFixed?React.createElement('span', { style: {fontSize:FS.xs+1,background:C.successDim,borderRadius:5,padding:"2px 8px",color:C.success,display:"inline-block",marginTop:5,fontWeight:600,letterSpacing:0.3}}, L_FIXED):null), React.createElement('div', { style: {textAlign:"right",flexShrink:0}}, React.createElement('div', { style: {fontSize:FS.xl,fontWeight:800,color:C.text,letterSpacing:-0.3,fontVariantNumeric:"tabular-nums"}}, "−", fmt(item.amount)))));}
 // Wrap with React.memo: re-render only when item data, lang, allC, or distFromLast changes.
 // Skip checking onEdit/onDel callbacks (they're recreated each render but functionally identical).
 ExpItem = React.memo(ExpItem, function(prevP, nextP){
@@ -4072,45 +4149,49 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                       React.createElement('div', {style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:(bigPlat||bigNet)?10:0}},
                         // Platform Pay card
                         React.createElement('div', {
+                          className:"card-pop",
                           onClick:function(){toggleColl("bigPlat");},
                           style:{
                             position:"relative",
-                            background:"linear-gradient(135deg, rgba(0,212,255,0.08) 0%, rgba(10,30,55,0.95) 60%, rgba(15,20,32,1) 100%)",
+                            background:"linear-gradient(135deg, rgba(212,165,116,0.12) 0%, rgba(50,35,22,0.95) 60%, rgba(30,22,15,1) 100%)",
                             borderRadius:RADIUS.lg,
                             padding:"16px 14px",
                             cursor:"pointer",
-                            border:"1px solid rgba(0,212,255,0.2)",
-                            boxShadow: "0 4px 16px rgba(0,212,255,0.08)",
+                            border:"1px solid rgba(212,165,116,0.28)",
+                            boxShadow: "0 4px 16px rgba(212,165,116,0.10)",
                             overflow:"hidden",
-                            transition:"transform 0.15s, box-shadow 0.15s"
+                            transition:"transform 0.15s, box-shadow 0.15s",
+                            animationDelay: "0ms"
                           }
                         },
 
                           React.createElement('div', {style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8,position:"relative"}},
-                            React.createElement('div', {style:{fontSize:FS.sm,color:C.accent2,letterSpacing:0.5,fontWeight:600,textTransform:"uppercase"}}, "📱 ", lang==="en"?"Platform Pay":"平台到账"),
+                            React.createElement('div', {style:{fontSize:FS.sm,color:C.accent,letterSpacing:0.5,fontWeight:600,textTransform:"uppercase"}}, "📱 ", lang==="en"?"Platform Pay":"平台到账"),
                             React.createElement('span', {style:{fontSize:FS.xs,color:C.text3}}, bigPlat?"▲":"▼")
                           ),
-                          React.createElement('div', {className:"big-num-gradient", style:{fontSize:FS.xl,fontWeight:800,letterSpacing:-0.5,lineHeight:1.1,fontVariantNumeric:"tabular-nums",position:"relative"}}, fmt(platformPay)),
+                          React.createElement(AnimatedMoney, {className:"big-num-gradient", style:{fontSize:FS.xl,fontWeight:800,letterSpacing:-0.5,lineHeight:1.1,fontVariantNumeric:"tabular-nums",position:"relative",display:"inline-block"}, value: platformPay}),
                           tToll>0 ? React.createElement('div', {style:{fontSize:FS.xs,color:C.text3,marginTop:6,position:"relative"}}, "−", lang==="en"?"toll ":"过桥 ", fmt(tToll)) : null,
                           tToll>0 ? React.createElement('div', {style:{fontSize:FS.sm,color:C.success,fontWeight:700,marginTop:2,position:"relative"}}, lang==="en"?"net ":"实收 ", fmt(realEarnings)) : null
                         ),
                         // Net Profit card
                         React.createElement('div', {
+                          className:"card-pop",
                           onClick:function(){toggleColl("bigNet");},
                           style:{
                             position:"relative",
                             background: net>=0 ?
-                              "linear-gradient(135deg, rgba(0,230,118,0.08) 0%, rgba(10,40,25,0.95) 60%, rgba(15,20,32,1) 100%)" :
-                              "linear-gradient(135deg, rgba(255,82,82,0.08) 0%, rgba(40,15,15,0.95) 60%, rgba(15,20,32,1) 100%)",
+                              "linear-gradient(135deg, rgba(143,183,121,0.13) 0%, rgba(35,42,28,0.95) 60%, rgba(26,20,15,1) 100%)" :
+                              "linear-gradient(135deg, rgba(194,107,79,0.13) 0%, rgba(50,28,22,0.95) 60%, rgba(26,20,15,1) 100%)",
                             borderRadius:RADIUS.lg,
                             padding:"16px 14px",
                             cursor:"pointer",
-                            border: net>=0 ? "1px solid rgba(0,230,118,0.2)" : "1px solid rgba(255,82,82,0.25)",
+                            border: net>=0 ? "1px solid rgba(143,183,121,0.30)" : "1px solid rgba(194,107,79,0.30)",
                             boxShadow: net>=0 ?
-                              "0 4px 16px rgba(0,230,118,0.08)" :
-                              "0 4px 16px rgba(255,82,82,0.1)",
+                              "0 4px 16px rgba(143,183,121,0.10)" :
+                              "0 4px 16px rgba(194,107,79,0.10)",
                             overflow:"hidden",
-                            transition:"transform 0.15s, box-shadow 0.15s"
+                            transition:"transform 0.15s, box-shadow 0.15s",
+                            animationDelay: "100ms"
                           }
                         },
 
@@ -4118,7 +4199,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                             React.createElement('div', {style:{fontSize:FS.sm,color:net>=0?C.success:C.danger,letterSpacing:0.5,fontWeight:600,textTransform:"uppercase",opacity:0.85}}, "💰 ", lang==="en"?"Net Profit":"净收入"),
                             React.createElement('span', {style:{fontSize:FS.xs,color:C.text3}}, bigNet?"▲":"▼")
                           ),
-                          (function(){var cls = net>=0?"big-num-success":"big-num-danger";return React.createElement('div', {className:cls, style:{fontSize:FS.xl,fontWeight:800,letterSpacing:-0.5,lineHeight:1.1,fontVariantNumeric:"tabular-nums",position:"relative"}}, fmt(net));}()),
+                          (function(){var cls = net>=0?"big-num-success":"big-num-danger";return React.createElement(AnimatedMoney, {className:cls, style:{fontSize:FS.xl,fontWeight:800,letterSpacing:-0.5,lineHeight:1.1,fontVariantNumeric:"tabular-nums",position:"relative",display:"inline-block"}, value: net});}()),
                           React.createElement('div', {style:{fontSize:FS.xs,color:C.text3,marginTop:8,position:"relative"}}, lang==="en"?"after all expenses":"扣除所有开销")
                         )
                       ),
