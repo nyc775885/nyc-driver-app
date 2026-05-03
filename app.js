@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-var APP_VERSION = "v3.11.62";  // ← single source of truth: bump this once per release
+var APP_VERSION = "v3.11.63";  // ← single source of truth: bump this once per release
 console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
@@ -3677,17 +3677,18 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                 , React.createElement(MoNav, { val: mo, set: setMo, lang: lang, onPick: function(){setMpState({value:mo,onChange:function(v){setMo(v);}});}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 266}} )
                 , (function(){
                     // === Two-column big number card: Platform Pay + Net Profit ===
-                    // 营业额 (revenue): tInc = grossFare + tips + bonus + other (NOT including toll)
-                    // 总营业额 (gross including toll): tInc + tToll
-                    // 平台收入 (Platform Pay) = 总营业额 - 平台抽成 = tInc + tToll - tPlatformFee
-                    //                          (Uber 实际打到银行的钱, 含 toll reimbursement)
-                    // 实赚 (Real Earnings) = 平台收入 - tToll = tInc - tPlatformFee
-                    //                       (扣掉付给收费站的过桥钱)
-                    // 净收入 (Net Profit) = tInc - tExp - tPlatformFee
-                    //                      (营业额 - 其他支出 - 平台抽成, toll 进出抵消)
-                    var grossWithToll = tInc + tToll;
-                    var platformPay = grossWithToll - tPlatformFee;
-                    var realEarnings = platformPay - tToll;  // = tInc - tPlatformFee
+                    // Per Uber's monthly PDF math:
+                    //   Gross Payment (lhs of "Net Payout" page) = grossFare + tips + bonus = $4,725.34
+                    //   This figure does NOT include toll reimbursement separately.
+                    //   Net Payout (bank deposit) = Gross Payment − Platform Fees = $2,895.76
+                    //
+                    // Therefore:
+                    //   tInc = grossFare + tips + bonus + other   (== Gross Payment)
+                    //   平台到账 (Platform Pay) = tInc − tPlatformFee  (Uber 实际打到银行的钱)
+                    //   实收 (Real Earnings) = Platform Pay − tToll  (扣掉司机付给收费站的过桥钱)
+                    //   净收入 (Net Profit) = tInc − tExp − tPlatformFee   (toll 是 pass-through, 不影响 net)
+                    var platformPay = tInc - tPlatformFee;
+                    var realEarnings = platformPay - tToll;
                     var bigNumKey = "dash_bignum_"+mo;
                     var bigExp = collOpen.bigNum === true;
                     return React.createElement('div', {style:{marginBottom:14}},
@@ -3768,15 +3769,11 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                             React.createElement('span', null, lang==="en"?"Bonus":"奖励"),
                             React.createElement('span', null, fmt(tBonus))
                           ) : null,
-                          // Layer 2: + toll = 总营业额
-                          tToll>0 ? React.createElement('div', {style:{display:"flex",justifyContent:"space-between"}},
-                            React.createElement('span', {style:{color:C.text3}}, "+ ", lang==="en"?"Toll reimbursed":"过桥退款"),
-                            React.createElement('span', {style:{color:"#5ADA7A"}}, "+", fmt(tToll))
-                          ) : null,
-                          tToll>0 ? React.createElement('div', {style:{display:"flex",justifyContent:"space-between",paddingTop:5,borderTop:"1px dashed #1F3A5A"}},
-                            React.createElement('span', {style:{color:C.text2,fontWeight:600}}, lang==="en"?"Gross Revenue":"总营业额"),
-                            React.createElement('b', {style:{color:C.accent2}}, fmt(grossWithToll))
-                          ) : null,
+                          // = Gross Payment (Uber's term — already includes toll if any)
+                          React.createElement('div', {style:{display:"flex",justifyContent:"space-between",paddingTop:5,borderTop:"1px dashed #1F3A5A"}},
+                            React.createElement('span', {style:{color:C.text2,fontWeight:600}}, lang==="en"?"Gross Payment":"总营业额"),
+                            React.createElement('b', {style:{color:C.accent2}}, fmt(tInc))
+                          ),
                           // Layer 3: − platform fee
                           tPlatformFee>0 ? React.createElement('div', {style:{display:"flex",justifyContent:"space-between"}},
                             React.createElement('span', {style:{color:C.text3}}, "− ", lang==="en"?"Platform fee":"平台抽成"),
@@ -3947,7 +3944,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                     );
                   }())
 
-                , tInc>0&&tExp>0 ? (function(){var grps={"车辆":0,"牌照":0,"平台":0,"其他":0};feAll.forEach(function(e){var cat=allC[e.category];var g=cat?(cat.g||"其他"):"其他";if(grps[g]!==undefined)grps[g]+=(+e.amount||0);else grps["其他"]+=(+e.amount||0);});var gcols={"车辆":C.accent,"牌照":C.gold,"平台":"#CC88FF","其他":"#7A9AB8"};var glbls=lang==="en"?{"车辆":"Vehicle","牌照":"License","平台":"Platform","其他":"Other"}:{"车辆":"车辆","牌照":"牌照","平台":"平台","其他":"其他"};if(!Object.values(grps).some(function(v){return v>0;}))return null;return React.createElement(Card, { style: {marginTop:10,padding:"14px 16px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, React.createElement('div', { style: {fontSize:FS.xs+1,fontWeight:600,marginBottom:10,color:C.text3,letterSpacing:1.2,textTransform:"uppercase"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, "📊 ", lang==="en"?"Expense Breakdown":"支出分布"), React.createElement('div', { style: {display:"flex",height:14,borderRadius:7,overflow:"hidden",marginBottom:12,background:C.bg4,boxShadow:"inset 0 1px 2px rgba(0,0,0,0.4)"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, Object.entries(grps).map(function(kv){if(!kv[1])return null;return React.createElement('div', { key: kv[0], style: {width:Math.round(kv[1]/tExp*100)+"%",background:gcols[kv[0]],minWidth:2,boxShadow:"0 0 8px "+gcols[kv[0]]+"40"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}} );})), React.createElement('div', { style: {display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, Object.entries(grps).map(function(kv){if(!kv[1])return null;return React.createElement('div', { key: kv[0], style: {display:"flex",alignItems:"center",gap:7}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, React.createElement('div', { style: {width:11,height:11,borderRadius:3,background:gcols[kv[0]],flexShrink:0,boxShadow:"0 0 8px "+gcols[kv[0]]+"60"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}} ), React.createElement('span', { style: {fontSize:FS.md,color:C.text2,fontWeight:500}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, glbls[kv[0]]), React.createElement('span', { style: {fontSize:FS.md,fontWeight:800,color:gcols[kv[0]],marginLeft:"auto",fontVariantNumeric:"tabular-nums"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, Math.round(kv[1]/tExp*100), "%"));}), " " ), React.createElement('div', { style: {borderTop:"1px solid "+C.border,marginTop:10,paddingTop:8,display:"flex",justifyContent:"space-between",alignItems:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, React.createElement('span', { style: {fontSize:FS.md,color:C.text2,fontWeight:500}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, lang==="en"?"Net Rate":"净利润率"), React.createElement('span', { style: {fontSize:FS.lg+1,fontWeight:800,color:net>=0?C.success:C.danger,letterSpacing:0.2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, tInc>0?Math.round(net/tInc*100):0, "%")));}()) : null
+                , tInc>0&&tExp>0 ? (function(){var grps={"车辆":0,"牌照":0,"平台":0,"其他":0};feAll.forEach(function(e){if(e.category==="platform")return;var cat=allC[e.category];var g=cat?(cat.g||"其他"):"其他";if(grps[g]!==undefined)grps[g]+=(+e.amount||0);else grps["其他"]+=(+e.amount||0);});var gcols={"车辆":C.accent,"牌照":C.gold,"平台":"#CC88FF","其他":"#7A9AB8"};var glbls=lang==="en"?{"车辆":"Vehicle","牌照":"License","平台":"Platform","其他":"Other"}:{"车辆":"车辆","牌照":"牌照","平台":"平台","其他":"其他"};if(!Object.values(grps).some(function(v){return v>0;}))return null;return React.createElement(Card, { style: {marginTop:10,padding:"14px 16px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, React.createElement('div', { style: {fontSize:FS.xs+1,fontWeight:600,marginBottom:10,color:C.text3,letterSpacing:1.2,textTransform:"uppercase"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, "📊 ", lang==="en"?"Expense Breakdown":"支出分布"), React.createElement('div', { style: {display:"flex",height:14,borderRadius:7,overflow:"hidden",marginBottom:12,background:C.bg4,boxShadow:"inset 0 1px 2px rgba(0,0,0,0.4)"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, Object.entries(grps).map(function(kv){if(!kv[1])return null;return React.createElement('div', { key: kv[0], style: {width:Math.round(kv[1]/tExp*100)+"%",background:gcols[kv[0]],minWidth:2,boxShadow:"0 0 8px "+gcols[kv[0]]+"40"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}} );})), React.createElement('div', { style: {display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, Object.entries(grps).map(function(kv){if(!kv[1])return null;return React.createElement('div', { key: kv[0], style: {display:"flex",alignItems:"center",gap:7}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, React.createElement('div', { style: {width:11,height:11,borderRadius:3,background:gcols[kv[0]],flexShrink:0,boxShadow:"0 0 8px "+gcols[kv[0]]+"60"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}} ), React.createElement('span', { style: {fontSize:FS.md,color:C.text2,fontWeight:500}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, glbls[kv[0]]), React.createElement('span', { style: {fontSize:FS.md,fontWeight:800,color:gcols[kv[0]],marginLeft:"auto",fontVariantNumeric:"tabular-nums"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, Math.round(kv[1]/tExp*100), "%"));}), " " ), React.createElement('div', { style: {borderTop:"1px solid "+C.border,marginTop:10,paddingTop:8,display:"flex",justifyContent:"space-between",alignItems:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, React.createElement('span', { style: {fontSize:FS.md,color:C.text2,fontWeight:500}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, lang==="en"?"Net Rate":"净利润率"), React.createElement('span', { style: {fontSize:FS.lg+1,fontWeight:800,color:net>=0?C.success:C.danger,letterSpacing:0.2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, tInc>0?Math.round(net/tInc*100):0, "%")));}()) : null
                 , achievements.length>0 ? React.createElement('div', { style: {display:"flex",flexWrap:"wrap",gap:8,marginBottom:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 275}}, achievements.map(function(a,i){return React.createElement(Badge, { key: i, icon: a.icon, text: a.text, color: a.color, bg: a.bg, __self: this, __source: {fileName: _jsxFileName, lineNumber: 275}} );})) : null
                 , tInc > 0 ? React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 276}}
                   , React.createElement('div', {style:{fontSize:FS.xs+1,color:C.text3,marginBottom:6,letterSpacing:1.2,fontWeight:600,textTransform:"uppercase"}}, "💵 ", lang==="en"?"Income Sources":"收入来源")
@@ -4288,6 +4285,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                     var allYE = yAllExps();
                     var groupTotals={"车辆":0,"牌照":0,"平台":0,"其他":0};
                     allYE.forEach(function(e){
+                      if(e.category==="platform") return;  // refOnly: never counted as expense
                       var cat=allC[e.category];
                       var g=cat?(cat.g||"其他"):"其他";
                       if(groupTotals[g]===undefined) g="其他";
@@ -4639,11 +4637,14 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
               var vTips=isMonth?tTips:yStmts.reduce(function(s,x){return s+(+x.tips||0);},0)+yDailies.reduce(function(s,d){return s+(+d.tips||0);},0);
               var vBonus=isMonth?tBonus:yStmts.reduce(function(s,x){return s+(+x.bonus||0);},0);
               var vToll=isMonth?tToll:yStmts.reduce(function(s,x){return s+(+x.tollReimbursed||0);},0)+yDailies.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.tollReimbursed||0):0);},0);
-              var vGrossTotal = vInc + vToll;  // "总营业额" includes toll
+              // Per Uber PDF: Gross Payment already includes toll. Don't double-count.
+              // tInc / yInc = grossFare + tips + bonus = Uber's "Gross Payment". Use that as 总营业额.
+              var vGrossTotal = vInc;
               // Mode breakdown — rideshare comes from sl + dl(rideshare), taxi comes from dl(taxi only)
-              var rsStmtInc = isMonth?mStmts.reduce(function(s,x){return s+(+x.grossFare||0)+(+x.tips||0)+(+x.bonus||0)+(+x.tollReimbursed||0)+(+x.otherIncome||0);},0):yStmts.reduce(function(s,x){return s+(+x.grossFare||0)+(+x.tips||0)+(+x.bonus||0)+(+x.tollReimbursed||0)+(+x.otherIncome||0);},0);
+              // (Don't include tollReimbursed here either — it's pass-through, already in grossFare per Uber PDF.)
+              var rsStmtInc = isMonth?mStmts.reduce(function(s,x){return s+(+x.grossFare||0)+(+x.tips||0)+(+x.bonus||0)+(+x.otherIncome||0);},0):yStmts.reduce(function(s,x){return s+(+x.grossFare||0)+(+x.tips||0)+(+x.bonus||0)+(+x.otherIncome||0);},0);
               var dlSrc = isMonth ? mDailies : yDailies;
-              var rsDlInc = dlSrc.reduce(function(s,d){return d.mode==="rideshare" ? s+(+d.grossFare||0)+(+d.tips||0)+(+d.bonus||0)+(+d.tollReimbursed||0) : s;},0);
+              var rsDlInc = dlSrc.reduce(function(s,d){return d.mode==="rideshare" ? s+(+d.grossFare||0)+(+d.tips||0)+(+d.bonus||0) : s;},0);
               var rsInc = rsStmtInc + rsDlInc;
               // Taxi: only entries WITHOUT mode==="rideshare" (legacy taxi-mode entries)
               var txInc = dlSrc.reduce(function(s,d){return d.mode!=="rideshare" ? s+(+d.cash||0)+(+d.card||0)+(+d.tips||0) : s;},0);
@@ -4668,7 +4669,9 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                     var platTotals = {};
                     stmtsToUse.forEach(function(x){
                       var p = x.platform || "Unknown";
-                      var amt = (+x.grossFare||0)+(+x.tips||0)+(+x.bonus||0)+(+x.tollReimbursed||0)+(+x.otherIncome||0);
+                      // Toll is pass-through and (per Uber PDF) already included in Gross Payment.
+                      // Don't add tollReimbursed here.
+                      var amt = (+x.grossFare||0)+(+x.tips||0)+(+x.bonus||0)+(+x.otherIncome||0);
                       platTotals[p] = (platTotals[p]||0) + amt;
                     });
                     var platEntries = Object.entries(platTotals).filter(function(e){return e[1]>0;}).sort(function(a,b){return b[1]-a[1];});
@@ -4689,12 +4692,11 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                         })
                     );
                   }())
-                // Gross/Tips/Bonus/Toll row
+                // Gross/Tips/Bonus row (toll moved out — it's pass-through, shown on dashboard)
                 , React.createElement('div', { style: {display:"flex",gap:14,fontSize:FS.md,marginBottom:8,flexWrap:"wrap",position:"relative"} }
                     , React.createElement('span', { style: {color:C.text2} }, (lang==="en"?"Gross ":"总车费 ") , React.createElement('b',{style:{color:C.text}},fmt(vGross)))
                     , React.createElement('span', { style: {color:C.text2} }, T.tips, " " , React.createElement('b',{style:{color:C.success}},fmt(vTips)))
                     , vBonus>0 ? React.createElement('span', { style: {color:C.text2} }, T.bonus, " " , React.createElement('b',{style:{color:C.gold}},fmt(vBonus))) : null
-                    , vToll>0 ? React.createElement('span', { style: {color:C.text2} }, T.toll, " " , React.createElement('b',{style:{color:C.accent2}},fmt(vToll))) : null
                   )
                 // Data source counts (small dim text)
                 , React.createElement('div', { style: {fontSize:11,color:C.text3,letterSpacing:0.3} }
@@ -4707,7 +4709,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                   )
               );
             }())
-            , (function(){var vS=incV==="month"?mStmts:yStmts; return vS.length > 0 ? React.createElement('div', { style: {marginBottom:16} }, React.createElement('div', { style: {fontSize:FS.xs+1,color:C.text3,letterSpacing:1.2,marginBottom:10,textTransform:"uppercase",fontWeight:600} }, "💵 " , T.monthly), vS.slice().sort(function(a,b){return (b.month||"").localeCompare(a.month||"");}).map(function(s){var total=(+s.grossFare||0)+(+s.tips||0)+(+s.bonus||0)+(+s.tollReimbursed||0)+(+s.otherIncome||0);return React.createElement('div', { key: s.id, style:{background:C.bg2,borderRadius:RADIUS.md,padding:"12px 14px",marginBottom:8,border:"1px solid "+C.border,boxShadow:SHADOW.sm,transition:"all 0.15s",cursor:"pointer"}, onClick: function(){setStf(Object.assign({trips:"",onlineHours:"",miles:"",notes:""},s));setSf("stmt");}}, React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"center"}}, React.createElement('div', {style:{flex:1,minWidth:0}}, React.createElement('div', { style: {fontSize:FS.lg,fontWeight:700,marginBottom:4,color:C.text}}, s.platform, " · "  , s.month), React.createElement('div', { style: {fontSize:FS.xl,color:C.success,fontWeight:800,letterSpacing:-0.3,fontVariantNumeric:"tabular-nums",marginBottom:6}}, fmt(total)), React.createElement('div', { style: {display:"flex",gap:6,flexWrap:"wrap"}}, s.trips?React.createElement('span', { style: {fontSize:FS.sm+1,background:C.bg4,border:"1px solid "+C.border,borderRadius:6,padding:"3px 9px",color:C.text2,fontWeight:600}}, s.trips, " " , T.trips):null, s.onlineHours?React.createElement('span', { style: {fontSize:FS.sm+1,background:C.bg4,border:"1px solid "+C.border,borderRadius:6,padding:"3px 9px",color:C.text2,fontWeight:600}}, s.onlineHours, "h"):null, s.miles?React.createElement('span', { style: {fontSize:FS.sm+1,background:C.bg4,border:"1px solid "+C.border,borderRadius:6,padding:"3px 9px",color:C.text2,fontWeight:600}}, s.miles, "mi"):null))));}), " " ) : null;}())
+            , (function(){var vS=incV==="month"?mStmts:yStmts; return vS.length > 0 ? React.createElement('div', { style: {marginBottom:16} }, React.createElement('div', { style: {fontSize:FS.xs+1,color:C.text3,letterSpacing:1.2,marginBottom:10,textTransform:"uppercase",fontWeight:600} }, "💵 " , T.monthly), vS.slice().sort(function(a,b){return (b.month||"").localeCompare(a.month||"");}).map(function(s){var total=(+s.grossFare||0)+(+s.tips||0)+(+s.bonus||0)+(+s.otherIncome||0);return React.createElement('div', { key: s.id, style:{background:C.bg2,borderRadius:RADIUS.md,padding:"12px 14px",marginBottom:8,border:"1px solid "+C.border,boxShadow:SHADOW.sm,transition:"all 0.15s",cursor:"pointer"}, onClick: function(){setStf(Object.assign({trips:"",onlineHours:"",miles:"",notes:""},s));setSf("stmt");}}, React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"center"}}, React.createElement('div', {style:{flex:1,minWidth:0}}, React.createElement('div', { style: {fontSize:FS.lg,fontWeight:700,marginBottom:4,color:C.text}}, s.platform, " · "  , s.month), React.createElement('div', { style: {fontSize:FS.xl,color:C.success,fontWeight:800,letterSpacing:-0.3,fontVariantNumeric:"tabular-nums",marginBottom:6}}, fmt(total)), React.createElement('div', { style: {display:"flex",gap:6,flexWrap:"wrap"}}, s.trips?React.createElement('span', { style: {fontSize:FS.sm+1,background:C.bg4,border:"1px solid "+C.border,borderRadius:6,padding:"3px 9px",color:C.text2,fontWeight:600}}, s.trips, " " , T.trips):null, s.onlineHours?React.createElement('span', { style: {fontSize:FS.sm+1,background:C.bg4,border:"1px solid "+C.border,borderRadius:6,padding:"3px 9px",color:C.text2,fontWeight:600}}, s.onlineHours, "h"):null, s.miles?React.createElement('span', { style: {fontSize:FS.sm+1,background:C.bg4,border:"1px solid "+C.border,borderRadius:6,padding:"3px 9px",color:C.text2,fontWeight:600}}, s.miles, "mi"):null))));}), " " ) : null;}())
             , (function(){var vW=incV==="month"?mWeeks:yWeeks; return vW.length > 0 ? React.createElement('div', {}, (function(){var tw=vW.reduce(function(s,w){return {trips:s.trips+(+w.trips||0),hours:s.hours+(+w.hours||0),miles:s.miles+(+w.miles||0)};},{trips:0,hours:0,miles:0});if(!tw.trips&&!tw.hours)return null;return React.createElement('div', { style: {background:"linear-gradient(135deg, "+C.bg3+", "+C.bg2+")",border:"1px solid "+C.border,borderRadius:RADIUS.md,marginBottom:10,padding:"14px 16px",boxShadow:SHADOW.sm}}, React.createElement('div', { style: {display:"flex",justifyContent:"space-around",alignItems:"center"}}, tw.trips?React.createElement('div', { style: {textAlign:"center"}}, React.createElement('div', { style: {fontSize:FS.xs+1,color:C.text3,marginBottom:3,letterSpacing:0.5,fontWeight:600,textTransform:"uppercase"}}, T.trips), React.createElement('div', { style: {fontSize:FS.xl,fontWeight:800,color:C.success,letterSpacing:-0.2}}, tw.trips)):null, tw.hours?React.createElement('div', { style: {textAlign:"center"}}, React.createElement('div', { style: {fontSize:FS.xs+1,color:C.text3,marginBottom:3,letterSpacing:0.5,fontWeight:600,textTransform:"uppercase"}}, lang==="en"?"Hours":"时长"), React.createElement('div', { style: {fontSize:FS.xl,fontWeight:800,color:C.accent,letterSpacing:-0.2}}, tw.hours, "h")):null, tw.miles?React.createElement('div', { style: {textAlign:"center"}}, React.createElement('div', { style: {fontSize:FS.xs+1,color:C.text3,marginBottom:3,letterSpacing:0.5,fontWeight:600,textTransform:"uppercase"}}, T.miles), React.createElement('div', { style: {fontSize:FS.xl,fontWeight:800,color:C.gold,letterSpacing:-0.2}}, tw.miles)):null, tw.hours>0&&tInc>0?React.createElement('div', { style: {textAlign:"center"}}, React.createElement('div', { style: {fontSize:FS.xs+1,color:C.text3,marginBottom:3,letterSpacing:0.5,fontWeight:600,textTransform:"uppercase"}}, T.hourlyRate), React.createElement('div', { style: {fontSize:FS.xl,fontWeight:800,color:"#FF9A65",letterSpacing:-0.2}}, fmt(Math.round(tInc/tw.hours*100)/100))):null));}()), " " , React.createElement('div', { style: {fontSize:FS.xs+1,color:C.text3,letterSpacing:1.2,marginBottom:10,textTransform:"uppercase",fontWeight:600}}, "📅 " , T.weekly), vW.slice().sort(function(a,b){return b.weekStart.localeCompare(a.weekStart);}).map(function(w){return React.createElement('div', { key: w.id, style:{background:C.bg2,borderRadius:RADIUS.md,padding:"12px 14px",marginBottom:8,border:"1px solid "+C.border,boxShadow:SHADOW.sm,cursor:"pointer",transition:"all 0.15s"}, onClick: function(){setWf(Object.assign({},w));setSf("week");}}, React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}, React.createElement('div', { style: {flex:1,minWidth:0}}, React.createElement('div', { style: {fontSize:FS.lg,fontWeight:700,color:C.success,marginBottom:4}}, wkLabel(w.weekStart)), React.createElement('div', { style: {fontSize:FS.md+1,color:C.text2,marginBottom:6,fontWeight:500}}, w.platform), (function(){var winc=(+w.grossFare||0)+(+w.tips||0)+(+w.bonus||0)+(+w.tollReimbursed||0);if(winc>0)return React.createElement('div', { style: {fontSize:FS.xl,fontWeight:800,color:C.accent,marginBottom:6,letterSpacing:-0.3,fontVariantNumeric:"tabular-nums"}}, "💵 " , fmt(winc));return null;}()), React.createElement('div', { style: {display:"flex",gap:6,flexWrap:"wrap"}}, w.trips?React.createElement('span', { style: {fontSize:FS.sm+1,background:C.bg4,border:"1px solid "+C.border,borderRadius:6,padding:"3px 9px",color:C.text2,fontWeight:600}}, w.trips, " " , T.trips):null, w.hours?React.createElement('span', { style: {fontSize:FS.sm+1,background:C.bg4,border:"1px solid "+C.border,borderRadius:6,padding:"3px 9px",color:C.text2,fontWeight:600}}, w.hours, "h"):null, w.miles?React.createElement('span', { style: {fontSize:FS.sm+1,background:C.bg4,border:"1px solid "+C.border,borderRadius:6,padding:"3px 9px",color:C.text2,fontWeight:600}}, w.miles, "mi"):null))));}), " " ) : null;}())
             , (function(){
                 var hasStmts = incV==="month" ? mStmts.length>0 : yStmts.length>0;
@@ -6609,7 +6611,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
             sl.forEach(function(s){
               var p=(s.platform||"").toLowerCase(), m=(s.month||"").toLowerCase(), n=(s.notes||"").toLowerCase();
               if(p.indexOf(q)>=0 || m.indexOf(q)>=0 || n.indexOf(q)>=0){
-                var total=(+s.grossFare||0)+(+s.tips||0)+(+s.bonus||0)+(+s.tollReimbursed||0)+(+s.otherIncome||0);
+                var total=(+s.grossFare||0)+(+s.tips||0)+(+s.bonus||0)+(+s.otherIncome||0);
                 hits.push({type:"stmt", date:s.month+"-01", icon:"💵", title:s.platform+" · "+s.month, sub:lang==="en"?"Monthly statement":"月度账单", amount:total, raw:s});
               }
             });
@@ -8468,7 +8470,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                       html+='<table>';
                       html+='<tr><th>'+(lang==="en"?"Month":"月份")+'</th><th>'+(lang==="en"?"Platform":"平台")+'</th><th class="amt">'+(lang==="en"?"Gross":"总车费")+'</th><th class="amt">'+(lang==="en"?"Tips":"小费")+'</th><th class="amt">'+(lang==="en"?"Bonus":"奖励")+'</th><th class="amt">'+(lang==="en"?"Total":"合计")+'</th></tr>';
                       yStmts.sort(function(a,b){return a.month.localeCompare(b.month);}).forEach(function(s){
-                        var t=(+s.grossFare||0)+(+s.tips||0)+(+s.bonus||0)+(+s.tollReimbursed||0)+(+s.otherIncome||0);
+                        var t=(+s.grossFare||0)+(+s.tips||0)+(+s.bonus||0)+(+s.otherIncome||0);
                         html+='<tr><td>'+esc(s.month)+'</td><td>'+esc(s.platform)+'</td><td class="amt">$'+(+s.grossFare||0).toFixed(2)+'</td><td class="amt">$'+(+s.tips||0).toFixed(2)+'</td><td class="amt">$'+(+s.bonus||0).toFixed(2)+'</td><td class="amt">$'+t.toFixed(2)+'</td></tr>';
                       });
                       if(yDls.length>0){
@@ -10128,7 +10130,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                     }else{
                       var r=rd.r;
                       html+='<h2>Income</h2><table><tr><th>Description</th><th class=amt>Amount</th></tr>';
-                      if(rd.stmts&&rd.stmts.length>0){rd.stmts.forEach(function(s){var sub=(+s.grossFare||0)+(+s.tips||0)+(+s.bonus||0)+(+s.tollReimbursed||0)+(+s.otherIncome||0);html+='<tr><td>'+esc(s.platform||"")+(s.month?' · '+esc(s.month):'')+'</td><td class=amt>$'+sub.toFixed(2)+'</td></tr>';});}
+                      if(rd.stmts&&rd.stmts.length>0){rd.stmts.forEach(function(s){var sub=(+s.grossFare||0)+(+s.tips||0)+(+s.bonus||0)+(+s.otherIncome||0);html+='<tr><td>'+esc(s.platform||"")+(s.month?' · '+esc(s.month):'')+'</td><td class=amt>$'+sub.toFixed(2)+'</td></tr>';});}
                       html+='<tr class=total><td>TOTAL INCOME</td><td class=amt>$'+r.rInc.toFixed(2)+'</td></tr></table>';
                       html+='<h2>Expenses</h2><table><tr><th>Category</th><th class=amt>Count</th><th class=amt>Amount</th></tr>';
                       ["车辆","牌照","平台","其他"].forEach(function(g){
@@ -10186,7 +10188,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                       // Financial report (summary)
                       var r=rd.r;
                       html+='<h2>Income</h2><table><tr><th>Description</th><th class=amt>Amount</th></tr>';
-                      if(rd.stmts&&rd.stmts.length>0){rd.stmts.forEach(function(s){var sub=(+s.grossFare||0)+(+s.tips||0)+(+s.bonus||0)+(+s.tollReimbursed||0)+(+s.otherIncome||0);html+='<tr><td>'+esc(s.platform||"")+(s.month?' · '+esc(s.month):'')+'</td><td class=amt>$'+sub.toFixed(2)+'</td></tr>';});}
+                      if(rd.stmts&&rd.stmts.length>0){rd.stmts.forEach(function(s){var sub=(+s.grossFare||0)+(+s.tips||0)+(+s.bonus||0)+(+s.otherIncome||0);html+='<tr><td>'+esc(s.platform||"")+(s.month?' · '+esc(s.month):'')+'</td><td class=amt>$'+sub.toFixed(2)+'</td></tr>';});}
                       html+='<tr class=total><td>TOTAL INCOME</td><td class=amt>$'+r.rInc.toFixed(2)+'</td></tr></table>';
                       html+='<h2>Expenses</h2><table><tr><th>Category</th><th class=amt>Count</th><th class=amt>Amount</th></tr>';
                       ["车辆","牌照","平台","其他"].forEach(function(g){
@@ -10265,7 +10267,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
               ) : (
                 React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 862}}
                   , React.createElement('div', { style: {fontSize:13,fontWeight:800,color:C.accent,letterSpacing:2,marginBottom:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 863}}, lang==="en"?"INCOME":"收入明细")
-                  , reportData.stmts&&reportData.stmts.length>0 ? reportData.stmts.map(function(s){var sub=(+s.grossFare||0)+(+s.tips||0)+(+s.bonus||0)+(+s.tollReimbursed||0)+(+s.otherIncome||0);return React.createElement('div', { key: s.id, style: {marginBottom:14}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 864}}
+                  , reportData.stmts&&reportData.stmts.length>0 ? reportData.stmts.map(function(s){var sub=(+s.grossFare||0)+(+s.tips||0)+(+s.bonus||0)+(+s.otherIncome||0);return React.createElement('div', { key: s.id, style: {marginBottom:14}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 864}}
                     , React.createElement('div', { style: {fontSize:13,fontWeight:700,color:C.text,marginBottom:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 865}}, s.platform)
                     , +s.grossFare>0?React.createElement('div', { style: {display:"flex",justifyContent:"space-between",padding:"3px 0 3px 16px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 866}}, React.createElement('span', { style: {fontSize:13,color:C.text2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 866}}, T.grossFare), React.createElement('span', { style: {fontSize:13,color:C.text}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 866}}, fmt(s.grossFare))):null
                     , +s.tips>0?React.createElement('div', { style: {display:"flex",justifyContent:"space-between",padding:"3px 0 3px 16px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 867}}, React.createElement('span', { style: {fontSize:13,color:C.text2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 867}}, T.tips), React.createElement('span', { style: {fontSize:13,color:C.text}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 867}}, fmt(s.tips))):null
