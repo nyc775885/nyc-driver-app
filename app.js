@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-var APP_VERSION = "v3.12.1";  // ← single source of truth: bump this once per release
+var APP_VERSION = "v3.12.3";  // ← single source of truth: bump this once per release
 console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
@@ -220,7 +220,8 @@ function parseUberTaxSummary(text){
   if(!year) return null;
 
   // Annual totals
-  var kM=text.match(/Gross Trip Earnings\s*\/\s*1099\s*-\s*K\s*\+?\s*\$([\d,]+\.\d{2})/);
+  // Match both formats: with "/1099-K" suffix (newer) and without (older 2024 format)
+  var kM=text.match(/Gross Trip Earnings(?:\*+)?(?:\s*\/\s*1099\s*-\s*K)?\s*\+?\s*\$([\d,]+\.\d{2})/);
   var kTotal=kM?num(kM[1]):0;
   // Fallback: 1099-K box 1a amount
   if(!kTotal){
@@ -228,7 +229,7 @@ function parseUberTaxSummary(text){
     if(k1a) kTotal=num(k1a[1]);
   }
 
-  var necM=text.match(/Total Additional Earnings\s*\/\s*1099\s*-\s*NEC\s*\+?\s*\$([\d,]+\.\d{2})/);
+  var necM=text.match(/Total Additional Earnings(?:\*+)?(?:\s*\/\s*1099\s*-\s*NEC)?\s*\+?\s*\$([\d,]+\.\d{2})/);
   var necTotal=necM?num(necM[1]):0;
   if(!necTotal){
     var nec1=text.match(/Nonemployee compensation\s*\$?([\d,]+\.\d{2})/);
@@ -288,6 +289,57 @@ function parseUberTaxSummary(text){
       // monthlyTips stays 0 — we couldn't pull tips out separately, so they're folded into fare.
     }
   }
+
+  // === SMART RECOVERY: find the 3 column totals via math — works for ANY PDF format ===
+  // Every Uber Tax Summary PDF has 3 big numbers: Gross | Fees | Net Payout
+  // satisfying Gross − Fees = Net Payout. If our regex extraction missed something,
+  // we recover it from this math relation. This makes the parser resilient to Uber
+  // renaming labels.
+  // Algorithm: (1) Gross is the LARGEST $ amount in the doc (always). (2) For fees,
+  // find amount B such that (A−B) exists in the doc AND B/A is in a realistic Uber
+  // take-rate range (20-55%). Pick the candidate whose ratio is closest to 37% (the
+  // typical Uber take after fees+tax). This rules out (Gross − Bonus = TripEarnings)
+  // and (NetPayout − Toll = NetEarnings) false positives.
+  var smartGross=0, smartFees=0, smartNetPayout=0;
+  (function smartRecover(){
+    var allAmounts = [];
+    var amtRe = /\$\s*([\d,]+\.\d{2})/g;
+    var amtMatch;
+    while((amtMatch = amtRe.exec(text)) !== null){
+      var v = num(amtMatch[1]);
+      if(v > 50 && v < 1000000) allAmounts.push(v);
+    }
+    if(allAmounts.length < 3) return;
+    // Largest amount IS Gross Payment
+    var maxA = 0;
+    for(var i=0;i<allAmounts.length;i++) if(allAmounts[i]>maxA) maxA=allAmounts[i];
+    // Find best (B,C) with maxA − B = C, B/maxA in [0.20, 0.55], score by closeness to 0.37
+    var best=null, bestScore=999;
+    for(var j=0;j<allAmounts.length;j++){
+      var B=allAmounts[j];
+      if(B>=maxA) continue;
+      var ratio = B/maxA;
+      if(ratio < 0.20 || ratio > 0.55) continue;
+      var targetC = maxA - B;
+      for(var k=0;k<allAmounts.length;k++){
+        var C=allAmounts[k];
+        if(Math.abs(C-targetC)<0.05 && B>0 && C>0){
+          var score = Math.abs(ratio - 0.37);
+          if(score < bestScore){
+            bestScore = score;
+            best = {gross:maxA, fees:B, netPayout:C};
+          }
+        }
+      }
+    }
+    if(!best) return;
+    smartGross=best.gross; smartFees=best.fees; smartNetPayout=best.netPayout;
+    // Recover missing fields from triple
+    if(!feesTotal) feesTotal=best.fees;
+    if(monthlyGrossOnly===0 && kTotal===0){
+      monthlyGrossOnly = best.gross - (necTotal||0);
+    }
+  })();
   
   return {
     year:year,
