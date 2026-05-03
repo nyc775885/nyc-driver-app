@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-var APP_VERSION = "v3.11.95";  // ← single source of truth: bump this once per release
+var APP_VERSION = "v3.11.96";  // ← single source of truth: bump this once per release
 console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
@@ -4794,11 +4794,11 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                       + mDailies.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.platformFee||0):0);},0);
                     if(vPlatformFee<=0 && vToll<=0) return null;
                     // Match Uber PDF's true logic:
-                    //   Gross Payment (车费+小费+奖励) − Uber Fees = Net Earnings (劳动净所得)
-                    //   Net Earnings + Toll Refund = Net Payout (实银行入账)
+                    //   Gross Payment − Uber Fees − Toll Refund = Net Earnings (your true labor income)
+                    //   Net Earnings + Toll Refund = Net Payout (what Uber deposits, includes toll for you to pay back)
                     var grossPayment = vGross + vTips + vBonus;  // = $4,725.34 in user's case
-                    var netEarnings = grossPayment - vPlatformFee;  // Uber's "Net Earnings" = $2,727.31
-                    var bankDeposit = netEarnings + vToll;  // Uber's "Net Payout" = $2,895.76
+                    var netEarnings = grossPayment - vPlatformFee - vToll;  // Uber's "Net Earnings" = $2,727.31 (toll washed out)
+                    var bankDeposit = grossPayment - vPlatformFee;  // Uber's "Net Payout" = $2,895.76 (includes toll refund)
                     // Color groups (per user spec):
                     var COL_FLOW = C.accent2;      // 总营业额 / Uber 抽成 / 平台到账 — same color (Uber-side flow nodes)
                     var COL_NET  = C.success;      // 净到账 — green (your real earnings)
@@ -5046,8 +5046,10 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                       var grossPayment = (+s.grossFare||0)+(+s.tips||0)+(+s.bonus||0)+(+s.otherIncome||0);
                       var feeS = +s.platformFee||0;
                       var tollS = +s.tollReimbursed||0;
-                      var bankDeposit = grossPayment - feeS + tollS;  // = Uber's "Net Payout"
-                      var netEarnings = grossPayment - feeS;          // = Uber's "Net Earnings" (toll washed out)
+                      // Match Uber PDF: Net Payout = Gross − Fees (already includes toll refund; toll is part of Net Payout)
+                      // Net Earnings = Gross − Fees − Toll (your true labor income, toll washed out)
+                      var bankDeposit = grossPayment - feeS;          // = Uber's "Net Payout" $2,895.76
+                      var netEarnings = grossPayment - feeS - tollS;  // = Uber's "Net Earnings" $2,727.31
                       return React.createElement('div', { key: s.id, style:{background:C.bg2,borderRadius:RADIUS.md,padding:"14px 16px",marginBottom:8,border:"1px solid "+C.border,boxShadow:SHADOW.sm,cursor:"pointer"}, onClick: function(){setStf(Object.assign({trips:"",onlineHours:"",miles:"",notes:""},s));setSf("stmt");} }
                         // Header — platform · month
                         , React.createElement('div', { style: {fontSize:FS.lg,fontWeight:700,marginBottom:8,color:C.text} }, s.platform, " · ", s.month)
