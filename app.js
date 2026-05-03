@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-var APP_VERSION = "v3.15.7";  // ← single source of truth: bump this once per release
+var APP_VERSION = "v3.15.8";  // ← single source of truth: bump this once per release
 console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
@@ -8217,7 +8217,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                       {icon:"&#128190;",label:T.backup,action:function(){setShowDrawer(false);setShowBackup(true);}},
                       {icon:"🏥",label:lang==="en"?"Health Check":"数据健康检查",action:function(){setShowDrawer(false);setSf("health_check");}},
                       {icon:"🔒",label:lang==="en"?"PIN Lock":"PIN 锁屏",action:function(){setShowDrawer(false);setSf("pin_settings");}},
-                      {icon:"🔍",label:lang==="en"?"Diagnostic":"诊断",action:function(){setShowDrawer(false);setShowElDiag(true);},color:C.warn}
+                      {icon:"🛠",label:lang==="en"?"Data Repair Tools":"数据修复工具",action:function(){setShowDrawer(false);setShowElDiag(true);},color:C.text2}
                     ]
                   },
                   {
@@ -9796,7 +9796,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
           , React.createElement('div', { style: {background:C.bg2,borderRadius:16,width:"100%",maxWidth:620,border:"1px solid "+C.border,maxHeight:"92vh",display:"flex",flexDirection:"column",overflow:"hidden"} }
             , React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 18px",borderBottom:"1px solid #1A2A44",flexShrink:0} }
               , React.createElement('button', { onClick: function(){setShowElDiag(false);}, style: {background:"#1E3050",border:"none",color:"#8ABCD0",fontSize:16,cursor:"pointer",width:34,height:34,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center"} }, "✕")
-              , React.createElement('div', { style: {fontSize:16,fontWeight:800} }, "🔍 ", lang==="en"?"All Expenses (Diagnostic)":"全部支出（诊断）")
+              , React.createElement('div', { style: {fontSize:16,fontWeight:800} }, "🛠 ", lang==="en"?"Data Repair Tools":"数据修复工具")
               , React.createElement('div', { style: {width:34} })
             )
             , React.createElement('div', { style: {padding:"14px 16px",overflowY:"auto",flex:1} }
@@ -10077,73 +10077,8 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                     )
                   );
                 })()
-              // === Summary by month ===
-              , (function(){
-                  // Detect Fuelio-imported entries by content patterns (notes don't literally contain "Fuelio")
-                  // Patterns: charging kWh, EZpass tolls, DMV Inspection, formatted kWh prices
-                  var fuelioPattern = /\bkWh\b|EZpass|mi\/kWh|DMV Inspection/i;
-                  var total = el.reduce(function(s,e){return s+(+e.amount||0);},0);
-                  var byMo = {};
-                  var vidSet = {};
-                  el.forEach(function(e){
-                    var moK = (e.date||"").slice(0,7) || "(no-date)";
-                    if(!byMo[moK]) byMo[moK] = {count:0, total:0, fuelio:0};
-                    byMo[moK].count++;
-                    byMo[moK].total += +e.amount||0;
-                    if(e.notes && fuelioPattern.test(e.notes)) byMo[moK].fuelio++;
-                    if(e.vehicleId) vidSet[e.vehicleId] = (vidSet[e.vehicleId]||0)+1;
-                  });
-                  var moEntries = Object.entries(byMo).sort(function(a,b){return b[0].localeCompare(a[0]);});
-                  var vidCount = Object.keys(vidSet).length;
-                  var fuelioTotal = el.filter(function(e){return e.notes && fuelioPattern.test(e.notes);}).length;
-                  return React.createElement('div', {style:{marginBottom:12}}
-                    , React.createElement('div', {style:{fontSize:13,marginBottom:8,padding:"10px 12px",background:C.bg3,border:"1px solid "+C.border,borderRadius:8}}
-                      , React.createElement('div', {style:{fontWeight:700,color:C.text2,marginBottom:4}}
-                        , lang==="en"?"el array: ":"el 数组：", React.createElement('b',{style:{color:C.gold}}, el.length+(lang==="en"?" entries · $":" 条 · $")+total.toFixed(2)))
-                      , React.createElement('div', {style:{fontSize:11,color:C.text3}}
-                        , lang==="en"?"Vehicles tagged: ":"车辆标签数：", React.createElement('b',{style:{color:C.text2}}, vidCount)
-                        , " · ", lang==="en"?"Fuelio entries: ":"Fuelio 条目：", React.createElement('b',{style:{color:fuelioTotal>0?"#5ADA7A":C.text3}}, fuelioTotal)
-                      )
-                    )
-                    , React.createElement('div', {style:{fontSize:11,color:C.text3,marginBottom:4,fontWeight:700}}, lang==="en"?"By month (newest first):":"按月份（最新在上）：")
-                    , React.createElement('div', {style:{background:C.bg3,border:"1px solid "+C.border,borderRadius:8,padding:"6px 10px",fontSize:11,fontFamily:"monospace",maxHeight:120,overflowY:"auto"}}
-                      , moEntries.length === 0
-                        ? React.createElement('div', {style:{color:C.text3,fontStyle:"italic",padding:"6px 0"}}, lang==="en"?"(empty)":"（空）")
-                        : moEntries.map(function(en){
-                            var hasFuelio = en[1].fuelio > 0;
-                            return React.createElement('div', {key:en[0], style:{display:"flex",justifyContent:"space-between",padding:"2px 0",color:hasFuelio?C.success:C.text2}}
-                              , React.createElement('span', null, en[0])
-                              , React.createElement('span', {style:{color:C.text3}}, en[1].count+(lang==="en"?" · $":" · $")+en[1].total.toFixed(2)+(hasFuelio?" ("+en[1].fuelio+" Fuelio)":""))
-                            );
-                          })
-                    )
-                  );
-                })()
-              // === Full entry list ===
-              , React.createElement('div', {style:{fontSize:11,color:C.text3,marginBottom:6,fontWeight:700}}, lang==="en"?"All entries (date desc):":"所有条目（按日期倒序）：")
-              , React.createElement('div', {style:{background:C.bg3,border:"1px solid "+C.border,borderRadius:8,padding:"6px 10px",fontSize:11,fontFamily:"monospace"}}
-                , (function(){
-                    var sorted = el.slice().sort(function(a,b){return (b.date||"").localeCompare(a.date||"");});
-                    if(sorted.length === 0){
-                      return React.createElement('div', {style:{color:C.text3,fontStyle:"italic",textAlign:"center",padding:"20px 0"}}, lang==="en"?"(no expenses found in el array)":"（el 数组为空）");
-                    }
-                    return sorted.map(function(e,i){
-                      var c = allC[e.category];
-                      var lbl = c ? (c.icon+" "+c.label) : ("? "+e.category);
-                      var notesShort = e.notes ? (" · "+(e.notes.length>40 ? e.notes.slice(0,40)+"…" : e.notes)) : "";
-                      var isFuelio = e.notes && /\bkWh\b|EZpass|mi\/kWh|DMV Inspection/i.test(e.notes);
-                      return React.createElement('div', {key:e.id||i, style:{padding:"4px 0",borderBottom:i<sorted.length-1?"1px solid #1A2A44":"none",display:"flex",justifyContent:"space-between",gap:6,alignItems:"flex-start"}}
-                        , React.createElement('div', {style:{flex:1,minWidth:0}}
-                          , React.createElement('div', {style:{color:isFuelio?C.success:C.text2}}, e.date || "??", " ", lbl)
-                          , notesShort ? React.createElement('div', {style:{color:C.text3,fontSize:10,marginTop:1,wordBreak:"break-word"}}, notesShort.slice(3)) : null
-                        )
-                        , React.createElement('span', {style:{color:C.gold,minWidth:60,textAlign:"right",flexShrink:0}}, "$"+(+e.amount||0).toFixed(2))
-                      );
-                    });
-                  })()
-              )
-              , React.createElement('div', {style:{fontSize:10,color:C.text3,marginTop:10,padding:"8px 10px",background:C.bg3,border:"1px solid "+C.border,borderRadius:8,lineHeight:1.5}}
-                , "💡 ", lang==="en"?"Months with Fuelio data are tinted green. If no green months appear here, the import never saved. If you see them but the main expense list doesn't show them, switch to the matching month — main views filter by month, not by vehicle.":"含 Fuelio 数据的月份用绿色标示。如果这里看不到绿色月份 → 导入根本没存上；如果有但主支出列表看不到 → 切到对应月份，主视图按月份筛选，不会因车辆而隐藏。")
+              // === [removed: el array stats / month breakdown / all entries list / help text]
+              //     Page is now purely action-oriented: only repair tools remain. ===
             )
           )
         )
