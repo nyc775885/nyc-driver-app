@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-var APP_VERSION = "v3.12.3";  // ← single source of truth: bump this once per release
+var APP_VERSION = "v3.12.5";  // ← single source of truth: bump this once per release
 console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
@@ -5590,10 +5590,17 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
 // === Vehicle Profiles section ===
               , (function(){
                   var hasProfiles = savedVehicles && savedVehicles.length > 0;
-                  // Match current veh against saved profiles: prefer vehicleId, fallback to plate
+                  // Match current veh against saved profiles strictly by vehicleId.
+                  // Plate is unreliable as a key — same TLC plate may follow a driver
+                  // across different physical cars over time, and brand/model often differ.
+                  // Plate fallback only applies when neither side has a vehicleId.
                   var currentIdx = hasProfiles ? savedVehicles.findIndex(function(p){
-                    if(p.vehicleId && veh.vehicleId && p.vehicleId === veh.vehicleId) return true;
-                    return (p.plate && p.plate===veh.plate) || (p.tlcPlate && p.tlcPlate===veh.tlcPlate);
+                    if(p.vehicleId && veh.vehicleId) return p.vehicleId === veh.vehicleId;
+                    if(!p.vehicleId && !veh.vehicleId){
+                      return (p.plate && p.plate===veh.plate)
+                          || (p.tlcPlate && p.tlcPlate===veh.tlcPlate);
+                    }
+                    return false;
                   }) : -1;
                   
                   // Save action
@@ -5607,12 +5614,89 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                         // Capture current odometer from latest expense entry (best estimate of "miles when saved")
                         var lastOdoEntry = el.filter(function(e){return e.odometer&&+e.odometer>0;}).sort(function(a,b){var c=b.date.localeCompare(a.date);return c!==0?c:(+b.odometer)-(+a.odometer);})[0];
                         var savedOdo = lastOdoEntry ? +lastOdoEntry.odometer : 0;
-                        var profile=Object.assign({},veh,{_savedName:label.trim(),_savedAt:new Date().toISOString(),_savedOdometer:savedOdo});
+                        // Give veh a fresh vehicleId so it becomes a distinct profile
+                        var newVehicleId = veh.vehicleId || ("v_"+Date.now()+"_"+Math.random().toString(36).slice(2,8));
+                        var newVeh = Object.assign({},veh,{vehicleId:newVehicleId});
+                        if(!veh.vehicleId) setVeh(newVeh);
+                        var profile=Object.assign({},newVeh,{_savedName:label.trim(),_savedAt:new Date().toISOString(),_savedOdometer:savedOdo});
                         setSavedVehicles((savedVehicles||[]).concat([profile]));
                         showToast(lang==="en"?"✓ Saved":"✓ 已保存");
                       }
                     });
                   };
+
+                  // === DRIFT DETECTION: warn when current veh fields don't match the linked profile ===
+                  // This catches: user edits veh's brand/model/year directly without saving as new profile.
+                  // The profile in savedVehicles becomes a "ghost" pointing to a different car than what's
+                  // really in veh — making the switch button do nothing useful.
+                  var driftWarning = null;
+                  if(currentIdx >= 0){
+                    var matched = savedVehicles[currentIdx];
+                    var differs = (
+                      (matched.brand||"")!==(veh.brand||"") ||
+                      (matched.model||"").trim()!==(veh.model||"").trim() ||
+                      (matched.year||"")!==(veh.year||"")
+                    );
+                    if(differs){
+                      driftWarning = React.createElement('div', {style:{padding:"12px 14px",background:"linear-gradient(135deg, rgba(255,140,80,0.10), rgba(40,20,0,0.6))",border:"1px solid rgba(255,140,80,0.4)",borderRadius:10,marginBottom:14}}
+                        , React.createElement('div', {style:{fontSize:13,fontWeight:700,color:"#FFB070",marginBottom:6}}, "⚠ ", lang==="en"?"Vehicle drift detected":"车辆资料不一致")
+                        , React.createElement('div', {style:{fontSize:12,color:C.text2,lineHeight:1.55,marginBottom:10}}
+                          , lang==="en"
+                            ? ("Form shows "+(veh.year||"?")+" "+(veh.brand||"?")+" "+(veh.model||"?")+", but the linked profile is \""+(matched._savedName||matched.brand+" "+matched.model)+"\". Pick what to do:")
+                            : ("当前表单是 "+(veh.year||"?")+" "+(veh.brand||"?")+" "+(veh.model||"?")+"，但关联的 profile 是「"+(matched._savedName||matched.brand+" "+matched.model)+"」。请选择处理方式：")
+                        )
+                        , React.createElement('div', {style:{display:"flex",flexDirection:"column",gap:6}}
+                          , React.createElement('button', {
+                              onClick: function(){
+                                // Give current veh a NEW vehicleId — this detaches it, then save as a new profile.
+                                if(!confirm(lang==="en"
+                                  ? "Treat the current form as a NEW vehicle (separate profile)? You'll be able to switch between this and the original."
+                                  : "把当前表单视作另一辆车（独立 profile）？以后可以在两辆车之间切换。")) return;
+                                var newId = "v_"+Date.now()+"_"+Math.random().toString(36).slice(2,8);
+                                setVeh(Object.assign({},veh,{vehicleId:newId}));
+                                showToast(lang==="en"?"✓ Now save it as a profile below":"✓ 请在下方保存为 profile");
+                              },
+                              style:{background:"#0A2840",border:"1px solid #2A6080",color:"#7AC5FF",fontSize:12,fontWeight:700,padding:"8px",borderRadius:6,cursor:"pointer",textAlign:"left"}
+                            }
+                            , "🆕 ", lang==="en"
+                              ? "This is actually a different vehicle — separate them"
+                              : "这其实是另一辆车 — 拆分为独立 profile"
+                          )
+                          , React.createElement('button', {
+                              onClick: function(){
+                                if(!confirm(lang==="en"
+                                  ? ("Restore "+(matched._savedName||matched.brand+" "+matched.model)+" data into the form? Your current edits will be lost.")
+                                  : ("把 "+(matched._savedName||matched.brand+" "+matched.model)+" 的资料还原到表单？当前的修改会丢失。"))) return;
+                                var restored = Object.assign({},matched);
+                                delete restored._savedName; delete restored._savedAt; delete restored._savedOdometer;
+                                setVeh(restored);
+                                showToast(lang==="en"?"✓ Restored":"✓ 已还原");
+                              },
+                              style:{background:"#0A2820",border:"1px solid #2A6040",color:"#5ADA7A",fontSize:12,fontWeight:700,padding:"8px",borderRadius:6,cursor:"pointer",textAlign:"left"}
+                            }
+                            , "↩ ", lang==="en"
+                              ? ("Restore "+(matched._savedName||matched.brand+" "+matched.model)+" — discard form edits")
+                              : ("还原「"+(matched._savedName||matched.brand+" "+matched.model)+"」资料 — 放弃当前修改")
+                          )
+                          , React.createElement('button', {
+                              onClick: function(){
+                                if(!confirm(lang==="en"
+                                  ? ("Update profile \""+(matched._savedName||"")+"\" with the new form data? It will become "+veh.year+" "+veh.brand+" "+veh.model+".")
+                                  : ("用当前表单数据更新 profile「"+(matched._savedName||"")+"」？它会变成 "+veh.year+" "+veh.brand+" "+veh.model+"。"))) return;
+                                var updated = Object.assign({},veh,{_savedName:matched._savedName,_savedAt:new Date().toISOString(),_savedOdometer:matched._savedOdometer||0});
+                                setSavedVehicles(savedVehicles.map(function(p,i){return i===currentIdx?updated:p;}));
+                                showToast(lang==="en"?"✓ Profile updated":"✓ Profile 已更新");
+                              },
+                              style:{background:"#202028",border:"1px solid #404048",color:C.text3,fontSize:12,fontWeight:600,padding:"8px",borderRadius:6,cursor:"pointer",textAlign:"left"}
+                            }
+                            , "✏ ", lang==="en"
+                              ? "Or just update the existing profile with form data"
+                              : "或用表单数据更新现有 profile"
+                          )
+                        )
+                      );
+                    }
+                  }
                   
                   // EMPTY state — friendly intro + warning if vehicle has data
                   if(!hasProfiles){
@@ -5633,6 +5717,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                   var liveLastOdo = el.filter(function(e){return e.odometer&&+e.odometer>0;}).sort(function(a,b){var c=b.date.localeCompare(a.date);return c!==0?c:(+b.odometer)-(+a.odometer);})[0];
                   var liveOdoMi = liveLastOdo ? +liveLastOdo.odometer : 0;
                   return React.createElement('div', { style: {background:C.bg3,border:"1px solid "+C.border,borderRadius:12,padding:14,marginBottom:16} }
+                    , driftWarning
                     , React.createElement('div', { style: {fontSize:13,fontWeight:700,color:"#90EAF8",marginBottom:10} }, "🚗 " , lang==="en"?"Switch Vehicle":"切换车辆")
                     , React.createElement('div', null
                       , savedVehicles.map(function(p,i){
