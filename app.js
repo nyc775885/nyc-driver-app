@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-var APP_VERSION = "v3.15.3";  // ← single source of truth: bump this once per release
+var APP_VERSION = "v3.15.5";  // ← single source of truth: bump this once per release
 console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
@@ -2277,6 +2277,7 @@ function App() {
   var rFIS=useState({}),fuelioSelected=rFIS[0],setFuelioSelected=rFIS[1]; // {entryIdx: true/false}
   // Expense diagnostic modal — quick scan of all el entries to find missing imports etc.
   var rELD=useState(false),showElDiag=rELD[0],setShowElDiag=rELD[1];
+  var rDiagBump=useState(0),diagBump=rDiagBump[0],setDiagBump=rDiagBump[1];
   // Completion modal state (for ✓ Done on mile-type reminders)
   var rCmp=useState(null),cmpRem=rCmp[0],setCmpRem=rCmp[1];
   var rCmpf=useState({currentMile:"",intervalMile:""}),cmpf=rCmpf[0],setCmpf=rCmpf[1];
@@ -10041,15 +10042,29 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                   try{ d = JSON.parse(dbgRaw); }catch(e){ return null; }
                   if(!d) return null;
                   var ok = !d.parseError && !d.extractError && d.parseEntryCount > 0;
-                  return React.createElement('div', {style:{marginBottom:14,padding:"12px 14px",background:ok?"rgba(0,200,80,0.08)":"rgba(255,80,80,0.10)",border:"1px solid "+(ok?"rgba(0,200,80,0.3)":"rgba(255,80,80,0.3)"),borderRadius:8}}
-                    , React.createElement('div', {style:{fontSize:12,fontWeight:700,color:ok?"#5ADA7A":"#FF8080",marginBottom:6}}
-                      , ok?"✓ ":"⚠ ", lang==="en"?"Last Fuelio import:":"上次 Fuelio 导入：", " ", (d.ts||"").slice(0,19).replace("T"," "))
+                  // Coffee-themed colors: success = matcha green, fail = warm amber (not harsh red)
+                  var bgCol = ok ? "rgba(143,183,121,0.08)" : "rgba(224,160,96,0.06)";
+                  var bdCol = ok ? "rgba(143,183,121,0.30)" : "rgba(224,160,96,0.25)";
+                  var titleCol = ok ? C.success : C.warn;
+                  return React.createElement('div', {style:{marginBottom:14,padding:"12px 14px",background:bgCol,border:"1px solid "+bdCol,borderRadius:8}}
+                    , React.createElement('div', {style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}
+                      , React.createElement('div', {style:{fontSize:12,fontWeight:700,color:titleCol}}
+                        , ok?"✓ ":"ⓘ ", lang==="en"?"Last Fuelio import:":"上次 Fuelio 导入：", " ", (d.ts||"").slice(0,19).replace("T"," "))
+                      , React.createElement('button', {
+                          onClick: function(){
+                            if(!confirm(lang==="en"?"Clear this Fuelio import record? It's just a log — no actual data is removed.":"清除这条 Fuelio 导入记录？只是日志，不会删任何实际数据。")) return;
+                            try{ localStorage.removeItem("nyc_debug_fuelio_pdf"); }catch(e){}
+                            setDiagBump(diagBump+1);
+                          },
+                          style:{background:"none",border:"1px solid "+C.border,color:C.text3,fontSize:10,fontWeight:600,padding:"3px 8px",borderRadius:5,cursor:"pointer"}
+                        }, "✕ ", lang==="en"?"Clear":"清除")
+                    )
                     , React.createElement('div', {style:{fontSize:11,color:C.text2,lineHeight:1.6,fontFamily:"monospace",wordBreak:"break-word"}}
                       , React.createElement('div', null, lang==="en"?"File: ":"文件：", d.fileName||"?", " (", ((d.fileSize||0)/1024).toFixed(1), " KB)")
-                      , React.createElement('div', null, lang==="en"?"Extracted text length: ":"提取文本长度：", React.createElement('b',{style:{color:d.textLen>0?C.text2:C.danger}}, (d.textLen||0).toLocaleString()), " chars")
-                      , d.extractError ? React.createElement('div', {style:{color:C.danger}}, "❌ PDF read error: ", d.extractError) : null
-                      , d.parseError ? React.createElement('div', {style:{color:C.danger}}, "❌ Parse error: ", d.parseError) : null
-                      , React.createElement('div', null, lang==="en"?"Entries parsed: ":"解析到条目数：", React.createElement('b',{style:{color:d.parseEntryCount>0?"#5ADA7A":C.danger}}, d.parseEntryCount||0))
+                      , React.createElement('div', null, lang==="en"?"Extracted text length: ":"提取文本长度：", React.createElement('b',{style:{color:d.textLen>0?C.text2:C.warn}}, (d.textLen||0).toLocaleString()), " chars")
+                      , d.extractError ? React.createElement('div', {style:{color:C.warn}}, "ⓘ PDF read: ", d.extractError) : null
+                      , d.parseError ? React.createElement('div', {style:{color:C.warn}}, "ⓘ Parse: ", d.parseError) : null
+                      , React.createElement('div', null, lang==="en"?"Entries parsed: ":"解析到条目数：", React.createElement('b',{style:{color:d.parseEntryCount>0?C.success:C.warn}}, d.parseEntryCount||0))
                       , d.dateRange ? React.createElement('div', null, lang==="en"?"Date range: ":"日期范围：", React.createElement('b',{style:{color:C.gold}}, d.dateRange)) : null
                       , d.parsePeriod ? React.createElement('div', null, lang==="en"?"Period header: ":"PDF 周期：", d.parsePeriod) : null
                       , React.createElement('div', null, "EV: ", d.parseIsEv?"yes":"no")
