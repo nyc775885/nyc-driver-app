@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-var APP_VERSION = "v3.11.63";  // ← single source of truth: bump this once per release
+var APP_VERSION = "v3.11.69";  // ← single source of truth: bump this once per release
 console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
@@ -73,8 +73,8 @@ class ErrorBoundary extends React.Component {
     return this.props.children;
   }
 }
-var CATS_ZH={fuel:{label:"燃油费",icon:"⛽",g:"车辆",taxable:true},charging:{label:"充电费",icon:"⚡",g:"车辆",taxable:true},toll:{label:"过桥费(月结)",icon:"🌉",g:"车辆",mo:true,taxable:true},congestion:{label:"拥堵费(月结)",icon:"🏙",g:"车辆",mo:true,taxable:true},parking:{label:"停车费",icon:"🅿",g:"车辆",taxable:true},ticket:{label:"停车罚款",icon:"🎫",g:"车辆",taxable:false},carwash:{label:"洗车费",icon:"🧼",g:"车辆",taxable:true},oil:{label:"换机油",icon:"🛢",g:"车辆",taxable:true},tires:{label:"轮胎",icon:"🔄",g:"车辆",taxable:true},brakes:{label:"刹车",icon:"🔩",g:"车辆",taxable:true},battery:{label:"电池",icon:"🔋",g:"车辆",taxable:true},ac:{label:"冷暖气维修",icon:"❄",g:"车辆",taxable:true},cabinFilter:{label:"空调滤芯",icon:"🌬",g:"车辆",taxable:true},airFilter:{label:"空气滤芯",icon:"💨",g:"车辆",taxable:true},wipers:{label:"雨刮片",icon:"🌂",g:"车辆",taxable:true},washer:{label:"玻璃水",icon:"💧",g:"车辆",taxable:true},maint:{label:"定期保养",icon:"🔧",g:"车辆",taxable:true},repair:{label:"意外维修",icon:"🛠",g:"车辆",taxable:true},insurance:{label:"TLC商业保险",icon:"🛡",g:"车辆",taxable:true},carloan:{label:"车贷月付",icon:"💳",g:"车辆",taxable:true},rentalcar:{label:"周租车费",icon:"🔑",g:"车辆",taxable:true},tlc:{label:"TLC驾照费",icon:"📋",g:"牌照",taxable:true},fhv:{label:"FHV车辆执照费",icon:"🚗",g:"牌照",taxable:true},dmv:{label:"DMV驾照",icon:"📝",g:"牌照",taxable:true},drug:{label:"验毒检查",icon:"🧪",g:"牌照",taxable:true},finger:{label:"指纹背景调查",icon:"👆",g:"牌照",taxable:true},ddcourse:{label:"TLC 24小时培训",icon:"📚",g:"牌照",taxable:true},defensive:{label:"DDC防御驾驶课程",icon:"🎓",g:"牌照",taxable:true},wav:{label:"WAV轮椅车辆培训",icon:"♿",g:"牌照",taxable:true},medical:{label:"体检费用",icon:"🩺",g:"牌照",taxable:true},background:{label:"其他背景调查费",icon:"🔎",g:"牌照",taxable:true},platform:{label:"被平台收取的费用(仅记录)",icon:"📋",g:"平台",mo:true,taxable:true,refOnly:true},blackcar:{label:"Black Car Fund(月结)",icon:"🖤",g:"平台",mo:true,taxable:true},uberpro:{label:"Uber Pro",icon:"⭐",g:"平台",taxable:true},phonebill:{label:"手机费",icon:"📱",g:"平台",taxable:true},coffee:{label:"现磨咖啡",icon:"☕",g:"其他",taxable:false},tax:{label:"季度预缴税",icon:"🧾",g:"其他",taxable:false},accountant:{label:"会计费用",icon:"🧮",g:"其他",taxable:true},health:{label:"健康保险",icon:"🏥",g:"其他",taxable:true},meals:{label:"工作餐饮",icon:"🍱",g:"其他",taxable:false},other:{label:"其他支出",icon:"💼",g:"其他",taxable:true}};
-var CATS_EN={fuel:{label:"Gas",icon:"⛽",g:"车辆",taxable:true},charging:{label:"Charging",icon:"⚡",g:"车辆",taxable:true},toll:{label:"Toll(mo)",icon:"🌉",g:"车辆",mo:true,taxable:true},congestion:{label:"Congestion(mo)",icon:"🏙",g:"车辆",mo:true,taxable:true},parking:{label:"Parking",icon:"🅿",g:"车辆",taxable:true},ticket:{label:"Parking Fine",icon:"🎫",g:"车辆",taxable:false},carwash:{label:"Car Wash",icon:"🧼",g:"车辆",taxable:true},oil:{label:"Oil Change",icon:"🛢",g:"车辆",taxable:true},tires:{label:"Tires",icon:"🔄",g:"车辆",taxable:true},brakes:{label:"Brakes",icon:"🔩",g:"车辆",taxable:true},battery:{label:"Battery",icon:"🔋",g:"车辆",taxable:true},ac:{label:"A/C Repair",icon:"❄",g:"车辆",taxable:true},cabinFilter:{label:"Cabin Filter",icon:"🌬",g:"车辆",taxable:true},airFilter:{label:"Air Filter",icon:"💨",g:"车辆",taxable:true},wipers:{label:"Wipers",icon:"🌂",g:"车辆",taxable:true},washer:{label:"Washer Fluid",icon:"💧",g:"车辆",taxable:true},maint:{label:"Maintenance",icon:"🔧",g:"车辆",taxable:true},repair:{label:"Repair",icon:"🛠",g:"车辆",taxable:true},insurance:{label:"TLC Insurance",icon:"🛡",g:"车辆",taxable:true},carloan:{label:"Car Loan",icon:"💳",g:"车辆",taxable:true},rentalcar:{label:"Weekly Rental",icon:"🔑",g:"车辆",taxable:true},tlc:{label:"TLC License",icon:"📋",g:"牌照",taxable:true},fhv:{label:"FHV License",icon:"🚗",g:"牌照",taxable:true},dmv:{label:"DMV License",icon:"📝",g:"牌照",taxable:true},drug:{label:"Drug Test",icon:"🧪",g:"牌照",taxable:true},finger:{label:"Fingerprint",icon:"👆",g:"牌照",taxable:true},ddcourse:{label:"TLC Training",icon:"📚",g:"牌照",taxable:true},defensive:{label:"DDC Course",icon:"🎓",g:"牌照",taxable:true},wav:{label:"WAV Training",icon:"♿",g:"牌照",taxable:true},medical:{label:"Medical Exam",icon:"🩺",g:"牌照",taxable:true},background:{label:"Background Check",icon:"🔎",g:"牌照",taxable:true},platform:{label:"Platform Fees Charged(ref only)",icon:"📋",g:"平台",mo:true,taxable:true,refOnly:true},blackcar:{label:"Black Car Fund(mo)",icon:"🖤",g:"平台",mo:true,taxable:true},uberpro:{label:"Uber Pro",icon:"⭐",g:"平台",taxable:true},phonebill:{label:"Phone Bill",icon:"📱",g:"平台",taxable:true},coffee:{label:"Fresh Coffee",icon:"☕",g:"其他",taxable:false},tax:{label:"Quarterly Tax",icon:"🧾",g:"其他",taxable:false},accountant:{label:"Accountant",icon:"🧮",g:"其他",taxable:true},health:{label:"Health Insurance",icon:"🏥",g:"其他",taxable:true},meals:{label:"Meals",icon:"🍱",g:"其他",taxable:false},other:{label:"Other",icon:"💼",g:"其他",taxable:true}};
+var CATS_ZH={fuel:{label:"燃油费",icon:"⛽",g:"车辆",taxable:true},charging:{label:"充电费",icon:"⚡",g:"车辆",taxable:true},toll:{label:"过桥费(月结)",icon:"🌉",g:"车辆",mo:true,taxable:true},congestion:{label:"拥堵费(月结)",icon:"🏙",g:"车辆",mo:true,taxable:true},parking:{label:"停车费",icon:"🅿",g:"车辆",taxable:true},ticket:{label:"停车罚款",icon:"🎫",g:"车辆",taxable:false},carwash:{label:"洗车费",icon:"🧼",g:"车辆",taxable:true},oil:{label:"换机油",icon:"🛢",g:"车辆",taxable:true},tires:{label:"轮胎",icon:"🔄",g:"车辆",taxable:true},brakes:{label:"刹车",icon:"🔩",g:"车辆",taxable:true},battery:{label:"电池",icon:"🔋",g:"车辆",taxable:true},ac:{label:"冷暖气维修",icon:"❄",g:"车辆",taxable:true},cabinFilter:{label:"空调滤芯",icon:"🌬",g:"车辆",taxable:true},airFilter:{label:"空气滤芯",icon:"💨",g:"车辆",taxable:true},wipers:{label:"雨刮片",icon:"🌂",g:"车辆",taxable:true},washer:{label:"玻璃水",icon:"💧",g:"车辆",taxable:true},maint:{label:"定期保养",icon:"🔧",g:"车辆",taxable:true},repair:{label:"意外维修",icon:"🛠",g:"车辆",taxable:true},insurance:{label:"TLC商业保险",icon:"🛡",g:"车辆",taxable:true},carloan:{label:"车贷月付",icon:"💳",g:"车辆",taxable:true},rentalcar:{label:"周租车费",icon:"🔑",g:"车辆",taxable:true},tlc:{label:"TLC驾照费",icon:"📋",g:"牌照",taxable:true},fhv:{label:"FHV车辆执照费",icon:"🚗",g:"牌照",taxable:true},dmv:{label:"DMV驾照",icon:"📝",g:"牌照",taxable:true},drug:{label:"验毒检查",icon:"🧪",g:"牌照",taxable:true},finger:{label:"指纹背景调查",icon:"👆",g:"牌照",taxable:true},ddcourse:{label:"TLC 24小时培训",icon:"📚",g:"牌照",taxable:true},defensive:{label:"DDC防御驾驶课程",icon:"🎓",g:"牌照",taxable:true},wav:{label:"WAV轮椅车辆培训",icon:"♿",g:"牌照",taxable:true},medical:{label:"体检费用",icon:"🩺",g:"牌照",taxable:true},background:{label:"其他背景调查费",icon:"🔎",g:"牌照",taxable:true},platform:{label:"被平台收取的费用(仅记录)",icon:"📋",g:"平台",mo:true,taxable:true,refOnly:true},blackcar:{label:"Black Car Fund(月结)",icon:"🖤",g:"平台",mo:true,taxable:true},uberpro:{label:"Uber Pro",icon:"⭐",g:"平台",taxable:true},phonebill:{label:"手机费",icon:"📱",g:"其他",taxable:true},coffee:{label:"现磨咖啡",icon:"☕",g:"其他",taxable:false},tax:{label:"季度预缴税",icon:"🧾",g:"其他",taxable:false},accountant:{label:"会计费用",icon:"🧮",g:"其他",taxable:true},health:{label:"健康保险",icon:"🏥",g:"其他",taxable:true},meals:{label:"工作餐饮",icon:"🍱",g:"其他",taxable:false},other:{label:"其他支出",icon:"💼",g:"其他",taxable:true}};
+var CATS_EN={fuel:{label:"Gas",icon:"⛽",g:"车辆",taxable:true},charging:{label:"Charging",icon:"⚡",g:"车辆",taxable:true},toll:{label:"Toll(mo)",icon:"🌉",g:"车辆",mo:true,taxable:true},congestion:{label:"Congestion(mo)",icon:"🏙",g:"车辆",mo:true,taxable:true},parking:{label:"Parking",icon:"🅿",g:"车辆",taxable:true},ticket:{label:"Parking Fine",icon:"🎫",g:"车辆",taxable:false},carwash:{label:"Car Wash",icon:"🧼",g:"车辆",taxable:true},oil:{label:"Oil Change",icon:"🛢",g:"车辆",taxable:true},tires:{label:"Tires",icon:"🔄",g:"车辆",taxable:true},brakes:{label:"Brakes",icon:"🔩",g:"车辆",taxable:true},battery:{label:"Battery",icon:"🔋",g:"车辆",taxable:true},ac:{label:"A/C Repair",icon:"❄",g:"车辆",taxable:true},cabinFilter:{label:"Cabin Filter",icon:"🌬",g:"车辆",taxable:true},airFilter:{label:"Air Filter",icon:"💨",g:"车辆",taxable:true},wipers:{label:"Wipers",icon:"🌂",g:"车辆",taxable:true},washer:{label:"Washer Fluid",icon:"💧",g:"车辆",taxable:true},maint:{label:"Maintenance",icon:"🔧",g:"车辆",taxable:true},repair:{label:"Repair",icon:"🛠",g:"车辆",taxable:true},insurance:{label:"TLC Insurance",icon:"🛡",g:"车辆",taxable:true},carloan:{label:"Car Loan",icon:"💳",g:"车辆",taxable:true},rentalcar:{label:"Weekly Rental",icon:"🔑",g:"车辆",taxable:true},tlc:{label:"TLC License",icon:"📋",g:"牌照",taxable:true},fhv:{label:"FHV License",icon:"🚗",g:"牌照",taxable:true},dmv:{label:"DMV License",icon:"📝",g:"牌照",taxable:true},drug:{label:"Drug Test",icon:"🧪",g:"牌照",taxable:true},finger:{label:"Fingerprint",icon:"👆",g:"牌照",taxable:true},ddcourse:{label:"TLC Training",icon:"📚",g:"牌照",taxable:true},defensive:{label:"DDC Course",icon:"🎓",g:"牌照",taxable:true},wav:{label:"WAV Training",icon:"♿",g:"牌照",taxable:true},medical:{label:"Medical Exam",icon:"🩺",g:"牌照",taxable:true},background:{label:"Background Check",icon:"🔎",g:"牌照",taxable:true},platform:{label:"Platform Fees Charged(ref only)",icon:"📋",g:"平台",mo:true,taxable:true,refOnly:true},blackcar:{label:"Black Car Fund(mo)",icon:"🖤",g:"平台",mo:true,taxable:true},uberpro:{label:"Uber Pro",icon:"⭐",g:"平台",taxable:true},phonebill:{label:"Phone Bill",icon:"📱",g:"其他",taxable:true},coffee:{label:"Fresh Coffee",icon:"☕",g:"其他",taxable:false},tax:{label:"Quarterly Tax",icon:"🧾",g:"其他",taxable:false},accountant:{label:"Accountant",icon:"🧮",g:"其他",taxable:true},health:{label:"Health Insurance",icon:"🏥",g:"其他",taxable:true},meals:{label:"Meals",icon:"🍱",g:"其他",taxable:false},other:{label:"Other",icon:"💼",g:"其他",taxable:true}};
 var PLATS=["Uber","Lyft","Via","Uber Black","Lyft Lux","其他"];
 var GROUPS=["车辆","牌照","平台","其他","自定义"];
 var TABS=["仪表盘","收入","支出","报告"];
@@ -1167,10 +1167,25 @@ function BucketList(p){
   var forceRerender=p.forceRerender||function(){};
   // Default: collapsed. Explicitly set true = expanded.
   var toggle=function(k){__bucketExpanded[k]=__bucketExpanded[k]===true?false:true;forceRerender();};
-  // Group by bucket then by category
-  var B={"车辆":{label:isEn?"🚗 Vehicle":"🚗 车辆",color:C.accent,items:[]},"牌照":{label:isEn?"📋 License":"📋 牌照",color:C.gold,items:[]},"平台":{label:isEn?"📱 Platform":"📱 平台",color:"#AB47BC",items:[]},"其他":{label:isEn?"💼 Other":"💼 其他",color:C.text2,items:[]}};
-  items.forEach(function(x){var g=catGrp(x.category,aC);B[g]?B[g].items.push(x):B["其他"].items.push(x);});
-  return React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 49}}, ["车辆","牌照","平台","其他"].map(function(bk){
+  // Group by bucket. "其他" group items are NOT bucketed — each category becomes its own top-level row.
+  var B={"车辆":{label:isEn?"🚗 Vehicle":"🚗 车辆",color:C.accent,items:[]},"牌照":{label:isEn?"📋 License":"📋 牌照",color:C.gold,items:[]},"平台":{label:isEn?"📱 Platform":"📱 平台",color:"#AB47BC",items:[]}};
+  var otherFlat={};  // {catKey: {label, icon, items[], total, color}}
+  items.forEach(function(x){
+    var g=catGrp(x.category,aC);
+    if(B[g]){
+      B[g].items.push(x);
+    } else {
+      // Other group → flatten by category (each category is its own top-level)
+      var k=x.isFixed?"fx_"+x.fixedLabel:x.category;
+      var cat=aC[x.category];
+      var lbl=x.isFixed?x.fixedLabel:(cat?cat.label:(isEn?"Other":"其他"));
+      var ico=x.isFixed?x.fixedIcon:getIcon(x.category,aC);
+      if(!otherFlat[k]) otherFlat[k]={label:lbl,icon:ico,items:[],total:0,_catKey:k};
+      otherFlat[k].items.push(x);
+      otherFlat[k].total+=(+x.amount||0);
+    }
+  });
+  return React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 49}}, ["车辆","牌照","平台"].map(function(bk){
     var bkt=B[bk];if(!bkt.items.length)return null;
     // Bucket subtotal excludes ref-only categories (they're shown for reference, not counted)
     var bT=bkt.items.reduce(function(s,e){var c=aC[e.category];if(c&&c.refOnly)return s;return s+(+e.amount||0);},0);
@@ -1264,12 +1279,64 @@ function BucketList(p){
         );
       })
     );
-  }));
+  }), 
+  // === Flat "其他" categories — each becomes a top-level row (no parent group label) ===
+  Object.values(otherFlat).sort(function(a,b){return b.total-a.total;}).map(function(cat){
+    var ck = cat._catKey;
+    var groupKey = "other_flat|"+ck;
+    var isExp = __bucketExpanded[groupKey]===true;
+    var hasMultiple = cat.items.length >= 2;
+    return React.createElement('div', { key: ck, style: {marginBottom:10}}
+      , React.createElement('button', { onClick: function(){if(hasMultiple)toggle(groupKey);}, style: {width:"100%",background:C.bg2,border:"1px solid "+C.border,borderRadius:10,padding:"10px 14px",display:"flex",justifyContent:"space-between",alignItems:"center",cursor:hasMultiple?"pointer":"default",marginBottom:isExp?8:0}}
+        , React.createElement('div', { style: {display:"flex",alignItems:"center",gap:10}}
+          , React.createElement('span', { style: {fontSize:18}}, cat.icon)
+          , React.createElement('div', { style: {textAlign:"left"}}
+            , React.createElement('div', { style: {fontSize:14,fontWeight:600,color:C.text}}, cat.label)
+            , React.createElement('div', { style: {fontSize:12,color:C.text3}}, cat.items.length+" "+(p.lang==="en"?(cat.items.length===1?"entry":"entries"):"笔"))
+          )
+        )
+        , React.createElement('div', { style: {display:"flex",alignItems:"center",gap:8}}
+          , React.createElement('span', { style: {fontSize:14,fontWeight:600,color:C.text}}, fmt(cat.total))
+          , hasMultiple ? React.createElement('span', { style: {fontSize:13,color:C.text3,minWidth:14}}, isExp?"▲":"▼") : null
+        )
+      )
+      , (isExp || !hasMultiple) ? React.createElement('div', { style: {paddingLeft:8}},
+          // For single-entry categories: show inline directly (no header click needed)
+          // For multi-entry: show only when expanded
+          p.groupByMonth ? (function(){
+            var byMo={};
+            cat.items.forEach(function(it){
+              var m = it.isFixed ? (it.statementMonth||(it.date||"").slice(0,7)) : (it.date||"").slice(0,7);
+              if(!m) return;
+              if(!byMo[m]) byMo[m]={month:m,total:0,items:[]};
+              byMo[m].total+=(+it.amount||0);
+              byMo[m].items.push(it);
+            });
+            return Object.values(byMo).sort(function(a,b){return b.month.localeCompare(a.month);}).map(function(mo){
+              return mo.items.slice().sort(function(a,b){
+                var ad=a.isFixed?(a.statementMonth||""):(a.date||"");
+                var bd=b.isFixed?(b.statementMonth||""):(b.date||"");
+                if(ad!==bd) return bd.localeCompare(ad);
+                return (b.time||"").localeCompare(a.time||"");
+              }).map(function(item){return React.createElement(ExpItem, { key: item.id, item: item, allC: aC, lang: p.lang, distFromLast: distMap[item.id]||null, onDel: function(){var prev=p.el.slice();p.setEl(p.el.filter(function(x){return x.id!==item.id;}));if(p.showUndo){p.showUndo((p.lang==="en"?"✓ Expense deleted":"✓ 支出已删除"), {prevEl:prev});}}, onEdit: function(){if(item.isFixed){p.onEditFixed&&p.onEditFixed(item);}else{p.onEditExp&&p.onEditExp(item);}}});});
+            });
+          }()) : cat.items.slice().sort(function(a,b){
+            var ad=a.isFixed?(a.statementMonth||""):(a.date||"");
+            var bd=b.isFixed?(b.statementMonth||""):(b.date||"");
+            if(ad!==bd) return bd.localeCompare(ad);
+            return (b.time||"").localeCompare(a.time||"");
+          }).map(function(item){return React.createElement(ExpItem, { key: item.id, item: item, allC: aC, lang: p.lang, distFromLast: distMap[item.id]||null, onDel: function(){var prev=p.el.slice();p.setEl(p.el.filter(function(x){return x.id!==item.id;}));if(p.showUndo){p.showUndo((p.lang==="en"?"✓ Expense deleted":"✓ 支出已删除"), {prevEl:prev});}}, onEdit: function(){if(item.isFixed){p.onEditFixed&&p.onEditFixed(item);}else{p.onEditExp&&p.onEditExp(item);}}});})
+        ) : null
+    );
+  })
+  );
 }
 function CatBreakdown(p){
   if(!p.items.length)return null;
   var cm={};
   p.items.forEach(function(e){
+    var cat0=p.allC[e.category];
+    if(cat0&&cat0.refOnly) return;  // refOnly entries (like platform fees) shown elsewhere; skip from main expense list
     var k=e.isFixed?"fx_"+e.fixedLabel:e.category,cat=p.allC[e.category],lbl=e.isFixed?e.fixedLabel:(cat?cat.label:"其他"),ico=e.isFixed?e.fixedIcon:getIcon(e.category,p.allC);
     if(!cm[k]){cm[k]={label:lbl,icon:ico,total:0,count:0,items:[],_key:k};}
     cm[k].total+=(+e.amount||0);
@@ -1321,7 +1388,7 @@ function CatBreakdown(p){
     );
   }));
 }
-function CatDetail(p){var aC=p.allC,items=p.items,total=p.total;var cm={};items.forEach(function(e){var k=e.isFixed?"fx_"+e.fixedLabel:e.category,cat=aC[e.category],lbl=e.isFixed?e.fixedLabel:(cat?cat.label:"其他"),ico=e.isFixed?e.fixedIcon:getIcon(e.category,aC),grp=catGrp(e.category,aC);if(!cm[k]){cm[k]={label:lbl,icon:ico,total:0,count:0,grp:grp};}cm[k].total+=(+e.amount||0);cm[k].count++;});var sorted=Object.values(cm).sort(function(a,b){return b.total-a.total;});var isEn=p.lang==="en";var totalCount=items.length;return React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 51}}
+function CatDetail(p){var aC=p.allC,items=p.items,total=p.total;var cm={};items.forEach(function(e){var cat0=aC[e.category];if(cat0&&cat0.refOnly)return;var k=e.isFixed?"fx_"+e.fixedLabel:e.category,cat=aC[e.category],lbl=e.isFixed?e.fixedLabel:(cat?cat.label:"其他"),ico=e.isFixed?e.fixedIcon:getIcon(e.category,aC),grp=catGrp(e.category,aC);if(!cm[k]){cm[k]={label:lbl,icon:ico,total:0,count:0,grp:grp};}cm[k].total+=(+e.amount||0);cm[k].count++;});var sorted=Object.values(cm).sort(function(a,b){return b.total-a.total;});var isEn=p.lang==="en";var totalCount=Object.values(cm).reduce(function(s,c){return s+c.count;},0);return React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 51}}
   , React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0 10px",borderBottom:"1px solid #182540",marginBottom:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 51}}
     , React.createElement('span', { style: {fontSize:13,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 51}}, isEn?"Total entries":"总笔数")
     , React.createElement('span', { style: {fontSize:14,fontWeight:700,color:C.accent}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 51}}, totalCount, " " , isEn?(totalCount===1?"entry":"entries"):"笔")
@@ -2113,9 +2180,9 @@ function App() {
   // tExp excludes platformfee — that's separately accounted via tPlatformFee from monthly stmts.
   // Including it here would double-count when net = tInc - tExp - tPlatformFee.
   var tExp=feAll.reduce(function(s,e){return e.category==="platform" ? s : s+(+e.amount||0);},0)+mDailyLease,tFix=fixMo.reduce(function(s,e){return s+(+e.amount||0);},0),net=tInc-tExp-tPlatformFee;
-  var tTrips=mWeeks.reduce(function(s,w){return s+(+w.trips||0);},0)+mDailies.reduce(function(s,d){return s+(+d.trips||0);},0);
-  var tHours=mWeeks.reduce(function(s,w){return s+(+w.hours||0);},0)+mDailies.reduce(function(s,d){return s+(+d.hours||0);},0);
-  var tOnl=mWeeks.reduce(function(s,w){return s+(+w.onlineHours||0);},0),tMiles=mWeeks.reduce(function(s,w){return s+(+w.miles||0);},0)+mDailies.reduce(function(s,d){return s+(+d.miles||0);},0);
+  var tTrips=mWeeks.reduce(function(s,w){return s+(+w.trips||0);},0)+mDailies.reduce(function(s,d){return s+(+d.trips||0);},0)+mStmts.reduce(function(s,x){return s+(+x.trips||0);},0);
+  var tHours=mWeeks.reduce(function(s,w){return s+(+w.hours||0);},0)+mDailies.reduce(function(s,d){return s+(+d.hours||0);},0)+mStmts.reduce(function(s,x){return s+(+x.onlineHours||0);},0);
+  var tOnl=mWeeks.reduce(function(s,w){return s+(+w.onlineHours||0);},0)+mStmts.reduce(function(s,x){return s+(+x.onlineHours||0);},0),tMiles=mWeeks.reduce(function(s,w){return s+(+w.miles||0);},0)+mDailies.reduce(function(s,d){return s+(+d.miles||0);},0)+mStmts.reduce(function(s,x){return s+(+x.miles||0);},0);
   var yMons=[];for(var yi=1;yi<=12;yi++){yMons.push(yr+"-"+p2(yi));}
   var yStmts=useMemo(function(){return sl.filter(function(x){return x.month.slice(0,4)===yr;});},[sl,yr]); var yWeeks=useMemo(function(){return wl.filter(function(w){return w.weekStart&&w.weekStart.slice(0,4)===yr;});},[wl,yr]);
   var yExps=useMemo(function(){return el.filter(function(e){return e.date.slice(0,4)===yr;});},[el,yr]);
@@ -2135,9 +2202,9 @@ function App() {
   var yToll=yStmts.reduce(function(s,x){return s+(+x.tollReimbursed||0);},0)+yDailies.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.tollReimbursed||0):0);},0);
   var yPlatformFee=yStmts.reduce(function(s,x){return s+(+x.platformFee||0);},0)+yDailies.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.platformFee||0):0);},0);
   var yExp=yExps.reduce(function(s,e){return e.category==="platform" ? s : s+(+e.amount||0);},0)+yFixT+yDailyLease,yNet=yInc-yExp-yPlatformFee;
-  var yTrips=wl.filter(function(w){return w.weekStart.slice(0,4)===yr;}).reduce(function(s,w){return s+(+w.trips||0);},0)+yDailies.reduce(function(s,d){return s+(+d.trips||0);},0);
-  var yHours=wl.filter(function(w){return w.weekStart.slice(0,4)===yr;}).reduce(function(s,w){return s+(+w.hours||0);},0)+yDailies.reduce(function(s,d){return s+(+d.hours||0);},0);
-  var yMiles=wl.filter(function(w){return w.weekStart.slice(0,4)===yr;}).reduce(function(s,w){return s+(+w.miles||0);},0)+yDailies.reduce(function(s,d){return s+(+d.miles||0);},0);  var yStmtTrips=yStmts.reduce(function(s,x){return s+(+x.trips||0);},0),yStmtHours=yStmts.reduce(function(s,x){return s+(+x.onlineHours||0);},0),yStmtMiles=yStmts.reduce(function(s,x){return s+(+x.miles||0);},0);
+  var yTrips=wl.filter(function(w){return w.weekStart.slice(0,4)===yr;}).reduce(function(s,w){return s+(+w.trips||0);},0)+yDailies.reduce(function(s,d){return s+(+d.trips||0);},0)+yStmts.reduce(function(s,x){return s+(+x.trips||0);},0);
+  var yHours=wl.filter(function(w){return w.weekStart.slice(0,4)===yr;}).reduce(function(s,w){return s+(+w.hours||0);},0)+yDailies.reduce(function(s,d){return s+(+d.hours||0);},0)+yStmts.reduce(function(s,x){return s+(+x.onlineHours||0);},0);
+  var yMiles=wl.filter(function(w){return w.weekStart.slice(0,4)===yr;}).reduce(function(s,w){return s+(+w.miles||0);},0)+yDailies.reduce(function(s,d){return s+(+d.miles||0);},0)+yStmts.reduce(function(s,x){return s+(+x.miles||0);},0);  var yStmtTrips=yStmts.reduce(function(s,x){return s+(+x.trips||0);},0),yStmtHours=yStmts.reduce(function(s,x){return s+(+x.onlineHours||0);},0),yStmtMiles=yStmts.reduce(function(s,x){return s+(+x.miles||0);},0);
   var mData=yMons.map(function(m){var ms=sl.filter(function(x){return x.month===m;}),me=el.filter(function(e){return e.date.slice(0,7)===m;}),md=dl.filter(function(d){return d.date&&d.date.slice(0,7)===m;}),mf=genFixed(fl,m).reduce(function(s,e){return s+(+e.amount||0);},0),inc=ms.reduce(function(s,x){return s+(+x.grossFare||0)+(+x.tips||0)+(+x.bonus||0)+(+x.otherIncome||0);},0)+md.reduce(function(s,d){if(isCashTip(d))return s;if(d.mode==="rideshare")return s+(+d.grossFare||0)+(+d.tips||0)+(+d.bonus||0);return s+(+d.cash||0)+(+d.card||0)+(+d.tips||0);},0),exp=me.reduce(function(s,e){return e.category==="platform" ? s : s+(+e.amount||0);},0)+mf+md.reduce(function(s,d){return s+(+d.lease||0);},0),mToll=ms.reduce(function(s,x){return s+(+x.tollReimbursed||0);},0)+md.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.tollReimbursed||0):0);},0),mPlat=ms.reduce(function(s,x){return s+(+x.platformFee||0);},0)+md.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.platformFee||0):0);},0);return {m:m,inc:inc,exp:exp,net:inc-exp-mPlat,label:m.slice(5)+"月"};});
   var insW=null;if(veh.lastInsp){var ip=veh.lastInsp.split("-"),baseY=+ip[0],baseM=+ip[1]-1;var isTlc=!!(veh.tlcPlate&&veh.tlcPlate.trim());var addMonths=isTlc?4:12;
     // TLC counts by month, not by day. So "Jan inspection + 4 months" means valid through end of April.
@@ -2160,7 +2227,7 @@ function App() {
       return {id:"_lease_"+(d.id||d.date), date:d.date, category:"carloan", amount:+d.lease, notes:(lang==="en"?"Daily lease":"每日租金"), isFixed:false, _virtual:true};
     });
     return realExps.concat(fixedExps).concat(leaseExps);
-  }; var hourlyRate=tHours>0?Math.round(tInc/tHours*100)/100:0,lastMo=prevMo(mo),lmStmts=sl.filter(function(x){return x.month===lastMo;}),lmWeeks=wl.filter(function(w){return w.weekStart.slice(0,7)===lastMo;}),lmFixMo=genFixed(fl,lastMo),lmDailies=dl.filter(function(d){return d.date&&d.date.slice(0,7)===lastMo;}),lmDlInc=lmDailies.reduce(function(s,d){if(isCashTip(d))return s;if(d.mode==="rideshare")return s+(+d.grossFare||0)+(+d.tips||0)+(+d.bonus||0);return s+(+d.cash||0)+(+d.card||0)+(+d.tips||0);},0),lmDlLease=lmDailies.reduce(function(s,d){return s+(+d.lease||0);},0),lmDlHours=lmDailies.reduce(function(s,d){return s+(+d.hours||0);},0),lmFeAll=el.filter(function(e){var c=allC[e.category];if(c&&c.mo)return (e.statementMonth||e.date.slice(0,7))===lastMo;return e.date.slice(0,7)===lastMo;}).concat(lmFixMo),lmInc=lmStmts.reduce(function(s,x){return s+(+x.grossFare||0)+(+x.tips||0)+(+x.bonus||0)+(+x.otherIncome||0);},0)+lmDlInc,lmExp=lmFeAll.reduce(function(s,e){return e.category==="platform" ? s : s+(+e.amount||0);},0)+lmDlLease,lmToll=lmStmts.reduce(function(s,x){return s+(+x.tollReimbursed||0);},0)+lmDailies.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.tollReimbursed||0):0);},0),lmPlatformFee=lmStmts.reduce(function(s,x){return s+(+x.platformFee||0);},0)+lmDailies.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.platformFee||0):0);},0),lmNet=lmInc-lmExp-lmPlatformFee,lmHours=lmWeeks.reduce(function(s,w){return s+(+w.hours||0);},0)+lmDlHours,lmHourly=lmHours>0?Math.round(lmInc/lmHours*100)/100:0,nextExpiry=ll.filter(function(l){return l.expiryDate;}).sort(function(a,b){return a.expiryDate.localeCompare(b.expiryDate);})[0]
+  }; var hourlyRate=tHours>0?Math.round(tInc/tHours*100)/100:0,lastMo=prevMo(mo),lmStmts=sl.filter(function(x){return x.month===lastMo;}),lmWeeks=wl.filter(function(w){return w.weekStart.slice(0,7)===lastMo;}),lmFixMo=genFixed(fl,lastMo),lmDailies=dl.filter(function(d){return d.date&&d.date.slice(0,7)===lastMo;}),lmDlInc=lmDailies.reduce(function(s,d){if(isCashTip(d))return s;if(d.mode==="rideshare")return s+(+d.grossFare||0)+(+d.tips||0)+(+d.bonus||0);return s+(+d.cash||0)+(+d.card||0)+(+d.tips||0);},0),lmDlLease=lmDailies.reduce(function(s,d){return s+(+d.lease||0);},0),lmDlHours=lmDailies.reduce(function(s,d){return s+(+d.hours||0);},0),lmFeAll=el.filter(function(e){var c=allC[e.category];if(c&&c.mo)return (e.statementMonth||e.date.slice(0,7))===lastMo;return e.date.slice(0,7)===lastMo;}).concat(lmFixMo),lmInc=lmStmts.reduce(function(s,x){return s+(+x.grossFare||0)+(+x.tips||0)+(+x.bonus||0)+(+x.otherIncome||0);},0)+lmDlInc,lmExp=lmFeAll.reduce(function(s,e){return e.category==="platform" ? s : s+(+e.amount||0);},0)+lmDlLease,lmToll=lmStmts.reduce(function(s,x){return s+(+x.tollReimbursed||0);},0)+lmDailies.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.tollReimbursed||0):0);},0),lmPlatformFee=lmStmts.reduce(function(s,x){return s+(+x.platformFee||0);},0)+lmDailies.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.platformFee||0):0);},0),lmNet=lmInc-lmExp-lmPlatformFee,lmHours=lmWeeks.reduce(function(s,w){return s+(+w.hours||0);},0)+lmDlHours+lmStmts.reduce(function(s,x){return s+(+x.onlineHours||0);},0),lmHourly=lmHours>0?Math.round(lmInc/lmHours*100)/100:0,nextExpiry=ll.filter(function(l){return l.expiryDate;}).sort(function(a,b){return a.expiryDate.localeCompare(b.expiryDate);})[0]
     // YEAR-OVER-YEAR comparisons
     // (a) Same month last year — for month-view comparison
     , lyMo = (function(){var p=mo.split("-");return (+p[0]-1)+"-"+p[1];})()
@@ -3690,13 +3757,15 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                     var platformPay = tInc - tPlatformFee;
                     var realEarnings = platformPay - tToll;
                     var bigNumKey = "dash_bignum_"+mo;
-                    var bigExp = collOpen.bigNum === true;
+                    // Two independent expansions: bigPlat (left card), bigNet (right card)
+                    var bigPlat = collOpen.bigPlat === true;
+                    var bigNet = collOpen.bigNet === true;
                     return React.createElement('div', {style:{marginBottom:14}},
                       // Two big number cards side-by-side — Tesla-inspired hero cards
-                      React.createElement('div', {style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:bigExp?10:0}},
+                      React.createElement('div', {style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:(bigPlat||bigNet)?10:0}},
                         // Platform Pay card
                         React.createElement('div', {
-                          onClick:function(){toggleColl("bigNum");},
+                          onClick:function(){toggleColl("bigPlat");},
                           style:{
                             position:"relative",
                             background:"linear-gradient(135deg, rgba(0,212,255,0.08) 0%, rgba(10,30,55,0.95) 60%, rgba(15,20,32,1) 100%)",
@@ -3709,11 +3778,10 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                             transition:"transform 0.15s, box-shadow 0.15s"
                           }
                         },
-                          // Subtle glow effect in top-right
 
                           React.createElement('div', {style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8,position:"relative"}},
                             React.createElement('div', {style:{fontSize:FS.sm,color:C.accent2,letterSpacing:0.5,fontWeight:600,textTransform:"uppercase"}}, "📱 ", lang==="en"?"Platform Pay":"平台到账"),
-                            React.createElement('span', {style:{fontSize:FS.xs,color:C.text3}}, bigExp?"▲":"▼")
+                            React.createElement('span', {style:{fontSize:FS.xs,color:C.text3}}, bigPlat?"▲":"▼")
                           ),
                           React.createElement('div', {style:{fontSize:FS.xl,fontWeight:700,color:C.accent2,letterSpacing:-0.5,lineHeight:1.1,fontVariantNumeric:"tabular-nums",position:"relative"}}, fmt(platformPay)),
                           tToll>0 ? React.createElement('div', {style:{fontSize:FS.xs,color:C.text3,marginTop:6,position:"relative"}}, "−", lang==="en"?"toll ":"过桥 ", fmt(tToll)) : null,
@@ -3721,7 +3789,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                         ),
                         // Net Profit card
                         React.createElement('div', {
-                          onClick:function(){toggleColl("bigNum");},
+                          onClick:function(){toggleColl("bigNet");},
                           style:{
                             position:"relative",
                             background: net>=0 ?
@@ -3741,22 +3809,22 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
 
                           React.createElement('div', {style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8,position:"relative"}},
                             React.createElement('div', {style:{fontSize:FS.sm,color:net>=0?C.success:C.danger,letterSpacing:0.5,fontWeight:600,textTransform:"uppercase",opacity:0.85}}, "💰 ", lang==="en"?"Net Profit":"净收入"),
-                            React.createElement('span', {style:{fontSize:FS.xs,color:C.text3}}, bigExp?"▲":"▼")
+                            React.createElement('span', {style:{fontSize:FS.xs,color:C.text3}}, bigNet?"▲":"▼")
                           ),
                           (function(){var nc=net>=0?C.success:C.danger;return React.createElement('div', {style:{fontSize:FS.xl,fontWeight:700,color:nc,letterSpacing:-0.5,lineHeight:1.1,fontVariantNumeric:"tabular-nums",position:"relative"}}, fmt(net));}()),
                           React.createElement('div', {style:{fontSize:FS.xs,color:C.text3,marginTop:8,position:"relative"}}, lang==="en"?"after all expenses":"扣除所有开销")
                         )
                       ),
-                      // Expanded full breakdown (single card under both)
-                      bigExp ? React.createElement(Card, {style:{padding:"12px 14px",background:C.bg3,border:"1px solid "+C.border}},
-                        React.createElement('div', {style:{fontSize:11,color:C.text3,marginBottom:8,letterSpacing:0.3}}, "📊 ", lang==="en"?"FULL BREAKDOWN":"完整明细"),
+                      // === Left card expansion: PLATFORM-only breakdown ===
+                      // Shows how Gross Payment becomes Platform Pay (and Real Earnings after toll)
+                      bigPlat ? React.createElement(Card, {style:{padding:"12px 14px",background:C.bg3,border:"1px solid "+C.border}},
+                        React.createElement('div', {style:{fontSize:11,color:C.accent2,marginBottom:8,letterSpacing:0.3,fontWeight:600}}, "📱 ", lang==="en"?"PLATFORM BREAKDOWN":"平台明细"),
                         React.createElement('div', {style:{display:"flex",flexDirection:"column",gap:5,fontSize:13,lineHeight:1.5}},
-                          // Layer 1: 营业额 = car fare + tips + bonus
+                          // Layer 1: Gross Payment + sub-items
                           React.createElement('div', {style:{display:"flex",justifyContent:"space-between"}},
-                            React.createElement('span', {style:{color:C.text2}}, lang==="en"?"Revenue":"营业额"),
+                            React.createElement('span', {style:{color:C.text2,fontWeight:600}}, lang==="en"?"Gross Payment":"总营业额"),
                             React.createElement('b', {style:{color:C.accent2}}, fmt(tInc))
                           ),
-                          // Sub-items
                           tGross>0 ? React.createElement('div', {style:{display:"flex",justifyContent:"space-between",fontSize:12,color:C.text3,paddingLeft:18}},
                             React.createElement('span', null, lang==="en"?"Trip earnings":"车费"),
                             React.createElement('span', null, fmt(tGross))
@@ -3769,37 +3837,67 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                             React.createElement('span', null, lang==="en"?"Bonus":"奖励"),
                             React.createElement('span', null, fmt(tBonus))
                           ) : null,
-                          // = Gross Payment (Uber's term — already includes toll if any)
-                          React.createElement('div', {style:{display:"flex",justifyContent:"space-between",paddingTop:5,borderTop:"1px dashed #1F3A5A"}},
-                            React.createElement('span', {style:{color:C.text2,fontWeight:600}}, lang==="en"?"Gross Payment":"总营业额"),
-                            React.createElement('b', {style:{color:C.accent2}}, fmt(tInc))
-                          ),
-                          // Layer 3: − platform fee
-                          tPlatformFee>0 ? React.createElement('div', {style:{display:"flex",justifyContent:"space-between"}},
+                          // − Platform fee
+                          tPlatformFee>0 ? React.createElement('div', {style:{display:"flex",justifyContent:"space-between",paddingTop:5,borderTop:"1px dashed #1F3A5A"}},
                             React.createElement('span', {style:{color:C.text3}}, "− ", lang==="en"?"Platform fee":"平台抽成"),
                             React.createElement('span', {style:{color:C.danger}}, "−", fmt(tPlatformFee))
                           ) : null,
-                          // = Platform Pay (实银行入账)
-                          React.createElement('div', {style:{display:"flex",justifyContent:"space-between",paddingTop:5,borderTop:"1px dashed #1F3A5A"}},
-                            React.createElement('span', {style:{color:C.text2,fontWeight:600}}, "📱 ", lang==="en"?"Platform Pay":"平台到账"),
-                            React.createElement('b', {style:{color:C.accent2}}, fmt(platformPay))
+                          // = Platform Pay
+                          React.createElement('div', {style:{display:"flex",justifyContent:"space-between",paddingTop:5,borderTop:"1px solid "+C.border,marginTop:3}},
+                            React.createElement('span', {style:{color:C.text,fontWeight:700}}, "📱 ", lang==="en"?"Platform Pay (bank)":"平台到账（银行入账）"),
+                            React.createElement('b', {style:{color:C.accent2,fontSize:14}}, fmt(platformPay))
                           ),
-                          // − Toll paid (booth)
+                          // − Toll paid out & = Real Earnings (only if toll > 0)
                           tToll>0 ? React.createElement('div', {style:{display:"flex",justifyContent:"space-between"}},
                             React.createElement('span', {style:{color:C.text3}}, "− ", lang==="en"?"Toll paid (booth)":"过桥支出"),
                             React.createElement('span', {style:{color:C.danger}}, "−", fmt(tToll))
                           ) : null,
-                          // = Real earnings
                           tToll>0 ? React.createElement('div', {style:{display:"flex",justifyContent:"space-between",paddingTop:5,borderTop:"1px dashed #1F3A5A"}},
                             React.createElement('span', {style:{color:C.text2,fontWeight:600}}, lang==="en"?"Real Earnings":"实收"),
                             React.createElement('b', {style:{color:C.gold}}, fmt(realEarnings))
+                          ) : null
+                        )
+                      ) : null,
+                      // === Right card expansion: NET PROFIT breakdown ===
+                      // Starts from Platform Pay → subtract all other expenses → net
+                      bigNet ? React.createElement(Card, {style:{padding:"12px 14px",background:C.bg3,border:"1px solid "+C.border}},
+                        React.createElement('div', {style:{fontSize:11,color:net>=0?C.success:C.danger,marginBottom:8,letterSpacing:0.3,fontWeight:600}}, "💰 ", lang==="en"?"NET PROFIT BREAKDOWN":"净收入明细"),
+                        React.createElement('div', {style:{display:"flex",flexDirection:"column",gap:5,fontSize:13,lineHeight:1.5}},
+                          // Start: Platform Pay
+                          React.createElement('div', {style:{display:"flex",justifyContent:"space-between"}},
+                            React.createElement('span', {style:{color:C.text2,fontWeight:600}}, "📱 ", lang==="en"?"Platform Pay":"平台到账"),
+                            React.createElement('b', {style:{color:C.accent2}}, fmt(platformPay))
+                          ),
+                          // − Toll paid (the "real" cost since Uber's deposit included it)
+                          tToll>0 ? React.createElement('div', {style:{display:"flex",justifyContent:"space-between"}},
+                            React.createElement('span', {style:{color:C.text3}}, "− ", lang==="en"?"Toll paid (booth)":"过桥支出"),
+                            React.createElement('span', {style:{color:C.danger}}, "−", fmt(tToll))
                           ) : null,
-                          // − Other expenses
+                          // − Other expenses (vehicle, license, other — excluding platform refOnly)
                           tExp>0 ? React.createElement('div', {style:{display:"flex",justifyContent:"space-between"}},
                             React.createElement('span', {style:{color:C.text3}}, "− ", lang==="en"?"Other expenses":"其他支出"),
                             React.createElement('span', {style:{color:C.danger}}, "−", fmt(tExp))
                           ) : null,
-                          // = Net profit
+                          // Breakdown of "other expenses" by category group (small dim text)
+                          (function(){
+                            if(tExp<=0) return null;
+                            var grps={"车辆":0,"牌照":0,"其他":0};
+                            feAll.forEach(function(e){
+                              if(e.category==="platform") return;  // refOnly excluded
+                              var cat=allC[e.category];
+                              var g=cat?(cat.g||"其他"):"其他";
+                              if(grps[g]===undefined) g="其他";
+                              grps[g]+=(+e.amount||0);
+                            });
+                            var lbls=lang==="en"?{"车辆":"Vehicle","牌照":"License","其他":"Other"}:{"车辆":"车辆","牌照":"牌照","其他":"其他"};
+                            return Object.entries(grps).filter(function(kv){return kv[1]>0;}).map(function(kv){
+                              return React.createElement('div', {key:kv[0], style:{display:"flex",justifyContent:"space-between",fontSize:12,color:C.text3,paddingLeft:18}},
+                                React.createElement('span', null, lbls[kv[0]]),
+                                React.createElement('span', null, fmt(kv[1]))
+                              );
+                            });
+                          })(),
+                          // = Net Profit
                           React.createElement('div', {style:{display:"flex",justifyContent:"space-between",paddingTop:5,borderTop:"1px solid "+C.border,marginTop:3}},
                             React.createElement('span', {style:{color:C.text,fontWeight:700}}, "💰 ", lang==="en"?"Net Profit":"净收入"),
                             React.createElement('b', {style:{color:net>=0?C.success:C.danger,fontSize:14}}, fmt(net))
@@ -3944,7 +4042,44 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                     );
                   }())
 
-                , tInc>0&&tExp>0 ? (function(){var grps={"车辆":0,"牌照":0,"平台":0,"其他":0};feAll.forEach(function(e){if(e.category==="platform")return;var cat=allC[e.category];var g=cat?(cat.g||"其他"):"其他";if(grps[g]!==undefined)grps[g]+=(+e.amount||0);else grps["其他"]+=(+e.amount||0);});var gcols={"车辆":C.accent,"牌照":C.gold,"平台":"#CC88FF","其他":"#7A9AB8"};var glbls=lang==="en"?{"车辆":"Vehicle","牌照":"License","平台":"Platform","其他":"Other"}:{"车辆":"车辆","牌照":"牌照","平台":"平台","其他":"其他"};if(!Object.values(grps).some(function(v){return v>0;}))return null;return React.createElement(Card, { style: {marginTop:10,padding:"14px 16px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, React.createElement('div', { style: {fontSize:FS.xs+1,fontWeight:600,marginBottom:10,color:C.text3,letterSpacing:1.2,textTransform:"uppercase"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, "📊 ", lang==="en"?"Expense Breakdown":"支出分布"), React.createElement('div', { style: {display:"flex",height:14,borderRadius:7,overflow:"hidden",marginBottom:12,background:C.bg4,boxShadow:"inset 0 1px 2px rgba(0,0,0,0.4)"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, Object.entries(grps).map(function(kv){if(!kv[1])return null;return React.createElement('div', { key: kv[0], style: {width:Math.round(kv[1]/tExp*100)+"%",background:gcols[kv[0]],minWidth:2,boxShadow:"0 0 8px "+gcols[kv[0]]+"40"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}} );})), React.createElement('div', { style: {display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, Object.entries(grps).map(function(kv){if(!kv[1])return null;return React.createElement('div', { key: kv[0], style: {display:"flex",alignItems:"center",gap:7}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, React.createElement('div', { style: {width:11,height:11,borderRadius:3,background:gcols[kv[0]],flexShrink:0,boxShadow:"0 0 8px "+gcols[kv[0]]+"60"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}} ), React.createElement('span', { style: {fontSize:FS.md,color:C.text2,fontWeight:500}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, glbls[kv[0]]), React.createElement('span', { style: {fontSize:FS.md,fontWeight:800,color:gcols[kv[0]],marginLeft:"auto",fontVariantNumeric:"tabular-nums"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, Math.round(kv[1]/tExp*100), "%"));}), " " ), React.createElement('div', { style: {borderTop:"1px solid "+C.border,marginTop:10,paddingTop:8,display:"flex",justifyContent:"space-between",alignItems:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, React.createElement('span', { style: {fontSize:FS.md,color:C.text2,fontWeight:500}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, lang==="en"?"Net Rate":"净利润率"), React.createElement('span', { style: {fontSize:FS.lg+1,fontWeight:800,color:net>=0?C.success:C.danger,letterSpacing:0.2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, tInc>0?Math.round(net/tInc*100):0, "%")));}()) : null
+                , tInc>0&&tExp>0 ? (function(){
+                    // Item-level breakdown — each category gets its own row (no "Other" bucket)
+                    // Group color comes from category's group, but each item is independent
+                    var cm={};
+                    feAll.forEach(function(e){
+                      var cat0=allC[e.category];
+                      if(cat0&&cat0.refOnly) return;  // refOnly (platform fees) shown elsewhere
+                      var k=e.isFixed?"fx_"+e.fixedLabel:e.category;
+                      var lbl=e.isFixed?e.fixedLabel:(cat0?cat0.label:(lang==="en"?"Other":"其他"));
+                      var ico=e.isFixed?e.fixedIcon:(cat0?cat0.icon:"💼");
+                      var grp=cat0?(cat0.g||"其他"):"其他";
+                      if(!cm[k]) cm[k]={label:lbl,icon:ico,grp:grp,total:0};
+                      cm[k].total+=(+e.amount||0);
+                    });
+                    var sorted=Object.values(cm).sort(function(a,b){return b.total-a.total;});
+                    if(!sorted.length) return null;
+                    var gcols={"车辆":C.accent,"牌照":C.gold,"平台":"#CC88FF","其他":"#7A9AB8"};
+                    return React.createElement(Card, { style: {marginTop:10,padding:"14px 16px"}}
+                      , React.createElement('div', { style: {fontSize:FS.xs+1,fontWeight:600,marginBottom:10,color:C.text3,letterSpacing:1.2,textTransform:"uppercase"}}, "📊 ", lang==="en"?"Expense Breakdown":"支出分布")
+                      // Stacked bar — each category is its own segment, colored by group
+                      , React.createElement('div', { style: {display:"flex",height:14,borderRadius:7,overflow:"hidden",marginBottom:12,background:C.bg4}}
+                        , sorted.map(function(c,i){return React.createElement('div', { key: c.label, style: {width:Math.round(c.total/tExp*100)+"%",background:gcols[c.grp]||gcols["其他"],minWidth:2,opacity:0.6+0.4/(i+1)}});})
+                      )
+                      // Each category as its own row — like the detailed list, but compact
+                      , React.createElement('div', { style: {display:"flex",flexDirection:"column",gap:5}}
+                        , sorted.map(function(c){var pct=Math.round(c.total/tExp*100);return React.createElement('div', { key: c.label, style: {display:"flex",alignItems:"center",gap:8,fontSize:FS.md}}
+                          , React.createElement('div', { style: {width:8,height:8,borderRadius:2,background:gcols[c.grp]||gcols["其他"],flexShrink:0}})
+                          , React.createElement('span', { style: {color:C.text2,flex:1}}, c.icon, " ", c.label)
+                          , React.createElement('span', { style: {color:C.text,fontWeight:600,fontVariantNumeric:"tabular-nums"}}, fmt(c.total))
+                          , React.createElement('span', { style: {color:C.text3,fontSize:FS.sm,minWidth:32,textAlign:"right"}}, pct, "%")
+                        );})
+                      )
+                      , React.createElement('div', { style: {borderTop:"1px solid "+C.border,marginTop:10,paddingTop:8,display:"flex",justifyContent:"space-between",alignItems:"center"}}
+                        , React.createElement('span', { style: {fontSize:FS.md,color:C.text2,fontWeight:500}}, lang==="en"?"Net Rate":"净利润率")
+                        , React.createElement('span', { style: {fontSize:FS.lg+1,fontWeight:800,color:net>=0?C.success:C.danger,letterSpacing:0.2}}, tInc>0?Math.round(net/tInc*100):0, "%")
+                      )
+                    );
+                  }()) : null
                 , achievements.length>0 ? React.createElement('div', { style: {display:"flex",flexWrap:"wrap",gap:8,marginBottom:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 275}}, achievements.map(function(a,i){return React.createElement(Badge, { key: i, icon: a.icon, text: a.text, color: a.color, bg: a.bg, __self: this, __source: {fileName: _jsxFileName, lineNumber: 275}} );})) : null
                 , tInc > 0 ? React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 276}}
                   , React.createElement('div', {style:{fontSize:FS.xs+1,color:C.text3,marginBottom:6,letterSpacing:1.2,fontWeight:600,textTransform:"uppercase"}}, "💵 ", lang==="en"?"Income Sources":"收入来源")
