@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-var APP_VERSION = "v3.11.59";  // ← single source of truth: bump this once per release
+var APP_VERSION = "v3.11.62";  // ← single source of truth: bump this once per release
 console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
@@ -2149,7 +2149,18 @@ function App() {
     insW={next:tY+"-"+p2(tM+1)+"-"+p2(tD),diff:Math.round((idEnd-todayMidnight)/86400000),isTlc:isTlc};}
   var insExpDiff=veh.insExpiry?daysFromToday(veh.insExpiry):null; var expiring=ll.filter(function(l){if(!l.expiryDate)return false;var d=daysFromToday(l.expiryDate);var rd=+(l.reminderDays||60);return d!==null&&d>=0&&d<=rd;});
   var expired=ll.filter(function(l){if(!l.expiryDate)return false;var d=daysFromToday(l.expiryDate);return d!==null&&d<0;}); var totalFix=fl.filter(function(f){return f.active&&f.amount;}).reduce(function(s,f){return s+(f.cycle==="annual"?Math.round(+f.amount/12*100)/100:+f.amount);},0); var bldRep=function(p){var isM=p==="month",ri=isM?tInc:yInc,rg=isM?tGross:yStmts.reduce(function(s,x){return s+(+x.grossFare||0);},0),rt=isM?tTips:yStmts.reduce(function(s,x){return s+(+x.tips||0);},0),rb=isM?tBonus:yStmts.reduce(function(s,x){return s+(+x.bonus||0);},0),rtr=isM?tToll:yStmts.reduce(function(s,x){return s+(+x.tollReimbursed||0);},0),rTot=isM?tExp:yExp,rn=ri-rTot,rT=isM?tTrips:yTrips,rH=isM?tHours:yHours,rM=isM?tMiles:yMiles;return {ri:ri,rg:rg,rt:rt,rb:rb,rtr:rtr,rTot:rTot,rn:rn,rTrips:rT,rHours:rH,rMiles:rM};};
-  var yAllExps=function(){return yExps.concat(yMons.reduce(function(acc,m){return acc.concat(genFixed(fl,m));},[]));}; var hourlyRate=tHours>0?Math.round(tInc/tHours*100)/100:0,lastMo=prevMo(mo),lmStmts=sl.filter(function(x){return x.month===lastMo;}),lmWeeks=wl.filter(function(w){return w.weekStart.slice(0,7)===lastMo;}),lmFixMo=genFixed(fl,lastMo),lmDailies=dl.filter(function(d){return d.date&&d.date.slice(0,7)===lastMo;}),lmDlInc=lmDailies.reduce(function(s,d){if(isCashTip(d))return s;if(d.mode==="rideshare")return s+(+d.grossFare||0)+(+d.tips||0)+(+d.bonus||0);return s+(+d.cash||0)+(+d.card||0)+(+d.tips||0);},0),lmDlLease=lmDailies.reduce(function(s,d){return s+(+d.lease||0);},0),lmDlHours=lmDailies.reduce(function(s,d){return s+(+d.hours||0);},0),lmFeAll=el.filter(function(e){var c=allC[e.category];if(c&&c.mo)return (e.statementMonth||e.date.slice(0,7))===lastMo;return e.date.slice(0,7)===lastMo;}).concat(lmFixMo),lmInc=lmStmts.reduce(function(s,x){return s+(+x.grossFare||0)+(+x.tips||0)+(+x.bonus||0)+(+x.otherIncome||0);},0)+lmDlInc,lmExp=lmFeAll.reduce(function(s,e){return e.category==="platform" ? s : s+(+e.amount||0);},0)+lmDlLease,lmToll=lmStmts.reduce(function(s,x){return s+(+x.tollReimbursed||0);},0)+lmDailies.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.tollReimbursed||0):0);},0),lmPlatformFee=lmStmts.reduce(function(s,x){return s+(+x.platformFee||0);},0)+lmDailies.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.platformFee||0):0);},0),lmNet=lmInc-lmExp-lmPlatformFee,lmHours=lmWeeks.reduce(function(s,w){return s+(+w.hours||0);},0)+lmDlHours,lmHourly=lmHours>0?Math.round(lmInc/lmHours*100)/100:0,nextExpiry=ll.filter(function(l){return l.expiryDate;}).sort(function(a,b){return a.expiryDate.localeCompare(b.expiryDate);})[0]
+  var yAllExps=function(){
+    // CRITICAL: must match yExp formula at line 2137:
+    //   yExps (excl. platform refOnly) + fixed expenses + daily lease
+    // Otherwise the report total ≠ expense page total.
+    var realExps = yExps.filter(function(e){return e.category!=="platform";});
+    var fixedExps = yMons.reduce(function(acc,m){return acc.concat(genFixed(fl,m));},[]);
+    // Wrap daily lease as virtual expense entries so CatDetail/BucketList can group them
+    var leaseExps = yDailies.filter(function(d){return +d.lease>0;}).map(function(d){
+      return {id:"_lease_"+(d.id||d.date), date:d.date, category:"carloan", amount:+d.lease, notes:(lang==="en"?"Daily lease":"每日租金"), isFixed:false, _virtual:true};
+    });
+    return realExps.concat(fixedExps).concat(leaseExps);
+  }; var hourlyRate=tHours>0?Math.round(tInc/tHours*100)/100:0,lastMo=prevMo(mo),lmStmts=sl.filter(function(x){return x.month===lastMo;}),lmWeeks=wl.filter(function(w){return w.weekStart.slice(0,7)===lastMo;}),lmFixMo=genFixed(fl,lastMo),lmDailies=dl.filter(function(d){return d.date&&d.date.slice(0,7)===lastMo;}),lmDlInc=lmDailies.reduce(function(s,d){if(isCashTip(d))return s;if(d.mode==="rideshare")return s+(+d.grossFare||0)+(+d.tips||0)+(+d.bonus||0);return s+(+d.cash||0)+(+d.card||0)+(+d.tips||0);},0),lmDlLease=lmDailies.reduce(function(s,d){return s+(+d.lease||0);},0),lmDlHours=lmDailies.reduce(function(s,d){return s+(+d.hours||0);},0),lmFeAll=el.filter(function(e){var c=allC[e.category];if(c&&c.mo)return (e.statementMonth||e.date.slice(0,7))===lastMo;return e.date.slice(0,7)===lastMo;}).concat(lmFixMo),lmInc=lmStmts.reduce(function(s,x){return s+(+x.grossFare||0)+(+x.tips||0)+(+x.bonus||0)+(+x.otherIncome||0);},0)+lmDlInc,lmExp=lmFeAll.reduce(function(s,e){return e.category==="platform" ? s : s+(+e.amount||0);},0)+lmDlLease,lmToll=lmStmts.reduce(function(s,x){return s+(+x.tollReimbursed||0);},0)+lmDailies.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.tollReimbursed||0):0);},0),lmPlatformFee=lmStmts.reduce(function(s,x){return s+(+x.platformFee||0);},0)+lmDailies.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.platformFee||0):0);},0),lmNet=lmInc-lmExp-lmPlatformFee,lmHours=lmWeeks.reduce(function(s,w){return s+(+w.hours||0);},0)+lmDlHours,lmHourly=lmHours>0?Math.round(lmInc/lmHours*100)/100:0,nextExpiry=ll.filter(function(l){return l.expiryDate;}).sort(function(a,b){return a.expiryDate.localeCompare(b.expiryDate);})[0]
     // YEAR-OVER-YEAR comparisons
     // (a) Same month last year — for month-view comparison
     , lyMo = (function(){var p=mo.split("-");return (+p[0]-1)+"-"+p[1];})()
@@ -8895,13 +8906,46 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                     setPasteUberTaxResult(r);
                   }, style: {width:"100%",background:"linear-gradient(135deg,#3A2800,#5A3A00)",border:"none",borderRadius:10,padding:"12px",color:"#FFB300",fontSize:14,fontWeight:800,cursor:"pointer",marginTop:12} }, "🔍 " , lang==="en"?"Parse":"解析")
               , pasteUberTaxResult ? React.createElement('div', { style: {marginTop:14} }
+                  // === Hero card: actual bank deposit (the most important number) ===
+                  , pasteUberTaxResult.isMonthly ? (function(){
+                      // Per Uber's PDF math:
+                      //   Gross Payment = grossFare + tips + bonus = $4,725.34
+                      //   Net Payout (bank deposit) = Gross − Uber fees = $2,895.76
+                      // Toll reimbursement is already INCLUDED in Gross — don't add again.
+                      // (This matches user's toll double-entry accounting rule.)
+                      var gross = +pasteUberTaxResult.monthlyGrossOnly + +pasteUberTaxResult.monthlyTips + +pasteUberTaxResult.necTotal;
+                      var bankNet = gross - +pasteUberTaxResult.feesTotal;
+                      return React.createElement('div', { style: {padding:"16px 18px",background:"linear-gradient(135deg, rgba(0,230,118,0.10), rgba(10,40,25,0.4))",border:"1px solid rgba(0,230,118,0.35)",borderRadius:12,marginBottom:12} }
+                        , React.createElement('div', { style: {fontSize:12,color:C.text3,letterSpacing:0.5,marginBottom:4,textTransform:"uppercase"} }, "🏦 ", lang==="en"?"Net Payout (to your bank)":"实际入账（打入银行）")
+                        , React.createElement('div', { style: {fontSize:24,fontWeight:800,color:"#5ADA7A",letterSpacing:-0.5,fontVariantNumeric:"tabular-nums"} }, "$"+bankNet.toFixed(2))
+                        , React.createElement('div', { style: {fontSize:11,color:C.text3,marginTop:6,lineHeight:1.5} }
+                          , lang==="en"?"Gross ":"营业额 ", "$"+gross.toFixed(2)
+                          , " − ", lang==="en"?"Uber fees ":"Uber 抽成 ", "$"+(+pasteUberTaxResult.feesTotal).toFixed(2)
+                        )
+                        , +pasteUberTaxResult.tollTotal>0 ? React.createElement('div', { style: {fontSize:10,color:C.text3,marginTop:3,fontStyle:"italic"} }
+                          , "💡 ", lang==="en"?"Toll $":"过桥退款 $", (+pasteUberTaxResult.tollTotal).toFixed(2), lang==="en"?" already included in Gross — you still owe it back at the toll plaza.":" 已含在营业额内 — 你还需付给收费站。")
+                        : null
+                      );
+                    })() : null
                   , React.createElement('div', { style: {padding:"14px 16px",background:"#1A1000",border:"1px solid #5A3A00",borderRadius:10,marginBottom:12} }
                     , React.createElement('div', { style: {fontSize:14,fontWeight:800,color:"#FFB300",marginBottom:10} }, "✓ " , pasteUberTaxResult.isMonthly ? (lang==="en"?"Monthly Statement · ":"月度账单 · ")+pasteUberTaxResult.year+"-"+(pasteUberTaxResult.monthNum<10?"0":"")+pasteUberTaxResult.monthNum : (lang==="en"?"Tax Year ":"税务年度 ")+pasteUberTaxResult.year)
                     , React.createElement('div', { style: {display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,fontSize:12,marginBottom:8} }
-                      , React.createElement('div', {}, "💵 1099-K: ", pasteUberTaxResult.kTotal>0 ? React.createElement('b',{style:{color:C.accent}}, "$"+pasteUberTaxResult.kTotal.toFixed(2)) : React.createElement('span',{style:{color:C.text3,fontStyle:"italic"}}, lang==="en"?"none":"无"))
-                      , React.createElement('div', {}, "⭐ 1099-NEC: ", pasteUberTaxResult.necTotal>0 ? React.createElement('b',{style:{color:C.success}}, "$"+pasteUberTaxResult.necTotal.toFixed(2)) : React.createElement('span',{style:{color:C.text3,fontStyle:"italic"}}, lang==="en"?"none":"无"))
-                      , React.createElement('div', {}, "🌉 " , lang==="en"?"Tolls":"过桥退款" , ": ", pasteUberTaxResult.tollTotal>0 ? React.createElement('b',{style:{color:C.gold}}, "$"+pasteUberTaxResult.tollTotal.toFixed(2)) : React.createElement('span',{style:{color:C.text3,fontStyle:"italic"}}, lang==="en"?"none":"无"))
-                      , React.createElement('div', {}, "💸 " , lang==="en"?"Uber Fees":"Uber 抽成" , ": ", pasteUberTaxResult.feesTotal>0 ? React.createElement('b',{style:{color:C.danger}}, "$"+pasteUberTaxResult.feesTotal.toFixed(2)) : React.createElement('span',{style:{color:C.text3,fontStyle:"italic"}}, lang==="en"?"none":"无"))
+                      , pasteUberTaxResult.isMonthly
+                          // Monthly format has no "1099-K" — show Gross Fare + Tips separately (matches the actual save fields)
+                          ? React.createElement('div', {}, "🚕 " , lang==="en"?"Gross Fare":"总车费" , ": ", pasteUberTaxResult.monthlyGrossOnly>0 ? React.createElement('b',{style:{color:C.accent}}, "$"+pasteUberTaxResult.monthlyGrossOnly.toFixed(2)) : React.createElement('span',{style:{color:C.text3,fontStyle:"italic"}}, lang==="en"?"none":"无"))
+                          : React.createElement('div', {}, "💵 1099-K: ", pasteUberTaxResult.kTotal>0 ? React.createElement('b',{style:{color:C.accent}}, "$"+pasteUberTaxResult.kTotal.toFixed(2)) : React.createElement('span',{style:{color:C.text3,fontStyle:"italic"}}, lang==="en"?"none":"无"))
+                      , pasteUberTaxResult.isMonthly
+                          ? React.createElement('div', {}, "💰 " , lang==="en"?"Tips":T.tips , ": ", pasteUberTaxResult.monthlyTips>0 ? React.createElement('b',{style:{color:C.success}}, "$"+pasteUberTaxResult.monthlyTips.toFixed(2)) : React.createElement('span',{style:{color:C.text3,fontStyle:"italic"}}, lang==="en"?"none":"无"))
+                          : React.createElement('div', {}, "⭐ 1099-NEC: ", pasteUberTaxResult.necTotal>0 ? React.createElement('b',{style:{color:C.success}}, "$"+pasteUberTaxResult.necTotal.toFixed(2)) : React.createElement('span',{style:{color:C.text3,fontStyle:"italic"}}, lang==="en"?"none":"无"))
+                      , pasteUberTaxResult.isMonthly
+                          ? React.createElement('div', {}, "⭐ " , lang==="en"?"Incentives":"奖励" , ": ", pasteUberTaxResult.necTotal>0 ? React.createElement('b',{style:{color:C.success}}, "$"+pasteUberTaxResult.necTotal.toFixed(2)) : React.createElement('span',{style:{color:C.text3,fontStyle:"italic"}}, lang==="en"?"none":"无"))
+                          : React.createElement('div', {}, "🌉 " , lang==="en"?"Tolls":"过桥退款" , ": ", pasteUberTaxResult.tollTotal>0 ? React.createElement('b',{style:{color:C.gold}}, "$"+pasteUberTaxResult.tollTotal.toFixed(2)) : React.createElement('span',{style:{color:C.text3,fontStyle:"italic"}}, lang==="en"?"none":"无"))
+                      , pasteUberTaxResult.isMonthly
+                          ? React.createElement('div', {}, "🌉 " , lang==="en"?"Tolls":"过桥退款" , ": ", pasteUberTaxResult.tollTotal>0 ? React.createElement('b',{style:{color:C.gold}}, "$"+pasteUberTaxResult.tollTotal.toFixed(2)) : React.createElement('span',{style:{color:C.text3,fontStyle:"italic"}}, lang==="en"?"none":"无"))
+                          : React.createElement('div', {}, "💸 " , lang==="en"?"Uber Fees":"Uber 抽成" , ": ", pasteUberTaxResult.feesTotal>0 ? React.createElement('b',{style:{color:C.danger}}, "$"+pasteUberTaxResult.feesTotal.toFixed(2)) : React.createElement('span',{style:{color:C.text3,fontStyle:"italic"}}, lang==="en"?"none":"无"))
+                      , pasteUberTaxResult.isMonthly
+                          ? React.createElement('div', {}, "💸 " , lang==="en"?"Uber Fees":"Uber 抽成" , ": ", pasteUberTaxResult.feesTotal>0 ? React.createElement('b',{style:{color:C.danger}}, "$"+pasteUberTaxResult.feesTotal.toFixed(2)) : React.createElement('span',{style:{color:C.text3,fontStyle:"italic"}}, lang==="en"?"none":"无"))
+                          : React.createElement('div', {}, "🚗 " , T.trips , ": ", pasteUberTaxResult.totalTrips>0 ? React.createElement('b', null, pasteUberTaxResult.totalTrips.toLocaleString()) : React.createElement('span',{style:{color:C.text3,fontStyle:"italic"}}, lang==="en"?"none":"无"))
                       , React.createElement('div', {}, "🚗 " , T.trips , ": ", pasteUberTaxResult.totalTrips>0 ? React.createElement('b', null, pasteUberTaxResult.totalTrips.toLocaleString()) : React.createElement('span',{style:{color:C.text3,fontStyle:"italic"}}, lang==="en"?"none":"无"))
                       , React.createElement('div', {}, "🛣 " , T.miles , ": ", pasteUberTaxResult.totalMiles>0 ? React.createElement('b', null, pasteUberTaxResult.totalMiles.toLocaleString()) : React.createElement('span',{style:{color:C.text3,fontStyle:"italic"}}, lang==="en"?"none":"无"))
                     )
