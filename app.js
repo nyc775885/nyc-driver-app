@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-var APP_VERSION = "v3.11.77";  // ← single source of truth: bump this once per release
+var APP_VERSION = "v3.11.80";  // ← single source of truth: bump this once per release
 console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
@@ -3365,10 +3365,6 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
   );
   return (
       React.createElement('div', { style: {minHeight:"100vh",background:C.bg,fontFamily:"'Inter',-apple-system,BlinkMacSystemFont,'PingFang SC','Noto Sans SC','Segoe UI',Roboto,sans-serif",color:C.text}, className: "app-wrapper", __self: this, __source: {fileName: _jsxFileName, lineNumber: 241}}
-      // === Simple Mode banner (subtle reminder) ===
-      , simpleMode ? React.createElement('div', {
-          style: {position:"fixed",bottom:140,left:14,zIndex:9999,background:"#0A2018",border:"1px solid #2A6040",borderRadius:8,padding:"4px 10px",fontSize:11,color:"#5ADA7A",pointerEvents:"none",opacity:0.7}
-        }, "🎯 ", lang==="en"?"Simple":"精简") : null
 
       // === ONBOARDING — first-time welcome (3 steps) ===
       , showOnboarding ? (function(){
@@ -4190,78 +4186,54 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                             : "≈ 每 10 mi 用 "+per10(yStats.eff)+" "+unitName+" · $"+(yStats.cpm*10).toFixed(2)+"/10 mi"
                         ):null
                     ):null
+                    // === Embedded trend chart (this month) — merged from old "Fuel/Charge trend" card ===
+                    , (function(){
+                        var fiAll=el.filter(function(e){return e.category===fuelCat&&+e.amount>0&&e.date&&e.date.slice(0,7)===mo;}).sort(function(a,b){return a.date.localeCompare(b.date);});
+                        var fi=fiAll.slice(-30);
+                        if(fi.length<2) return null;
+                        var allHaveQty = fi.every(function(e){return e.qty&&+e.qty>0;});
+                        var trendMode = allHaveQty ? "price" : "amount";
+                        var pts=fi.map(function(e){
+                          var v = trendMode==="price" ? Math.round(+e.amount/+e.qty*100)/100 : (+e.amount);
+                          return {date:e.date,v:v,qty:+e.qty||0,amount:+e.amount,notes:e.notes||""};
+                        });
+                        var vals=pts.map(function(x){return x.v;});
+                        var minV=Math.min.apply(null,vals),maxV=Math.max.apply(null,vals);
+                        var avgV=vals.reduce(function(a,b){return a+b;},0)/vals.length;
+                        var maxIdx=vals.indexOf(maxV),minIdx=vals.indexOf(minV);
+                        var latest=pts[pts.length-1];
+                        var W=300,H=46,padY=4;
+                        var sx=function(i){return pts.length>1?(i/(pts.length-1))*W:W/2;};
+                        var sy=function(p){return maxV===minV?H/2:H-padY-(p-minV)/(maxV-minV)*(H-2*padY);};
+                        var pathD=pts.map(function(p,i){return (i===0?"M":"L")+sx(i).toFixed(1)+","+sy(p.v).toFixed(1);}).join(" ");
+                        var subTitle = trendMode==="price"
+                          ? (lang==="en"?(fi.length+" fills · avg $"+fmt2(avgV)+(fuelCat==="charging"?"/kWh":"/Gal")):(fi.length+" 次 · 均 $"+fmt2(avgV)+(fuelCat==="charging"?"/kWh":"/Gal")))
+                          : (lang==="en"?(fi.length+" fills · avg $"+fmt2(avgV)+"/fill"):(fi.length+" 次 · 均 $"+fmt2(avgV)+"/次"));
+                        return React.createElement('div', { style: {marginTop:14,paddingTop:12,borderTop:"1px solid "+C.border}}
+                          , React.createElement('div', { style: {fontSize:11,color:C.text3,marginBottom:8,display:"flex",justifyContent:"space-between",alignItems:"center"}}
+                            , React.createElement('span', null, "📈 ", lang==="en"?"Trend":"趋势")
+                            , React.createElement('span', {style:{color:C.text3,fontSize:10}}, subTitle)
+                          )
+                          , React.createElement('div', {style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,marginBottom:8,fontSize:11}}
+                            , React.createElement('div', {style:{textAlign:"center"}}, React.createElement('div',{style:{color:C.text3,fontSize:10}}, lang==="en"?"Highest":"最贵"), React.createElement('div',{style:{color:C.danger,fontWeight:700}}, "$"+fmt2(maxV)))
+                            , React.createElement('div', {style:{textAlign:"center"}}, React.createElement('div',{style:{color:C.text3,fontSize:10}}, lang==="en"?"Lowest":"最便宜"), React.createElement('div',{style:{color:C.success,fontWeight:700}}, "$"+fmt2(minV)))
+                            , React.createElement('div', {style:{textAlign:"center"}}, React.createElement('div',{style:{color:C.text3,fontSize:10}}, lang==="en"?"Latest":"最近"), React.createElement('div',{style:{color:C.gold,fontWeight:700}}, "$"+fmt2(latest.v)))
+                          )
+                          , React.createElement('div', {style:{height:H+16,position:"relative"}}
+                            , React.createElement('svg', {width:"100%",height:H,viewBox:"0 0 "+W+" "+H,preserveAspectRatio:"none",style:{display:"block"}}
+                              , React.createElement('path', {d:pathD,fill:"none",stroke:C.gold,strokeWidth:1.5,vectorEffect:"non-scaling-stroke"})
+                              , pts.map(function(p,i){var isMax=i===maxIdx,isMin=i===minIdx,isLast=i===pts.length-1;var col=isMax?C.danger:isMin?C.success:isLast?C.gold:"#5A6A80";var rad=isMax||isMin||isLast?2.5:1.5;return React.createElement('circle', {key:i,cx:sx(i),cy:sy(p.v),r:rad,fill:col,vectorEffect:"non-scaling-stroke"});})
+                            )
+                            , React.createElement('div', {style:{display:"flex",justifyContent:"space-between",fontSize:9,color:C.text3,marginTop:2}}
+                              , React.createElement('span', null, fmtDate(pts[0].date))
+                              , React.createElement('span', null, fmtDate(pts[pts.length-1].date))
+                            )
+                          )
+                          , trendMode==="amount" ? React.createElement('div', {style:{fontSize:10,color:C.text3,fontStyle:"italic",textAlign:"center",marginTop:4}}, "ⓘ ", lang==="en"?"Showing $/fill (no kWh data on entries)":"显示每次金额（记录里无 kWh 数据）") : null
+                        );
+                      }())
                   );
                 }())
-                , (function(){
-                  // Trend chart: if entries have qty (kWh/Gal), show price-per-unit trend.
-                  // If no qty (Fuelio data without kWh field), fall back to amount-per-fill trend.
-                  if(!collOpen.fuelchart){
-                    var hasFuelData = el.some(function(e){return (e.category==="charging"||e.category==="fuel")&&e.date&&e.date.slice(0,7)===mo&&((e.qty&&+e.qty>0)||(+e.amount>0));});
-                    if(!hasFuelData) return null;
-                    return React.createElement(Card, {style:{marginBottom:8,padding:"10px 14px",cursor:"pointer"}, onClick:function(){toggleColl("fuelchart");}}
-                      , React.createElement('div', {style:{display:"flex",justifyContent:"space-between",alignItems:"center"}}
-                        , React.createElement('div', {style:{fontSize:13,fontWeight:700,color:C.gold}}, "⛽ ", lang==="en"?"Fuel/Charge trend":"加油/充电趋势")
-                        , React.createElement('span', {style:{fontSize:12,color:C.text3}}, "▼")
-                      )
-                    );
-                  }
-                  var hasCharging=el.some(function(e){return e.category==="charging"&&+e.amount>0;});
-                  var hasFuel=el.some(function(e){return e.category==="fuel"&&+e.amount>0;});
-                  var isEv=veh.type==="electric"||(hasCharging&&!hasFuel);
-                  var fuelCat=isEv?"charging":"fuel";var unit=isEv?"/kWh":"/Gal";var unitName=isEv?"kWh":"Gal";
-                  // Filter to current month, sorted by date
-                  var fiAll=el.filter(function(e){return e.category===fuelCat&&+e.amount>0&&e.date&&e.date.slice(0,7)===mo;}).sort(function(a,b){return a.date.localeCompare(b.date);});
-                  var fi=fiAll.slice(-30);
-                  if(fi.length<2)return null;
-                  // Determine trend mode: use price ($/unit) if all have qty; otherwise use amount per fill
-                  var allHaveQty = fi.every(function(e){return e.qty&&+e.qty>0;});
-                  var trendMode = allHaveQty ? "price" : "amount";
-                  var pts=fi.map(function(e){
-                    var v = trendMode==="price" ? Math.round(+e.amount/+e.qty*100)/100 : (+e.amount);
-                    return {date:e.date,v:v,qty:+e.qty||0,amount:+e.amount,notes:e.notes||""};
-                  });
-                  var vals=pts.map(function(x){return x.v;});
-                  var minV=Math.min.apply(null,vals),maxV=Math.max.apply(null,vals);
-                  var avgV=vals.reduce(function(a,b){return a+b;},0)/vals.length;
-                  var maxIdx=vals.indexOf(maxV),minIdx=vals.indexOf(minV);
-                  var latest=pts[pts.length-1];
-                  var titleStr = trendMode==="price"
-                    ? (lang==="en"?(isEv?"Charging · "+fi.length+" fills · avg $"+fmt2(avgV)+unit:"Gas · "+fi.length+" fills · avg $"+fmt2(avgV)+unit):(isEv?"充电 · "+fi.length+" 次 · 均价 $"+fmt2(avgV)+unit:"加油 · "+fi.length+" 次 · 均价 $"+fmt2(avgV)+unit))
-                    : (lang==="en"?(isEv?"Charging · "+fi.length+" fills · avg $"+fmt2(avgV)+"/fill":"Gas · "+fi.length+" fills · avg $"+fmt2(avgV)+"/fill"):(isEv?"充电 · "+fi.length+" 次 · 均 $"+fmt2(avgV)+"/次":"加油 · "+fi.length+" 次 · 均 $"+fmt2(avgV)+"/次"));
-                  var W=300,H=50,padY=4;
-                  var sx=function(i){return pts.length>1?(i/(pts.length-1))*W:W/2;};
-                  var sy=function(p){return maxV===minV?H/2:H-padY-(p-minV)/(maxV-minV)*(H-2*padY);};
-                  var pathD=pts.map(function(p,i){return (i===0?"M":"L")+sx(i).toFixed(1)+","+sy(p.v).toFixed(1);}).join(" ");
-                  return React.createElement(Card, { style: {marginBottom:8,padding:"12px 14px"}}
-                    , React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10,cursor:"pointer"}, onClick: function(){toggleColl("fuelchart");}}
-                      , React.createElement('div', { style: {fontSize:13,fontWeight:700,color:C.gold}}, "⛽ " , titleStr)
-                      , React.createElement('span', { style: {fontSize:12,color:C.text3}}, "▲")
-                    )
-                    , React.createElement('div', { style: {display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:10}}
-                      , React.createElement('div', { style: {textAlign:"center"}}, React.createElement('div', { style: {fontSize:12,color:C.text3}}, lang==="en"?"Highest":"最贵"), React.createElement('div', { style: {fontSize:15,fontWeight:800,color:C.danger}}, "$"+fmt2(maxV)), React.createElement('div', { style: {fontSize:10,color:C.text3}}, fmtDate(pts[maxIdx].date)))
-                      , React.createElement('div', { style: {textAlign:"center"}}, React.createElement('div', { style: {fontSize:12,color:C.text3}}, lang==="en"?"Lowest":"最便宜"), React.createElement('div', { style: {fontSize:15,fontWeight:800,color:C.success}}, "$"+fmt2(minV)), React.createElement('div', { style: {fontSize:10,color:C.text3}}, fmtDate(pts[minIdx].date)))
-                      , React.createElement('div', { style: {textAlign:"center"}}, React.createElement('div', { style: {fontSize:12,color:C.text3}}, lang==="en"?"Latest":"最近"), React.createElement('div', { style: {fontSize:15,fontWeight:800,color:C.gold}}, "$"+fmt2(latest.v)), React.createElement('div', { style: {fontSize:10,color:C.text3}}, fmtDate(latest.date)))
-                    )
-                    , React.createElement('div', { style: {marginBottom:6,height:H+18,position:"relative"}}
-                      , React.createElement('svg', { width:"100%", height:H, viewBox:"0 0 "+W+" "+H, preserveAspectRatio:"none", style:{display:"block"}}
-                        , React.createElement('path', { d: pathD, fill: "none", stroke: C.gold, strokeWidth: 1.5, vectorEffect:"non-scaling-stroke"})
-                        , pts.map(function(p,i){var isMax=i===maxIdx,isMin=i===minIdx,isLast=i===pts.length-1;var col=isMax?C.danger:isMin?C.success:isLast?C.gold:"#5A6A80";var rad=isMax||isMin||isLast?2.5:1.5;return React.createElement('circle', { key: i, cx: sx(i), cy: sy(p.v), r: rad, fill: col, vectorEffect:"non-scaling-stroke"});})
-                      )
-                      , React.createElement('div', { style: {display:"flex",justifyContent:"space-between",fontSize:10,color:C.text3,marginTop:2}}, React.createElement('span', null, fmtDate(pts[0].date)), React.createElement('span', null, fmtDate(pts[pts.length-1].date)))
-                    )
-                    , trendMode==="amount" ? React.createElement('div', {style:{fontSize:10,color:C.text3,fontStyle:"italic",textAlign:"center",marginTop:4}}, "ⓘ ", lang==="en"?"Showing $/fill (no kWh data on entries)":"显示每次金额（记录里无 kWh 数据）") : null
-                    , trendOpen ? React.createElement('div', { style: {marginTop:12,paddingTop:10,borderTop:"1px solid "+C.border}}
-                      , React.createElement('div', { style: {fontSize:12,color:C.text3,marginBottom:6}}, lang==="en"?"All "+fi.length+" fills this month":"本月 "+fi.length+" 次详情")
-                      , pts.slice().reverse().map(function(p,i){var isMax=p.v===maxV,isMin=p.v===minV;var col=isMax?C.danger:isMin?C.success:C.text;return React.createElement('div', { key: i, style: {display:"flex",justifyContent:"space-between",padding:"6px 0",borderBottom:i<pts.length-1?"1px solid "+C.border:"none",fontSize:13}}
-                        , React.createElement('span', { style: {color:C.text2,fontSize:12}}, fmtDate(p.date))
-                        , React.createElement('span', { style: {color:C.text2,fontSize:12,flex:1,marginLeft:8,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}, p.notes)
-                        , p.qty>0 ? React.createElement('span', { style: {color:C.text3,fontSize:12,marginRight:8}}, fmt2(p.qty), unitName) : null
-                        , React.createElement('span', { style: {color:col,fontWeight:700}}, "$"+fmt2(p.amount))
-                      );})
-                    ) : null
-                  );
-                }())
-
                 , (tExp > 0 || tPlatformFee > 0) ? (
                   !collOpen.expDet ? (
                     // Collapsed view — show summary header with platform fee inline
@@ -4810,9 +4782,12 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                     var vPlatformFee = mStmts.reduce(function(s,x){return s+(+x.platformFee||0);},0)
                       + mDailies.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.platformFee||0):0);},0);
                     if(vPlatformFee<=0 && vToll<=0) return null;  // nothing to show
-                    var grossWithToll = vInc + vToll;  // for display: Uber's bank deposit basis
-                    var netPayout = grossWithToll - vPlatformFee;
-                    var realEarnings = netPayout - vToll;
+                    // Per Uber PDF: Gross Payment = grossFare + tips + bonus (does NOT include toll).
+                    // Net to bank = Gross - feesTotal. Toll is a pass-through:
+                    //   Uber reimburses driver toll IN ADDITION to Net Payout (separate line),
+                    //   driver also pays the same amount at the booth → net effect = $0.
+                    // For the driver's "real" pocket, Net Payout already IS the real amount.
+                    var netPayout = vInc - vPlatformFee;  // What hits the bank
                     return React.createElement('div', { style: {marginTop:10,padding:"12px 14px",background:C.bg3,border:"1px solid "+C.border,borderRadius:RADIUS.md,position:"relative"} }
                       , React.createElement('div', { style: {fontSize:11,color:C.text3,marginBottom:8,letterSpacing:0.8,textTransform:"uppercase",fontWeight:600} }, "💰 ", lang==="en"?"Money Flow":"收入明细")
                       , React.createElement('div', { style: {display:"flex",flexDirection:"column",gap:5,fontSize:13,lineHeight:1.5} }
@@ -4821,34 +4796,27 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                           , React.createElement('span', { style: {color:C.text2,fontWeight:600} }, lang==="en"?"Gross Payment":"总营业额")
                           , React.createElement('b', { style: {color:C.accent2,fontVariantNumeric:"tabular-nums"} }, fmt(vInc))
                         )
-                        // + toll reimbursement (if any)
-                        , vToll>0 ? React.createElement('div', { style: {display:"flex",justifyContent:"space-between"} }
-                          , React.createElement('span', { style: {color:C.text3} }, "+ ", lang==="en"?"Toll reimbursed":"过桥退款")
-                          , React.createElement('span', { style: {color:"#5ADA7A",fontVariantNumeric:"tabular-nums"} }, "+", fmt(vToll))
-                        ) : null
-                        , vToll>0 ? React.createElement('div', { style: {display:"flex",justifyContent:"space-between",paddingTop:5,borderTop:"1px dashed #1F3A5A"} }
-                          , React.createElement('span', { style: {color:C.text2} }, lang==="en"?"Uber payout basis":"Uber 总打款")
-                          , React.createElement('span', { style: {color:C.text,fontVariantNumeric:"tabular-nums"} }, fmt(grossWithToll))
-                        ) : null
                         // − Uber fees
                         , vPlatformFee>0 ? React.createElement('div', { style: {display:"flex",justifyContent:"space-between"} }
                           , React.createElement('span', { style: {color:C.text3} }, "− ", lang==="en"?"Uber fees":"Uber 抽成")
                           , React.createElement('span', { style: {color:C.danger,fontVariantNumeric:"tabular-nums"} }, "−", fmt(vPlatformFee))
                         ) : null
-                        // = Net Payout (bank deposit)
-                        , vPlatformFee>0 ? React.createElement('div', { style: {display:"flex",justifyContent:"space-between",paddingTop:5,borderTop:"1px solid "+C.border,marginTop:3} }
+                        // = Net Payout (bank deposit) — main result
+                        , vPlatformFee>0 ? React.createElement('div', { style: {display:"flex",justifyContent:"space-between",paddingTop:6,borderTop:"1px solid "+C.border,marginTop:3} }
                           , React.createElement('span', { style: {color:C.text,fontWeight:700} }, "🏦 ", lang==="en"?"Net Payout (bank)":"平台到账（实银行入账）")
-                          , React.createElement('b', { style: {color:C.accent2,fontSize:14,fontVariantNumeric:"tabular-nums"} }, fmt(netPayout))
+                          , React.createElement('b', { style: {color:C.gold,fontSize:15,fontVariantNumeric:"tabular-nums"} }, fmt(netPayout))
                         ) : null
-                        // − Toll paid out (booth)
-                        , vToll>0 ? React.createElement('div', { style: {display:"flex",justifyContent:"space-between"} }
-                          , React.createElement('span', { style: {color:C.text3} }, "− ", lang==="en"?"Toll paid (booth)":"过桥支出（付收费站）")
-                          , React.createElement('span', { style: {color:C.danger,fontVariantNumeric:"tabular-nums"} }, "−", fmt(vToll))
-                        ) : null
-                        // = Real Earnings
-                        , vToll>0 ? React.createElement('div', { style: {display:"flex",justifyContent:"space-between",paddingTop:5,borderTop:"1px solid "+C.border,marginTop:3} }
-                          , React.createElement('span', { style: {color:C.text,fontWeight:700} }, "💰 ", lang==="en"?"Real Earnings":"实收（真正属于你）")
-                          , React.createElement('b', { style: {color:C.gold,fontSize:14,fontVariantNumeric:"tabular-nums"} }, fmt(realEarnings))
+                        // Toll pass-through note (collapsible visual: shown subtly to indicate it nets to $0)
+                        , vToll>0 ? React.createElement('div', {style:{marginTop:8,padding:"8px 10px",background:"rgba(120,140,170,0.06)",borderRadius:6,fontSize:11,color:C.text3,lineHeight:1.5}}
+                          , React.createElement('div', {style:{fontWeight:600,marginBottom:3,color:"#7A95B8"}}, "ⓘ ", lang==="en"?"Toll pass-through (nets to $0)":"过桥中转（净影响 $0）")
+                          , React.createElement('div', {style:{display:"flex",justifyContent:"space-between"}}
+                            , React.createElement('span', null, lang==="en"?"  Reimbursed by Uber":"  Uber 退款（已含在打款外）")
+                            , React.createElement('span', {style:{color:"#7A95B8",fontVariantNumeric:"tabular-nums"}}, "+", fmt(vToll))
+                          )
+                          , React.createElement('div', {style:{display:"flex",justifyContent:"space-between"}}
+                            , React.createElement('span', null, lang==="en"?"  Paid at booth":"  付收费站")
+                            , React.createElement('span', {style:{color:"#7A95B8",fontVariantNumeric:"tabular-nums"}}, "−", fmt(vToll))
+                          )
                         ) : null
                       )
                     );
