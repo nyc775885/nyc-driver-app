@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-var APP_VERSION = "v3.11.53";  // ← single source of truth: bump this once per release
+var APP_VERSION = "v3.11.55";  // ← single source of truth: bump this once per release
 console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
@@ -2409,8 +2409,7 @@ function App() {
   }, [hasPIN, pinTimeout, locked]);
 
   useEffect(function(){
-    // One-time cleanup: remove old debug data from localStorage
-    try{ localStorage.removeItem("nyc_debug_fuelio_pdf"); }catch(e){}
+    // (was: cleanup nyc_debug_fuelio_pdf — re-enabled for diagnostics, kept across loads)
     var s=document.createElement("script");s.src="https://accounts.google.com/gsi/client";s.async=true;s.defer=true;document.body.appendChild(s);
   },[]); var r55=useState(""),syncStatus=r55[0],setSyncStatus=r55[1]; var r56=useState(false),syncing=r56[0],setSyncing=r56[1]; var r57=useState(function(){return lsLoad("nyc_driveFileId",null);}),driveFileId=r57[0],_setDriveFileId=r57[1];function setDriveFileId(v){_setDriveFileId(v);try{if(v)localStorage.setItem("nyc_driveFileId",JSON.stringify(v));else localStorage.removeItem("nyc_driveFileId");}catch(e){}} var r58=useState(null),accessToken=r58[0],setAccessToken=r58[1];
 
@@ -4731,9 +4730,40 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                       }
                       showToast(lang==="en"?"📄 Reading Fuelio PDF...":"📄 读取 Fuelio PDF 中...", "info");
                       extractPdfText(f).then(function(text){
+                        // === Debug capture: save what the parser saw, even if it fails ===
+                        // Helps diagnose "I imported but nothing showed up" issues. Cleared on next import.
+                        try{
+                          var dbg = {
+                            ts: new Date().toISOString(),
+                            fileName: f.name || "unknown",
+                            fileSize: f.size || 0,
+                            textLen: text ? text.length : 0,
+                            textHead: text ? text.slice(0, 600) : "",
+                            textTail: text ? text.slice(-400) : ""
+                          };
+                          localStorage.setItem("nyc_debug_fuelio_pdf", JSON.stringify(dbg));
+                        }catch(e){}
                         var r = parseFuelioReport(text);
+                        // Update debug with parse result
+                        try{
+                          var dbg2 = JSON.parse(localStorage.getItem("nyc_debug_fuelio_pdf") || "{}");
+                          dbg2.parseError = r.error || null;
+                          dbg2.parseEntryCount = r.entries ? r.entries.length : 0;
+                          dbg2.parsePeriod = r.period || "";
+                          dbg2.parseIsEv = !!r.isEv;
+                          dbg2.parseStats = r.stats || null;
+                          if(r.entries && r.entries.length > 0){
+                            // Sort by date for sample
+                            var sorted = r.entries.slice().sort(function(a,b){return (a.date||"").localeCompare(b.date||"");});
+                            dbg2.parseFirst = sorted[0];
+                            dbg2.parseLast = sorted[sorted.length-1];
+                            // Date range
+                            dbg2.dateRange = sorted[0].date + " → " + sorted[sorted.length-1].date;
+                          }
+                          localStorage.setItem("nyc_debug_fuelio_pdf", JSON.stringify(dbg2));
+                        }catch(e){}
                         if(r.error || !r.entries || r.entries.length === 0){
-                          showToast(lang==="en"?"No entries found — may not be a Fuelio report":"没找到记录，可能不是 Fuelio 月报", "error");
+                          showToast(lang==="en"?"No entries found — check 🔍 diagnostic for details":"没找到记录 — 看 🔍 诊断按钮查原因", "error");
                           return;
                         }
                         var sel = {};
@@ -4753,6 +4783,11 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                           ("✓ 共"+r.entries.length+"条 | "+catSummary),
                           "success");
                       }).catch(function(err){
+                        try{
+                          var dbgErr = JSON.parse(localStorage.getItem("nyc_debug_fuelio_pdf") || "{}");
+                          dbgErr.extractError = err.message || String(err);
+                          localStorage.setItem("nyc_debug_fuelio_pdf", JSON.stringify(dbgErr));
+                        }catch(e){}
                         showToast(lang==="en"?"PDF read failed: "+err.message:"PDF 读取失败: "+err.message, "error");
                       });
                     }
@@ -8686,8 +8721,41 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
               , React.createElement('div', { style: {width:34} })
             )
             , React.createElement('div', { style: {padding:"14px 16px",overflowY:"auto",flex:1} }
+              // === Last Fuelio import attempt (debug capture) ===
+              , (function(){
+                  var dbgRaw = "";
+                  try{ dbgRaw = localStorage.getItem("nyc_debug_fuelio_pdf") || ""; }catch(e){}
+                  if(!dbgRaw) return null;
+                  var d = null;
+                  try{ d = JSON.parse(dbgRaw); }catch(e){ return null; }
+                  if(!d) return null;
+                  var ok = !d.parseError && !d.extractError && d.parseEntryCount > 0;
+                  return React.createElement('div', {style:{marginBottom:14,padding:"12px 14px",background:ok?"rgba(0,200,80,0.08)":"rgba(255,80,80,0.10)",border:"1px solid "+(ok?"rgba(0,200,80,0.3)":"rgba(255,80,80,0.3)"),borderRadius:8}}
+                    , React.createElement('div', {style:{fontSize:12,fontWeight:700,color:ok?"#5ADA7A":"#FF8080",marginBottom:6}}
+                      , ok?"✓ ":"⚠ ", lang==="en"?"Last Fuelio import:":"上次 Fuelio 导入：", " ", (d.ts||"").slice(0,19).replace("T"," "))
+                    , React.createElement('div', {style:{fontSize:11,color:C.text2,lineHeight:1.6,fontFamily:"monospace",wordBreak:"break-word"}}
+                      , React.createElement('div', null, lang==="en"?"File: ":"文件：", d.fileName||"?", " (", ((d.fileSize||0)/1024).toFixed(1), " KB)")
+                      , React.createElement('div', null, lang==="en"?"Extracted text length: ":"提取文本长度：", React.createElement('b',{style:{color:d.textLen>0?C.text2:C.danger}}, (d.textLen||0).toLocaleString()), " chars")
+                      , d.extractError ? React.createElement('div', {style:{color:C.danger}}, "❌ PDF read error: ", d.extractError) : null
+                      , d.parseError ? React.createElement('div', {style:{color:C.danger}}, "❌ Parse error: ", d.parseError) : null
+                      , React.createElement('div', null, lang==="en"?"Entries parsed: ":"解析到条目数：", React.createElement('b',{style:{color:d.parseEntryCount>0?"#5ADA7A":C.danger}}, d.parseEntryCount||0))
+                      , d.dateRange ? React.createElement('div', null, lang==="en"?"Date range: ":"日期范围：", React.createElement('b',{style:{color:C.gold}}, d.dateRange)) : null
+                      , d.parsePeriod ? React.createElement('div', null, lang==="en"?"Period header: ":"PDF 周期：", d.parsePeriod) : null
+                      , React.createElement('div', null, "EV: ", d.parseIsEv?"yes":"no")
+                    )
+                    // Show first 600 chars of extracted text — helps see if PDF is actually Fuelio format
+                    , React.createElement('details', {style:{marginTop:8}}
+                      , React.createElement('summary', {style:{cursor:"pointer",fontSize:11,color:C.text3}}, lang==="en"?"▸ Show extracted text head/tail":"▸ 看提取文本开头/结尾")
+                      , React.createElement('div', {style:{fontSize:10,fontFamily:"monospace",color:C.text3,marginTop:6,padding:"6px 8px",background:C.bg3,borderRadius:6,maxHeight:200,overflowY:"auto",whiteSpace:"pre-wrap",wordBreak:"break-word"}}
+                        , "=== HEAD (first 600 chars) ===\n", d.textHead||"(empty)", "\n\n=== TAIL (last 400 chars) ===\n", d.textTail||"(empty)")
+                    )
+                  );
+                })()
               // === Summary by month ===
               , (function(){
+                  // Detect Fuelio-imported entries by content patterns (notes don't literally contain "Fuelio")
+                  // Patterns: charging kWh, EZpass tolls, DMV Inspection, formatted kWh prices
+                  var fuelioPattern = /\bkWh\b|EZpass|mi\/kWh|DMV Inspection/i;
                   var total = el.reduce(function(s,e){return s+(+e.amount||0);},0);
                   var byMo = {};
                   var vidSet = {};
@@ -8696,12 +8764,12 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                     if(!byMo[moK]) byMo[moK] = {count:0, total:0, fuelio:0};
                     byMo[moK].count++;
                     byMo[moK].total += +e.amount||0;
-                    if(e.notes && /fuelio/i.test(e.notes)) byMo[moK].fuelio++;
+                    if(e.notes && fuelioPattern.test(e.notes)) byMo[moK].fuelio++;
                     if(e.vehicleId) vidSet[e.vehicleId] = (vidSet[e.vehicleId]||0)+1;
                   });
                   var moEntries = Object.entries(byMo).sort(function(a,b){return b[0].localeCompare(a[0]);});
                   var vidCount = Object.keys(vidSet).length;
-                  var fuelioTotal = el.filter(function(e){return e.notes && /fuelio/i.test(e.notes);}).length;
+                  var fuelioTotal = el.filter(function(e){return e.notes && fuelioPattern.test(e.notes);}).length;
                   return React.createElement('div', {style:{marginBottom:12}}
                     , React.createElement('div', {style:{fontSize:13,marginBottom:8,padding:"10px 12px",background:C.bg3,border:"1px solid "+C.border,borderRadius:8}}
                       , React.createElement('div', {style:{fontWeight:700,color:C.text2,marginBottom:4}}
@@ -8737,7 +8805,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                       var c = allC[e.category];
                       var lbl = c ? (c.icon+" "+c.label) : ("? "+e.category);
                       var notesShort = e.notes ? (" · "+(e.notes.length>40 ? e.notes.slice(0,40)+"…" : e.notes)) : "";
-                      var isFuelio = e.notes && /fuelio/i.test(e.notes);
+                      var isFuelio = e.notes && /\bkWh\b|EZpass|mi\/kWh|DMV Inspection/i.test(e.notes);
                       return React.createElement('div', {key:e.id||i, style:{padding:"4px 0",borderBottom:i<sorted.length-1?"1px solid #1A2A44":"none",display:"flex",justifyContent:"space-between",gap:6,alignItems:"flex-start"}}
                         , React.createElement('div', {style:{flex:1,minWidth:0}}
                           , React.createElement('div', {style:{color:isFuelio?"#5ADA7A":C.text2}}, e.date || "??", " ", lbl, isFuelio?" 🟢":"")
