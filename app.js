@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-var APP_VERSION = "v3.15.5";  // ← single source of truth: bump this once per release
+var APP_VERSION = "v3.15.6";  // ← single source of truth: bump this once per release
 console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
@@ -10111,8 +10111,8 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                         ? React.createElement('div', {style:{color:C.text3,fontStyle:"italic",padding:"6px 0"}}, lang==="en"?"(empty)":"（空）")
                         : moEntries.map(function(en){
                             var hasFuelio = en[1].fuelio > 0;
-                            return React.createElement('div', {key:en[0], style:{display:"flex",justifyContent:"space-between",padding:"2px 0",color:hasFuelio?"#5ADA7A":C.text2}}
-                              , React.createElement('span', null, en[0], hasFuelio?" 🟢":"")
+                            return React.createElement('div', {key:en[0], style:{display:"flex",justifyContent:"space-between",padding:"2px 0",color:hasFuelio?C.success:C.text2}}
+                              , React.createElement('span', null, en[0])
                               , React.createElement('span', {style:{color:C.text3}}, en[1].count+(lang==="en"?" · $":" · $")+en[1].total.toFixed(2)+(hasFuelio?" ("+en[1].fuelio+" Fuelio)":""))
                             );
                           })
@@ -10134,7 +10134,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                       var isFuelio = e.notes && /\bkWh\b|EZpass|mi\/kWh|DMV Inspection/i.test(e.notes);
                       return React.createElement('div', {key:e.id||i, style:{padding:"4px 0",borderBottom:i<sorted.length-1?"1px solid #1A2A44":"none",display:"flex",justifyContent:"space-between",gap:6,alignItems:"flex-start"}}
                         , React.createElement('div', {style:{flex:1,minWidth:0}}
-                          , React.createElement('div', {style:{color:isFuelio?"#5ADA7A":C.text2}}, e.date || "??", " ", lbl, isFuelio?" 🟢":"")
+                          , React.createElement('div', {style:{color:isFuelio?C.success:C.text2}}, e.date || "??", " ", lbl)
                           , notesShort ? React.createElement('div', {style:{color:C.text3,fontSize:10,marginTop:1,wordBreak:"break-word"}}, notesShort.slice(3)) : null
                         )
                         , React.createElement('span', {style:{color:C.gold,minWidth:60,textAlign:"right",flexShrink:0}}, "$"+(+e.amount||0).toFixed(2))
@@ -10143,7 +10143,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                   })()
               )
               , React.createElement('div', {style:{fontSize:10,color:C.text3,marginTop:10,padding:"8px 10px",background:C.bg3,border:"1px solid "+C.border,borderRadius:8,lineHeight:1.5}}
-                , "💡 ", lang==="en"?"Entries with 'Fuelio' in notes are highlighted green. If you don't see green entries here, the import never saved. If you see them but they don't appear in the expense list, switch to the matching month — main views filter by month, NOT by vehicle.":"备注里含 'Fuelio' 的条目高亮为绿色。如果这里没绿色条目 → 导入根本没存上；如果有但其他地方看不到 → 切到对应月份，主视图按月份筛选，不会因车辆而隐藏。")
+                , "💡 ", lang==="en"?"Months with Fuelio data are tinted green. If no green months appear here, the import never saved. If you see them but the main expense list doesn't show them, switch to the matching month — main views filter by month, not by vehicle.":"含 Fuelio 数据的月份用绿色标示。如果这里看不到绿色月份 → 导入根本没存上；如果有但主支出列表看不到 → 切到对应月份，主视图按月份筛选，不会因车辆而隐藏。")
             )
           )
         )
