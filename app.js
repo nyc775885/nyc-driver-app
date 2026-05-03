@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-var APP_VERSION = "v3.11.98";  // ← single source of truth: bump this once per release
+var APP_VERSION = "v3.11.99";  // ← single source of truth: bump this once per release
 console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
@@ -3159,22 +3159,25 @@ function App() {
         setDriveFileId(fileId);
         var cloudModTime = cloudData.localModTime || "";
         // === DEFENSIVE: never let cloud silently delete data ===
-        // If cloud has empty arrays for sl/el/wl/dl but local has data, the user almost
-        // certainly does NOT want to lose that data. Could be: stale cloud from a fresh
-        // device, sync race condition, or token-expired-then-restored scenario.
-        // Rule: when arrays are empty on cloud but populated locally, keep local data
-        // and re-upload it. Do this BEFORE the timestamp comparison so it's never bypassed.
+        // If cloud has fewer entries than local for sl/el/wl/dl, refuse to overwrite.
+        // Could be: stale cloud from another device, sync race condition (Device A imported new
+        // records but Device B sync'd before Device A finished uploading), or token-restore.
+        // Rule: cloud arrays must have AT LEAST as many entries as local. If cloud is "smaller",
+        // that's a data-loss signal — keep local and re-upload.
+        // (User-deletes are handled fine: when user deletes locally, localModTime bumps, and
+        // local pushes to cloud. Cloud's pre-delete state is older, so timestamp comparison
+        // sends LOCAL → cloud, not the other way around.)
         var cloudHasLessData = (
-          (Array.isArray(cloudData.sl) && cloudData.sl.length===0 && sl.length>0) ||
-          (Array.isArray(cloudData.el) && cloudData.el.length===0 && el.length>0) ||
-          (Array.isArray(cloudData.wl) && cloudData.wl.length===0 && wl.length>0) ||
-          (Array.isArray(cloudData.dl) && cloudData.dl.length===0 && dl.length>0)
+          (Array.isArray(cloudData.sl) && cloudData.sl.length < sl.length) ||
+          (Array.isArray(cloudData.el) && cloudData.el.length < el.length) ||
+          (Array.isArray(cloudData.wl) && cloudData.wl.length < wl.length) ||
+          (Array.isArray(cloudData.dl) && cloudData.dl.length < dl.length)
         );
         if(cloudHasLessData){
-          console.warn("[sync] Refusing to overwrite local data with empty cloud arrays. Re-uploading local.");
+          console.warn("[sync] Refusing to overwrite local data — cloud has fewer entries. Re-uploading local. cloud.sl="+(cloudData.sl||[]).length+" local.sl="+sl.length+" cloud.el="+(cloudData.el||[]).length+" local.el="+el.length);
           var safeData={wl:wl,sl:sl,el:el,fl:fl,ll:ll,veh:veh,cc:cc,custGroups:custGroups,reminders:reminders,custPlat:custPlat,custBrands:custBrands,custLicTypes:custLicTypes,custLoanTypes:custLoanTypes,favNotes:favNotes,favStations:favStations,favExpenses:favExpenses,notes:notes,incGoals:incGoals,seRate:seRate,fedRate:fedRate,stateRate:stateRate,stdDed:stdDed,mtaRate:mtaRate,savedVehicles:savedVehicles,dl:dl,driverType:driverType,driver:driver,localModTime:new Date().toISOString()};
           saveToDrive(accessToken,fileId,safeData);
-          setSyncStatus(lang==="en"?"⚠ Cloud was empty — kept local data":"⚠ 云端为空 · 已保留本地数据");
+          setSyncStatus(lang==="en"?"⚠ Cloud had fewer entries — kept local":"⚠ 云端记录较少 · 已保留本地");
           setTimeout(function(){setSyncStatus("");},3500);
           return;
         }
@@ -3241,7 +3244,30 @@ function App() {
   // Save to localStorage when data changes (load is handled by lazy useState initializers)
   function lsSave(k,v){
     // Save immediately AND keep debounced for safety (immediate is most reliable)
-    try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){}
+    // === DEFENSIVE: never overwrite a non-empty stored array with an empty one ===
+    // If something went wrong during initial load (JSON.parse threw, returned default []),
+    // the useEffect would otherwise write [] back and silently destroy the user's data.
+    try{
+      if(Array.isArray(v) && v.length === 0){
+        var existing = localStorage.getItem(k);
+        if(existing){
+          try{
+            var parsed = JSON.parse(existing);
+            if(Array.isArray(parsed) && parsed.length > 0){
+              // Stored data has entries, incoming is empty. Likely a load failure or bug.
+              // Refuse the write — preserve existing data.
+              console.warn("[lsSave] Refusing to overwrite "+k+" ("+parsed.length+" entries) with empty array. Likely a load error.");
+              return;
+            }
+          }catch(e){
+            // JSON.parse failed on stored value — write would corrupt it further. Skip.
+            console.warn("[lsSave] Stored "+k+" has invalid JSON — refusing to overwrite with empty.");
+            return;
+          }
+        }
+      }
+      localStorage.setItem(k, JSON.stringify(v));
+    }catch(e){}
   }
   // IRS standard rates by year. Std deduction is single-filer; fed rate is the bracket
   // most NYC drivers (net $30-60k after SE deduction) actually fall into. State rate
