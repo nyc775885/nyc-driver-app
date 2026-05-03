@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-var APP_VERSION = "v3.11.99";  // ← single source of truth: bump this once per release
+var APP_VERSION = "v3.12.0";  // ← single source of truth: bump this once per release
 console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
@@ -1409,13 +1409,72 @@ function CatBreakdown(p){
     );
   }));
 }
-function CatDetail(p){var aC=p.allC,items=p.items,total=p.total;var cm={};items.forEach(function(e){var cat0=aC[e.category];if(cat0&&cat0.refOnly)return;var k=e.isFixed?"fx_"+e.fixedLabel:e.category,cat=aC[e.category],lbl=e.isFixed?e.fixedLabel:(cat?cat.label:"其他"),ico=e.isFixed?e.fixedIcon:getIcon(e.category,aC),grp=catGrp(e.category,aC);if(!cm[k]){cm[k]={label:lbl,icon:ico,total:0,count:0,grp:grp};}cm[k].total+=(+e.amount||0);cm[k].count++;});var sorted=Object.values(cm).sort(function(a,b){return b.total-a.total;});var isEn=p.lang==="en";var totalCount=Object.values(cm).reduce(function(s,c){return s+c.count;},0);return React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 51}}
-  , React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0 10px",borderBottom:"1px solid #182540",marginBottom:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 51}}
-    , React.createElement('span', { style: {fontSize:13,color:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 51}}, isEn?"Total entries":"总笔数")
-    , React.createElement('span', { style: {fontSize:14,fontWeight:700,color:C.accent}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 51}}, totalCount, " " , isEn?(totalCount===1?"entry":"entries"):"笔")
-  )
-  , sorted.map(function(c){var pct=Math.round(c.total/total*100),gcl=c.grp==="车辆"?C.accent:c.grp==="牌照"?C.gold:c.grp==="平台"?"#AB47BC":"#B0D4E8";return React.createElement('div', { key: c.label, style: {padding:"8px 0",borderBottom:"1px solid #111D30"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 51}}, React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 51}}, React.createElement('span', { style: {fontSize:14,color:C.text2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 51}}, c.icon, " " , c.label, React.createElement('span', { style: {fontSize:12,color:C.text3,marginLeft:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 51}}, "×", c.count)), React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 51}}, React.createElement('span', { style: {fontSize:14,fontWeight:700,color:"#FF9A65"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 51}}, fmt(c.total)), React.createElement('span', { style: {fontSize:12,color:C.text2,marginLeft:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 51}}, pct, "%"))), React.createElement('div', { style: {height:4,borderRadius:2,background:C.border}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 51}}, React.createElement('div', { style: {height:4,borderRadius:2,width:pct+"%",background:gcl}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 51}})));})
-);}
+function CatDetail(p){
+  var aC=p.allC, items=p.items, total=p.total, isEn=p.lang==="en";
+  var rExp = useState({}), expanded = rExp[0], setExpanded = rExp[1];
+  // Group items by category (skipping refOnly categories like Platform Fee)
+  var cm={};
+  items.forEach(function(e){
+    var cat0=aC[e.category]; if(cat0&&cat0.refOnly) return;
+    var k=e.isFixed?"fx_"+e.fixedLabel:e.category,
+        cat=aC[e.category],
+        lbl=e.isFixed?e.fixedLabel:(cat?cat.label:"其他"),
+        ico=e.isFixed?e.fixedIcon:getIcon(e.category,aC),
+        grp=catGrp(e.category,aC);
+    if(!cm[k]){cm[k]={key:k,label:lbl,icon:ico,total:0,count:0,grp:grp,entries:[]};}
+    cm[k].total += (+e.amount||0);
+    cm[k].count++;
+    cm[k].entries.push(e);
+  });
+  var sorted=Object.values(cm).sort(function(a,b){return b.total-a.total;});
+  var totalCount=Object.values(cm).reduce(function(s,c){return s+c.count;},0);
+  return React.createElement('div', null
+    , React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0 10px",borderBottom:"1px solid #182540",marginBottom:6} }
+      , React.createElement('span', { style: {fontSize:13,color:C.text3} }, isEn?"Total entries":"总笔数")
+      , React.createElement('span', { style: {fontSize:14,fontWeight:700,color:C.accent} }, totalCount, " ", isEn?(totalCount===1?"entry":"entries"):"笔")
+    )
+    , sorted.map(function(c){
+        var pct=total>0?Math.round(c.total/total*100):0,
+            gcl=c.grp==="车辆"?C.accent:c.grp==="牌照"?C.gold:c.grp==="平台"?"#AB47BC":"#B0D4E8",
+            isOpen=!!expanded[c.key];
+        return React.createElement('div', { key: c.key, style: {borderBottom:"1px solid #111D30"} }
+          // Header — click to toggle
+          , React.createElement('div', {
+              onClick: function(){var nx={};Object.keys(expanded).forEach(function(k){nx[k]=expanded[k];});nx[c.key]=!isOpen;setExpanded(nx);},
+              style: {padding:"8px 0",cursor:"pointer",userSelect:"none"}
+            }
+            , React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4} }
+              , React.createElement('span', { style: {fontSize:14,color:C.text2,display:"flex",alignItems:"center",gap:4} }
+                , React.createElement('span', {style:{fontSize:10,color:C.text3,width:10,display:"inline-block",transition:"transform 0.15s",transform:isOpen?"rotate(90deg)":"none"}}, "▶")
+                , c.icon, " ", c.label
+                , React.createElement('span', { style: {fontSize:12,color:C.text3,marginLeft:6} }, "×", c.count)
+              )
+              , React.createElement('div', null
+                , React.createElement('span', { style: {fontSize:14,fontWeight:700,color:"#FF9A65"} }, fmt(c.total))
+                , React.createElement('span', { style: {fontSize:12,color:C.text2,marginLeft:6} }, pct, "%")
+              )
+            )
+            , React.createElement('div', { style: {height:4,borderRadius:2,background:C.border} }
+              , React.createElement('div', { style: {height:4,borderRadius:2,width:pct+"%",background:gcl} } )
+            )
+          )
+          // Expanded entry list
+          , isOpen ? React.createElement('div', { style: {paddingLeft:16,paddingBottom:8,paddingTop:2,background:"rgba(0,0,0,0.15)",borderRadius:4,marginBottom:6,maxHeight:280,overflowY:"auto"} }
+              , c.entries.slice().sort(function(a,b){return (b.date||"").localeCompare(a.date||"");}).map(function(e,i){
+                  var noteShort = e.notes ? (e.notes.length>50?e.notes.slice(0,50)+"…":e.notes) : "";
+                  return React.createElement('div', { key: e.id||i, style: {padding:"5px 6px",borderBottom:i<c.entries.length-1?"1px dotted #1A2335":"none",display:"flex",justifyContent:"space-between",gap:8,fontSize:11,alignItems:"baseline"} }
+                    , React.createElement('div', { style: {flex:1,minWidth:0} }
+                      , React.createElement('div', { style: {color:C.text2,fontVariantNumeric:"tabular-nums"} }, e.date||"?")
+                      , noteShort ? React.createElement('div', { style: {color:C.text3,fontSize:10,lineHeight:1.4,wordBreak:"break-word"} }, noteShort) : null
+                    )
+                    , React.createElement('span', { style: {fontWeight:700,color:"#FFB890",fontVariantNumeric:"tabular-nums",whiteSpace:"nowrap"} }, fmt(+e.amount||0))
+                  );
+                })
+            ) : null
+        );
+      })
+  );
+}
 
 // Custom full-screen date picker — replaces native browser picker for better UX
 function DatePicker(p){
