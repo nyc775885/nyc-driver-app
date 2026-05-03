@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-var APP_VERSION = "v3.11.96";  // ← single source of truth: bump this once per release
+var APP_VERSION = "v3.11.97";  // ← single source of truth: bump this once per release
 console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
@@ -4873,8 +4873,10 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
             // === YEAR VIEW EXTRAS — chained big nums, monthly compare table, tax zone, vs prior year ===
             , incV==="year" ? (function(){
                 if(yInc<=0) return null;
-                var yGrossWithToll = yInc + yToll;
-                var yNetPayout = yGrossWithToll - yPlatformFee;
+                // Match Uber PDF: yInc is Gross Payment (fare+tips+bonus+other, NOT toll)
+                //   Net Payout (平台到账)  = Gross − Fees       (Uber's "Net Payout" — includes toll refund)
+                //   Net Earnings (实收)    = Gross − Fees − Toll (your true labor income, toll washed out)
+                var yNetPayout = yInc - yPlatformFee;
                 var yRealEarnings = yNetPayout - yToll;
                 return React.createElement('div', {style:{marginBottom:14}}
                   // ─── Chained big numbers (4 cards 2x2 grid) ───
@@ -4914,7 +4916,8 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                           )
                           , React.createElement('tbody', null
                             , rowsWithData.map(function(m){
-                                var realEarn = m.inc - m.platformFee;
+                                // Match Uber PDF: Net Earnings = Gross − Fees − Toll (toll washed out)
+                                var realEarn = m.inc - m.platformFee - (m.toll||0);
                                 var hourly = m.hours>0 ? m.inc/m.hours : 0;
                                 var profitColor = m.net>=0?C.success:C.danger;
                                 return React.createElement('tr', {key:m.m,style:{borderBottom:"1px solid #142035"}}
@@ -4929,7 +4932,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                             , React.createElement('tr', {style:{borderTop:"2px solid "+C.border,background:C.bg3}}
                               , React.createElement('td', {style:{padding:"8px 4px",color:C.text,fontWeight:800}}, lang==="en"?"YTD":"累计")
                               , React.createElement('td', {style:{padding:"8px 4px",textAlign:"right",color:C.accent2,fontWeight:800}}, fmt(yInc))
-                              , React.createElement('td', {style:{padding:"8px 4px",textAlign:"right",color:C.text,fontWeight:800}}, yPlatformFee>0?fmt(yNetPayout):"—")
+                              , React.createElement('td', {style:{padding:"8px 4px",textAlign:"right",color:C.text,fontWeight:800}}, yPlatformFee>0?fmt(yRealEarnings):"—")
                               , React.createElement('td', {style:{padding:"8px 4px",textAlign:"right",color:yNet>=0?C.success:C.danger,fontWeight:800}}, fmt(yNet))
                               , React.createElement('td', {style:{padding:"8px 4px",textAlign:"right",color:C.gold,fontWeight:800}}, yStmtHours>0?fmt(yInc/yStmtHours):"—")
                             )
