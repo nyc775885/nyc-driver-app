@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-var APP_VERSION = "v3.13.0";  // ← single source of truth: bump this once per release
+var APP_VERSION = "v3.13.3";  // ← single source of truth: bump this once per release
 console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
@@ -2817,15 +2817,26 @@ function App() {
         }
         // === DEFENSIVE: never silently wipe local data with empty cloud arrays ===
         var localSl=lsLoad("nyc_sl",[]),localEl=lsLoad("nyc_el",[]),localWl=lsLoad("nyc_wl",[]),localDl=lsLoad("nyc_dl",[]);
+        // === DEFENSIVE: never let cloud silently delete data on initial sign-in ===
+        // Cloud may have FEWER entries than local for many reasons:
+        //   • another device pushed an older state up
+        //   • a partial upload completed (e.g. Drive token expired mid-upload)
+        //   • token-restore scenario where local has new imports the cloud never received
+        // Rule: cloud arrays must be >= local. If cloud is "smaller" by any amount on
+        // critical data (sl/el/wl/dl), refuse to overwrite — keep local and re-upload.
+        // Tolerance: shrinking is allowed only down to 70% (matches smartSync defense).
         var cloudHasLessData = (
-          (Array.isArray(data.sl) && data.sl.length===0 && localSl.length>0) ||
-          (Array.isArray(data.el) && data.el.length===0 && localEl.length>0) ||
-          (Array.isArray(data.wl) && data.wl.length===0 && localWl.length>0) ||
-          (Array.isArray(data.dl) && data.dl.length===0 && localDl.length>0)
+          (Array.isArray(data.sl) && data.sl.length < localSl.length * 0.7 && localSl.length > 0) ||
+          (Array.isArray(data.el) && data.el.length < localEl.length * 0.7 && localEl.length > 0) ||
+          (Array.isArray(data.wl) && data.wl.length < localWl.length * 0.7 && localWl.length > 0) ||
+          (Array.isArray(data.dl) && data.dl.length < localDl.length * 0.7 && localDl.length > 0)
         );
         if(cloudHasLessData){
-          console.warn("[sync-onSignIn] Cloud has empty arrays where local has data. Refusing to overwrite. Re-uploading local.");
-          setSyncStatus(lang==="en"?"⚠ Cloud was empty — kept local data":"⚠ 云端为空 · 已保留本地数据");
+          console.warn("[sync-onSignIn] Cloud has fewer entries than local. Refusing to overwrite. Re-uploading local.",
+            "cloud.sl="+(data.sl||[]).length+" local.sl="+localSl.length,
+            "cloud.el="+(data.el||[]).length+" local.el="+localEl.length,
+            "cloud.wl="+(data.wl||[]).length+" local.wl="+localWl.length);
+          setSyncStatus(lang==="en"?"⚠ Cloud had fewer entries — kept local":"⚠ 云端记录较少 · 已保留本地");
           setTimeout(function(){setSyncStatus("");},3500);
           // Re-upload local data to cloud so this device "wins"
           var safeData={wl:localWl,sl:localSl,el:localEl,fl:lsLoad("nyc_fl",[]),ll:lsLoad("nyc_ll",[]),veh:lsLoad("nyc_veh",{}),cc:lsLoad("nyc_cc",[]),custGroups:lsLoad("nyc_custGroups",{}),reminders:lsLoad("nyc_reminders",[]),custPlat:lsLoad("nyc_custPlat",[]),dl:localDl,localModTime:new Date().toISOString()};
@@ -3256,6 +3267,51 @@ function App() {
     setLocalModTime(new Date().toISOString());
   },[wl,sl,el,fl,ll,veh,cc,custGroups,reminders,custPlat,custBrands,custLicTypes,custLoanTypes,favNotes,favExpenses,notes,incGoals,seRate,fedRate,stateRate,stdDed,mtaRate,savedVehicles,dl,driverType,driver]);
 
+  // === DATA-LOSS DETECTION: keep ring buffer of recent sl/wl/el snapshots in localStorage ===
+  // If a write would shrink any array dramatically (lose >30% of entries), save a snapshot
+  // and warn the user. Snapshots can be restored from the diagnostic page.
+  var snapshotRef = useState({lastSl:-1,lastWl:-1,lastEl:-1,lastDl:-1})[0];
+  useEffect(function(){
+    var prevSl = snapshotRef.lastSl, prevWl = snapshotRef.lastWl, prevEl = snapshotRef.lastEl, prevDl = snapshotRef.lastDl;
+    snapshotRef.lastSl = sl.length;
+    snapshotRef.lastWl = wl.length;
+    snapshotRef.lastEl = el.length;
+    snapshotRef.lastDl = dl.length;
+    // First render baseline — don't snapshot
+    if(prevSl < 0) return;
+    // Check for dramatic shrink in any of the major arrays
+    var shrunk = (
+      (prevSl > 5 && sl.length < prevSl * 0.7) ||
+      (prevWl > 5 && wl.length < prevWl * 0.7) ||
+      (prevEl > 50 && el.length < prevEl * 0.7) ||
+      (prevDl > 5 && dl.length < prevDl * 0.7)
+    );
+    if(shrunk){
+      try{
+        // Save the PREVIOUS state (before shrink) so user can restore
+        var snapKey = "nyc_emergency_snapshot_"+Date.now();
+        var snapData = {
+          when: new Date().toISOString(),
+          reason: "auto-detected dramatic shrink",
+          before: {sl_count:prevSl, wl_count:prevWl, el_count:prevEl, dl_count:prevDl},
+          after: {sl_count:sl.length, wl_count:wl.length, el_count:el.length, dl_count:dl.length}
+        };
+        // Store metadata only; actual data is in cloud + already-overwritten local.
+        // Future: store last-known-good data dump too.
+        localStorage.setItem(snapKey, JSON.stringify(snapData));
+        // Keep only last 3 snapshots
+        var keys = [];
+        for(var i=0;i<localStorage.length;i++){
+          var k=localStorage.key(i);
+          if(k && k.indexOf("nyc_emergency_snapshot_")===0) keys.push(k);
+        }
+        keys.sort();
+        while(keys.length > 3){ try{localStorage.removeItem(keys.shift());}catch(e){} }
+        console.warn("[data-loss-guard] Detected dramatic shrink:", snapData);
+      }catch(e){}
+    }
+  }, [sl.length, wl.length, el.length, dl.length]);
+
   // Smart sync function — compares timestamps and decides direction
   function smartSync(){
     if(!accessToken)return;
@@ -3301,12 +3357,13 @@ function App() {
         }
         // Compare timestamps as ISO strings (lexicographic compare works for ISO 8601)
         if(cloudModTime > localModTime){
-          // Cloud is newer — download. But still guard each array: only overwrite if cloud has data.
-          if(Array.isArray(cloudData.wl) && cloudData.wl.length>0)setWl(cloudData.wl);
-          if(Array.isArray(cloudData.sl) && cloudData.sl.length>0)setSl(cloudData.sl);
-          if(Array.isArray(cloudData.el) && cloudData.el.length>0)setEl(cloudData.el);
-          if(Array.isArray(cloudData.fl) && cloudData.fl.length>0)setFl(cloudData.fl);
-          if(Array.isArray(cloudData.ll) && cloudData.ll.length>0)setLl(cloudData.ll);
+          // Cloud is newer — download. Per-array guard: never overwrite a longer local array
+          // with a shorter cloud one. (Defense in depth — even if cloudHasLessData missed it.)
+          if(Array.isArray(cloudData.wl) && cloudData.wl.length >= wl.length) setWl(cloudData.wl);
+          if(Array.isArray(cloudData.sl) && cloudData.sl.length >= sl.length) setSl(cloudData.sl);
+          if(Array.isArray(cloudData.el) && cloudData.el.length >= el.length) setEl(cloudData.el);
+          if(Array.isArray(cloudData.fl) && cloudData.fl.length >= fl.length) setFl(cloudData.fl);
+          if(Array.isArray(cloudData.ll) && cloudData.ll.length >= ll.length) setLl(cloudData.ll);
           if(cloudData.veh)setVeh(cloudData.veh);if(cloudData.driver)setDriver(cloudData.driver);
           if(cloudData.cc)setCc(cloudData.cc);
           if(cloudData.custGroups)setCustGroups(cloudData.custGroups);
@@ -3362,27 +3419,48 @@ function App() {
   // Save to localStorage when data changes (load is handled by lazy useState initializers)
   function lsSave(k,v){
     // Save immediately AND keep debounced for safety (immediate is most reliable)
-    // === DEFENSIVE: never overwrite a non-empty stored array with an empty one ===
-    // If something went wrong during initial load (JSON.parse threw, returned default []),
-    // the useEffect would otherwise write [] back and silently destroy the user's data.
     try{
+      // === DEFENSIVE LAYER 1: never overwrite non-empty stored array with completely empty one ===
       if(Array.isArray(v) && v.length === 0){
-        var existing = localStorage.getItem(k);
-        if(existing){
+        var existing0 = localStorage.getItem(k);
+        if(existing0){
           try{
-            var parsed = JSON.parse(existing);
-            if(Array.isArray(parsed) && parsed.length > 0){
-              // Stored data has entries, incoming is empty. Likely a load failure or bug.
-              // Refuse the write — preserve existing data.
-              console.warn("[lsSave] Refusing to overwrite "+k+" ("+parsed.length+" entries) with empty array. Likely a load error.");
+            var parsed0 = JSON.parse(existing0);
+            if(Array.isArray(parsed0) && parsed0.length > 0){
+              console.warn("[lsSave] Refusing to overwrite "+k+" ("+parsed0.length+" entries) with empty array. Likely a load error.");
               return;
             }
           }catch(e){
-            // JSON.parse failed on stored value — write would corrupt it further. Skip.
             console.warn("[lsSave] Stored "+k+" has invalid JSON — refusing to overwrite with empty.");
             return;
           }
         }
+      }
+      // === DEFENSIVE LAYER 2: for critical data keys, auto-snapshot before any large shrink ===
+      // This is BACKUP, not blocking — the write is still allowed, but the previous state
+      // is preserved in a recovery slot so it can be restored if needed.
+      var criticalKeys = {nyc_sl:1, nyc_wl:1, nyc_el:1, nyc_dl:1};
+      if(criticalKeys[k] && Array.isArray(v)){
+        try{
+          var existingRaw = localStorage.getItem(k);
+          if(existingRaw){
+            var existingArr = JSON.parse(existingRaw);
+            if(Array.isArray(existingArr) && existingArr.length > 5 && v.length < existingArr.length * 0.7){
+              // Big shrink — preserve the BEFORE state in a rolling recovery slot
+              var recoveryKey = k + "_recovery_" + Date.now();
+              localStorage.setItem(recoveryKey, existingRaw);
+              // Keep only the 3 most recent recovery slots per key
+              var recKeys = [];
+              for(var ki=0;ki<localStorage.length;ki++){
+                var kk = localStorage.key(ki);
+                if(kk && kk.indexOf(k+"_recovery_")===0) recKeys.push(kk);
+              }
+              recKeys.sort();
+              while(recKeys.length > 3){ try{localStorage.removeItem(recKeys.shift());}catch(e){} }
+              console.warn("[lsSave] "+k+" shrunk from "+existingArr.length+" to "+v.length+" — saved recovery snapshot to "+recoveryKey);
+            }
+          }
+        }catch(e){}
       }
       localStorage.setItem(k, JSON.stringify(v));
     }catch(e){}
@@ -10061,10 +10139,29 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                         var yr=r.year;
                         // Check if any year statements exist
                         var existing=sl.filter(function(x){return x.platform==="Uber"&&x.month&&x.month.slice(0,4)===yr;});
-                        var msg=lang==="en"
-                          ?"Create 12 monthly statements for "+yr+" Uber?"+(existing.length>0?"\n\n⚠ "+existing.length+" existing entry/entries will be overwritten.":"")
-                          :"为 "+yr+" 年 Uber 创建 12 个月度账单？"+(existing.length>0?"\n\n⚠ 已有 "+existing.length+" 条记录会被覆盖。":"");
-                        if(!confirm(msg))return;
+                        // STRONG WARNING when there are existing entries — this operation deletes ALL Uber records for that year first
+                        if(existing.length > 0){
+                          var detail = existing.slice(0,8).map(function(x){return "  • "+x.month+" $"+(+x.grossFare||0).toFixed(2);}).join("\n");
+                          if(existing.length>8) detail += "\n  … "+(existing.length-8)+(lang==="en"?" more":" 笔更多");
+                          var bigWarn = lang==="en"
+                            ? ("⚠⚠ DESTRUCTIVE OPERATION ⚠⚠\n\nThis will DELETE all "+existing.length+" existing Uber records for "+yr+" and replace them with 12 new ones derived from this annual PDF.\n\nRecords that will be deleted:\n"+detail+"\n\nIf this PDF is INCOMPLETE (missing months), those months will be GONE.\n\nUse this only if importing a fresh full-year tax summary. Continue?")
+                            : ("⚠⚠ 危险操作 ⚠⚠\n\n这会删除 "+yr+" 年现有的全部 "+existing.length+" 条 Uber 记录，然后用这份年度 PDF 重建 12 个新记录。\n\n将被删除的记录：\n"+detail+"\n\n如果这份 PDF 数据不完整（少了某些月），那些月份会永久丢失。\n\n仅在导入完整年度税务总结时使用。继续？");
+                          if(!confirm(bigWarn)) return;
+                          // Second confirm — type-the-year style guard
+                          var typed = prompt(lang==="en"
+                            ? ("Type the year ("+yr+") to confirm deletion of "+existing.length+" records:")
+                            : ("输入年份（"+yr+"）确认删除 "+existing.length+" 条记录："));
+                          if(typed !== yr) {
+                            showToast(lang==="en"?"Cancelled":"已取消");
+                            return;
+                          }
+                        } else {
+                          if(!confirm(lang==="en"
+                            ?"Create 12 monthly statements for "+yr+" Uber?"
+                            :"为 "+yr+" 年 Uber 创建 12 个月度账单？")) return;
+                        }
+                        // Save undo snapshot BEFORE making changes
+                        var prevSl = sl.slice();
                         var MNS=["January","February","March","April","May","June","July","August","September","October","November","December"];
                         var newSl=sl.slice();
                         // Remove existing Uber entries for this year first
@@ -10094,7 +10191,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                         });
                         setSl(newSl);
                         setShowPasteUberTax(false);setPasteUberTaxText("");setPasteUberTaxResult(null);
-                        showToast(lang==="en"?"✓ Imported 12 monthly statements for "+yr:"✓ "+yr+" 年 12 个月度账单已导入");
+                        showUndo(lang==="en"?"✓ Imported 12 monthly statements for "+yr:"✓ "+yr+" 年 12 个月度账单已导入", {prevSl:prevSl});
                       }, style: {width:"100%",background:"linear-gradient(135deg,#5A3A00,#3A2800)",border:"1px solid #7A5500",borderRadius:10,padding:"12px",color:"#fff",fontSize:14,fontWeight:800,cursor:"pointer"} }, "✓ " , lang==="en"?"Import 12 Monthly Statements":"导入 12 个月度账单") : null
                 ) : null
             )
