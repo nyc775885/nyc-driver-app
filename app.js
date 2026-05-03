@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-var APP_VERSION = "v3.11.55";  // ← single source of truth: bump this once per release
+var APP_VERSION = "v3.11.58";  // ← single source of truth: bump this once per release
 console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
@@ -3260,7 +3260,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
           return React.createElement('div', {style:{position:"fixed",inset:0,background:"rgba(0,4,12,0.96)",backdropFilter:"blur(8px)",WebkitBackdropFilter:"blur(8px)",zIndex:20000,display:"flex",alignItems:"center",justifyContent:"center",padding:20,animation:"fadeIn 0.2s"}}
             , React.createElement('div', {style:{background:"linear-gradient(180deg, "+C.bg2+" 0%, "+C.bg+" 100%)",border:"1px solid "+C.border2,borderRadius:RADIUS.xl,maxWidth:400,width:"100%",padding:"36px 28px",textAlign:"center",boxShadow:"0 20px 60px rgba(0,0,0,0.8), 0 0 80px rgba(0,212,255,0.1)",position:"relative",overflow:"hidden",animation:"slideUp 0.3s"}}
               // Top glow
-              , React.createElement('div', {style:{position:"absolute",top:-50,left:"50%",transform:"translateX(-50%)",width:200,height:100,background:"radial-gradient(ellipse, rgba(0,212,255,0.2) 0%, transparent 70%)",pointerEvents:"none"}})
+
               , React.createElement('div', {style:{fontSize:64,marginBottom:18,filter:"drop-shadow(0 4px 12px rgba(0,212,255,0.4))",position:"relative"}}, s.emoji)
               , React.createElement('div', {style:{fontSize:FS.xxl+2,fontWeight:900,color:C.accent,marginBottom:16,letterSpacing:-0.4,position:"relative"}}, s.title)
               , React.createElement('div', {style:{fontSize:FS.md+2,color:C.text2,lineHeight:1.7,marginBottom:28,whiteSpace:"pre-line",position:"relative"}}, s.body)
@@ -3467,6 +3467,8 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                   )
                 );
               }())
+
+            , incGoal&&+incGoal>0 ? React.createElement(Card, { style: {marginBottom:10,padding:"12px 14px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 267}}, React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 267}}, React.createElement('div', { style: {fontSize:13,fontWeight:700,color:C.gold}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 267}}, "🎯 " , lang==="en"?"Monthly Goal":"本月目标"), React.createElement('div', { style: {display:"flex",alignItems:"center",gap:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 267}}, React.createElement('span', { style: {fontSize:13,color:C.text2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 267}}, fmt(tInc), " / "  , fmt(+incGoal)), React.createElement('button', { onClick: function(){setShowGoal(true);}, style: {background:"none",border:"none",color:C.text3,fontSize:12,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 267}}, "✏️"))), React.createElement('div', { style: {height:8,borderRadius:4,background:"#1A2A40",overflow:"hidden",marginBottom:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 267}}, React.createElement('div', { style: {height:8,borderRadius:4,width:Math.min(100,Math.round(tInc/+incGoal*100))+"%",background:tInc>=+incGoal?"linear-gradient(90deg,#00E676,#FFD700)":"linear-gradient(90deg,#00D4FF,#0055FF)"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 267}} )), React.createElement('div', { style: {fontSize:12,color:tInc>=+incGoal?C.success:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 267}}, tInc>=+incGoal?(lang==="en"?"🎉 Goal reached!":"🎉 目标达成！"):(lang==="en"?"Still need: ":"还差: ")+fmt(+incGoal-tInc)+" ("+Math.round(tInc/+incGoal*100)+"%)")) : React.createElement('button', { onClick: function(){setShowGoal(true);}, style: {width:"100%",background:C.bg3,border:"1px dashed #2A4A6A",borderRadius:10,padding:"8px 14px",color:C.text3,fontSize:12,cursor:"pointer",marginBottom:10,textAlign:"left"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 267}}, "🎯 " , lang==="en"?"Set monthly goal...":"设定本月收入目标...")
 
             , React.createElement(SegBtn, { val: dashV, set: setDashV, opts: [["month",T.thisMonth],["year",T.thisYear]], __self: this, __source: {fileName: _jsxFileName, lineNumber: 263}} )
 
@@ -3690,18 +3692,18 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                             padding:"16px 14px",
                             cursor:"pointer",
                             border:"1px solid rgba(0,212,255,0.2)",
-                            boxShadow: "0 4px 16px rgba(0,212,255,0.08), inset 0 1px 0 rgba(255,255,255,0.04)",
+                            boxShadow: "0 4px 16px rgba(0,212,255,0.08)",
                             overflow:"hidden",
                             transition:"transform 0.15s, box-shadow 0.15s"
                           }
                         },
                           // Subtle glow effect in top-right
-                          React.createElement('div', {style:{position:"absolute",top:-30,right:-30,width:80,height:80,borderRadius:"50%",background:"radial-gradient(circle, rgba(0,212,255,0.15) 0%, transparent 70%)",pointerEvents:"none"}}),
+
                           React.createElement('div', {style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8,position:"relative"}},
                             React.createElement('div', {style:{fontSize:FS.sm,color:C.accent2,letterSpacing:0.5,fontWeight:600,textTransform:"uppercase"}}, "📱 ", lang==="en"?"Platform Pay":"平台到账"),
                             React.createElement('span', {style:{fontSize:FS.xs,color:C.text3}}, bigExp?"▲":"▼")
                           ),
-                          React.createElement('div', {style:{fontSize:FS.xxl,fontWeight:900,color:C.accent2,letterSpacing:-1.2,lineHeight:1,fontVariantNumeric:"tabular-nums",position:"relative"}}, fmt(platformPay)),
+                          React.createElement('div', {style:{fontSize:FS.xl,fontWeight:700,color:C.accent2,letterSpacing:-0.5,lineHeight:1.1,fontVariantNumeric:"tabular-nums",position:"relative"}}, fmt(platformPay)),
                           tToll>0 ? React.createElement('div', {style:{fontSize:FS.xs,color:C.text3,marginTop:6,position:"relative"}}, "−", lang==="en"?"toll ":"过桥 ", fmt(tToll)) : null,
                           tToll>0 ? React.createElement('div', {style:{fontSize:FS.sm,color:C.success,fontWeight:700,marginTop:2,position:"relative"}}, lang==="en"?"net ":"实收 ", fmt(realEarnings)) : null
                         ),
@@ -3718,18 +3720,18 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                             cursor:"pointer",
                             border: net>=0 ? "1px solid rgba(0,230,118,0.2)" : "1px solid rgba(255,82,82,0.25)",
                             boxShadow: net>=0 ?
-                              "0 4px 16px rgba(0,230,118,0.08), inset 0 1px 0 rgba(255,255,255,0.04)" :
-                              "0 4px 16px rgba(255,82,82,0.1), inset 0 1px 0 rgba(255,255,255,0.04)",
+                              "0 4px 16px rgba(0,230,118,0.08)" :
+                              "0 4px 16px rgba(255,82,82,0.1)",
                             overflow:"hidden",
                             transition:"transform 0.15s, box-shadow 0.15s"
                           }
                         },
-                          React.createElement('div', {style:{position:"absolute",top:-30,right:-30,width:80,height:80,borderRadius:"50%",background:net>=0?"radial-gradient(circle, rgba(0,230,118,0.15) 0%, transparent 70%)":"radial-gradient(circle, rgba(255,82,82,0.15) 0%, transparent 70%)",pointerEvents:"none"}}),
+
                           React.createElement('div', {style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8,position:"relative"}},
                             React.createElement('div', {style:{fontSize:FS.sm,color:net>=0?C.success:C.danger,letterSpacing:0.5,fontWeight:600,textTransform:"uppercase",opacity:0.85}}, "💰 ", lang==="en"?"Net Profit":"净收入"),
                             React.createElement('span', {style:{fontSize:FS.xs,color:C.text3}}, bigExp?"▲":"▼")
                           ),
-                          (function(){var nc=net>=0?C.success:C.danger;return React.createElement('div', {style:{fontSize:FS.xxl,fontWeight:900,color:nc,letterSpacing:-1.2,lineHeight:1,fontVariantNumeric:"tabular-nums",position:"relative"}}, fmt(net));}()),
+                          (function(){var nc=net>=0?C.success:C.danger;return React.createElement('div', {style:{fontSize:FS.xl,fontWeight:700,color:nc,letterSpacing:-0.5,lineHeight:1.1,fontVariantNumeric:"tabular-nums",position:"relative"}}, fmt(net));}()),
                           React.createElement('div', {style:{fontSize:FS.xs,color:C.text3,marginTop:8,position:"relative"}}, lang==="en"?"after all expenses":"扣除所有开销")
                         )
                       ),
@@ -3798,7 +3800,6 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                       ) : null
                     );
                   }())
-                , incGoal&&+incGoal>0 ? React.createElement(Card, { style: {marginBottom:10,padding:"12px 14px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 267}}, React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 267}}, React.createElement('div', { style: {fontSize:13,fontWeight:700,color:C.gold}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 267}}, "🎯 " , lang==="en"?"Monthly Goal":"本月目标"), React.createElement('div', { style: {display:"flex",alignItems:"center",gap:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 267}}, React.createElement('span', { style: {fontSize:13,color:C.text2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 267}}, fmt(tInc), " / "  , fmt(+incGoal)), React.createElement('button', { onClick: function(){setShowGoal(true);}, style: {background:"none",border:"none",color:C.text3,fontSize:12,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 267}}, "✏️"))), React.createElement('div', { style: {height:8,borderRadius:4,background:"#1A2A40",overflow:"hidden",marginBottom:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 267}}, React.createElement('div', { style: {height:8,borderRadius:4,width:Math.min(100,Math.round(tInc/+incGoal*100))+"%",background:tInc>=+incGoal?"linear-gradient(90deg,#00E676,#FFD700)":"linear-gradient(90deg,#00D4FF,#0055FF)"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 267}} )), React.createElement('div', { style: {fontSize:12,color:tInc>=+incGoal?C.success:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 267}}, tInc>=+incGoal?(lang==="en"?"🎉 Goal reached!":"🎉 目标达成！"):(lang==="en"?"Still need: ":"还差: ")+fmt(+incGoal-tInc)+" ("+Math.round(tInc/+incGoal*100)+"%)")) : React.createElement('button', { onClick: function(){setShowGoal(true);}, style: {width:"100%",background:C.bg3,border:"1px dashed #2A4A6A",borderRadius:10,padding:"8px 14px",color:C.text3,fontSize:12,cursor:"pointer",marginBottom:10,textAlign:"left"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 267}}, "🎯 " , lang==="en"?"Set monthly goal...":"设定本月收入目标...")
                 , (function(){
                     if(dashV !== "year") return null;
                     var hm=mData.filter(function(m){return m.inc>0;});if(hm.length<2)return null;var mx=Math.max.apply(null,hm.map(function(m){return m.inc;}));return React.createElement(Card, { style: {marginBottom:8,padding:"12px 14px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 268}}, React.createElement('div', { style: {fontSize:13,fontWeight:700,color:C.text2,marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 268}}, "📊 " , lang==="en"?("Income Trend · "+yr):("收入趋势 · "+yr+"年")), React.createElement('div', { style: {display:"flex",alignItems:"center",gap:3,height:60}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 268}}, mData.map(function(m,i){if(!m.inc)return React.createElement('div', { key: i, style: {flex:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 268}} );var h=Math.round(8+m.inc/mx*48);var isCur=m.m===mo;return React.createElement('div', { key: i, onClick: function(){setMo(m.m);setDashV("month");}, style: {flex:1,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 268}}, React.createElement('div', { style: {width:"100%",height:h,borderRadius:"4px 4px 1px 1px",background:isCur?"linear-gradient(180deg, #00D4FF, #0066AA)":m.net>=0?"linear-gradient(180deg, #00E676, #0A8050)":"linear-gradient(180deg, #FF7060, #C03030)",opacity:isCur?1:0.75,boxShadow:isCur?"0 0 12px rgba(0,212,255,0.4)":"none",transition:"opacity 0.2s"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 268}} ));}), " " ), React.createElement('div', { style: {display:"flex",fontSize:11,color:C.text3,marginTop:3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 268}}, mData.map(function(m,i){return React.createElement('div', { key: i, style: {flex:1,textAlign:"center",color:m.m===mo?C.accent:C.text3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 268}}, m.label.slice(0,3));})));
@@ -4335,13 +4336,13 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
           // ---- TAXI MODE: daily income UI ----
           React.createElement('div', {}
             , React.createElement(MoNav, { val: mo, set: setMo, lang: lang, onPick: function(){setMpState({value:mo,onChange:function(v){setMo(v);}});} } )
-            , React.createElement('button', { onClick: function(){setDlf({date:today(),cash:"",card:"",tips:"",trips:"",hours:"",miles:"",lease:"",notes:""});setSf("daily");}, style: {width:"100%",background:"linear-gradient(135deg, rgba(255,179,71,0.12), rgba(60,40,0,0.6))",border:"1px solid rgba(255,179,71,0.3)",borderRadius:RADIUS.lg,padding:"22px",cursor:"pointer",textAlign:"center",color:"#FFB300",marginBottom:14,boxShadow:"0 4px 16px rgba(255,179,71,0.08), inset 0 1px 0 rgba(255,255,255,0.05)",transition:"transform 0.15s"} }
+            , React.createElement('button', { onClick: function(){setDlf({date:today(),cash:"",card:"",tips:"",trips:"",hours:"",miles:"",lease:"",notes:""});setSf("daily");}, style: {width:"100%",background:"linear-gradient(135deg, rgba(255,179,71,0.12), rgba(60,40,0,0.6))",border:"1px solid rgba(255,179,71,0.3)",borderRadius:RADIUS.lg,padding:"22px",cursor:"pointer",textAlign:"center",color:"#FFB300",marginBottom:14,boxShadow:"0 4px 16px rgba(255,179,71,0.08)",transition:"transform 0.15s"} }
               , React.createElement('div', { style: {fontSize:32,marginBottom:8,filter:"drop-shadow(0 2px 4px rgba(0,0,0,0.3))"} }, "🚖")
               , React.createElement('div', { style: {fontSize:FS.lg+1,fontWeight:800,letterSpacing:0.2} }, lang==="en"?"+ Add Today's Income":"+ 添加今日收入")
               , React.createElement('div', { style: {fontSize:FS.sm+1,color:"#9A7A40",marginTop:4} }, lang==="en"?"Cash · Card · Tips · Lease":"现金 · 信用卡 · 小费 · 租金")
             )
             , (mDailies.length>0 || mDailyInc>0) ? React.createElement('div', { style: {marginBottom:14,padding:"16px 18px",background:"linear-gradient(135deg, rgba(0,230,118,0.06), "+C.bg2+" 60%)",border:"1px solid "+C.border,borderRadius:RADIUS.lg,boxShadow:SHADOW.md,position:"relative",overflow:"hidden"} }
-              , React.createElement('div', {style:{position:"absolute",top:-30,right:-30,width:90,height:90,borderRadius:"50%",background:"radial-gradient(circle, rgba(0,230,118,0.15) 0%, transparent 70%)",pointerEvents:"none"}})
+
               , React.createElement('div', { style: {fontSize:FS.xs+1,color:C.text3,marginBottom:4,letterSpacing:0.8,textTransform:"uppercase",fontWeight:600,position:"relative"} }, lang==="en"?"This Month — Gross":"本月毛收入")
               , React.createElement('div', { style: {fontSize:FS.xxl,fontWeight:900,color:C.success,marginBottom:8,letterSpacing:-0.8,fontVariantNumeric:"tabular-nums",position:"relative"} }, fmt(mDailyInc))
               , mDailyLease>0 ? React.createElement('div', { style: {fontSize:FS.md+1,color:"#FF9A65",marginBottom:4,position:"relative"} }, "− " , lang==="en"?"Lease ":"租金 " , fmt(mDailyLease)) : null
@@ -4642,7 +4643,7 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
               var dlCnt=isMonth?mDailies.length:yDailies.length;
               if(vInc<=0)return null;
               return React.createElement('div', { style: {marginBottom:14,padding:"16px 18px",background:"linear-gradient(135deg, rgba(0,212,255,0.06), "+C.bg2+" 60%)",border:"1px solid "+C.border,borderRadius:RADIUS.lg,boxShadow:SHADOW.md,position:"relative",overflow:"hidden"} }
-                , React.createElement('div', {style:{position:"absolute",top:-30,right:-30,width:90,height:90,borderRadius:"50%",background:"radial-gradient(circle, rgba(0,212,255,0.15) 0%, transparent 70%)",pointerEvents:"none"}})
+
                 , React.createElement('div', { style: {fontSize:FS.xs+1,color:C.text3,marginBottom:4,letterSpacing:0.8,textTransform:"uppercase",fontWeight:600,position:"relative"} }, T.totalIncome)
                 , React.createElement('div', { style: {fontSize:FS.xxl,fontWeight:900,color:C.text,marginBottom:10,letterSpacing:-0.8,fontVariantNumeric:"tabular-nums",position:"relative"} }, fmt(vGrossTotal))
                 // Mode breakdown row — only show when BOTH modes have data
