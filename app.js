@@ -1,5 +1,5 @@
 // === Error monitoring (Sentry) ===
-var APP_VERSION = "v3.11.80";  // ← single source of truth: bump this once per release
+var APP_VERSION = "v3.11.85";  // ← single source of truth: bump this once per release
 console.log("%cNYC Driver Tracker — version "+APP_VERSION,"color:#00D4FF;font-weight:bold;font-size:14px");
 // To enable Sentry: add to index.html before app.js:
 //   <script src="https://browser.sentry-cdn.com/8.40.0/bundle.min.js" crossorigin="anonymous"></script>
@@ -4781,44 +4781,65 @@ React.createElement('div', { style: {minHeight:"100vh",background:C.bg2,display:
                     if(!isMonth) return null;
                     var vPlatformFee = mStmts.reduce(function(s,x){return s+(+x.platformFee||0);},0)
                       + mDailies.reduce(function(s,d){return s+(d.mode==="rideshare"?(+d.platformFee||0):0);},0);
-                    if(vPlatformFee<=0 && vToll<=0) return null;  // nothing to show
-                    // Per Uber PDF: Gross Payment = grossFare + tips + bonus (does NOT include toll).
-                    // Net to bank = Gross - feesTotal. Toll is a pass-through:
-                    //   Uber reimburses driver toll IN ADDITION to Net Payout (separate line),
-                    //   driver also pays the same amount at the booth → net effect = $0.
-                    // For the driver's "real" pocket, Net Payout already IS the real amount.
-                    var netPayout = vInc - vPlatformFee;  // What hits the bank
-                    return React.createElement('div', { style: {marginTop:10,padding:"12px 14px",background:C.bg3,border:"1px solid "+C.border,borderRadius:RADIUS.md,position:"relative"} }
-                      , React.createElement('div', { style: {fontSize:11,color:C.text3,marginBottom:8,letterSpacing:0.8,textTransform:"uppercase",fontWeight:600} }, "💰 ", lang==="en"?"Money Flow":"收入明细")
-                      , React.createElement('div', { style: {display:"flex",flexDirection:"column",gap:5,fontSize:13,lineHeight:1.5} }
-                        // Gross Payment
-                        , React.createElement('div', { style: {display:"flex",justifyContent:"space-between"} }
-                          , React.createElement('span', { style: {color:C.text2,fontWeight:600} }, lang==="en"?"Gross Payment":"总营业额")
-                          , React.createElement('b', { style: {color:C.accent2,fontVariantNumeric:"tabular-nums"} }, fmt(vInc))
+                    if(vPlatformFee<=0 && vToll<=0) return null;
+                    // Logical chain — Uber fees apply to FARE only (not tips/bonus):
+                    //   Section 1 "跑车赚的" (Driving income):
+                    //     Gross Fare − Uber Fees = Fare Net
+                    //   Section 2 "额外收入" (Extras): Tips + Bonus = Extras Total
+                    //   Bottom: Bank Deposit = Fare Net + Extras
+                    var fareNet = vGross - vPlatformFee;
+                    var extras = vTips + vBonus;
+                    var bankDeposit = fareNet + extras;
+                    // Reusable styles
+                    var sectionLabel = {fontSize:11,color:"#9AB0CC",fontWeight:700,letterSpacing:0.3,marginBottom:6,paddingLeft:2};
+                    var rowStyle = {display:"flex",justifyContent:"space-between",alignItems:"baseline",fontSize:13,padding:"3px 6px"};
+                    var subTotalRow = {display:"flex",justifyContent:"space-between",alignItems:"baseline",fontSize:13,padding:"6px 6px 4px",borderTop:"1px solid "+C.border,marginTop:4};
+                    var numStyle = {fontVariantNumeric:"tabular-nums",fontWeight:600};
+                    return React.createElement('div', { style: {marginTop:10,padding:"14px 16px",background:C.bg3,border:"1px solid "+C.border,borderRadius:RADIUS.md} }
+                      , React.createElement('div', { style: {fontSize:11,color:C.text3,marginBottom:12,letterSpacing:0.8,textTransform:"uppercase",fontWeight:600} }, "💰 ", lang==="en"?"Money Flow":"收入明细")
+                      // === Section 1: Earned from driving (fare − fees) ===
+                      , React.createElement('div', {style:{marginBottom:14}}
+                        , React.createElement('div', {style:sectionLabel}, "🚗 ", lang==="en"?"EARNED FROM DRIVING":"跑车赚的")
+                        , React.createElement('div', {style:rowStyle}
+                          , React.createElement('span', {style:{color:C.text2}}, lang==="en"?"Gross fare":"总车费")
+                          , React.createElement('span', {style:Object.assign({},numStyle,{color:C.text})}, fmt(vGross))
                         )
-                        // − Uber fees
-                        , vPlatformFee>0 ? React.createElement('div', { style: {display:"flex",justifyContent:"space-between"} }
-                          , React.createElement('span', { style: {color:C.text3} }, "− ", lang==="en"?"Uber fees":"Uber 抽成")
-                          , React.createElement('span', { style: {color:C.danger,fontVariantNumeric:"tabular-nums"} }, "−", fmt(vPlatformFee))
+                        , vPlatformFee>0 ? React.createElement('div', {style:rowStyle}
+                          , React.createElement('span', {style:{color:C.text3}}, "− ", lang==="en"?"Uber fees":"Uber 抽成")
+                          , React.createElement('span', {style:Object.assign({},numStyle,{color:C.danger})}, "−", fmt(vPlatformFee))
                         ) : null
-                        // = Net Payout (bank deposit) — main result
-                        , vPlatformFee>0 ? React.createElement('div', { style: {display:"flex",justifyContent:"space-between",paddingTop:6,borderTop:"1px solid "+C.border,marginTop:3} }
-                          , React.createElement('span', { style: {color:C.text,fontWeight:700} }, "🏦 ", lang==="en"?"Net Payout (bank)":"平台到账（实银行入账）")
-                          , React.createElement('b', { style: {color:C.gold,fontSize:15,fontVariantNumeric:"tabular-nums"} }, fmt(netPayout))
-                        ) : null
-                        // Toll pass-through note (collapsible visual: shown subtly to indicate it nets to $0)
-                        , vToll>0 ? React.createElement('div', {style:{marginTop:8,padding:"8px 10px",background:"rgba(120,140,170,0.06)",borderRadius:6,fontSize:11,color:C.text3,lineHeight:1.5}}
-                          , React.createElement('div', {style:{fontWeight:600,marginBottom:3,color:"#7A95B8"}}, "ⓘ ", lang==="en"?"Toll pass-through (nets to $0)":"过桥中转（净影响 $0）")
-                          , React.createElement('div', {style:{display:"flex",justifyContent:"space-between"}}
-                            , React.createElement('span', null, lang==="en"?"  Reimbursed by Uber":"  Uber 退款（已含在打款外）")
-                            , React.createElement('span', {style:{color:"#7A95B8",fontVariantNumeric:"tabular-nums"}}, "+", fmt(vToll))
-                          )
-                          , React.createElement('div', {style:{display:"flex",justifyContent:"space-between"}}
-                            , React.createElement('span', null, lang==="en"?"  Paid at booth":"  付收费站")
-                            , React.createElement('span', {style:{color:"#7A95B8",fontVariantNumeric:"tabular-nums"}}, "−", fmt(vToll))
-                          )
+                        , vPlatformFee>0 ? React.createElement('div', {style:subTotalRow}
+                          , React.createElement('b', {style:{color:C.text,fontSize:14}}, lang==="en"?"Fare net":"净到账")
+                          , React.createElement('b', {style:Object.assign({},numStyle,{color:C.accent2,fontSize:15})}, fmt(fareNet))
                         ) : null
                       )
+                      // === Section 2: Extras (tips + bonus) ===
+                      , extras>0 ? React.createElement('div', {style:{marginBottom:14}}
+                        , React.createElement('div', {style:sectionLabel}, "🎁 ", lang==="en"?"EXTRAS":"额外收入")
+                        , vTips>0 ? React.createElement('div', {style:rowStyle}
+                          , React.createElement('span', {style:{color:C.text2}}, "+ ", lang==="en"?"Tips":"小费")
+                          , React.createElement('span', {style:Object.assign({},numStyle,{color:C.success})}, "+", fmt(vTips))
+                        ) : null
+                        , vBonus>0 ? React.createElement('div', {style:rowStyle}
+                          , React.createElement('span', {style:{color:C.text2}}, "+ ", lang==="en"?"Bonus":"奖励")
+                          , React.createElement('span', {style:Object.assign({},numStyle,{color:C.gold})}, "+", fmt(vBonus))
+                        ) : null
+                        , (vTips>0 && vBonus>0) ? React.createElement('div', {style:subTotalRow}
+                          , React.createElement('b', {style:{color:C.text,fontSize:14}}, lang==="en"?"Extras subtotal":"小计")
+                          , React.createElement('b', {style:Object.assign({},numStyle,{color:C.text,fontSize:15})}, "+", fmt(extras))
+                        ) : null
+                      ) : null
+                      // === Bottom: Bank Deposit (the result) ===
+                      , React.createElement('div', {style:{padding:"12px 14px",background:"linear-gradient(135deg, rgba(255,215,0,0.10), "+C.bg2+" 70%)",border:"1px solid rgba(255,215,0,0.3)",borderRadius:RADIUS.sm,display:"flex",justifyContent:"space-between",alignItems:"center"}}
+                        , React.createElement('span', {style:{fontSize:14,fontWeight:700,color:C.text}}, "🏦 ", lang==="en"?"Bank Deposit":"平台到账")
+                        , React.createElement('b', {style:{color:C.gold,fontSize:20,fontVariantNumeric:"tabular-nums",letterSpacing:-0.4}}, fmt(bankDeposit))
+                      )
+                      // Toll pass-through footnote
+                      , vToll>0 ? React.createElement('div', {style:{marginTop:10,fontSize:10,color:C.text3,fontStyle:"italic",lineHeight:1.5,paddingLeft:2}}
+                        , lang==="en"
+                          ? "ⓘ Tolls pass through: Uber refunds +$"+fmt2(vToll)+", you pay −$"+fmt2(vToll)+" at booths (net = $0)."
+                          : "ⓘ 过桥是中转：Uber 退 +$"+fmt2(vToll)+"，付收费站 −$"+fmt2(vToll)+"（净 = $0）。"
+                      ) : null
                     );
                   }())
                 // Data source counts (small dim text)
